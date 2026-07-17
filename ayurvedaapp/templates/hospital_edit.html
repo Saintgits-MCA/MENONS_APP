@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="content-wrapper">
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Hospital Details</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item">
+               
+                    <a href="{% url 'hospital_list_view' %}">View</a>
+             
+              <li class="breadcrumb-item active">Hospital</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  <section class="content">
+    <div class="container-fluid">
+      <div class="card card-primary">
+        <div class="card-header">
+          <h3 class="card-title">Edit Hospital</h3>
+        </div>
+
+        <!-- Form for editing hospital details -->
+        <form method="POST" enctype="multipart/form-data" action="{% url 'edithospital' %}">
+          {% csrf_token %}
+          <input type="hidden" name="hospitalid" value="{{ hospital.id }}">
+          <div class="card-body">
+            <div class="form-group">
+              <label for="hospitalName">Hospital Name</label>
+              <input type="text" class="form-control" id="hospitalName" name="hospitalname" value="{{ hospital.Name }}" >
+            </div>
+            <div class="form-group">
+              <label for="address">Address</label>
+              <textarea class="form-control" id="address" name="address" >{{ hospital.Address }}</textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="registerNo">Register No</label>
+              <input type="text" class="form-control" id="registerNo" name="regnumber" value="{{ hospital.Register_no }}" >
+            </div>
+
+            <div class="form-group">
+              <label for="gst">GST</label>
+              <input type="text" class="form-control" id="gst" name="gst" value="{{ hospital.GST }}" >
+            </div>
+            <div class="form-group">
+              <label for="managerName">Manager Name</label>
+              <input type="text" class="form-control" id="managerName" name="managername" value="{{ hospital.Manager_name }}">
+            </div>
+            <div class="form-group">
+              <label for="contactNo">Contact No</label>
+              <input type="text" class="form-control" id="contactNo" name="contactnumber" value="{{ hospital.Contact_no }}" >
+            </div>
+
+            <div class="form-group">
+              <label for="email">Email</label>
+              <input type="email" class="form-control" id="email" name="email" value="{{ hospital.Email }}" >
+            </div>
+            <!-- Logo upload field -->
+            <div class="form-group">
+              <label for="logo">Logo</label>
+              {% if hospital.Logo %}
+                <div class="mb-2">
+                  <p>Current Logo:</p>
+                  <img src="{{ hospital.Logo.url }}" alt="Hospital Logo" width="100" height="100">
+                </div>
+              {% endif %}
+              <input type="file" class="form-control-file" id="logo" name="logo">
+              <small class="form-text text-muted">Upload a new logo to replace the current one (JPEG, PNG).</small>
+            </div>
+
+          </div>
+          
+          <div class="card-footer">
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+            <a href="{% url 'hospital_list_view' %}" class="btn btn-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+</div>
+
+{% endblock %}

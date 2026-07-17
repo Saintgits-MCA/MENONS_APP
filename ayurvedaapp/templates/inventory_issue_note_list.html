@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="content-wrapper">
+    <!-- Content Header -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Inventory Issue Note</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item active"> <a href="{% url 'inventory_issue_note_create' %}?menumanagement_id={{ idmngmnt }}" class="btn btn-primary float-right">
+                        <i class="fas fa-plus"></i> Create New GIN
+                    </a></li>
+                        <li class="breadcrumb-item active">GIN List</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+        <div class="container-fluid">
+          
+
+            <!-- GIN List Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Goods Issue Notes</h3>
+                    <div class="card-tools">
+                        <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                            <!-- <i class="fas fa-minus"></i> -->
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="example1" class="table table-bordered table-striped table-sm" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>GIN Number</th>
+                                    <th>Date</th>
+                                    <th>Department</th>
+                                    <th>Staff</th>
+                                    <th>Reference No</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for gin in gin_list %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ gin.gin_number }}</td>
+                                    <td>{{ gin.gin_date|date:'Y-m-d' }}</td>
+                                    <td>{{ gin.department.Department_Name|default:'' }}</td>
+                                    <td>
+                                        {% if gin.staff %}
+                                            {{ gin.staff.Staff_firstname }} {{ gin.staff.Staff_lastname }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ gin.reference_no|default:'-' }}</td>
+                                    <td>
+                                        {% if gin.status == 'issued' %}
+                                            <span class="badge badge-success">Issued</span>
+                                        {% elif gin.status == 'draft' %}
+                                            <span class="badge badge-warning">Draft</span>
+                                        {% elif gin.status == 'cancelled' %}
+                                            <span class="badge badge-danger">Cancelled</span>
+                                        {% else %}
+                                            <span class="badge badge-secondary">{{ gin.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'inventory_issue_note_detail' %}?id={{ gin.id }}&menumanagement_id={{ idmngmnt }}" class="btn btn-info" title="View">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'inventory_issue_note_print' %}?id={{ gin.id }}&menumanagement_id={{ idmngmnt }}" class="btn btn-primary" title="Print" target="_blank">
+                                                <i class="fas fa-print"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="8" class="text-center text-muted">
+                                        <i class="fas fa-file-alt"></i> No Goods Issue Notes found.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+{% endblock %}

@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<style>
+  .low-stock {
+    background-color: orange;
+  }
+  .out-of-stock {
+    background-color: red;
+    color: white;
+  }
+  /* Explanatory text */
+  .color-description {
+    font-size: 14px;
+    margin-top: 5px;
+  }
+  .low-stock-description {
+    color: orange;
+  }
+  .out-of-stock-description {
+    color: red;
+  }
+  /* Colored square */
+  .color-square {
+    width: 20px;
+    height: 20px;
+    display: inline-block;
+    margin-right: 10px;
+  }
+  .low-stock-square {
+    background-color: orange;
+  }
+  .out-of-stock-square {
+    background-color: red;
+  }
+</style>
+
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper">
+  <!-- Content Header (Page header) -->
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Physical Stock Details</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item">
+              <a href="{% url 'storestockentry' %}?menumanagement_id={{ idmngmnt }}">Add</a>
+            </li>
+            <li class="breadcrumb-item active">Physical Stock</li>
+          </ol>
+        </div>
+      </div>
+    </div><!-- /.container-fluid -->
+  </section>
+  <!-- Main content -->
+  <section class="content">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-12">
+          <div class="card">
+            <div class="scroll">
+              <div class="card-body">
+                <!-- Color descriptions with squares -->
+                <div class="color-description">
+                  <span class="color-square low-stock-square"></span> Low Stock: Quantity is below the reorder level
+                </div>
+                <div class="color-description">
+                  <span class="color-square out-of-stock-square"></span> Out of Stock: Quantity is zero
+                </div>
+                <!-- Stock table -->
+                <table id="example1"  class="table table-bordered table-striped">
+                  <thead>
+                    <tr>
+                      <th>SL No</th>
+                      <th>Store</th>
+                      <th>Item</th>
+                      <th>Supplier</th>
+                      <th> Company</th>
+                      <th>Batch No</th>
+                      {% comment %} <th>Total Base Quantity</th> {% endcomment %}
+                      <th>Quantity</th>
+                      <th>Base Unit</th>
+                      <th>Unit</th>
+                      {% comment %} <th>Manufacture Date</th> {% endcomment %}
+                      <th>Expiry Date</th>
+                      <th>Purchase Rate</th>
+                      <th>Wholesale Rate</th>
+                      <th>Rate(MRP)</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                     {% for item, is_low_stock, is_out_of_stock in stock_with_status %}
+                    <tr>
+                      <td>{{ forloop.counter }}</td>
+                      <td>{{ item.storenm.storename }}</td>
+                      <td  class="{% if is_out_of_stock %}out-of-stock{% elif is_low_stock %}low-stock{% endif %}">{{ item.itemnm.itemnm }}</td>
+                      <td>
+                        {% if item.suppliernm %}
+                          {{ item.suppliernm.shopname }}
+                        {% else %}
+                          N/A
+                        {% endif %}
+                      </td>
+                      <td>
+                        {% if item.Comapany_name %}
+                          {{ item.Comapany_name.Comapany_name }}
+                        {% else %}
+                          N/A
+                        {% endif %}
+                      </td>
+                      <td>{{ item.Batch_no }}</td>
+                      {% comment %} <td>{{ item.total_base_quantity }}</td> {% endcomment %}
+                      <td class="{% if is_out_of_stock %}out-of-stock{% elif is_low_stock %}low-stock{% endif %}">{{ item.qty }}</td>
+                      <td>{{ item.unt.bsuntid.unit }}</td>
+                      <td>{{ item.unt.unitname }}</td>
+                      {% comment %} <td>{{ item.Manufacturer_date|date:'M/Y' }}</td> {% endcomment %}
+                      <td>{{ item.Expiry_date|date:'M/Y' }}</td>
+                      <td>{{ item.purchase_rate}}</td>
+                      <td>{{item.wholesale_rate}}</td>
+                      <td>{{ item.Rate }}</td>
+                      <td>
+                        <a href="{% url 'editstock' %}?ids={{ item.id }}">
+                          <i class="nav-icon" style="width:20px">
+                            <img src="{% static 'assets/dist/img/icons/edit.svg' %}" class="img-square" style="width:20px">
+                          </i>
+                        </a>
+                        <a href="{% url 'delstockdetls' %}?ids={{ item.id }}"
+                            onclick="confirmDelete(event, this.href);">
+                              <i class="nav-icon" style="width:20px">
+                                  <img src="{% static 'assets/dist/img/icons/delete.svg' %}"
+                                      class="img-square" style="width:20px">
+                              </i>
+                          </a>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+<!-- /.content-wrapper -->
+<!-- /.content-wrapper -->
+<script>
+  function confirmDelete(event, url) {
+    event.preventDefault(); // Prevent the default action (navigating to the link)
+    const userConfirmed = confirm("Are you sure you want to delete this Stock Details record?");
+    if (userConfirmed) {
+      window.location.href = url; // Proceed with the delete action
+    }
+  }
+  </script>
+{% endblock %}

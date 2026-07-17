@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Staff Details</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item">
+                <a href="{% url 'staffdetail' %}">Add</a>
+              </li>
+              <li class="breadcrumb-item active">Staff</li>
+            </ol>
+          </div>
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-12">
+            <!-- /.card -->
+
+            <div class="card">
+              <div class="scroll">
+                <!-- /.card-header -->
+                <div class="card-body">
+
+                  <table id="example1" class="table table-bordered table-striped">
+                    <thead>
+                      <tr>
+                        <th>SL.No</th>
+                        <th>Staff Name</th>
+                        <th>House Name</th>
+                        <th>Pincode</th>
+                        <th>Country</th>
+                        <th>State</th>
+                        <th>District</th>
+                        <th>City</th>
+                        <th>Email</th>
+                        <th>Phone Number</th>
+                        <th>Qualification</th>
+                        <th>Experience</th>
+                        <th>Pancard Number</th>
+                        <th>Gender</th>
+                        <th>Joining Date</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead> 
+                    <tbody>
+                      {% for i in objstaffdetailtable %}
+                      <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ i.Staff.Staff_firstname }}</td>
+                        <td>{{ i.Staff.Housename }}</td>
+                        <td>{{ i.Staff.Pincode }}</td>
+                        <td>{{ i.Staff.Country.Country_Name }}</td>
+                        <td>{{ i.Staff.State.State_Name }}</td>
+                        <td>{{ i.Staff.District.District_name }}</td>
+                        <td>{{ i.Staff.City.City_name }}</td>
+                        <td>{{ i.Staff.Email }}</td>
+                        <td>{{ i.Staff.contactno }}</td>
+                        <td>{{ i.Staff.Qualification }}</td>
+                        <td>{{ i.Staff.Experience }}</td>
+                        <td>{{ i.Staff.Pancard_No }}</td>
+                        <td>{{ i.Staff.Gender }}</td>
+                        <td>{{ i.Staff.Joining_date }}</td> 
+                        <td>
+                          <a href="{% url 'editstaffdetail'%}?ids={{i.Staff_id}}"><i class="nav-icon " style="width:20px"><img src="{% static 'assets/dist/img/icons/edit.svg'%}"  class=" img-squre "  style="width:20px"></i></a>
+                         
+       <a href="{% url 'delstaffdetail'%}?ids={{i.Staff_id}}"><i class="nav-icon " style="width:20px"><img src="{% static 'assets/dist/img/icons/delete.svg'%}"  class=" img-squre "  style="width:20px"></i></a>
+       
+       
+                           
+                                </td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <!-- /.card-body -->
+            </div>
+            <!-- /.card -->
+          </div>
+          <!-- /.col -->
+        </div>
+        <!-- /.row -->
+      </div>
+      <!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+  </div>
+  <!-- /.content-wrapper -->
+{% endblock %}

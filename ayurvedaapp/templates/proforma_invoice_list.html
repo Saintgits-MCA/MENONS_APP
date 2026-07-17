@@ -1,0 +1,215 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Proforma Invoices</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'proforma_invoice_create' %}">Create New</a>
+                        </li>
+                        <li class="breadcrumb-item active">Proforma Invoices</li>
+                    </ol>
+                </div>
+            </div>
+        </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Proforma Invoice List</h3>
+                            <div class="card-tools">
+                              
+                            </div>
+                        </div>
+                        <!-- /.card-header -->
+                        <div class="card-body">
+                            <!-- Filter Form -->
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <form method="GET" class="form-inline">
+                                        <div class="form-group mr-2">
+                                            <input type="text" name="search" class="form-control" placeholder="Search by Voucher No or Buyer" value="{{ search }}" style="width: 250px;">
+                                        </div>
+                                        <div class="form-group mr-2">
+                                            <input type="date" name="from_date" class="form-control" placeholder="From Date" value="{{ from_date }}">
+                                        </div>
+                                        <div class="form-group mr-2">
+                                            <input type="date" name="to_date" class="form-control" placeholder="To Date" value="{{ to_date }}">
+                                        </div>
+                                        <div class="form-group mr-2">
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fas fa-filter"></i> Filter
+                                            </button>
+                                        </div>
+                                        <div class="form-group">
+                                            <a href="{% url 'proforma_invoice_list' %}" class="btn btn-secondary">
+                                                <i class="fas fa-sync-alt"></i> Reset
+                                            </a>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <div class="scroll">
+                                <table id="example1" class="table table-bordered table-striped">
+                                    <thead>
+                                         <tr>
+                                            <th width="5%">SL No</th>
+                                            <th width="12%">Voucher No</th>
+                                            <th width="8%">Date</th>
+                                            <th width="18%">Buyer Name</th>
+                                            <th width="8%">Branch</th>
+                                            <th width="7%">Subtotal</th>
+                                            <th width="7%">GST Total</th>
+                                            <th width="8%">Grand Total</th>
+                                            <th width="10%">Payment Status</th>
+                                            <th width="17%">Action</th>
+                                         </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for invoice in page_obj %}
+                                         <tr>
+                                            <td class="text-center">{{ forloop.counter0|add:page_obj.start_index }}</td>
+                                            <td>
+                                                <strong>{{ invoice.voucher_no }}</strong>
+                                            </td>
+                                            <td class="text-center">{{ invoice.invoice_date|date:"d-m-Y" }}</td>
+                                            <td>{{ invoice.buyer_name|truncatechars:50 }}</td>
+                                            <td>
+                                                {% if invoice.branch %}
+                                                    {{ invoice.branch.Branch_Name }}
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-right">₹ {{ invoice.subtotal|floatformat:2 }}</td>
+                                            <td class="text-right">₹ {{ invoice.gst_total|floatformat:2 }}</td>
+                                            <td class="text-right"><strong>₹ {{ invoice.grand_total|floatformat:2 }}</strong></td>
+                                            <td class="text-center">
+                                                {% if invoice.payment_status == 'Paid' %}
+                                                    <span class="badge badge-success" style="font-size: 12px; padding: 5px 10px;">Paid</span>
+                                                    {% if invoice.payment_date %}
+                                                        <br><small class="text-muted">{{ invoice.payment_date|date:"d-m-Y H:i" }}</small>
+                                                    {% endif %}
+                                                {% elif invoice.payment_status == 'Credit' %}
+                                                    <span class="badge badge-warning" style="font-size: 12px; padding: 5px 10px; background-color: #ffc107; color: #212529;">Credit</span>
+                                                    {% if invoice.payment_date %}
+                                                        <br><small class="text-muted">{{ invoice.payment_date|date:"d-m-Y H:i" }}</small>
+                                                    {% endif %}
+                                                {% else %}
+                                                    <span class="badge badge-danger" style="font-size: 12px; padding: 5px 10px;">Unpaid</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-center">
+                                                <div class="btn-group" role="group">
+                                                    <a href="{% url 'proforma_invoice_view' invoice.id %}" class="btn btn-info btn-sm" title="View">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    
+                                                    {% if invoice.payment_status == 'Paid' or invoice.payment_status == 'Credit' %}
+                                                        <a href="{% url 'b2b_invoice_create' invoice.id %}" class="btn btn-primary btn-sm ml-1" title="B2B Tax Invoice">
+                                                            <i class="fas fa-building"></i> B2B
+                                                        </a>
+                                                        
+                                                        <a href="{% url 'b2c_invoice_create' invoice.id %}" class="btn btn-success btn-sm ml-1" title="B2C Tax Invoice">
+                                                            <i class="fas fa-user"></i> B2C
+                                                        </a>
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="10" class="text-center">
+                                                <div class="alert alert-info mb-0">
+                                                    <i class="fas fa-info-circle"></i> No proforma invoices found.
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Pagination -->
+                            {% if page_obj.has_other_pages %}
+                            <div class="row mt-3">
+                                <div class="col-12">
+                                    <nav aria-label="Page navigation">
+                                        <ul class="pagination justify-content-center">
+                                            {% if page_obj.has_previous %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}">
+                                                    <i class="fas fa-chevron-left"></i> Previous
+                                                </a>
+                                            </li>
+                                            {% else %}
+                                            <li class="page-item disabled">
+                                                <span class="page-link"><i class="fas fa-chevron-left"></i> Previous</span>
+                                            </li>
+                                            {% endif %}
+                                            
+                                            {% for num in page_obj.paginator.page_range %}
+                                                {% if page_obj.number == num %}
+                                                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                                <li class="page-item">
+                                                    <a class="page-link" href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}">{{ num }}</a>
+                                                </li>
+                                                {% endif %}
+                                            {% endfor %}
+                                            
+                                            {% if page_obj.has_next %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}">
+                                                    Next <i class="fas fa-chevron-right"></i>
+                                                </a>
+                                            </li>
+                                            {% else %}
+                                            <li class="page-item disabled">
+                                                <span class="page-link">Next <i class="fas fa-chevron-right"></i></span>
+                                            </li>
+                                            {% endif %}
+                                        </ul>
+                                    </nav>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-12 text-center text-muted">
+                                    <small>Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} entries</small>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <!-- /.card-body -->
+                    </div>
+                    <!-- /.card -->
+                </div>
+                <!-- /.col -->
+            </div>
+            <!-- /.row -->
+        </div>
+        <!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+</div>
+<!-- /.content-wrapper -->
+
+<script src="{% static 'assets/js/jquery-3.6.0.min.js' %}"></script>
+
+{% endblock %}

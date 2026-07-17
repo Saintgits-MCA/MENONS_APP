@@ -1,0 +1,302 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Patient Details</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item">
+                {% if ipview == '1' %} 
+                    <a href="{% url 'iptable' %}?menumanagement_id={{ idmngmnt }}">View All</a>
+                {% endif %}
+              </li>
+              <li class="breadcrumb-item active">Patient Admission</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+      <!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="row">
+        <div class="col-md-12">
+          <div class="card card-primary">
+            <div class="card-header">
+              <h3 class="card-title">Patient Admission</h3>
+              <div class="card-tools">
+                <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                  <!-- <i class="fas fa-minus"></i> -->
+                </button>
+              </div>
+            </div>
+            <form method="POST" action="{% url 'ippatient' %}?menumanagement_id={{ idmngmnt }}">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body"> 
+                                  <div class="row">
+                                    <div class="col-md-8">
+                                        <div class="form-group">
+                                          <label for="mrSearch">MR Number/PhoneNo/Name</label>
+                                          <input type="text" id="mrSearch" class="form-control" placeholder="Type MR Number" required>
+                                          <input type="hidden" class="form-control" id="ptid" name="ptid">
+                               
+                                        </div>
+                                    </div>
+  
+                                    <div class="col-md-4 mt-4"> 
+                                      <button id="searchBtn" class="btn btn-primary">Search</button></div>
+                                    
+                                  </div>
+
+<!-- Dropdown for selected result -->
+<div class="form-group">
+  <label for="mrDropdown">Selected MR Number/Patient</label>
+  <select class="form-control" name="mrnum" id="mrDropdown" required>
+    <option selected disabled value="">Select</option>
+  </select>
+</div>
+                                <!-- Form Fields -->
+                                <div class="form-group">
+                                    <label for="exampleInputFirstName">Patient Name</label>
+                                    <input type="text" class="form-control" id="exampleInputpatientname" name="patientname" placeholder="Enter Patient Name" >
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="exampleInputEmail1">Age</label>
+                                    <input type="text" class="form-control" id="exampleInputage" name="age" placeholder="Enter Age">
+                                </div>
+                                <div class="form-group">
+                                    <label for="exampleInputManagerName">Gender</label>
+                                    <br>
+                                    <input type="radio" value="Male" name="gender" id="gender" >
+                                    <label for="genderMale">Male</label>
+                                    <input type="radio" value="Female" id="gender" name="gender" >
+                                    <label for="genderFemale">Female</label>
+                                    <input type="radio" value="Others" id="gender" name="gender" >
+                                    <label for="genderOthers">Others</label>
+                                </div>
+                                
+                            </div>
+                        </div>
+                    </div>
+                  
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                       
+                              <div class="form-group">
+                                <label for="exampleInputContactNo">Contact no</label>
+                                <input type="text" class="form-control" id="contctno" name="contactnumber" placeholder="Enter Contact no" >
+                            </div>
+                              
+                                <div class="form-group">
+                                    <label for="exampleInputPincode">Address</label>
+                                    <textarea class="form-control" id="exampleInputhousename" name="address" placeholder="Enter House Name"></textarea>
+                                </div>
+                                <div class="form-group">
+                                  <label for="exampleInputemail">Blood Group</label>
+                                  <input type="text" class="form-control" id="exampleInputemail" name="bloodgroup" placeholder="Enter Blood Group">
+                              </div>
+                              
+                                
+                                <label for="genderOthers" >Diagnosis</label>
+                                <textarea class="form-control" name="diagnosis">
+  
+                                </textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    {% if messages %}
+                    {% for message in messages %}
+                    <p style="color:green;">{{ message }}</p>
+                    {% endfor %}
+                    {% endif %}
+                 
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                 
+                </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- /.content -->
+  </div>
+
+<!-- Modal for displaying search results with DataTable -->
+<div class="modal fade" id="searchModal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="searchModalLabel">Search Results</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <!-- DataTable for displaying search results -->
+        <table id="searchResultsTable" class="display table table-bordered">
+          <thead>
+            <tr>
+              <th>MR Number</th>
+              <th>Patient Name</th>
+              <th>Address</th>
+              <th>Contact No</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Results will be appended here -->
+          </tbody>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Modal for messages -->
+<div class="modal fade" id="messageModal" tabindex="-1" role="dialog" aria-labelledby="messageModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="messageModalLabel">Notification</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" id="messageBody">
+        <!-- Messages will be inserted here -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>$(document).ready(function() {
+  // Initialize DataTable (without data initially)
+  let table = $('#searchResultsTable').DataTable({
+    paging: true,
+    searching: true, // Enable internal search for filtering
+    info: true,
+    lengthChange: true, // Allow changing number of entries shown
+    pageLength: 10,     // Limit results to 10 per page
+  });
+
+  // Event listener for the search button click
+  $('#searchBtn').on('click', function() {
+    let query = $('#mrSearch').val();
+
+    // Ensure the search query is not empty
+    if (query.trim() === '') {
+      alert('Please enter a search term.');
+      return;
+    }
+
+    // Clear previous table data
+    table.clear().draw();
+
+    // Send an AJAX request to search for the query
+    fetch(`/search_ipptmrno?query=${query}`)
+      .then(response => response.json())
+      .then(data => {
+        // Check if data exists
+        if (data.length > 0) {
+          // Loop through the results and add to the table
+          data.forEach(item => {
+            let actionBtn = `<button class="btn btn-primary select-btn" data-id="${item.id}" 
+                                data-name="${item.Patient_Name}" 
+                                data-mrno="${item.Medical_Record_Number}" 
+                                data-contact="${item.contactno}"
+                                data-address="${item.Housename}"
+                                data-age="${item.Age}"
+                                data-gender="${item.Gender}">
+                              Select
+                            </button>`;
+
+            // Make sure to add data in the correct order: MR Number -> Name -> Contact -> Address -> Action
+            table.row.add([
+              item.Medical_Record_Number,  // MR Number
+              item.Patient_Name,
+              item.Housename || 'N/A',            // Patient Name
+              item.contactno,              // Contact Number
+                  // Address (if null, show 'N/A')
+              actionBtn,                   // Action Button
+            ]).draw(false); // Re-draw the table after adding the row
+          });
+
+          // Show the modal with the DataTable results
+          $('#searchModal').modal('show');
+        } else {
+          alert('No matching records found.');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('There was an error retrieving the data. Please try again.');
+      });
+  });
+  // Event delegation to handle clicks on dynamically generated "Select" buttons
+  $('#searchResultsTable tbody').on('click', '.select-btn', function() {
+    let id = $(this).data('id');
+    let mrno = $(this).data('mrno');
+    let name = $(this).data('name');
+    let contact = $(this).data('contact');
+    let address = $(this).data('address');
+    let gender = $(this).data('gender');
+    
+    let age = $(this).data('age');
+    // Populate the dropdown with the selected value
+    $('#mrDropdown').html(`<option value="${id}" selected>${mrno} - ${name}</option>`);
+    // Populate the patient details input
+    $('#exampleInputAddress').val(`${mrno} `);
+    $('#contctno').val(`${contact}`);
+    $('#exampleInputpatientname').val(`${name}`);
+    $('#ptid').val(`${id}`);
+    
+    $('#exampleInputage').val(`${age}`);
+   // Set gender radio button
+   $(`input[name="gender"][value="${gender}"]`).prop("checked", true);
+    // Close the modal
+    $('#searchModal').modal('hide');
+  });
+});
+</script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    let messages = [];
+
+    {% if messages %}
+      {% for message in messages %}
+        messages.push("{{ message }}");
+      {% endfor %}
+    {% endif %}
+
+    if (messages.length > 0) {
+      let messageText = messages.join("<br>"); // Combine multiple messages
+      document.getElementById("messageBody").innerHTML = messageText;
+      $("#messageModal").modal("show"); // Show Bootstrap modal
+    }
+  });
+</script>
+
+
+{% endblock %}

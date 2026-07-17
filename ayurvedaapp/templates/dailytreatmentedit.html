@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Daily Treatment Details</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item">
+
+                <a href="{% url 'dailytreatmenttable' %}">View</a></li>
+              <li class="breadcrumb-item active">Daily Treatment</li>
+            </ol>
+          </div>
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+
+      <div class="row">
+        <div class="col-md-12">
+          <div class="card card-primary">
+            <div class="card-header">
+              <h3 class="card-title">Daily Treatment</h3>
+
+              <div class="card-tools">
+                <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                  <!-- <i class="fas fa-minus"></i> -->
+                </button>
+              </div>
+            </div>
+             <form method="POST", action="{% url 'dailytreatment' %}">
+             
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                       
+                       
+                          <div class="card-body">
+                              <div class="form-group">
+                              <label for="exampleInputFirstName">Staff  </label>
+                              <select class="form-control" name="staffname">
+                        <option selected>Select</option>
+                        {% for i in staff %}
+
+                        <option value="{{i.id}}" {% if i.id == objdaily.Staff_name_id %}selected{% endif %}>{{i.Staff_firstname}}</option>
+                      {% endfor %}
+                      </select>
+                            </div>
+                            <div class="form-group">
+                              <label for="exampleInputRegisterNo">MR Number</label>
+                              <select class="form-control" name="mrno">
+                        <option selected>Select</option>
+                                        {% for i in ptdt %}
+                         <option value="{{i.id}}" {% if i.id == objdaily.MR_Number_id %}selected{% endif %}>{{i.Medical_Record_Number}}</option>
+                    
+                                       {% endfor %}
+                      </select>
+                            </div>
+                           
+                            
+
+                          </div>
+                        </div>
+                      </div>
+                          <!-- /.card-body -->
+                       
+                        <div class="col-md-6">
+                        <div class="card">
+                       
+                       
+                          <div class="card-body">
+                      
+                              <div class="form-group">
+                              <label for="exampleInputEmail1">Patient Name</label>
+                              <select class="form-control" name="patientname">
+                        <option selected>Select</option>
+                        {% for i in ptdt %}
+                        <option value="{{i.id}}" {% if i.id == objdaily.Patient_Name_id %}selected{% endif %}>{{i.Patient_Name}}</option>
+                   
+                                      {% endfor %}
+                      </select>
+                            </div>
+                        
+                            <div class="form-group ">
+                              <label for="exampleInputRegisterNo">Current Date</label>
+                             <input type="date" class="form-control" name="currentdate" id="exampleInputdate" value="{{objdaily.Current_date|date:'Y-m-d'}}" readonly >
+
+                            </div>
+                             
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+          <div class="row">
+              <div class="col-md-12">
+              <div class="card">
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col-md-6">
+                  <div class="form-group ">
+                    <label for="exampleInputHouse">Treatment Name</label>
+                      <button type="button" class="btn btn-primary" id="addTreatmentButton">Add Treatment</button>
+                      
+                      <select class="form-control" id="treatmentname" name="treatmentnames">
+                        <option selected>Select</option>
+                                        {% for i in treatments %}
+
+                      <option value="{{i.id}}" data-hidden-value="{{i.Treatment_name}}">{{i.Treatment_name}}</option>
+                                        {% endfor %}
+                      </select>
+                  </div>
+                   </div>
+                    <div class="col-md-6">
+                  <div class="form-group ">
+                    <label for="exampleInputHouse">Medicine Name</label>
+                     
+                      <select class="form-control" id="medicinename" name="medicinename">
+                        <option selected>Select</option>
+                                        {% for i in medicines %}
+
+                      <option value="{{i.id}}">{{i.Medicinename}}</option>
+                                        {% endfor %}
+                      </select>
+                  </div>
+                   </div>
+                 </div>
+                  <div class="row">
+                    <div class="col-md-6"><div class="treatment-container"  ></div></div>
+                  <div class="col-md-6">
+                   <div class="treatment-medicine"></div>
+                 </div>
+                </div>
+              <!-- </div> -->
+            </div>
+          </div>
+
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </div>
+              </form>
+          
+            <!-- /.card-body -->
+          </div>
+          <!-- /.card -->
+        </div>
+     
+      </div>
+
+      
+    </section>
+    <!-- /.content -->
+  </div>
+  {% endblock %}

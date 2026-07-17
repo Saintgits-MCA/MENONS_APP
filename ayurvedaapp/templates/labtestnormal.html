@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="content-wrapper">
+
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6"><h1>Normal Value Master</h1></div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="{% url 'normal_value_list' %}">View Normal Values</a></li>
+            <li class="breadcrumb-item active">Create Normal Value</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="content">
+    <div class="row">
+      <div class="col-md-8">
+        <div class="card card-primary">
+
+          <div class="card-header">
+            <h3 class="card-title">Add Normal Value</h3>
+          </div>
+          <form method="POST" action="{% url 'normalevaluesave' %}" onsubmit="return validateNormalForm()">
+            {% csrf_token %}
+            <div class="card-body">
+
+              {% if messages %}
+                {% for message in messages %}
+                  <div class="alert alert-success">{{ message }}</div>
+                {% endfor %}
+              {% endif %}
+
+              <!-- Test Name -->
+              <div class="form-group">
+                <label>Test Name</label>
+                  <select class="form-control" id="groupSelect" name="group" required>
+                  <option value="">-- Select Test --</option>
+                  {% for g in lbchild %}
+                    <option value="{{ g.id }}">{{ g.testname }}</option>
+                  {% endfor %}
+                </select>    </div>
+
+              <!-- Gender -->
+              <div class="form-group">
+                <label>Gender</label>
+                <select class="form-control" name="gender" required>
+                  <option value="">Select Gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Newborn">Newborn (0–1 month)</option>
+                  <option value="Infant">Infant (1 month–1 year)</option>
+                  
+                  <option value="Both">Both</option>
+                </select>
+              </div>
+
+              <!-- Age Range (optional, or for more precision) -->
+              <div class="form-group">
+                <label>Age Range (optional)</label>
+                <div class="row">
+                  <div class="col-md-6">
+                    <input type="number" onwheel="this.blur()" class="form-control" name="age_from" placeholder="Age From">
+                  </div>
+                  <div class="col-md-6">
+                    <input type="number" onwheel="this.blur()" class="form-control" name="age_to" placeholder="Age To">
+                  </div>
+                </div>
+                <small class="form-text text-muted">Use if you want specific age (in years or decimals). Otherwise leave blank.</small>
+              </div>
+
+              <!-- Unit (optional) -->
+              <div class="form-group">
+                <label>Unit</label>
+                <select class="form-control" name="unit">
+                  <option value="">-- Select Unit --</option>
+                  {% for u in unt %}
+                    <option value="{{ u.id }}">{{ u.unit }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <!-- Normal Value Range -->
+              <div class="form-group">
+                <label>Normal Value Range</label>
+                <div class="row">
+                  <div class="col-md-6">
+                    <input type="number" onwheel="this.blur()" class="form-control" name="min_value" placeholder="Min Value" required>
+                  </div>
+                  <div class="col-md-6">
+                    <input type="number" onwheel="this.blur()" class="form-control" name="max_value" placeholder="Max Value" required>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <div class="card-footer">
+              <button type="submit" class="btn btn-primary">Save</button>
+              <a href="" class="btn btn-secondary ml-2">Cancel</a>
+            </div>
+
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+function validateNormalForm() {
+    var minVal = parseFloat(document.getElementsByName("min_value")[0].value);
+    var maxVal = parseFloat(document.getElementsByName("max_value")[0].value);
+
+    if (minVal >= maxVal) {
+      alert("Min value must be less than Max value.");
+      return false;
+    }
+
+    // You can also optionally validate age_from / age_to if provided
+    var ageFromField = document.getElementsByName("age_from")[0];
+    var ageToField = document.getElementsByName("age_to")[0];
+    if (ageFromField.value && ageToField.value) {
+      var a1 = parseFloat(ageFromField.value);
+      var a2 = parseFloat(ageToField.value);
+      if (a1 >= a2) {
+        alert("Age From must be less than Age To.");
+        return false;
+      }
+    }
+
+    return true;
+}
+</script>
+
+{% endblock %}

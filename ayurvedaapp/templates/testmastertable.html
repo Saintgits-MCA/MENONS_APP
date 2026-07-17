@@ -1,0 +1,247 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="content-wrapper">
+  <!-- Content Header -->
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Lab Test Master</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="#">Home</a></li>
+            <li class="breadcrumb-item active">Test Master</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main content -->
+  <section class="content">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Test Groups</h3>
+          
+              <div class="card-tools">
+                <a href="{% url 'testmaster' %}?menumanagement_id={{ idmngmnt }}" class="btn btn-primary btn-sm">
+                  <i class="fas fa-plus"></i> Add New Group
+                </a>
+              </div>
+            
+            </div>
+            
+            <div class="card-body">
+              {% if messages %}
+                {% for message in messages %}
+                  <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                {% endfor %}
+              {% endif %}
+              
+              <table id="example1" class="table table-bordered table-striped">
+                <thead>
+                  <tr>
+                    <th>SL No</th>
+                    <th>Group Name</th>
+                     <th>Rate</th>
+                    <th>Status</th>
+                   <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for test in objtestmastertable %}
+                  <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ test.groupname }}</td>
+                     <td>{{test.rate}}</td>
+                    <td>
+                      {% if test.status %}
+                        <span class="badge badge-success">Active</span>
+                      {% else %}
+                        <span class="badge badge-danger">Inactive</span>
+                      {% endif %}
+                    </td>
+                    <td> {%if testmstredit == '1'%}
+                        <a href="{% url 'testmasteredit'%}?ids={{test.id}}"><i class="nav-icon " style="width:20px"><img src="{% static 'assets/dist/img/icons/edit.svg'%}"  class=" img-squre "  style="width:20px"></i></a>
+                      {%endif%}
+                        {% comment %} {% if testmstrdelete == '1' %}
+                        <button type="button" class="btn btn-sm btn-outline-danger delete-test ml-2" 
+                                data-id="{{ test.id }}" 
+                                data-name="{{ test.groupname }}"
+                                title="Delete">
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      {% endif %} {% endcomment %}
+                    </td>
+                  </tr>
+                  {% empty %}
+                  <tr>
+                    <td colspan="{% if testmstredit or testmstrdelete %}4{% else %}3{% endif %}" class="text-center">
+                      No test groups found.
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title" id="deleteModalLabel">
+          <i class="fas fa-exclamation-triangle"></i> Confirm Delete
+        </h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to delete the test group: <strong id="deleteTestName"></strong>?</p>
+        <p class="text-muted">This action will soft delete the group and all associated tests.</p>
+        <input type="hidden" id="deleteTestId" value="">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+          <i class="fas fa-trash"></i> Yes, Delete
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Success/Error Toast Notification -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 9999;">
+  <div id="toastMessage" class="toast align-items-center text-white border-0" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+      <div class="toast-body" id="toastMessageBody">
+        <!-- Message will be inserted here -->
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  </div>
+</div>
+<script>
+$(document).ready(function() {
+    // Handle delete button click
+    $('.delete-test').on('click', function() {
+        var testId = $(this).data('id');
+        var testName = $(this).data('name');
+        
+        // Set values in modal
+        $('#deleteTestId').val(testId);
+        $('#deleteTestName').text(testName);
+        
+        // Show modal
+        $('#deleteModal').modal('show');
+    });
+
+    // Handle confirm delete
+    $('#confirmDeleteBtn').on('click', function() {
+        var testId = $('#deleteTestId').val();
+        var testName = $('#deleteTestName').text();
+        var $btn = $(this);
+        
+        // Show loading state
+        $btn.html('<i class="fas fa-spinner fa-spin"></i> Deleting...').prop('disabled', true);
+        
+        // Send AJAX request
+        $.ajax({
+            url: "{% url 'testmaster_delete' %}",
+            method: "POST",
+            data: {
+                'test_id': testId,
+                'csrfmiddlewaretoken': '{{ csrf_token }}'
+            },
+            success: function(response) {
+                if (response.success) {
+                    // Close modal
+                    $('#deleteModal').modal('hide');
+                    
+                    // Show success toast
+                    showToast('success', response.message || 'Test group deleted successfully!');
+                    
+                    // Reload after delay
+                    setTimeout(function() {
+                        location.reload();
+                    }, 2000);
+                } else {
+                    showToast('error', response.error || 'Failed to delete test group.');
+                    $btn.html('<i class="fas fa-trash"></i> Yes, Delete').prop('disabled', false);
+                }
+            },
+            error: function(xhr) {
+                showToast('error', 'An error occurred while deleting the test group.');
+                console.error('Error:', xhr);
+                $btn.html('<i class="fas fa-trash"></i> Yes, Delete').prop('disabled', false);
+            }
+        });
+    });
+
+    // Toast notification function
+    function showToast(type, message) {
+        var toast = $('#toastMessage');
+        var toastBody = $('#toastMessageBody');
+        
+        // Reset classes
+        toast.removeClass('bg-success bg-danger bg-warning bg-info');
+        
+        // Set color based on type
+        if (type === 'success') {
+            toast.addClass('bg-success');
+        } else if (type === 'error') {
+            toast.addClass('bg-danger');
+        } else if (type === 'warning') {
+            toast.addClass('bg-warning');
+        } else {
+            toast.addClass('bg-info');
+        }
+        
+        // Set message
+        toastBody.text(message);
+        
+        // Show toast
+        toast.toast({
+            delay: 3000
+        });
+        toast.toast('show');
+    }
+});
+</script>
+
+<style>
+.delete-test:hover {
+    transform: scale(1.1);
+    transition: transform 0.2s;
+}
+
+.toast-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 9999;
+}
+
+.toast {
+    min-width: 300px;
+    border-radius: 8px;
+}
+</style>
+{% endblock %}

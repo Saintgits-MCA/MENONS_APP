@@ -1,0 +1,182 @@
+<!-- templates/appointment_fee_edit.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Edit Appointment Fee</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item active">Edit Fee</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+        <!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title">Edit Appointment Fee</h3>
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <form method="POST" action="{% url 'appointment_fee_edit'  %}?ids={{fee.id}}">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <label for="branch">Branch <span class="text-danger">*</span></label>
+                                                    <select class="form-control" name="branch" id="branch" 
+                                                            {% if not is_superadmin %}disabled{% endif %} required>
+                                                        <option value="">Select Branch</option>
+                                                        {% for branch in branches %}
+                                                        <option value="{{ branch.id }}" 
+                                                                {% if branch.id == fee.branch_id %}selected{% endif %}>
+                                                            {{ branch.Branch_Name }}
+                                                        </option>
+                                                        {% endfor %}
+                                                    </select>
+                                                    {% if not is_superadmin %}
+                                                        <input type="hidden" name="branch" value="{{ staff_branch_id }}">
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <label for="doctor">Doctor <span class="text-danger">*</span></label>
+                                                    <select class="form-control" name="doctor" id="doctor" required>
+                                                        <option value="">Select Doctor</option>
+                                                        {% for alloc in doctors %}
+                                                        <option value="{{ alloc.Staff.id }}" 
+                                                                {% if alloc.Staff.id == fee.doctor_id %}selected{% endif %}
+                                                                data-branch="{{ alloc.Branch_Name_id }}">
+                                                            {{ alloc.Staff.Staff_firstname }} {{ alloc.Staff.Staff_lastname }}
+                                                            {% if alloc.Designation_Name %}
+                                                                ({{ alloc.Designation_Name.Designation_Name }})
+                                                            {% endif %}
+                                                        </option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <label for="visit_type">Appointment Status <span class="text-danger">*</span></label>
+                                                   <select class="form-control" name="visit_type" id="visit_type" required>
+                                                        <option value="">Select Status</option>
+                                                        {% for i in appointment_status %}
+                                                        <option value="{{ i.status_name }}" {% if i.status_name == fee.visit_type %}selected{% endif %}>
+                                                            {{ i.status_name }}
+                                                        </option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <label for="fee_amount">Fee Amount (₹) <span class="text-danger">*</span></label>
+                                                    <input type="number" class="form-control" name="fee_amount" id="fee_amount" 
+                                                           step="0.01" min="0" value="{{ fee.fee_amount|default:'0.00' }}" 
+                                                           placeholder="Enter fee amount" required>
+                                                </div>
+                                            </div>
+                                             <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <label for="visit_days_range">No. of Days</label>
+                                                    <input type="number" class="form-control" name="visit_days_range" id="revisit_days_range" 
+                                                           min="0" max="365" value="{{ fee.no_of_days|default:'0.00' }}" 
+                                                           placeholder="Enter days (e.g., 20)">
+                                                    <small class="text-muted">Number of days within which a patient is considered a revisit</small>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <label for="max_visit_count">Maximum  Count</label>
+                                                    <input type="number" class="form-control" name="max_visit_count" id="max_revisit_count" 
+                                                           min="1" max="50"  value="{{ fee.max_visit_count|default:'0.00' }}" 
+                                                           placeholder="Enter Max Number of Visit Type (e.g., 3)" >
+                                                    <small class="text-muted">Maximum number of each visits allowed for a patient</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-footer">
+                            <button type="submit" class="btn btn-primary">Update</button>
+                            <a href="{% url 'appointment_fee_list' %}" class="btn btn-default float-right">Cancel</a>
+                        </div>
+                    </form>
+                    <!-- /.card-body -->
+                </div>
+                <!-- /.card -->
+            </div>
+        </div>
+    </section>
+    <!-- /.content -->
+</div>
+<!-- /.content-wrapper -->
+
+<script>
+$(document).ready(function() {
+    var isSuperAdmin = {% if is_superadmin %}true{% else %}false{% endif %};
+    var currentBranch = $('#branch').val();
+    var currentDoctorId = {% if fee.doctor_id %}{{ fee.doctor_id }}{% else %}null{% endif %};
+    
+    $('#branch').change(function() {
+        if (isSuperAdmin) {
+            var branchId = $(this).val();
+            if (branchId) {
+                $.ajax({
+                    url: '{% url "get_doctors_by_branch_ajax" %}',
+                    data: {
+                        'branch_id': branchId
+                    },
+                    dataType: 'json',
+                    success: function(data) {
+                        var doctorSelect = $('#doctor');
+                        doctorSelect.empty();
+                        doctorSelect.append('<option value="">Select Doctor</option>');
+                        $.each(data.doctors, function(key, doctor) {
+                            var selected = (doctor.id == currentDoctorId) ? 'selected' : '';
+                            doctorSelect.append('<option value="' + doctor.id + '" ' + selected + '>' + doctor.name + '</option>');
+                        });
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error loading doctors:', error);
+                    }
+                });
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

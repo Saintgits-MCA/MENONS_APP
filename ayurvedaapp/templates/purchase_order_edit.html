@@ -1,0 +1,826 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    /* Fix sidebar overlay issues */
+    .content-wrapper {
+        margin-left: 250px;
+        min-height: 100vh;
+        transition: margin-left 0.3s ease;
+    }
+    
+    @media (max-width: 767.98px) {
+        .content-wrapper {
+            margin-left: 0;
+        }
+        .main-sidebar {
+            transform: translateX(-250px);
+            transition: transform 0.3s ease;
+        }
+        .sidebar-open .main-sidebar {
+            transform: translateX(0);
+        }
+        .sidebar-open .content-wrapper {
+            margin-left: 250px;
+        }
+    }
+    
+    /* Enhanced Header Style */
+    .form-header {
+        background-color: #00796b !important;
+        color: #fff !important;
+        border-bottom: 1px solid #00695c;
+        padding: 15px 20px;
+        margin: -20px -30px 25px -30px;
+        border-radius: 8px 8px 0 0;
+    }
+    
+    .form-header h4 {
+        margin: 0;
+        color: #fff;
+        font-weight: 600;
+    }
+    
+    /* View All Button */
+    .btn-view-all {
+        background-color: #00796b;
+        color: #fff;
+        border: none;
+        padding: 8px 20px;
+        margin-bottom: 15px;
+        border-radius: 4px;
+        transition: all 0.3s;
+        display: inline-block;
+        text-decoration: none;
+    }
+    
+    .btn-view-all:hover {
+        background-color: #00695c;
+        color: #fff;
+        text-decoration: none;
+    }
+    
+    .btn-view-all i {
+        margin-right: 5px;
+    }
+    
+    /* Fix form container positioning */
+    .form-container {
+        background: #fff;
+        padding: 20px 30px;
+        max-width: 1400px;
+        margin: 20px auto;
+        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .form-row {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+    }
+
+    .form-group {
+        flex: 1;
+        min-width: 200px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 600;
+        font-size: 13px;
+        color: #555;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 8px 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 14px;
+        box-sizing: border-box;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: #00796b;
+        box-shadow: 0 0 0 2px rgba(0, 121, 107, 0.15);
+    }
+
+    .items-section {
+        margin: 25px 0;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        padding: 15px;
+        background: #fafafa;
+        position: relative;
+    }
+
+    .items-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .search-bar {
+        margin-bottom: 15px;
+        position: relative;
+        z-index: 10000;
+    }
+
+    .search-bar input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+
+    .search-bar input:focus {
+        border-color: #00796b;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(0, 121, 107, 0.15);
+    }
+
+    .medicine-search-results {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #ddd;
+        max-height: 400px;
+        overflow-y: auto;
+        z-index: 99999;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        border-radius: 4px;
+        margin-top: 2px;
+    }
+
+    .medicine-search-result-item {
+        padding: 10px;
+        cursor: pointer;
+        border-bottom: 1px solid #eee;
+        transition: background 0.2s;
+    }
+
+    .medicine-search-result-item:hover {
+        background-color: #f0f0f0;
+    }
+
+    .medicine-name {
+        font-weight: bold;
+        color: #333;
+    }
+
+    .medicine-details {
+        font-size: 11px;
+        color: #666;
+        margin-top: 4px;
+    }
+
+    .batch-info {
+        font-size: 10px;
+        color: #00796b;
+        margin-left: 10px;
+    }
+
+    .items-table-container {
+        overflow-x: auto;
+        width: 100%;
+        position: relative;
+    }
+
+    .items-table {
+        width: 100%;
+        min-width: 700px;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+
+    .items-table th,
+    .items-table td {
+        border: 1px solid #ccc;
+        padding: 8px;
+        text-align: left;
+        vertical-align: middle;
+    }
+
+    .items-table th {
+        background: #f5f5f5;
+        font-weight: 600;
+        font-size: 12px;
+    }
+
+    .items-table input,
+    .items-table select {
+        width: 100%;
+        padding: 6px;
+        border: 1px solid #ddd;
+        border-radius: 3px;
+        font-size: 13px;
+        box-sizing: border-box;
+    }
+
+    .items-table input:focus,
+    .items-table select:focus {
+        border-color: #00796b;
+        outline: none;
+    }
+
+    .items-table .action-col {
+        width: 50px;
+        text-align: center;
+    }
+
+    .btn-remove {
+        background: #dc3545;
+        color: #fff;
+        border: none;
+        padding: 4px 10px;
+        border-radius: 3px;
+        cursor: pointer;
+        font-size: 12px;
+    }
+
+    .btn-remove:hover {
+        background: #c82333;
+    }
+
+    .totals-section {
+        margin-top: 20px;
+        text-align: right;
+        padding: 15px;
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .totals-section p {
+        margin: 8px 0;
+        font-size: 14px;
+    }
+
+    .totals-section strong {
+        color: #00796b;
+    }
+
+    .form-actions {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 15px;
+        margin-top: 25px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+        flex-wrap: wrap;
+    }
+
+    .btn-submit {
+        background: #00796b;
+        color: #fff;
+        border: none;
+        padding: 10px 25px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.3s;
+    }
+
+    .btn-submit:hover {
+        background: #00695c;
+    }
+
+    .btn-cancel {
+        background: #6c757d;
+        color: #fff;
+        border: none;
+        padding: 10px 25px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    .btn-cancel:hover {
+        background: #5a6268;
+    }
+
+    .error-msg {
+        color: #dc3545;
+        font-size: 12px;
+        margin-top: 4px;
+        display: none;
+    }
+
+    .form-group.error input,
+    .form-group.error select,
+    .form-group.error textarea {
+        border-color: #dc3545;
+    }
+
+    @media (max-width: 768px) {
+        .form-container {
+            padding: 15px;
+            margin: 10px;
+        }
+        
+        .form-header {
+            margin: -15px -15px 20px -15px;
+            padding: 12px 15px;
+        }
+        
+        .form-row {
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .items-table {
+            font-size: 11px;
+            min-width: 600px;
+        }
+        
+        .items-table th,
+        .items-table td {
+            padding: 6px 4px;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+        }
+        
+        .items-header {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .btn-view-all {
+            width: 100%;
+            text-align: center;
+        }
+    }
+</style>
+
+<div class="content-wrapper">
+    <div style="padding: 20px;">
+        <a href="{% url 'purchase_order_list' %}" class="btn-view-all">
+            <i class="fas fa-list"></i> View All Purchase Orders
+        </a>
+        <div class="form-container">
+            <div class="form-header">
+                <h4>Edit Purchase Order - {{ po.po_number }}</h4>
+            </div>
+
+            <form method="POST" id="purchaseOrderForm" action="{% url 'purchase_order_edit' po.id %}" novalidate>
+                {% csrf_token %}
+      
+                <!-- Header Section -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="po_number">PO Number *</label>
+                        <input type="text" id="po_number" name="po_number" value="{{ po.po_number }}" readonly required>
+                        <div class="error-msg" id="po_number_error">This field is required</div>
+                    </div>
+                     
+                    <div class="form-group">
+                        <label for="po_date">Date *</label>
+                        <input type="date" id="po_date" name="po_date" value="{{ po.po_date|date:'Y-m-d' }}" required>
+                        <div class="error-msg" id="po_date_error">This field is required</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="branch">Branch *</label>
+                        <select id="branch" name="branch" required>
+                            <option value="">Select Branch</option>
+                            {% for branch in branches %}
+                            <option value="{{ branch.id }}" {% if po.branch.id == branch.id %}selected{% endif %}>
+                                {{ branch.Branch_Name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="error-msg" id="branch_error">This field is required</div>
+                    </div>
+                </div>
+
+                <!-- Supplier Details -->
+                <div class="form-row">
+                    <div class="form-group" style="flex: 2;">
+                        <label for="supplier_name">Supplier Name *</label>
+                        <input type="text" id="supplier_name" name="supplier_name" value="{{ po.supplier_name }}" placeholder="Supplier/Company Name" required>
+                        <div class="error-msg" id="supplier_name_error">This field is required</div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group" style="flex: 2;">
+                        <label for="supplier_address">Supplier Address *</label>
+                        <textarea id="supplier_address" name="supplier_address" rows="2" placeholder="Full address with pincode" required>{{ po.supplier_address }}</textarea>
+                        <div class="error-msg" id="supplier_address_error">This field is required</div>
+                    </div>
+                </div>
+
+                <!-- Terms Section -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="delivery_date">Expected Delivery Date</label>
+                        <input type="date" id="delivery_date" name="delivery_date" value="{{ po.expected_delivery_date|date:'Y-m-d' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="payment_terms">Payment Terms *</label>
+                        <select id="payment_terms" name="payment_terms" required>
+                            <option value="">Select Payment Terms</option>
+                            <option value="Advance" {% if po.payment_terms == 'Advance' %}selected{% endif %}>Advance</option>
+                            <option value="Credit 7 Days" {% if po.payment_terms == 'Credit 7 Days' %}selected{% endif %}>Credit 7 Days</option>
+                            <option value="Credit 15 Days" {% if po.payment_terms == 'Credit 15 Days' %}selected{% endif %}>Credit 15 Days</option>
+                            <option value="Credit 30 Days" {% if po.payment_terms == 'Credit 30 Days' %}selected{% endif %}>Credit 30 Days</option>
+                            <option value="Cash" {% if po.payment_terms == 'Cash' %}selected{% endif %}>Cash</option>
+                            <option value="Bank Transfer" {% if po.payment_terms == 'Bank Transfer' %}selected{% endif %}>Bank Transfer</option>
+                        </select>
+                        <div class="error-msg" id="payment_terms_error">This field is required</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="transport">Mode of Transport</label>
+                        <input type="text" id="transport" name="transport" value="{{ po.transport_mode }}" placeholder="e.g., JEYEM PARCEL SERVICE">
+                    </div>
+                    <div class="form-group">
+                        <label for="gst_applicable">GST Applicable</label>
+                        <select id="gst_applicable" name="gst_applicable">
+                            <option value="yes" {% if po.gst_applicable %}selected{% endif %}>Yes</option>
+                            <option value="no" {% if not po.gst_applicable %}selected{% endif %}>No</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Approval Section -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="prepared_by">Prepared By</label>
+                        <input type="text" id="prepared_by" name="prepared_by" value="{{ po.prepared_by }}" placeholder="Name">
+                    </div>
+                    <div class="form-group">
+                        <label for="checked_by">Checked By</label>
+                        <input type="text" id="checked_by" name="checked_by" value="{{ po.checked_by }}" placeholder="Name">
+                    </div>
+                    <div class="form-group">
+                        <label for="approved_by">Approved By</label>
+                        <input type="text" id="approved_by" name="approved_by" value="{{ po.approved_by }}" placeholder="Name">
+                    </div>
+                    <div class="form-group">
+                        <label for="approver_designation">Approver Designation</label>
+                        <input type="text" id="approver_designation" name="approver_designation" value="{{ po.approver_designation }}" placeholder="e.g., Chief Consulting Physician">
+                    </div>
+                </div>
+
+                <!-- Items Section with Medicine Search -->
+                <div class="items-section">
+                    <div class="items-header">
+                        <strong>📦 Items</strong>
+                    </div>
+
+                    <!-- Medicine Search Bar -->
+                    <div class="search-bar">
+                        <input type="text" id="medicineSearch" placeholder="🔍 Search for medicines..." autocomplete="off">
+                        <div id="medicineSearchResults" class="medicine-search-results" style="display: none;"></div>
+                    </div>
+                    
+                    <div class="items-table-container">
+                        <table class="items-table">
+                            <thead>
+                                <tr>
+                                    <th width="3%">Sl</th>
+                                    <th width="35%">Item Name</th>
+                                    <th width="10%">Quantity</th>
+                                    <th width="10%">Unit</th>
+                                    <th width="15%">Unit Rate (₹)</th>
+                                    <th width="15%">Total Amount (₹)</th>
+                                    <th width="5%" class="action-col"></th>
+                                   </tr>
+                            </thead>
+                            <tbody id="itemsBody">
+                                {% for item in items %}
+                                <tr>
+                                    <td style="text-align: center;">{{ forloop.counter }}</td>
+                                    <td>
+                                        <input type="text" name="items[{{ forloop.counter }}][description]" class="item-desc" value="{{ item.item_name }}" readonly required style="width: 100%;">
+                                        <input type="hidden" name="items[{{ forloop.counter }}][medicine_id]" value="{{ item.id }}">
+                                    </td>
+                                    <td><input type="number" name="items[{{ forloop.counter }}][qty]" class="item-qty" min="0.01" step="0.01" value="{{ item.quantity }}" required style="width: 100%;"></td>
+                                    <td>
+                                        <select name="items[{{ forloop.counter }}][unit]" class="item-unit" required style="width: 100%;">
+                                            <option value="BTL" {% if item.unit == 'BTL' %}selected{% endif %}>BTL</option>
+                                            <option value="STRP" {% if item.unit == 'STRP' %}selected{% endif %}>STRP</option>
+                                            <option value="PCS" {% if item.unit == 'PCS' %}selected{% endif %}>PCS</option>
+                                            <option value="BOX" {% if item.unit == 'BOX' %}selected{% endif %}>BOX</option>
+                                            <option value="KG" {% if item.unit == 'KG' %}selected{% endif %}>KG</option>
+                                        </select>
+                                    </td>
+                                    <td><input type="number" name="items[{{ forloop.counter }}][rate]" class="item-rate" min="0" step="0.01" value="{{ item.unit_rate }}" required style="width: 100%;"></td>
+                                    <td><input type="text" name="items[{{ forloop.counter }}][amount]" class="item-amount" readonly value="{{ item.total_amount|floatformat:2 }}" style="width: 100%;"></td>
+                                    <td class="action-col"><button type="button" class="btn-remove" onclick="removeRow(this)">✕</button></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Totals Section -->
+                <div class="totals-section">
+                    <p>Subtotal: <strong id="subtotal">₹ {{ po.subtotal|floatformat:2 }}</strong></p>
+                    <p style="font-size: 16px; border-top: 2px solid #000; padding-top: 10px;">
+                        Grand Total: <strong id="grand_total">₹ {{ po.grand_total|floatformat:2 }}</strong>
+                    </p>
+                    <p style="font-size: 13px; color: #666; margin-top: 10px;">
+                        In Words: <span id="amount_in_words">{{ po.amount_in_words|default:"Zero Only" }}</span>
+                    </p>
+                    <input type="hidden" id="total_amount" name="total_amount" value="{{ po.grand_total }}">
+                    <input type="hidden" id="items_count" name="items_count" value="{{ items|length }}">
+                </div>
+
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel" onclick="window.location.href='{% url 'purchase_order_list' %}'">Cancel</button>
+                    <button type="submit" class="btn-submit">💾 Update Purchase Order</button>
+                </div>
+                {% if messages %}
+                    {% for message in messages %}
+                      <p style="color:green;">{{message}}</p> 
+                    {% endfor %}
+                {% endif %}
+                 {%if desgnadd == '1'%}
+                   <button type="submit" class="btn btn-primary">Submit</button>
+                  {%endif%}
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'assets/js/jquery-3.6.0.min.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let itemCounter = {{ items|length }};
+    const itemsBody = document.getElementById('itemsBody');
+    const medicineSearch = document.getElementById('medicineSearch');
+    const medicineResults = document.getElementById('medicineSearchResults');
+    let searchTimeout;
+
+    // Add item row from search
+    function addSearchItemRow(medicine) {
+        itemCounter++;
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td style="text-align: center;">${itemCounter}</td>
+            <td>
+                <input type="text" name="items[${itemCounter}][description]" class="item-desc" value="${escapeHtml(medicine.item_name)}" readonly required style="width: 100%;">
+                <input type="hidden" name="items[${itemCounter}][medicine_id]" value="${medicine.id}">
+            </td>
+            <td><input type="number" name="items[${itemCounter}][qty]" class="item-qty" min="0.01" step="0.01" value="1" required style="width: 100%;"></td>
+            <td>
+                <select name="items[${itemCounter}][unit]" class="item-unit" required style="width: 100%;">
+                    <option value="${medicine.unit}">${medicine.unit}</option>
+                </select>
+            </td>
+            <td><input type="number" name="items[${itemCounter}][rate]" class="item-rate" min="0" step="0.01" value="${medicine.rate}" required style="width: 100%;"></td>
+            <td><input type="text" name="items[${itemCounter}][amount]" class="item-amount" readonly value="${(1 * medicine.rate).toFixed(2)}" style="width: 100%;"></td>
+            <td class="action-col"><button type="button" class="btn-remove" onclick="removeRow(this)">✕</button></td>
+        `;
+        itemsBody.appendChild(row);
+        attachItemCalculations(row);
+        calculateTotals();
+        medicineSearch.value = '';
+        medicineResults.style.display = 'none';
+        updateItemsCount();
+        
+        return row;
+    }
+
+    // Remove row function
+    window.removeRow = function(btn) {
+        const row = btn.closest('tr');
+        row.remove();
+        renumberRows();
+        calculateTotals();
+        updateItemsCount();
+    };
+
+    // Renumber rows after removal
+    function renumberRows() {
+        const rows = document.querySelectorAll('#itemsBody tr');
+        rows.forEach((tr, idx) => {
+            tr.cells[0].textContent = idx + 1;
+            const inputs = tr.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                const name = input.getAttribute('name');
+                if (name) {
+                    input.setAttribute('name', name.replace(/items\[\d+\]/, `items[${idx + 1}]`));
+                }
+            });
+        });
+        itemCounter = rows.length;
+    }
+
+    // Attach calculation listeners to a row
+    function attachItemCalculations(row) {
+        const qtyInput = row.querySelector('.item-qty');
+        const rateInput = row.querySelector('.item-rate');
+        const amountInput = row.querySelector('.item-amount');
+
+        function calculateAmount() {
+            const qty = parseFloat(qtyInput.value) || 0;
+            const rate = parseFloat(rateInput.value) || 0;
+            const total = qty * rate;
+            amountInput.value = total.toFixed(2);
+            calculateTotals();
+        }
+
+        qtyInput.addEventListener('input', calculateAmount);
+        rateInput.addEventListener('input', calculateAmount);
+    }
+
+    // Calculate grand totals
+    function calculateTotals() {
+        let subtotal = 0;
+        document.querySelectorAll('#itemsBody tr').forEach(row => {
+            const amount = parseFloat(row.querySelector('.item-amount').value) || 0;
+            subtotal += amount;
+        });
+        
+        document.getElementById('subtotal').textContent = '₹ ' + subtotal.toFixed(2);
+        document.getElementById('grand_total').textContent = '₹ ' + subtotal.toFixed(2);
+        document.getElementById('total_amount').value = subtotal.toFixed(2);
+        document.getElementById('amount_in_words').textContent = numberToWords(Math.round(subtotal)) + ' Only';
+    }
+
+    // Update items count for backend
+    function updateItemsCount() {
+        document.getElementById('items_count').value = document.querySelectorAll('#itemsBody tr').length;
+    }
+
+    // Number to words (Indian Rupees)
+    function numberToWords(num) {
+        if (num === 0) return 'Zero';
+        
+        const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
+        const teens = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+        const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+        
+        function convertHundreds(n) {
+            let str = '';
+            if (n >= 100) {
+                str += ones[Math.floor(n / 100)] + ' Hundred ';
+                n %= 100;
+            }
+            if (n >= 20) {
+                str += tens[Math.floor(n / 10)] + ' ';
+                n %= 10;
+            } else if (n >= 10) {
+                str += teens[n - 10] + ' ';
+                n = 0;
+            }
+            if (n > 0) str += ones[n] + ' ';
+            return str.trim();
+        }
+        
+        let words = '';
+        let crore = Math.floor(num / 10000000);
+        num %= 10000000;
+        let lakh = Math.floor(num / 100000);
+        num %= 100000;
+        let thousand = Math.floor(num / 1000);
+        num %= 1000;
+        
+        if (crore > 0) words += convertHundreds(crore) + ' Crore ';
+        if (lakh > 0) words += convertHundreds(lakh) + ' Lakh ';
+        if (thousand > 0) words += convertHundreds(thousand) + ' Thousand ';
+        if (num > 0) words += convertHundreds(num);
+        
+        return words.trim() + ' Rupees';
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.appendChild(document.createTextNode(text));
+        return div.innerHTML;
+    }
+
+    // Medicine Search Function
+    function searchMedicines() {
+        const query = medicineSearch.value.trim();
+        const branchId = document.getElementById('branch').value;
+        
+        clearTimeout(searchTimeout);
+        
+        if (!query) {
+            medicineResults.style.display = 'none';
+            return;
+        }
+        
+        if (!branchId) {
+            alert('Please select a branch first');
+            medicineResults.style.display = 'none';
+            return;
+        }
+        
+        searchTimeout = setTimeout(function() {
+            fetch(`/api/search-medicines/?term=${encodeURIComponent(query)}&branch_id=${branchId}`)
+                .then(res => res.json())
+                .then(data => {
+                    medicineResults.innerHTML = '';
+                    
+                    if (!Array.isArray(data) || data.length === 0) {
+                        const noResult = document.createElement('div');
+                        noResult.innerHTML = '<div style="padding: 10px; color: #999;">No medicines found</div>';
+                        medicineResults.appendChild(noResult);
+                        medicineResults.style.display = 'block';
+                        return;
+                    }
+                    
+                    data.forEach(medicine => {
+                        const div = document.createElement('div');
+                        div.className = 'medicine-search-result-item';
+                        
+                        div.innerHTML = `
+                            <div class="medicine-name">${escapeHtml(medicine.item_name)}</div>
+                            <div class="medicine-details">
+                                HSN: ${medicine.hsncode || 'N/A'} | GST: ${medicine.tax}% | Unit: ${medicine.unit} | Rate: ₹${medicine.rate || 'N/A'}
+                            </div>
+                        `;
+                        div.onclick = function() {
+                            addSearchItemRow(medicine);
+                        };
+                        medicineResults.appendChild(div);
+                    });
+                    
+                    medicineResults.style.display = 'block';
+                })
+                .catch(err => {
+                    console.error('Search error:', err);
+                    medicineResults.style.display = 'none';
+                });
+        }, 300);
+    }
+
+    // Medicine search input event
+    medicineSearch.addEventListener('input', searchMedicines);
+    
+    // Branch change event - clear search results
+    document.getElementById('branch').addEventListener('change', function() {
+        medicineSearch.value = '';
+        medicineResults.style.display = 'none';
+    });
+    
+    // Close search results when clicking outside
+    $(document).click(function(e) {
+        if (!$(e.target).closest('#medicineSearch, #medicineSearchResults').length) {
+            $('#medicineSearchResults').hide();
+        }
+    });
+
+    // Attach calculations to existing rows
+    document.querySelectorAll('#itemsBody tr').forEach(row => {
+        attachItemCalculations(row);
+    });
+
+    // Form validation
+    document.getElementById('purchaseOrderForm').addEventListener('submit', function(e) {
+        let valid = true;
+        
+        ['po_number', 'po_date', 'branch', 'supplier_name', 'supplier_address', 'payment_terms'].forEach(id => {
+            const field = document.getElementById(id);
+            const error = document.getElementById(id + '_error');
+            if (!field || !field.value.trim()) {
+                if (field) field.closest('.form-group').classList.add('error');
+                if (error) error.style.display = 'block';
+                valid = false;
+            } else {
+                if (field) field.closest('.form-group').classList.remove('error');
+                if (error) error.style.display = 'none';
+            }
+        });
+
+        if (itemsBody.children.length === 0) {
+            alert('Please add at least one item to the purchase order');
+            valid = false;
+        }
+
+        if (!valid) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+{% endblock %}

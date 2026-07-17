@@ -1,0 +1,354 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="content-wrapper">
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Patient Room Booking</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item">
+            
+                  <a href="{% url 'patient_room_booking_list' %}">View All</a>
+ 
+            </li>
+            <li class="breadcrumb-item active">Patient Room Booking</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="content">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card card-primary">
+          <div class="card-header">
+            <h3 class="card-title">Patient Room Booking</h3>
+          </div>
+          <form id="patientDetailsForm" method="POST" action="{% url 'editroomadmission' %}">
+            {% csrf_token %}
+            <div class="row">
+              <!-- Left Column -->
+              <div class="col-md-6">
+                <div class="card">
+                  <div class="card-body">
+
+                    <!-- Search -->
+                    <div class="row">
+                      <div class="col-md-8">
+                        <div class="form-group">
+                          <label for="mrSearch">MR Number/PhoneNo/Name</label>
+                          <input type="text" id="mrSearch" class="form-control" placeholder="Type MR Number">
+                        </div>
+                      </div>
+                      <div class="col-md-4 mt-4"> 
+                        <button id="searchBtn" class="btn btn-primary">Search</button>
+                      </div>
+                    </div>
+
+                    <!-- Patient details -->
+                    <div class="form-group">
+                      <label for="ptdt">Patient Details</label>
+                      <input type="text" id="exampleInputAddress" class="form-control" value="{{ patient_room_bookings.MR_Number.Patient_Name }}-{{ patient_room_bookings.MR_Number.Medical_Record_Number }}({{ patient_room_bookings.MR_Number.contactno }})"readonly>
+                    </div>
+
+                    <!-- Modal for search results -->
+                    <div class="modal fade" id="searchModal" tabindex="-1">
+                      <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                          <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title">Search Results</h5>
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                          </div>
+                          <div class="modal-body">
+                            <table id="searchResultsTable" class="display table table-bordered">
+                              <thead>
+                                <tr>
+                                  <th>MR Number</th>
+                                  <th>Patient Name</th>
+                                  <th>Address</th>
+                                  <th>Contact No</th>
+                                  <th>Action</th>
+                                </tr>
+                              </thead>
+                              <tbody></tbody>
+                            </table>
+                          </div>
+                          <div class="modal-footer">
+                            <button class="btn btn-secondary" data-dismiss="modal">Close</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Form fields -->
+                    <div class="form-group">
+                  
+                      <input type="hidden" class="form-control" id="ptroomid" name="ptroomid" required value="{{ patient_room_bookings.id }}">
+                     
+                      <input type="hidden" class="form-control"id="patientid" name="patientid"required value="{{ patient_room_bookings.MR_Number_id }}">
+                      <input type="hidden" class="form-control mt-2" id="patientipid" name="patientipid"   required value="{{ patient_room_bookings.ipno_id }}">
+                      </div>
+                    <div class="form-group">
+                      <label for="admdate">Admission Date</label>
+                      <input type="date" class="form-control" id="admdate" name="admdate" required value="{{ patient_room_bookings.Admission_Date|date:'Y-m-d' }}">
+                    </div>
+                    <div class="form-group">
+                      <label for="admtime">Admission Time</label>
+                      <input type="time" class="form-control" id="admtime" name="admtime" required value="{{ patient_room_bookings.admissiontime|time:'H:i' }}">
+                    </div>
+                     <div class="form-group">
+                        <label for="admdoc">Admitted Doctor</label>
+                        <select class="form-control" id="admdoc" name="admdoc">
+                          {% for i in stffallc %}
+                          <option value="{{ i.id }}" {% if patient_room_bookings.admitted_doctor_id == i.id %}selected{% endif %}>
+                            {{ i.Staff__Staff_firstname }} {{ i.Staff__Staff_lastname }}
+                          </option>
+                          {% endfor %}
+                        </select>
+                      </div>
+                      <div class="form-group">
+                        <label for="admdpt">Department</label>
+                        <select class="form-control" id="admdpt" name="admdpt">
+                          {% for i in dpt %}
+                          <option value="{{ i.id }}" {% if patient_room_bookings.department_id == i.id %}selected{% endif %}>
+                            {{ i.Department_Name }}
+                          </option>
+                          {% endfor %}
+                        </select>
+                      </div>  
+                  </div>
+                  
+                </div>
+              </div>
+
+              <!-- Right Column -->
+              <div class="col-md-6">
+                <div class="card">
+                  <div class="card-body">
+                  
+                    <div class="form-group">
+                      <label for="emgcont">Emergency Contact No</label>
+                      <input type="text" class="form-control" id="emgcont" name="emgcont" required value="{{ patient_room_bookings.emergencycontact }}">
+  </div>
+                    <!-- <div class="form-group">
+                      <label for="branch">Branch</label>
+                      <select class="form-control" name="branch">
+                        {% for i in brch %}
+                        <option value="{{ i.id }}">{{ i.Branch_Name }}</option>
+                        {% endfor %}
+                      </select>
+                    </div> -->
+
+                    <div class="form-group">
+                      <label for="accommodationType">Select Accommodation Type:</label><br>
+                      <input type="radio" value="Ward" name="accommodation" id="accommodationWard"
+                      {% if patient_room_bookings.accommodation_type == "Ward" %}checked{% endif %}>
+                    <label for="accommodationWard">Ward</label> 
+                    
+                    <input type="radio" value="Room" id="accommodationRoom" name="accommodation"
+                      {% if patient_room_bookings.accommodation_type == "Room" %}checked{% endif %}>
+                    <label for="accommodationRoom">Room</label>
+                    
+                    </div>
+
+                    <div id="roomSelection" style="display: none;">
+                      <div class="form-group">
+                        <label for="roomtype">Room Type</label>
+                        <select class="form-control" name="roomtype" id="roomtype">
+                            <option value="">Select Room Type</option>
+                            {% for i in unique_room_types %}
+                            <option value="{{ i }}" {% if patient_room_bookings.room_number.Room_type == i %}selected{% endif %}>{{ i }}</option>
+                            {% endfor %}
+                          </select>
+                          
+                      </div>
+                      <div class="form-group">
+                        <div class="form-group">
+                            <label>Allocated Room:</label>
+                            <select class="form-control" name="roommnumber" id="roommnumber">
+                            <option value="{{ patient_room_bookings.room_number.id }}" selected>
+                                {{ patient_room_bookings.room_number.Roomno }}
+                              </option>
+                            </select>
+                        </div>
+                          
+                      </div>
+                      <div class="form-group">
+                        <label for="roomfloor">Floor Number</label>
+                        <input type="text" class="form-control" id="roomfloor" name="roomfloor" 
+                        value="{{ patient_room_bookings.floor_number }}">    </div>
+                    </div>
+                    <div id="wardSelection" style="display: none;">
+                        <div class="form-group">
+                          <label for="wardbedno">Select Ward Bed Number</label>
+                          <select class="form-control" id="wardbedno" name="wardbedno">
+                            <option value="{{ patient_room_bookings.bed_number.id }}" selected>
+                              {{ patient_room_bookings.bed_number.wardbedno }} ({{ patient_room_bookings.floor_number }})
+                            </option>
+                          </select>
+                        </div>
+                      
+                        <div class="form-group">
+                          <label for="wardfloor">Floor Number</label>
+                          <input type="text" class="form-control" id="wardfloor" name="wardfloor" readonly
+                            value="{{ patient_room_bookings.floor_number }}">
+                        </div>
+                      </div>
+                      
+
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-footer">
+              <button type="submit" class="btn btn-primary">Submit</button>
+            </div>
+          </form>
+
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Success Message Modal -->
+<div class="modal fade" id="successModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title">Success</h5>
+        <button class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        {% for message in messages %}
+          <p class="success-msg">{{ message }}</p>
+        {% endfor %}
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script>
+  $(document).ready(function () {
+    const table = $("#searchResultsTable").DataTable();
+
+    $("#searchBtn").on("click", function (e) {
+      e.preventDefault();
+      const query = $("#mrSearch").val().trim();
+      if (!query) return alert("Please enter a search term.");
+      table.clear().draw();
+
+      fetch(`/search_current_admitted_patients?query=${query}`)
+        .then(res => res.json())
+        .then(data => {
+          if (!data.length) return alert("No records found.");
+          data.forEach(item => {
+            const btn = `<button class="btn btn-primary select-btn" data-patient='${JSON.stringify(item)}'>Select</button>`;
+            table.row.add([
+              item.Medical_Record_Number,
+              item.Patient_Name,
+              item.address || "N/A",
+              item.contactno || "N/A",
+              btn
+            ]).draw(false);
+          });
+          $("#searchModal").modal("show");
+        }).catch(err => {
+          console.error(err);
+          alert("Error fetching data.");
+        });
+    });
+
+    $("#searchResultsTable tbody").on("click", ".select-btn", function () {
+      const data = JSON.parse($(this).attr("data-patient"));
+      $("#exampleInputAddress").val(`${data.Medical_Record_Number} - ${data.Patient_Name} (${data.contactno})`);
+      $("#patientipid").val(data.ipno);
+      $("#patientid").val(data.ptid);
+      $('#searchModal').modal('hide');
+    });
+
+    $("input[name='accommodation']").change(function () {
+      const type = $(this).val();
+      $("#roomSelection").toggle(type === "Room");
+      $("#wardSelection").toggle(type === "Ward");
+
+      if (type === "Ward") {
+        $.ajax({
+          url: "{% url 'get_available_accommodations' %}",
+          data: { "accommodation_type": "Ward" },
+          dataType: "json",
+          success: function (data) {
+            let bedDropdown = $("#wardbedno");
+            let floorInput = $("#wardfloor");
+            bedDropdown.empty();
+            if (data.beds.length) {
+              bedDropdown.append('<option value="">Select Bed Number</option>');
+              $.each(data.beds, function (i, bed) {
+                bedDropdown.append(`<option value="${bed.id}" data-floor="${bed.Floorno}">${bed.wardbedno}</option>`);
+              });
+              bedDropdown.off('change').on('change', function () {
+                floorInput.val($(this).find(":selected").data("floor"));
+              });
+            } else {
+              bedDropdown.append('<option>No beds available</option>');
+            }
+          }
+        });
+      }
+    });
+
+    $("#roomtype").change(function () {
+      let type = $(this).val();
+      if (type) {
+        $.ajax({
+          url: "{% url 'get_available_accommodations' %}",
+          data: { "accommodation_type": "Room", "room_type": type },
+          dataType: "json",
+          success: function (data) {
+            let roomDropdown = $("#roommnumber");
+            let floorInput = $("#roomfloor");
+            roomDropdown.empty();
+            if (data.rooms.length) {
+              roomDropdown.append('<option>Select Room Number</option>');
+              $.each(data.rooms, function (i, room) {
+                roomDropdown.append(`<option value="${room.id}" data-floor="${room.Floorno}">${room.Roomno}</option>`);
+              });
+              roomDropdown.off('change').on('change', function () {
+                floorInput.val($(this).find(":selected").data("floor"));
+              });
+            } else {
+              roomDropdown.append('<option>No rooms available</option>');
+            }
+          }
+        });
+      }
+    });
+// Show correct accommodation block on page load
+const selectedAccommodation = $("input[name='accommodation']:checked").val();
+if (selectedAccommodation === "Room") {
+  $("#roomSelection").show();
+  $("#wardSelection").hide();
+} else if (selectedAccommodation === "Ward") {
+  $("#wardSelection").show();
+  $("#roomSelection").hide();
+}
+
+    {% if messages %}
+      $("#successModal").modal("show");
+      setTimeout(() => $("#successModal").modal("hide"), 5000);
+    {% endif %}
+  });
+</script>
+
+{% endblock %}

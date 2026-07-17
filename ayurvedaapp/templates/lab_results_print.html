@@ -1,0 +1,749 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+.lab-report {
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+  max-width: 800px;
+  margin: 0 auto;
+  background: #fff;
+  padding: 25px 30px;
+  position: relative;
+  min-height: 100%;
+}
+
+/* Header */
+.report-header {
+  text-align: center;
+  border: 2px solid #1a1a2e;
+  padding-bottom: 12px;
+  margin-bottom: 15px;
+}
+
+.report-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1a2e;
+  letter-spacing: 1px;
+}
+
+.report-sub {
+  color: #555;
+  margin: 4px 0 2px;
+}
+
+.report-contact {
+  font-size: 10px;
+  color: #555;
+  margin: 0;
+}
+
+/* Title */
+.report-title {
+  text-align: center;
+  margin: 12px 0;
+}
+
+.report-title h2 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a1a2e;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin: 0;
+}
+
+/* Patient Info Table */
+.patient-table {
+  width: 100%;
+  border: 1px solid #999;
+  border-collapse: collapse;
+  margin-bottom: 0;
+}
+
+.patient-table td {
+  border: 1px solid #999;
+  padding: 6px 8px;
+  vertical-align: top;
+}
+
+.patient-table .label {
+  width: 110px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #333;
+}
+
+.patient-table .value {
+  font-size: 10px;
+  color: #222;
+}
+
+/* Section Headers */
+.section-header {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: #fff;
+  padding: 8px 6px 4px 6px;
+  border-left: 1px solid #999;
+  border-right: 1px solid #999;
+  border-top: 1px solid #999;
+  color: #1a1a2e;
+  letter-spacing: 0.5px;
+}
+
+/* Results Table */
+.results-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 15px;
+}
+
+.results-table thead th {
+  background: #D3D3D3 !important;
+  padding: 6px 8px;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #333;
+  text-align: left;
+  border: 1px solid #999 !important;
+}
+
+.results-table td {
+  padding: 5px 8px;
+  font-size: 10px;
+  border-left: 1px solid #999;
+  border-right: 1px solid #999;
+  border-bottom: 1px solid #eee;
+  vertical-align: top;
+}
+
+.results-table tr:last-child td {
+  border-bottom: 1px solid #999;
+}
+
+.results-table .test-name {
+  font-weight: 500;
+  color: #222;
+}
+
+.results-table .sub-test {
+  padding-left: 18px;
+  font-size: 9.5px;
+}
+
+.results-table .result-value {
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+.results-table .ref-range {
+  color: #555;
+  font-size: 9.5px;
+}
+
+/* Footer Section */
+.report-footer {
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid #999;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+/* Left Side - Laboratory Details */
+.lab-details {
+  text-align: left;
+  flex: 1;
+}
+
+.lab-details p {
+  margin: 3px 0;
+  font-size: 9px;
+  color: #555;
+  line-height: 1.4;
+}
+
+.lab-details .lab-title {
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+/* Right Side - Signature */
+.signature-section {
+  text-align: right;
+  min-width: 220px;
+  margin-left: auto;
+}
+
+.signature-line {
+  width: 220px;
+  text-align: center;
+  padding-top: 5px;
+  border-top: 1px solid #333;
+  margin-bottom: 5px;
+  margin-left: auto;
+}
+
+.signature-label {
+  font-size: 10px;
+  color: #555;
+}
+
+.signature-label-small {
+  font-size: 15px;
+  color: #777;
+  margin-top: 3px;
+}
+
+/* Disclaimer Footer */
+.disclaimer-footer {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 8px;
+  color: #666;
+  line-height: 1.4;
+  padding-top: 10px;
+  border-top: 1px dashed #ccc;
+}
+
+.disclaimer-footer p {
+  margin: 2px 0;
+}
+
+/* Print Timestamp */
+.print-timestamp {
+  text-align: center;
+  font-size: 8px;
+  color: #888;
+  margin-top: 15px;
+  padding-top: 8px;
+}
+
+/* Action Buttons */
+.action-buttons {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.btn-print, .btn-back {
+  padding: 8px 20px;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  margin: 0 5px;
+}
+
+.btn-print {
+  background: #1a5276;
+  color: white;
+}
+
+.btn-back {
+  background: #6c757d;
+  color: white;
+  text-decoration: none;
+  display: inline-block;
+}
+
+/* FORCED A4 PORTRAIT PRINT STYLES */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm 8mm;
+  }
+  
+  /* Hide ALL base template footers and sidebars */
+  .main-footer,
+  .site-footer,
+  footer[class*="footer"],
+  div[class*="footer"]:not(.report-footer):not(.disclaimer-footer):not(.lab-details),
+  .main-sidebar,
+  .main-header,
+  .navbar,
+  .sidebar,
+  .action-buttons, 
+  .no-print,
+  .content-wrapper > footer,
+  .wrapper > footer,
+  .page-footer,
+  .footer-area,
+  .main-footer {
+    display: none !important;
+  }
+  
+  /* Hide any footer from base.html */
+  body > footer,
+  .wrapper > .footer,
+  .content-wrapper .footer {
+    display: none !important;
+  }
+  
+  /* Ensure report footer elements are visible */
+  .report-footer {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: flex-end !important;
+    border-top: 1px solid #999 !important;
+    padding-top: 20px !important;
+    margin-top: 40px !important;
+  }
+  
+  .lab-details {
+    display: block !important;
+    flex: 1 !important;
+  }
+  
+  .signature-section {
+    display: block !important;
+    text-align: right !important;
+    min-width: 220px !important;
+    margin-left: auto !important;
+  }
+  
+  .signature-line {
+    margin-left: auto !important;
+  }
+  
+  .disclaimer-footer {
+    display: block !important;
+    margin-top: 20px !important;
+  }
+
+  html, body {
+    width: 210mm !important;
+    height: 297mm !important;
+  }
+  
+  body, .content-wrapper {
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  .action-buttons, .no-print {
+    display: none !important;
+  }
+  
+  .lab-report {
+    padding: 5px 10px !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
+  
+  .report-name {
+    font-size: 16px;
+  }
+  
+  .patient-table .label, .patient-table .value {
+    font-size: 9px;
+  }
+  
+  .results-table td, .results-table th {
+    font-size: 9px;
+  }
+  
+  .results-table thead tr,
+  .results-table thead th {
+    background-color: #e2dede !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  .results-table th,
+  .results-table td {
+    border: 1px solid #ddd !important;
+  }
+  
+  .results-table tr, 
+  .patient-table tr, 
+  .section-header {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  
+  /* Prevent page break inside the footer */
+  .report-footer {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    page-break-before: avoid;
+    page-break-after: avoid;
+  }
+}
+.status-normal { color: #155724; font-weight: 600; }
+.status-low { color: #856404; font-weight: 600; }
+.status-high { color: #721c24; font-weight: 600; }
+.status-abnormal { color: #721c24; font-weight: 600; }
+</style>
+
+<!-- Action Buttons - Hidden in print -->
+<div class="action-buttons no-print">
+  <button class="btn-print text-decoration-none text-white" onclick="printReport()">
+    <i class="fas fa-print"></i> Print Report
+  </button>
+  <a href="{% url 'lab_invoice_list' %}" class="btn-back text-decoration-none text-white">
+    <i class="fas fa-arrow-left"></i> Back
+  </a>
+</div>
+
+<div class="lab-report" id="labReport">
+  <!-- Header Section -->
+  <div class="report-header">
+    <div class="report-info">
+      <h5 class="report-name mt-3 pt-2 font-weight-bolder">{{ hospital.Name|default:"Healthcare Laboratory" }}</h5>
+      <p class="report-sub">
+        {{ hospital.Address|default:"Advanced Diagnostic Centre" }}<br>
+        {% if hospital.Contact_no %}Ph: {{ hospital.Contact_no }}{% endif %}
+        {% if hospital.Email %} &nbsp;|&nbsp; {{ hospital.Email }}{% endif %}
+        {% if hospital.GST %} &nbsp;|&nbsp; GST: {{ hospital.GST }}{% endif %}
+        {% if hospital.Register_no %} &nbsp;|&nbsp; Reg: {{ hospital.Register_no }}{% endif %}
+      </p>
+    </div>
+    <div class="report-title">
+      <h2>LABORATORY TEST REPORT</h2>
+    </div>
+  </div>
+
+  <!-- Patient Information Table -->
+  <table class="patient-table">
+    <tr>
+      <td class="label">Name:</td>
+      <td class="value">{{ patient.Patient_Name|default:"—" }}</td>
+      <td class="label">Bill Date:</td>
+      <td class="value">{{ invoice.date|date:"d-m-Y"|default:"—" }}</td>
+    </tr>
+    <tr>
+      <td class="label">Address:</td>
+      <td class="value">{%if patient.address %}{{ patient.address }} {%else%} {{patient.district}},{{patient.state.State_Name}}{%endif%}</td>
+      <td class="label">Report Number:</td>
+      <td class="value">{{ result_master.result_number|default:"—" }}</td>
+    </tr>
+    <tr>
+      <td class="label">Age/Sex:</td>
+      <td class="value">{{ patient.Age|default:"—" }}Y / {{ patient.Gender|default:"—"|slice:":1" }}</td>
+      <td class="label">MR Number:</td>
+      <td class="value">{{ patient.Medical_Record_Number|default:"—" }}</td>
+    </tr>
+    <tr>
+      <td class="label">Requested By:</td>
+      <td class="value">{{ result_master.completed_by.Staff_firstname|default:"—" }}</td>
+      <td class="label">Report Date:</td>
+      <td class="value">{{ result_master.created_at|date:"d-m-Y"|default:"—" }}</td>
+    </tr>
+  </table>
+
+  <!-- Test Results Grouped by Category -->
+  {% regroup lab_results by test_group as grouped_results %}
+  
+  {% for group in grouped_results %}
+    <div class="section-header">{{ group.grouper|default:"GENERAL" }}</div>
+    
+    <table class="results-table">
+      <thead>
+        <tr>
+          <th style="width: 40%">TEST NAME</th>
+          <th style="width: 20%">RESULT</th>
+          <th style="width: 15%">UNIT</th>
+          <th style="width: 25%">REFERENCE RANGE</th>
+          <th style="width: 15%">STATUS</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for result in group.list %}
+        <tr>
+          <td class="test-name">{{ result.test_name }}</td>
+          <td class="result-value">{{ result.result_value|default:"—" }}</td>
+          <td>{{ result.unit|default:"-" }}</td>
+          <td class="ref-range">{{ result.normal_value|default:"—" }}</td>
+          <td>{{ result.status|default:"—" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% empty %}
+    <div class="alert alert-warning">No test results found for this invoice.</div>
+  {% endfor %}
+
+  <!-- Footer with Laboratory Details (Left) and Signature (Right) -->
+  <div class="report-footer">
+    <!-- Left: Laboratory Details -->
+    <div class="lab-details">
+
+    </div>
+    
+    <!-- Right: Signature Section -->
+    <div class="signature-section">
+      <div class="signature-line"></div>
+      <div class="signature-label">Authorized Signatory</div>
+      <div class="signature-label-small"><small>Lab In Charge</small></div>
+    </div>
+  </div>
+  
+  <!-- Disclaimer Footer -->
+  <div class="disclaimer-footer">
+  </div>
+  
+  <!-- Print Timestamp -->
+  <div class="print-timestamp">
+    Printed on: {{ today|date:"d-m-Y H:i:s"|default:"—" }} | Generated by: {{ result_master.completed_by.Staff_firstname|default:"System" }}
+  </div>
+</div>
+
+<script>
+  function printReport() {
+    // Get the report content
+    const reportContent = document.getElementById('labReport').innerHTML;
+    
+    // Create a new window for printing
+    const printWindow = window.open('', '_blank', 'width=900,height=700');
+    
+    // Write the print-friendly HTML
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Laboratory Test Report</title>
+        <meta charset="utf-8">
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+        <style>
+          * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+          }
+          
+          body {
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+            background: white;
+            padding: 20px;
+          }
+          
+          @page {
+            size: A4 portrait;
+            margin: 10mm 8mm;
+          }
+          
+          .lab-report {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 25px 30px;
+          }
+          
+          /* Header */
+          .report-header {
+            text-align: center;
+            border: 2px solid #1a1a2e;
+            padding-bottom: 12px;
+            margin-bottom: 15px;
+          }
+          
+          .report-name {
+  font-size: 20px;
+  font-weight: 700;
+  margin-top:40px;
+  color: #1a1a2e;
+  letter-spacing: 1px;
+}
+          
+          .report-sub {
+            font-size:13px;
+            color: #555;
+            margin: 4px 0 2px;
+          }
+          
+          .report-title h2 {
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin: 12px 0;
+          }
+          
+          /* Patient Table */
+          .patient-table {
+            width: 100%;
+            border: 1px solid #999;
+            border-collapse: collapse;
+            margin-bottom: 0;
+          }
+          
+          .patient-table td {
+            border: 1px solid #999;
+            padding: 6px 8px;
+            vertical-align: top;
+          }
+          
+          .signature-label-small {
+  font-size: 15px;
+  color: #777;
+  margin-top: 3px;
+}
+          .patient-table .label {
+            width: 110px;
+            font-size: 10px;
+            font-weight: 600;
+          }
+          
+          .patient-table .value {
+            font-size: 10px;
+          }
+          
+          /* Section Header */
+          .section-header {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 8px 6px 4px 6px;
+            border-left: 1px solid #999;
+            border-right: 1px solid #999;
+            border-top: 1px solid #999;
+            margin-top: 10px;
+          }
+          
+          /* Results Table */
+          .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+          }
+          
+          .results-table th {
+            background: #ffff;
+            padding: 6px 8px;
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            border: 1px solid #999;
+          }
+          
+          .results-table td {
+            padding: 5px 8px;
+            font-size: 10px;
+            border-left: 1px solid #999;
+            border-right: 1px solid #999;
+            border-bottom: 1px solid #eee;
+          }
+          
+          .results-table tr:last-child td {
+            border-bottom: 1px solid #999;
+          }
+          
+          .results-table .test-name {
+            font-weight: 500;
+          }
+          
+          .results-table .result-value {
+            font-weight: 600;
+          }
+          
+          /* Footer */
+          .report-footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #999;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+          }
+          
+          .lab-details {
+            text-align: left;
+            flex: 1;
+          }
+          
+          .lab-details p {
+            margin: 3px 0;
+            font-size: 9px;
+            color: #555;
+          }
+          
+          .signature-section {
+            text-align: right;
+            min-width: 220px;
+           margin-left: auto !important;
+  }
+          
+          .signature-line {
+            width: 220px;
+            padding-top: 5px;
+            border-top: 1px solid #333;
+            margin-bottom: 5px;
+            margin-left: auto;
+          }
+          
+          .signature-label {
+            font-size: 10px;
+          }
+          
+          .disclaimer-footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 8px;
+            color: #666;
+            padding-top: 10px;
+            border-top: 1px dashed #ccc;
+          }
+          
+          .print-timestamp {
+            text-align: center;
+            font-size: 8px;
+            color: #888;
+            margin-top: 15px;
+          }
+          
+          @media print {
+            body {
+              padding: 0;
+            }
+            .lab-report {
+              padding: 5px 10px;
+            }
+          }
+            .status-normal { color: #155724; font-weight: 600; }
+.status-low { color: #856404; font-weight: 600; }
+.status-high { color: #721c24; font-weight: 600; }
+.status-abnormal { color: #721c24; font-weight: 600; }
+        </style>
+      </head>
+      <body>
+        <div class="lab-report">
+          ${reportContent}
+        </div>
+        <script>
+          // Auto-print after page loads
+          window.onload = function() {
+            setTimeout(function() {
+              window.print();
+              setTimeout(function() {
+                window.close();
+              }, 1000);
+            }, 500);
+          };
+        <\/script>
+      </body>
+      </html>
+    `);
+    
+    printWindow.document.close();
+  }
+
+   window.addEventListener('load', function() {
+    // Small delay to ensure all styles are applied
+    setTimeout(function() {
+      printReport();
+    }, 500);
+  });
+</script>
+
+<!-- Remove auto-print, use button click only -->
+{% endblock %}

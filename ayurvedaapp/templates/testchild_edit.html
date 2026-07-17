@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="content-wrapper">
+  <!-- Content Header -->
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Edit Test Child</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item">
+              <a href="{% url 'testchild' %}?menumanagement_id={{ idmngmnt }}">View All</a>
+            </li>
+            <li class="breadcrumb-item active">Edit Test Child</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content -->
+  <section class="content">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card card-primary">
+          <div class="card-header">
+            <h3 class="card-title">Edit Test Child - {{ test_child.testname }}</h3>
+          </div>
+
+          <form method="POST" action="{% url 'testchild_edit' %}?ids={{test_child.id}}&menumanagement_id={{ idmngmnt }}" onsubmit="return validateForm()">
+            {% csrf_token %}
+            <div class="card-body">
+
+              <!-- Group Dropdown -->
+              <div class="form-group">
+                <label for="groupSelect">Group <span class="text-danger">*</span></label>
+                <select class="form-control" id="groupSelect" name="group" required>
+                  <option value="">-- Select Group --</option>
+                  {% for g in groups %}
+                    <option value="{{ g.id }}" {% if test_child.group.id == g.id %}selected{% endif %}>
+                      {{ g.groupname }}
+                    </option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <!-- Test Name -->
+              <div class="form-group">
+                <label for="testname">Test Name <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="testname" name="testname" 
+                       placeholder="Enter Test Name" value="{{ test_child.testname }}" required>
+              </div>
+
+              <!-- Symbols -->
+              <div class="form-group">
+                <label for="symbol">Symbols</label>
+                <input type="text" class="form-control" id="symbol" name="symbol" 
+                       placeholder="eg: FT3" value="{{ test_child.symbol }}">
+                <small class="form-text text-muted">Enter the laboratory symbol/code for this test</small>
+              </div>
+
+              <!-- Rate -->
+              <div class="form-group">
+                <label for="rate">Rate <span class="text-danger">*</span></label>
+                <input type="number" onwheel="this.blur()" class="form-control" id="rate" name="rate" 
+                       placeholder="Enter rate amount" value="{{ test_child.rate }}" required>
+                <small class="form-text text-muted">Enter the test price/rate</small>
+              </div>
+
+              <!-- Status -->
+              <div class="form-group">
+                <label>Status <span class="text-danger">*</span></label><br>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="status" id="statusActive" 
+                         value="Active" {% if test_child.status %}checked{% endif %} required>
+                  <label class="form-check-label" for="statusActive">Active</label>
+                </div>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="status" id="statusInactive" 
+                         value="Inactive" {% if not test_child.status %}checked{% endif %}>
+                  <label class="form-check-label" for="statusInactive">Inactive</label>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Messages & Submit -->
+            <div class="card-footer">
+              {% if messages %}
+                {% for message in messages %}
+                  <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                {% endfor %}
+              {% endif %}
+              
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Update Test
+              </button>
+              <a href="{% url 'testchild' %}?menumanagement_id={{ idmngmnt }}" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Cancel
+              </a>
+            </div>
+
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+  function validateForm() {
+      var group = document.getElementById("groupSelect").value;
+      var testname = document.getElementById("testname").value.trim();
+      var rate = document.getElementById("rate").value.trim();
+      var statusChecked = document.querySelector('input[name="status"]:checked');
+
+      if (group === "") {
+          alert("Please select a group.");
+          document.getElementById("groupSelect").focus();
+          return false;
+      }
+
+      if (testname === "") {
+          alert("Test name is required.");
+          document.getElementById("testname").focus();
+          return false;
+      }
+
+      if (rate === "") {
+          alert("Rate is required.");
+          document.getElementById("rate").focus();
+          return false;
+      }
+
+      if (isNaN(rate) || parseFloat(rate) < 0) {
+          alert("Please enter a valid rate (positive number).");
+          document.getElementById("rate").focus();
+          return false;
+      }
+
+      if (!statusChecked) {
+          alert("Please select a status.");
+          return false;
+      }
+
+      return true;
+  }
+</script>
+
+{% endblock %}

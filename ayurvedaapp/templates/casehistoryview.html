@@ -1,0 +1,464 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+  body { background-color: #f8fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #334155; }
+  .container { max-width: 1200px; }
+  .header { background: linear-gradient(135deg, #1e88e5 0%, #0d47a1 100%); color: white; border-radius: 10px; padding: 20px; margin-bottom: 25px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); }
+  .card { border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05); margin-bottom: 20px; border: none; }
+  .card-header { background-color: #f1f5f9; border-bottom: 1px solid #e2e8f0; padding: 15px 20px; font-weight: 600; color: #1e40af; border-radius: 10px 10px 0 0 !important; }
+  .section-title { border-left: 4px solid #1e88e5; padding-left: 12px; margin: 25px 0 15px; color: #1e40af; }
+  .patient-info { background-color: #e3f2fd; border-radius: 8px; padding: 15px; }
+  .vital-card { background-color: #f8f9fa; border-left: 4px solid #1e88e5; padding: 15px; }
+  .medication-table th { background-color: #1e40af; color: white; }
+  .history-item { border-left: 3px solid #1e88e5; padding-left: 15px; margin-bottom: 15px; }
+  .badge-status { padding: 6px 12px; border-radius: 20px; font-weight: 500; }
+  
+  /* Print styles for full page */
+  @media print {
+    .no-print { display: none; }
+  }
+  
+  /* Prescription-only print styles */
+  @media print {
+    body.prescription-print * {
+      visibility: hidden;
+    }
+    
+    body.prescription-print .prescription-print-section,
+    body.prescription-print .prescription-print-section * {
+      visibility: visible;
+    }
+    
+    body.prescription-print .prescription-print-section {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    
+    body.prescription-print .prescription-header {
+      text-align: center;
+      margin-bottom: 15px;
+      border-bottom: 2px solid #1e40af;
+      padding-bottom: 10px;
+      page-break-after: avoid;
+      break-after: avoid;
+    }
+    
+    body.prescription-print .prescription-patient-info {
+      margin-bottom: 15px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    
+    body.prescription-print .prescription-date {
+      text-align: right;
+      margin-bottom: 10px;
+      page-break-after: avoid;
+      break-after: avoid;
+    }
+    
+    body.prescription-print .doctor-signature {
+      margin-top: 30px;
+      border-top: 1px solid #000;
+      width: 250px;
+      padding-top: 5px;
+      text-align: center;
+      page-break-before: avoid;
+      break-before: avoid;
+    }
+    
+    body.prescription-print .medication-table {
+      page-break-inside: avoid;
+      break-inside: avoid;
+      font-size: 14px;
+    }
+    
+    /* Prevent empty pages */
+    body.prescription-print {
+      height: auto;
+      overflow: visible !important;
+    }
+    
+    html, body {
+      height: auto;
+      margin: 0 !important;
+      padding: 0 !important;
+      overflow: visible !important;
+    }
+  }
+</style>
+
+<div class="content-wrapper">
+  <!-- Header -->
+  <div class="header">
+    <div class="row align-items-center">
+      <div class="col-md-8">
+        <h2><i class="fas fa-user-injured me-2"></i>Patient Case History</h2>
+        <p class="mb-0">Complete medical record and treatment history</p>
+      </div>
+      <div class="col-md-4 text-md-end">
+        <button class="btn btn-light me-2 no-print" onclick="window.print()"><i class="fas fa-print me-1"></i> Print</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Left Column -->
+    <div class="col-lg-4">
+      <!-- Patient Info -->
+      <div class="card prescription-print-section">
+        <div class="card-header"><i class="fas fa-info-circle me-2"></i>Patient Details</div>
+        <div class="card-body">
+          <div class="patient-info prescription-patient-info">
+            <p><b>MR No:</b> {{ case_history.patient.Medical_Record_Number }}</p>
+            <p><b>Name:</b> {{ case_history.patient.Patient_Name }}</p>
+            <p><b>Gender:</b> {{ case_history.patient.Gender }}</p>
+            <p><b>Age:</b> {{ case_history.patient.Age }}</p>
+            <p><b>Phone:</b> {{ case_history.patient.contactno }}</p>
+            <p><b>Address:</b> {{ case_history.patient.address }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Medical & Surgical History -->
+      <div class="card">
+        <div class="card-header"><i class="fas fa-history me-2"></i>Medical & Surgical History</div>
+        <div class="card-body">
+          {% if medical_surgical %}
+            {% if medical_surgical.medicalhistory %}
+              <div class="history-item"><h6>Medical History</h6><p>{{ medical_surgical.medicalhistory }}</p></div>
+            {% endif %}
+            {% if medical_surgical.surgicalhist %}
+              <div class="history-item"><h6>Surgical History</h6><p>{{ medical_surgical.surgicalhist }}</p></div>
+            {% endif %}
+          {% else %}
+            <p>No history available.</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Patient Vitals -->
+      {% if vitals %}
+      <div class="card">
+        <div class="card-header"><i class="fas fa-heartbeat me-2"></i>Patient Vitals</div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-sm-6"><b>Age:</b> {{ vitals.age }}</div>
+            <div class="col-sm-6"><b>Weight:</b> {{ vitals.weight }} kg</div>
+            <div class="col-sm-6"><b>Height:</b> {{ vitals.height }} cm</div>
+            <div class="col-sm-6"><b>BMI:</b> {{ vitals.bmi }}</div>
+            <div class="col-sm-6"><b>BP:</b> {{ vitals.bp }}</div>
+            <div class="col-sm-6"><b>FBS:</b> {{ vitals.fbs }}</div>
+            <div class="col-sm-6"><b>PPBS:</b> {{ vitals.ppbs }}</div>
+            <div class="col-sm-6"><b>HbA1c:</b> {{ vitals.hba1c }}</div>
+            <div class="col-sm-6"><b>TChol:</b> {{ vitals.tchol }}</div>
+            <div class="col-sm-6"><b>HDL:</b> {{ vitals.hdl }}</div>
+            <div class="col-sm-6"><b>TG:</b> {{ vitals.tg }}</div>
+            <div class="col-sm-6"><b>LDL:</b> {{ vitals.ldl }}</div>
+            <div class="col-sm-6"><b>S. Creatinine:</b> {{ vitals.s_creatinine }}</div>
+            <div class="col-sm-6"><b>Uric Acid:</b> {{ vitals.uric_acid }}</div>
+            <div class="col-sm-6"><b>SGPT:</b> {{ vitals.sgpt }}</div>
+            <div class="col-sm-6"><b>SGOT:</b> {{ vitals.sgot }}</div>
+            <div class="col-sm-6"><b>Alcohol:</b> {% if vitals.alcohol %}Yes{% else %}No{% endif %}</div>
+            <div class="col-sm-6"><b>Smoking:</b> {% if vitals.smoking %}Yes{% else %}No{% endif %}</div>
+          </div>
+          <small class="text-muted">Recorded on {{ vitals.created_at }}</small>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Right Column -->
+    <div class="col-lg-8">
+      <!-- Current Visit -->
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span><i class="fas fa-calendar-check me-2"></i>Visit Date - {{ case_history.created_at }}</span>
+          <span class="badge bg-success badge-status">{{ case_history.status }}</span>
+        </div>
+        <div class="card-body">
+          <h5 class="section-title">Chief Complaint</h5><p>{{ case_history.chief_complaint|safe }}</p>
+          <h5 class="section-title">Present Complaint</h5><p>{{ case_history.present_complaint|safe }}</p>
+          <h5 class="section-title">Diagnosis</h5><p>{{ case_history.final_diagnosis }}</p>
+
+          {% if case_history.follow_up_date %}
+          <h5 class="section-title">Next Follow-up</h5>
+          <div class="vital-card text-center">
+            <h4 class="text-primary">{{ case_history.follow_up_date }}</h4>
+            <p class="mb-0">with {{ case_history.assigned_doctor.name }}</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Prescriptions -->
+      <div class="card prescription-print-section">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span><i class="fas fa-pills me-2"></i>Medication Prescribed</span>
+          <button class="btn btn-sm btn-outline-primary no-print" onclick="printPrescription()">
+            <i class="fas fa-print me-1"></i> Print Prescription
+          </button>
+        </div>
+        <div class="card-body">
+          {% if prescriptions %}
+            <table class="table table-bordered medication-table">
+              <thead>
+                <tr><th>Medicine</th><th>Days</th><th>Morning</th><th>Noon</th><th>Night</th><th>Diet Timing</th></tr>
+              </thead>
+              <tbody>
+                {% for p in prescriptions %}
+                <tr>
+                  <td>{{ p.medicine_name }}</td>
+                  <td>{{ p.noofdays }}</td>
+                  <td class="text-center">{% if p.moringtime %}✔{% endif %}</td>
+                  <td class="text-center">{% if p.noontime %}✔{% endif %}</td>
+                  <td class="text-center">{% if p.nighttime %}✔{% endif %}</td>
+                  <td>{{ p.beforeorafterdiet }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% else %}
+            <p>No medication prescribed.</p>
+          {% endif %}
+        </div>
+      </div>
+      
+      <!-- Treatment Details Section -->
+      <div class="card mb-4 shadow">
+          <div class="card-header bg-primary text-white">
+              <i class="fas fa-stethoscope"></i> <strong>Treatment Details</strong>
+          </div>
+          <div class="card-body">
+              {% if treatment_plans %}
+              <div class="table-responsive">
+                  <table class="table table-bordered table-striped">
+                      <thead class="bg-light">
+                          <tr>
+                              <th>Treatment Name</th>
+                              <th>Count</th>
+                          </tr>
+                      </thead>
+                      <tbody>
+                          {% for treatment in treatment_plans %}
+                          <tr>
+                              <td>{{ treatment.treatment.Treatment_name }}</td>
+                              <td>{{ treatment.count }}</td>
+                          </tr>
+                          {% endfor %}
+                      </tbody>
+                  </table>
+              </div>
+              {% else %}
+              <p class="text-muted">No treatment details found.</p>
+              {% endif %}
+          </div>
+      </div>
+
+      <!-- Lab Tests & Diet Plan -->
+      <div class="row">
+        <div class="col-md-6">
+          <div class="card h-100">
+            <div class="card-header"><i class="fas fa-flask me-2"></i>Lab Tests</div>
+            <div class="card-body">
+              {% if lab_tests %}
+                <ul>
+                  {% for test in lab_tests %}
+                    <li>{{ test.labtestchild.testname }}</li>
+                  {% endfor %}
+                </ul>
+              {% else %}
+                <p>No lab tests ordered.</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="card h-100">
+            <div class="card-header"><i class="fas fa-utensils me-2"></i>Diet Plan</div>
+            <div class="card-body">
+              {% if diet_plans %}
+                <ul>
+                  {% for d in diet_plans %}
+                    <li>{{ d.diet.name }} - {{ d.noofdays }} days</li>
+                    {% if d.foodtobeavoided %}<p>Avoid: {{ d.foodtobeavoided }}</p>{% endif %}
+                  {% endfor %}
+                </ul>
+              {% else %}
+                <p>No diet plan provided.</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Doctor's Notes -->
+      <div class="card mt-3">
+        <div class="card-header"><i class="fas fa-sticky-note me-2"></i>Doctor's Notes</div>
+        <div class="card-body">
+          {% if doctors_notes %}
+            {% for note in doctors_notes %}
+              <div class="mb-3">
+                <p>{{ note.notes }}</p>
+                <small class="text-muted">By {{ note.handledbystaff.name }} on {{ note.created_at }}</small>
+              </div>
+            {% endfor %}
+          {% else %}
+            <p>No notes recorded.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function printPrescription() {
+  // Store original body class
+  const originalBodyClass = document.body.className;
+  
+  // Add a special class to body for prescription printing
+  document.body.classList.add('prescription-print');
+  
+  // Create a temporary container for prescription content
+  const printContainer = document.createElement('div');
+  printContainer.style.width = '100%';
+  
+  // Create prescription header
+  const headerDiv = document.createElement('div');
+  headerDiv.className = 'prescription-header';
+  headerDiv.innerHTML = `
+    <h2>Medical Prescription</h2>
+    <p>${document.querySelector('.header h2').textContent}</p>
+  `;
+  printContainer.appendChild(headerDiv);
+  
+  // Create prescription date
+  const dateDiv = document.createElement('div');
+  dateDiv.className = 'prescription-date';
+  dateDiv.innerHTML = `<strong>Date:</strong> ${new Date().toLocaleDateString()}`;
+  printContainer.appendChild(dateDiv);
+  
+  // Get patient info
+  const patientInfo = document.querySelector('.prescription-patient-info').cloneNode(true);
+  printContainer.appendChild(patientInfo);
+  
+  // Get prescription table
+  const prescriptionTable = document.querySelector('.medication-table').cloneNode(true);
+  printContainer.appendChild(prescriptionTable);
+  
+  // Create doctor signature area
+  const signatureDiv = document.createElement('div');
+  signatureDiv.className = 'doctor-signature';
+  signatureDiv.innerHTML = `<p>Doctor's Signature</p>`;
+  printContainer.appendChild(signatureDiv);
+  
+  // Create a hidden iframe for printing
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'absolute';
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = 'none';
+  document.body.appendChild(iframe);
+  
+  const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+  
+  // Write content to iframe
+  iframeDoc.open();
+  iframeDoc.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Prescription</title>
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          margin: 0.5in;
+          padding: 0;
+          line-height: 1.4;
+        }
+        .prescription-header {
+          text-align: center;
+          margin-bottom: 15px;
+          border-bottom: 2px solid #1e40af;
+          padding-bottom: 10px;
+        }
+        .prescription-date {
+          text-align: right;
+          margin-bottom: 10px;
+        }
+        .prescription-patient-info {
+          margin-bottom: 15px;
+          padding: 10px;
+          border: 1px solid #ddd;
+          border-radius: 5px;
+        }
+        .medication-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-bottom: 20px;
+          page-break-inside: avoid;
+        }
+        .medication-table th {
+          background-color: #1e40af;
+          color: white;
+          padding: 8px;
+          text-align: left;
+        }
+        .medication-table td {
+          padding: 8px;
+          border: 1px solid #ddd;
+        }
+        .doctor-signature {
+          margin-top: 50px;
+          border-top: 1px solid #000;
+          width: 250px;
+          padding-top: 5px;
+          text-align: center;
+        }
+        @media print {
+          body {
+            margin: 0.5in;
+            height: auto;
+            overflow: visible !important;
+          }
+          html, body {
+            height: auto;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: visible !important;
+          }
+        }
+      </style>
+    </head>
+    <body>
+      ${printContainer.innerHTML}
+    </body>
+    </html>
+  `);
+  iframeDoc.close();
+  
+  // Print the iframe content
+  iframe.contentWindow.focus();
+  iframe.contentWindow.print();
+  
+  // Clean up
+  setTimeout(() => {
+    document.body.removeChild(iframe);
+    document.body.classList.remove('prescription-print');
+    document.body.className = originalBodyClass;
+  }, 100);
+}
+</script>
+{% endblock %}

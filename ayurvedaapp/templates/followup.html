@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Follow Up Details</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item">
+                {%if follwupadd == '1'%}<a href="{% url 'followuptable' %}?menumanagement_id={{ idmngmnt }}">View</a></li>
+               {%endif%}<li class="breadcrumb-item active">Follow Up</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="content">
+      <div class="row">
+        <div class="col-md-8">
+          <div class="card card-primary">
+            <div class="card-header">
+              <h3 class="card-title">Follow Up</h3>
+              <div class="card-tools">
+                <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                  <!-- <i class="fas fa-minus"></i> -->
+                </button>
+              </div>
+            </div>
+            <form method="POST", action="{% url 'followupdt' %}?menumanagement_id={{ idmngmnt }}">
+                {% csrf_token %}
+        <div class="row">
+                <div class="card-body" >
+                  <div class="form-group">
+                    <label for="exampleInputBranchName">Follow up Status</label>
+                    <select class="form-control" name="callormsg" required>
+                          <option selected disabled value="">Select</option>
+                          <option value="Pending">Pending</option>
+                          <option value="Recontact">Re- contact</option>
+                          <option value="Recontact2">Re-contact2</option>
+                          <option value="Converted">Converted</option>
+                          <option value="Priority">Priority</option>
+                          <option value="Dropped">Dropped</option>
+                    </select>
+                   </div>
+                </div>
+        </div> 
+        <div class="card-footer">
+                {% if messages %}
+                    {% for message in messages %}
+                        <p style="color:green;">{{message}}</p> 
+                    {% endfor %}
+                {% endif %}
+                  <button type="submit" class="btn btn-primary">Submit</button>
+                </div>
+              </form>
+            <!-- /.card-body -->
+          
+          </div>
+          
+          <!-- /.card -->
+        </div>
+        
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body1">
+    
+                 <table id="example1"  class="table table-bordered table-striped">
+                    <thead>
+                    <tr>
+                    <th>Sl No</th>
+                    <th>Name</th>
+                
+                    <th>Phone Number</th>
+                    <th>Call or Message</th>
+                    <th>Language</th>  
+                    <th>Source Details</th>
+                    <th>Remainder Date</th>
+                    <th>Status</th>
+                    <th>Details</th>
+                      {% if status == 'Pending' %}
+                        <th>Follow Up</th>
+                      {% endif %}  
+                          
+                    </tr>
+                    </thead> 
+                    <tbody>
+                    {% for i in enqdt %}
+                    <tr>
+                      <td>{{ forloop.counter }}</td>
+                      <td>{{i.name}}</td>
+                      <td>{{i.Phone_number}}</td>
+                      <td>{{i.callormsg}}</td>
+                      <td>{{i.language}}</td>
+                      <th>{{i.sourrcdts.sourcename}}</th>
+                      <td>
+                        {% if i.followup_set.exists %}
+                            {{ i.followup_set.first.remainderdate }}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </td>
+                    {% if i.status == 'Converted' %}
+                      <td>Converted</td>
+                    {% elif i.status == 'Dropped' %}
+                      <td>Dropped</td>
+                    {% else %}
+                      <td>{{i.status}}</td>
+                    {% endif %}
+                    {% if i.status == "Pending" or i.status == "Recontact" or i.status == "Recontact2" or i.status == "Priority" %}
+                    <td><a href="{%url 'followupdetails'%}?ids={{i.id}}"> <button type="submit" class="btn btn-primary">Follow Up</button></a></td>
+                    {% else %}
+                    <td></td>
+                    {% endif %}
+                    {% empty %}
+                 
+                    <tr>
+                      <td colspan="6">No enquiries found.</td>
+                    </tr>
+                    {% endfor %}
+                    
+                    </tbody>
+    </table>
+    
+
+ 
+ 
+
+    </div>
+    </div>
+    </div>
+    </div>
+    </section>
+    <!-- /.content -->
+  </div>
+
+  <!-- /.content-wrapper -->
+{% endblock %}

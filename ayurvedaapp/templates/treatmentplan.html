@@ -1,0 +1,608 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<head>
+  <style type="text/css">
+    /*Acco*/
+.ac-container {
+    /*max-width: 400px;*/
+    max-width: 1600px;
+}
+
+.ac-container label {
+    height: 30px !important;
+    line-height: 21px !important;
+    font-size: 12px !important;
+    font-family: 'Open Sans','Arial Narrow',Arial,sans-serif !important;
+    padding: 5px 20px;
+    position: relative;
+    z-index: 20;
+    display: block;
+    height: 30px;
+    cursor: pointer;
+    color: #777;
+    text-shadow: 1px 1px 1px rgba(255,255,255,0.8);
+    line-height: 33px;
+    font-size: 19px;
+    background: #fff;
+    background: -moz-linear-gradient(top,#fff 1%,#eaeaea 100%);
+    background: -webkit-gradient(linear,left top,left bottom,color-stop(1%,#fff),color-stop(100%,#eaeaea));
+    background: -webkit-linear-gradient(top,#fff 1%,#eaeaea 100%);
+    background: -o-linear-gradient(top,#fff 1%,#eaeaea 100%);
+    background: -ms-linear-gradient(top,#fff 1%,#eaeaea 100%);
+    background: linear-gradient(top,#fff 1%,#eaeaea 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fff',endColorstr='#eaeaea',GradientType=0 );
+    box-shadow: 0 0 0 1px rgba(155,155,155,0.3),1px 0 0 rgba(255,255,255,0.9) inset,0 2px 2px rgba(0,0,0,0.1);
+    font-size: 12px;
+    height: 30px;
+    line-height: 20px;
+}
+
+.ac-container {
+    width: 100%;
+    margin: 10px auto 30px auto;
+    text-align: left;
+}
+
+.ac-container label:hover {
+    background: #fff;
+}
+
+.ac-container input:checked + label,.ac-container input:checked + label:hover {
+    background: #f1f2f3;
+    color: #666;
+    text-shadow: 0 1px 1px rgba(255,255,255,0.6);
+    box-shadow: 0 0 0 1px rgba(155,155,155,0.3),0 2px 2px rgba(0,0,0,0.1);
+    height: 30px;
+    line-height: 21px;
+    font-size: 13px;
+}
+
+.ac-container label:hover:after,.ac-container input:checked + label:hover:after {
+    content: '';
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    right: 13px;
+    top: 7px;
+    background: transparent url(../images/arrow_down.png) no-repeat center center;
+}
+
+.ac-container input:checked + label:hover:after {
+    background-image: url(../images/arrow_up.png);
+}
+
+/*.ac-container input {
+    display: none;
+}
+*/
+#ac-1,#ac-2,#ac-3,#ac-4,#ac-5,#ac-6,#ac-7,#ac-8,#ac-9,#ac-10{
+  display: none;
+}
+.ac-container article {
+    background: rgba(255,255,255,0.5);
+    margin-top: -1px;
+    overflow: hidden;
+    height: 0;
+    position: relative;
+    z-index: 10;
+    -webkit-transition: height 0.3s ease-in-out,box-shadow 0.6s linear;
+    -moz-transition: height 0.3s ease-in-out,box-shadow 0.6s linear;
+    -o-transition: height 0.3s ease-in-out,box-shadow 0.6s linear;
+    -ms-transition: height 0.3s ease-in-out,box-shadow 0.6s linear;
+    transition: height 0.3s ease-in-out,box-shadow 0.6s linear;
+}
+
+.ac-container article p {
+    font-style: normal;
+    color: #777;
+    line-height: 23px;
+    font-size: 10px;
+    padding: 20px;
+    text-shadow: 1px 1px 1px rgba(255,255,255,0.8);
+    font: normal normal 12px 'Open Sans';
+}
+
+.ac-container input:checked ~ article {
+    -webkit-transition: height 0.5s ease-in-out,box-shadow 0.1s linear;
+    -moz-transition: height 0.5s ease-in-out,box-shadow 0.1s linear;
+    -o-transition: height 0.5s ease-in-out,box-shadow 0.1s linear;
+    -ms-transition: height 0.5s ease-in-out,box-shadow 0.1s linear;
+    transition: height 0.5s ease-in-out,box-shadow 0.1s linear;
+    box-shadow: 0 0 0 1px rgba(155,155,155,0.3);
+}
+
+.ac-container input:checked ~ article.ac-small {
+    height: 250px;
+}
+
+.ac-container input:checked ~ article.ac-medium {
+    height: 310px;
+}
+
+.ac-container input:checked ~ article.ac-large {
+    height: 550px;
+}
+
+.ac-container input:checked ~ article.ac-large1 {
+    height: 780px;
+}
+.card-body{
+  overflow: scroll;
+  height: 300px;
+}
+
+  </style>
+
+  
+
+</head>
+
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Treatment Plan</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item">
+                {%if mntrtview == '1'%}<a href="{% url 'treatmentplantable'%}?menumanagement_id={{ idmngmnt }}">View All</a>
+              {%endif%}</li>
+              <li class="breadcrumb-item active">Treatment Plan</li>
+            </ol>
+          </div>
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="row">
+      <div class="col-md-12">
+      <section class="ac-container">
+        <form method="POST", action="{% url 'treatmentplan' %}?menumanagement_id={{ idmngmnt }}">
+                {% csrf_token %}
+                <div class="row">
+                  <div class="col-md-12">
+                  <input id="ac-1" name="accordion-1" type="radio"  >
+                 <label for="ac-1">Plan</label>
+
+              <article class="ac-medium">
+                <div class="row card-body">
+                    <div class="col-md-6">
+                        <!-- <div class="form-group">
+                                <label for="exampleInputFirstName">MR Number</label>
+                               <select class="form-control" name="mrnumber">
+                                 <option selected>Select</option>
+                                                {% for i in mrnumobj %}
+
+                                 <option value="{{i.id}}">{{i.Medical_Record_Number}}</option>
+                                                {% endfor %}
+                              </select>
+                              </div> -->
+                              <div class="form-group">
+                                <label for="mrSearch">MR Number</label>
+                                <input type="text" id="mrSearch" class="form-control" placeholder="Type MR Number">
+                                <select class="form-control" name="mrnumber" id="mrDropdown" required>
+                                  <option selected disabled value="">Select</option>
+                                </select>
+                              </div>
+                              <div class="form-group">
+                                <label for="exampleInputEmail1">Patient Details</label>
+                                <input type="text" id="exampleInputAddress" class="form-control">
+                              </div>
+                               <div class="form-group">
+                                <label for="exampleInputEmail1">Treatment Plan</label>
+                               <textarea class="form-control" rows="4" cols="5" name="treatmentplan"></textarea>
+                              </div>
+                             <div class="form-group">
+                                <label for="exampleInputEmail1">Notes</label>
+                               <textarea class="form-control" rows="4" cols="5" name="notes"></textarea>
+                              </div>
+                              
+                    </div>
+               </div>
+            </article>                   
+          <div>
+          <input id="ac-2" name="accordion-1" type="radio">
+          <label for="ac-2">Record Sheet</label>
+          <article class="ac-small">
+            <div class="row">
+              <div class="col-md-12">
+                <div class="card">
+                  <div class="card-body" >
+                      <div class="form-group">
+                        <table class="table table-striped" style="width: 1000px;margin-left: 30px;">
+                            <thead>
+                              <tr>
+                                <th scope="col">Date</th>
+                                <th scope="col">BP</th>
+                                <th scope="col">PR/RR</th>
+                                <th scope="col">SPO2</th>
+                                <th scope="col">TEMP</th>
+                                <th scope="col">FBS/PPBS</th>
+                              </tr>
+                            </thead>
+                            <tbody id="tbody">
+                                <tr class="recordsheet" >
+                                  <td> <input type="date" class="form-control" id="exampleInputdate" name="adddate"></td>
+                                  <td> <input type="text" class="form-control" id="exampleInputbp" name="addbp"></td>
+                                  <td> <input type="text" class="form-control" id="exampleInputpr_rr" name="addpr"></td>
+                                  <td> <input type="text" class="form-control" id="exampleInputspo2" name="addspo2"></td>
+                                  <td> <input type="text" class="form-control" id="exampleInputtemp" name="addtemp"></td>
+                                  <td> <input type="text" class="form-control" id="exampleInputfbsppbs" name="addfbsppbs"></td>
+                                <td><button type="button" style="width:60px;height: 40px;" class="btn btn-primary" id="addBtn" >Add</button></td>
+                                <td><button type="button" class="btn btn-danger" onclick="deleteRow(this)">Delete</button></td>
+
+                                </tr>
+                            </tbody>
+                        </table>
+            </div>
+          </div>
+        </div>
+      </div> 
+      </div>
+</article>
+</div>
+ 
+ <div>
+    <input id="ac-3" name="accordion-1" type="radio">
+      <label for="ac-3">Treatment Chart</label>
+          <article class="ac-medium">
+            <div class="row">
+                  <div class="col-md-12">
+                    <div class="card">
+                      <div class="card-body">
+                         <div class="form-group">
+                         
+                         <table class="table table-striped" style="width: 1000px;margin-left: 30px;">
+                          <thead>
+                            <tr>
+                              <th scope="col">Date</th>
+                              <th scope="col">EM</th>
+                              <th scope="col">Morning</th>
+                              <th scope="col">Afternoon</th>
+                              <th scope="col">Evening</th>
+                              <th scope="col">Night</th>
+                            </tr>
+                          </thead>
+                          <tbody id="tbody1">
+                            <tr class="treatmentchart" >
+                                <td>   <input type="date" class="form-control" id="exampleInputdate" name="date"></td>
+                                <td>   <input type="text" class="form-control" id="exampleInputem" name="em"></td>
+                                <td>   <input type="text" class="form-control" id="exampleInputmrng" name="mrng"></td>
+                                <td>   <input type="text" class="form-control" id="exampleInputaftn" name="aftn"></td>
+                                <td>   <input type="text" class="form-control" id="exampleInputevng" name="evng"></td>
+                                <td>   <input type="text" class="form-control" id="exampleInputnight" name="night"></td>
+                                <td><button type="button" style="width:60px;height: 40px;" class="btn btn-primary" id="addBtn1" >Add</button></td>
+                              
+                                <td><button type="button" class="btn btn-danger" onclick="deleteRow(this)">Delete</button></td>
+                            </tr>
+                            <tr>
+                              <td class="treatment-date"></td>
+                              <td class="treatment-EM"></td>
+                              <td class="treatment-morning"></td>
+                              <td class="treatment-afternoon"></td>
+                              <td class="treatment-evening"></td>
+                              <td class="treatment-night"></td>
+                              
+                            </tr>
+                          </tbody>
+                    </table>
+                  </div>
+              </div>  
+          </div>     
+        </div>
+    </div>
+</article>
+</div>
+<div>
+      <input id="ac-4" name="accordion-1" type="radio">
+      <label for="ac-4">Diet Chart</label>
+          <article class="ac-medium">
+            <div class="row">
+              <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                      <div class="form-group">  
+                       <table class="table"  id="dietTable">
+
+                          <tbody>
+                            <tr>
+                              <th scope="col" >Date</th>
+                              <th scope="col">6.15 AM</th>
+                              <th scope="col">8.30 AM</th>
+                              <th scope="col">11 AM</th>
+                              <th scope="col">12.30 PM</th>
+                              
+                            </tr>
+                            <tr>
+                              <td  rowspan="3" ><input type="date" class="form-control" id="exampleInputContactNo" name="date"></td>
+                              <td><textarea   class="form-control" id="exampleInputContactNo" name="6_15"></textarea></td>
+                              <td><textarea   class="form-control" 
+                                id="exampleInputContactNo" name="8_30"></textarea></td>
+                              <td><textarea    class="form-control" 
+                              id="exampleInputContactNo" name="11"></textarea>
+                              </td>
+                              <td><textarea  class="form-control" 
+                                id="exampleInputContactNo" name="12_30"></textarea>
+                              </td>
+                            </tr>
+                            <tr>
+                              <th scope="col">4.00 PM</th>
+                              <th scope="col">6.30 PM</th>
+                              <th scope="col">Bed Time</th>
+                            </tr>
+                        
+                            <tr>
+                          
+                              <td><textarea    class="form-control" id="exampleInputContactNo" name="4"></textarea></td>
+                              <td><textarea  class="form-control" id="exampleInputContactNo" name="6_30"></textarea></td>
+                              <td><textarea   class="form-control" id="exampleInputContactNo" name="bedtime"></textarea></td>
+                              <td><button type="button" class="btn btn-danger" onclick="removeRow(this)">Remove</button></td><td>
+                              <button type="button" class="btn btn-primary" onclick="addTreatment()">Add </button></td>
+                            </tr>
+                            <tr>
+                            
+                              <div class="row">
+                                <div class="col-md-6"><div class="treatment-container">
+                                </div>
+                              </div>
+                              <div class="col-md-6">
+                              <div class="treatment-medicine"></div>
+                              </div>
+                              </div>
+                            </tr>
+                          </tbody>
+                        </table>
+                       </div>
+                    </div>
+                  </div>
+              </div>
+          </div>
+      </article>
+    </div>
+      <button type="submit"  class="btn btn-primary">Submit</button>
+ 
+    </div>
+</div>
+
+</form>
+</section>
+</div>
+
+</div>
+</section>
+</div>
+
+<script>
+  function addTreatment() {
+    // Get the table body
+    var tableBody = document.getElementById('dietTable').getElementsByTagName('tbody')[0];
+
+    // Create a new row with th elements
+    var headerRow = document.createElement('tr');
+    var headerCells = ['Date', '6.15 AM', '8.30 AM', '11 AM', '12.30 PM'];
+
+    for (var i = 0; i < headerCells.length; i++) {
+      var headerCell = document.createElement('th');
+      headerCell.scope = 'col';
+      headerCell.textContent = headerCells[i];
+      headerRow.appendChild(headerCell);
+    }
+
+    // Append the new header row to the table
+    tableBody.appendChild(headerRow);
+
+    // Create a new row with td elements
+    var dataRow = document.createElement('tr');
+    var dataCells = ['', '6_15', '8_30', '11', '12_30'];
+
+    for (var i = 0; i < dataCells.length; i++) {
+      var dataCell = document.createElement('td');
+
+      if (i === 0) {
+        // For the first cell with rowspan
+        dataCell.rowSpan = 3;
+        var dateInput = document.createElement('input');
+        dateInput.type = 'date';
+        dateInput.className = 'form-control';
+        dateInput.id = 'exampleInputContactNo';
+        dateInput.name = 'date';
+        dataCell.appendChild(dateInput);
+      } else {
+        var textarea = document.createElement('textarea');
+        textarea.className = 'form-control';
+        textarea.id = 'exampleInputContactNo';
+        textarea.name = dataCells[i];
+        dataCell.appendChild(textarea);
+      }
+
+      dataRow.appendChild(dataCell);
+    }
+    
+    // Create a new cell for the "Remove" button
+    var removeCell = document.createElement('td');
+    var removeButton = document.createElement('button');
+    removeButton.type = 'button';
+    removeButton.className = 'btn btn-danger';
+    removeButton.textContent = 'Remove';
+    removeButton.onclick = function () {
+      removeRow(this);
+    };
+    removeCell.appendChild(removeButton);
+    dataRow.appendChild(removeCell);
+
+    // Append the new data row to the table
+    tableBody.appendChild(dataRow);
+
+    // Create a new row with th elements
+    var footerRow = document.createElement('tr');
+    var footerCells = ['4.00 PM', '6.30 PM', 'Bed Time'];
+
+    for (var i = 0; i < footerCells.length; i++) {
+      var footerCell = document.createElement('th');
+      footerCell.scope = 'col';
+      footerCell.textContent = footerCells[i];
+      footerRow.appendChild(footerCell);
+    }
+
+    // Append the new footer row to the table
+    tableBody.appendChild(footerRow);
+
+    // Create a new row with td elements
+    var dataRow2 = document.createElement('tr');
+    var dataCells2 = ['4', '6_30', 'bedtime'];
+
+    for (var i = 0; i < dataCells2.length; i++) {
+      var dataCell2 = document.createElement('td');
+      var textarea2 = document.createElement('textarea');
+      textarea2.className = 'form-control';
+      textarea2.id = 'exampleInputContactNo';
+      textarea2.name = dataCells2[i];
+      dataCell2.appendChild(textarea2);
+      dataRow2.appendChild(dataCell2);
+    }
+    // Append the new data row to the table
+    tableBody.appendChild(dataRow2);
+  }
+ function removeRow(button) {
+  // Get the table body
+  var tableBody = document.getElementById('dietTable').getElementsByTagName('tbody')[0];
+  // Check if there are rows to remove
+  if (tableBody.rows.length > 0) {
+    // Remove the last created row
+    tableBody.removeChild(tableBody.lastChild);
+    // Remove the second last row (which is the footer row)
+    tableBody.removeChild(tableBody.lastChild);
+    // Remove the last created row
+    tableBody.removeChild(tableBody.lastChild);
+    // Remove the second last row (which is the footer row)
+    tableBody.removeChild(tableBody.lastChild);
+  }
+}
+// treatment chart
+document.getElementById('addBtn1').addEventListener('click', function() {
+  addTreatmentRow();
+});
+function addTreatmentRow() {
+  // Get the tbody element
+  var tbody = document.getElementById('tbody1');
+  // Create a new row
+  var newRow = document.createElement('tr');
+  newRow.classList.add('treatmentchart');
+  // Add cells to the row
+  newRow.innerHTML = `
+    <td><input type="date" class="form-control" name="date"></td>
+    <td><input type="text" class="form-control" name="em"></td>
+    <td><input type="text" class="form-control" name="mrng"></td>
+    <td><input type="text" class="form-control" name="aftn"></td>
+    <td><input type="text" class="form-control" name="evng"></td>
+    <td><input type="text" class="form-control" name="night"></td>
+    <td><button type="button" style="width:60px;height: 40px;" class="btn btn-danger" onclick="deleteRow(this)">Delete</button></td>
+  `;
+  // Append the new row to the tbody
+  tbody.appendChild(newRow);
+}
+function deleteRow(button){
+  // Get the row to be deleted
+  var row = button.parentNode.parentNode;
+  // Remove the row
+  row.parentNode.removeChild(row);
+}
+document.getElementById('addBtn').addEventListener('click', function() {
+  addRecordSheetRow();
+});
+function addRecordSheetRow() {
+  // Get the tbody element
+  var tbody = document.getElementById('tbody');
+  // Create a new row
+  var newRow = document.createElement('tr');
+  newRow.classList.add('recordsheet');
+  // Add cells to the row
+  newRow.innerHTML = `
+    <td><input type="date" class="form-control" name="adddate"></td>
+    <td><input type="text" class="form-control" name="addbp"></td>
+    <td><input type="text" class="form-control" name="addpr"></td>
+    <td><input type="text" class="form-control" name="addspo2"></td>
+    <td><input type="text" class="form-control" name="addtemp"></td>
+    <td><input type="text" class="form-control" name="addfbsppbs"></td>
+    <td><button type="button" style="width:60px;height: 40px;" class="btn btn-danger" onclick="deleteRow(this)">Delete</button></td>
+  `;
+  // Append the new row to the tbody
+  tbody.appendChild(newRow);
+}
+</script>
+<script>
+  $(document).ready(function () {
+  
+    // Function to update patient details based on selected MR Number
+    function updatePatientDetails(selectedMrNumber) {
+      $.ajax({
+        type: "GET",
+        url: "{% url 'getmrdetails' %}",  // Update this URL based on your project structure
+        data: { mrNumber: selectedMrNumber },
+        success: function (data) {
+          var combinedDetails = `${data.Patient_Name}, ${data.phno}, ${data.place}`;
+          $("#exampleInputAddress").val(combinedDetails);  // Update the input field with the combined details
+        },
+        error: function (xhr, status, error) {
+          console.error("Error fetching patient details:", error);
+          $("#exampleInputAddress").val("Error fetching details. Please try again.");
+        }
+      });
+    }
+  
+    // Trigger patient details update when MR Number dropdown changes
+    $("#mrDropdown").on("change", function() {
+      var selectedMrNumber = $(this).val();
+      if (selectedMrNumber) {
+        updatePatientDetails(selectedMrNumber);
+      }
+    });
+  
+    // Search MR Numbers and update the dropdown dynamically based on input
+    $('#mrSearch').on('keyup', function() {
+      var query = $(this).val();
+      if (query.length >= 2) {  // Start searching after 2 characters
+        $.ajax({
+          type: 'GET',
+          url: "{% url 'search_mrno' %}",  // Update with the correct URL
+          data: { query: query },
+          success: function(data) {
+            var dropdown = $('#mrDropdown');
+            dropdown.empty().append('<option selected disabled value="">Select</option>');  // Reset dropdown
+  
+            if (data.length > 0) {
+              data.forEach(function(item) {
+                dropdown.append(`<option value="${item.id}">${item.Patient_Name} -> ${item.Medical_Record_Number}</option>`);
+              });
+              // Automatically select the first matching MR number and display details
+              var firstMrNumber = data[0].id;
+              dropdown.val(firstMrNumber);  // Select the first matching MR number
+              updatePatientDetails(firstMrNumber);  // Update patient details for the selected MR number
+            } else {
+              dropdown.append('<option selected disabled value="">No matching MR numbers found</option>');
+              $("#exampleInputAddress").val("");  // Clear patient details if no matches
+            }
+          },
+          error: function (xhr, status, error) {
+            console.error("Error fetching MR numbers:", error);
+            $('#mrDropdown').empty().append('<option selected disabled value="">Error fetching data. Please try again.</option>');
+            $("#exampleInputAddress").val("");  // Clear patient details on error
+          }
+        });
+      } else {
+        $("#mrDropdown").empty().append('<option selected disabled value="">Select</option>');  // Clear dropdown if query is too short
+        $("#exampleInputAddress").val("");  // Clear patient details
+      }
+    });
+  });
+  </script>
+{% endblock %}
+

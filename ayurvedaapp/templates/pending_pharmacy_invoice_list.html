@@ -1,0 +1,1089 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<style>
+    /* ───────────────────────────────────────────────
+       Pharmacy Billing Status — Modern & Clean Design
+       Fully Responsive Enhancements
+    ──────────────────────────────────────────────── */
+
+    :root {
+        --primary-gradient-start: #1e3a8a;
+        --primary-gradient-end: #3b82f6;
+        --pending-color: #f59e0b;
+        --completed-color: #10b981;
+        --text-primary: #1e293b;
+        --text-secondary: #475569;
+        --border-color: #e2e8f0;
+        --bg-light: #f8fafc;
+    }
+
+    /* Base Layout */
+    .content-wrapper {
+        padding: 1rem;
+    }
+
+    .report-header {
+        background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);
+        color: white;
+        padding: 1.5rem 1.25rem;
+        border-radius: 10px 10px 0 0;
+        margin-bottom: 0;
+    }
+
+    .report-header h1 {
+        margin: 0;
+        font-weight: 600;
+        font-size: clamp(1.4rem, 4vw, 1.85rem);
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .branch-meta {
+        background: var(--bg-light);
+        border: 1px solid var(--border-color);
+        border-radius: 0 0 10px 10px;
+        padding: 1rem 1.25rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .branch-name {
+        font-size: clamp(1.1rem, 3vw, 1.4rem);
+        font-weight: 600;
+        color: #1e40af;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .date-badge {
+        background: #e0f2fe;
+        color: #0369a1;
+        padding: 0.4rem 0.9rem;
+        border-radius: 30px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        margin-top: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .period {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+
+    /* Filter Card - Responsive */
+    .filter-card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+    }
+
+    .filter-card .card-header {
+        background: #eff6ff;
+        border-bottom: 1px solid var(--border-color);
+        padding: 0.9rem 1.25rem;
+        font-weight: 600;
+        color: #1e40af;
+        font-size: 1rem;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 1rem;
+        padding: 1.25rem;
+        align-items: flex-end;
+    }
+
+    .form-group {
+        min-width: 0;
+    }
+
+    .form-group label {
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: var(--text-secondary);
+        margin-bottom: 0.35rem;
+        display: block;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .form-control, .select2 {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.9rem;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        box-sizing: border-box;
+    }
+
+    .form-group .btn {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.9rem;
+        white-space: nowrap;
+    }
+
+    /* Summary Cards - Responsive Grid */
+    .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 1rem;
+        margin: 1.25rem 0;
+    }
+
+    .summary-card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 3px 14px rgba(0,0,0,0.06);
+        overflow: hidden;
+        transition: transform 0.18s ease, box-shadow 0.18s ease;
+        text-align: center;
+        padding: 1rem 0.75rem;
+        border-top: 4px solid #64748b;
+    }
+
+    .summary-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+    }
+
+    .summary-card .icon {
+        font-size: 1.5rem;
+        margin-bottom: 0.6rem;
+    }
+
+    .summary-card .title {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        margin-bottom: 0.4rem;
+        line-height: 1.3;
+    }
+
+    .summary-card .value {
+        font-size: clamp(1.4rem, 5vw, 1.8rem);
+        font-weight: 700;
+        color: var(--text-primary);
+        line-height: 1.1;
+    }
+
+    .summary-card .mt-2 small,
+    .summary-card .badge {
+        font-size: 0.75rem !important;
+    }
+
+    .summary-card.total { border-top-color: #3b82f6; }
+    .summary-card.pending { border-top-color: var(--pending-color); }
+    .summary-card.completed { border-top-color: var(--completed-color); }
+
+    /* Quick Status Tabs - Scrollable on Mobile */
+    .nav-pills {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: 0.25rem;
+        gap: 0.25rem;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+    .nav-pills::-webkit-scrollbar {
+        display: none;
+    }
+
+    .nav-pills .nav-link {
+        font-size: 0.85rem;
+        padding: 0.4rem 0.8rem;
+        white-space: nowrap;
+        border-radius: 20px;
+        margin-right: 0.25rem;
+    }
+
+    .nav-pills .nav-link.active {
+        color: white !important;
+    }
+
+    /* Table Section - Responsive */
+    .table-section {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+        overflow: hidden;
+        margin-top: 1.5rem;
+    }
+
+    .table-section h2 {
+        margin: 0;
+        padding: 1rem 1.25rem;
+        background: var(--bg-light);
+        border-bottom: 1px solid var(--border-color);
+        font-size: 1.1rem;
+        color: var(--text-primary);
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+    }
+
+    .table-section h2 .float-right {
+        width: 100%;
+        text-align: left;
+        font-size: 0.8rem;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .table {
+        margin-bottom: 0;
+        font-size: 0.9rem;
+    }
+
+    .table th, .table td {
+        vertical-align: middle;
+        padding: 0.65rem 0.5rem;
+        white-space: nowrap;
+    }
+
+    .table td {
+        max-width: 200px;
+    }
+
+    .table td:nth-child(4), /* Patient Details */
+    .table td:nth-child(6)  /* Doctor */
+    {
+        white-space: normal;
+        max-width: 250px;
+        min-width: 180px;
+    }
+
+    .table td small {
+        display: block;
+        font-size: 0.75rem;
+        line-height: 1.4;
+    }
+
+    /* Badges & Status */
+    .badge-status {
+        font-size: 0.7rem;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+    
+    .badge-pending {
+        background-color: var(--pending-color);
+        color: white;
+    }
+    
+    .badge-completed {
+        background-color: var(--completed-color);
+        color: white;
+    }
+    
+    .badge-today {
+        background-color: #ef4444;
+        color: white;
+        font-size: 0.65rem;
+        padding: 2px 6px;
+        border-radius: 10px;
+        margin-left: 5px;
+        vertical-align: middle;
+    }
+
+    .badge-info, .badge-secondary {
+        font-size: 0.75rem;
+        padding: 4px 8px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        flex-wrap: wrap;
+    }
+
+    /* Patient Details - Responsive Text */
+    .patient-name {
+        font-weight: 600;
+        font-size: 0.95rem;
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 180px;
+    }
+
+    .patient-detail-line {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 200px;
+    }
+
+    /* Summary Footer */
+    .alert-light {
+        padding: 1rem;
+        font-size: 0.9rem;
+    }
+
+    .alert-light .col-md-4 {
+        margin-bottom: 0.75rem;
+    }
+
+    .alert-light h5 {
+        font-size: 1rem;
+        margin: 0.4rem 0;
+        line-height: 1.3;
+    }
+
+    .alert-light .badge {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.8rem;
+    }
+
+    /* Buttons - Touch Friendly */
+    .btn {
+        padding: 0.5rem 0.85rem;
+        font-size: 0.9rem;
+        min-height: 40px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+    }
+
+    .btn-block {
+        width: 100%;
+    }
+
+    /* Pagination - Mobile Optimized */
+    .pagination {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.25rem;
+    }
+
+    .page-link {
+        padding: 0.35rem 0.6rem;
+        font-size: 0.85rem;
+        min-width: 32px;
+        text-align: center;
+    }
+
+    /* Print optimizations */
+    @media print {
+        .filter-card, .btn, .dataTables_wrapper .dt-buttons, 
+        .nav-pills, .summary-footer, .card-footer {
+            display: none !important;
+        }
+        .branch-meta, .summary-grid {
+            page-break-inside: avoid;
+        }
+        .summary-card {
+            box-shadow: none;
+            border: 1px solid #ccc;
+            break-inside: avoid;
+        }
+        .report-header {
+            background: #f1f5f9 !important;
+            color: black !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .table-section {
+            box-shadow: none;
+            border: 1px solid #ddd;
+        }
+        .table th, .table td {
+            font-size: 0.8rem !important;
+            padding: 4px !important;
+        }
+        body {
+            font-size: 10pt;
+        }
+    }
+
+    /* Mobile Breakpoints */
+    @media (max-width: 768px) {
+        .content-wrapper {
+            padding: 0.75rem;
+        }
+
+        .branch-meta {
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 0.9rem 1rem;
+        }
+
+        .branch-meta .text-right {
+            width: 100%;
+            text-align: left !important;
+            margin-top: 0.5rem;
+        }
+
+        .form-row {
+            grid-template-columns: 1fr;
+            padding: 1rem;
+        }
+
+        .form-group label[style*="visibility: hidden"] {
+            display: none;
+        }
+
+        .form-group .btn-block {
+            margin-bottom: 0.5rem;
+        }
+
+        .summary-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+
+        .summary-card {
+            padding: 0.85rem 0.5rem;
+        }
+
+        .table th, .table td {
+            padding: 0.5rem 0.4rem;
+            font-size: 0.85rem;
+        }
+
+        .table td:nth-child(4),
+        .table td:nth-child(6) {
+            min-width: 150px;
+            max-width: 180px;
+        }
+
+        .patient-name {
+            max-width: 140px;
+            font-size: 0.9rem;
+        }
+
+        .patient-detail-line {
+            max-width: 160px;
+            font-size: 0.7rem;
+        }
+
+        .badge {
+            font-size: 0.7rem !important;
+            padding: 3px 6px !important;
+        }
+
+        .alert-light .row {
+            flex-direction: column;
+            text-align: center !important;
+        }
+
+        .alert-light .col-md-4 {
+            margin-bottom: 1rem;
+        }
+
+        .alert-light .d-flex {
+            justify-content: center !important;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .summary-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .table thead {
+            display: none;
+        }
+
+        .table tbody tr {
+            display: block;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem;
+            background: white;
+        }
+
+        .table tbody tr td {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 0.4rem 0 !important;
+            border: none !important;
+            white-space: normal !important;
+            max-width: 100% !important;
+            font-size: 0.85rem !important;
+        }
+
+        .table tbody tr td::before {
+            content: attr(data-label);
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-right: 0.75rem;
+            min-width: 80px;
+            flex-shrink: 0;
+        }
+
+        .table tbody tr td:last-child {
+            padding-bottom: 0 !important;
+        }
+
+        .patient-name {
+            max-width: 100%;
+        }
+
+        .patient-detail-line {
+            max-width: 100%;
+        }
+
+        .nav-pills .nav-link {
+            font-size: 0.8rem;
+            padding: 0.35rem 0.7rem;
+        }
+
+        .report-header h1 {
+            font-size: 1.3rem;
+        }
+
+        .branch-name {
+            font-size: 1.15rem;
+        }
+    }
+
+    /* Accessibility - Focus States */
+    .form-control:focus,
+    .select2-container--bootstrap4 .select2-selection--single:focus,
+    .btn:focus {
+        outline: 2px solid #3b82f6;
+        outline-offset: 2px;
+    }
+
+    /* Smooth Scrolling */
+    html {
+        scroll-behavior: smooth;
+    }
+</style>
+
+<div class="content-wrapper">
+    <section class="content">
+
+        <!-- Header -->
+        <div class="report-header">
+            <h1><i class="fas fa-prescription mr-2"></i> Pharmacy Billing Status</h1>
+        </div>
+
+        <!-- Branch & Period Info -->
+        <div class="branch-meta">
+            <div>
+                <div class="branch-name">
+                    <i class="fas fa-store mr-2"></i> 
+                    {% if is_superadmin %}
+                        {% if selected_branch_id %}
+                            {% for branch in branches %}
+                                {% if branch.id == selected_branch_id %}
+                                    {{ branch.Branch_Name }}
+                                {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            All Branches
+                        {% endif %}
+                    {% else %}
+                        {{ staff_branch_name }}
+                    {% endif %}
+                </div>
+                
+                <!-- Date Range Display -->
+                <div class="date-badge mt-2">
+                    <i class="far fa-calendar-alt mr-2"></i>
+                    {% if start_date and end_date %}
+                        {% if start_date == end_date %}
+                            {{ start_date|date:"d M Y" }}
+                        {% else %}
+                            {{ start_date|date:"d M Y" }} — {{ end_date|date:"d M Y" }}
+                        {% endif %}
+                    {% else %}
+                        {{ today|date:"d M Y" }}
+                    {% endif %}
+                </div>
+                
+                <div class="period mt-1">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle"></i> Selected Period
+                    </small>
+                </div>
+            </div>
+            <div class="text-right">
+                <span class="badge badge-primary px-3 py-2">
+                    <i class="fas fa-prescription-bottle-alt mr-1"></i>
+                    Total: {{ total_count }}
+                </span>
+            </div>
+        </div>
+
+        <!-- Filter Form -->
+        <div class="filter-card">
+            <div class="card-header">
+                <i class="fas fa-filter mr-2"></i> Filter Pharmacy Billing Status
+            </div>
+            <form method="get">
+                <div class="form-row">
+                    <!-- Branch Filter - Only for Superadmin -->
+                    {% if is_superadmin %}
+                    <div class="form-group">
+                        <label for="id_branch"><i class="fas fa-store"></i> Branch</label>
+                        <select name="branch" id="id_branch" class="form-control select2">
+                            <option value="">All Branches</option>
+                            {% for branch in branches %}
+                            <option value="{{ branch.id }}" {% if branch.id == selected_branch_id %}selected{% endif %}>
+                                {{ branch.Branch_Name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+
+                    <!-- From Date -->
+                    <div class="form-group">
+                        <label for="id_start_date"><i class="fas fa-calendar-alt"></i> From Date</label>
+                        <input type="date" name="start_date" id="id_start_date" class="form-control" 
+                               value="{{ start_date|date:'Y-m-d' }}">
+                    </div>
+
+                    <!-- To Date -->
+                    <div class="form-group">
+                        <label for="id_end_date"><i class="fas fa-calendar-alt"></i> To Date</label>
+                        <input type="date" name="end_date" id="id_end_date" class="form-control" 
+                               value="{{ end_date|date:'Y-m-d' }}">
+                    </div>
+
+                    <!-- Status Filter -->
+                    <div class="form-group">
+                        <label for="id_status"><i class="fas fa-tag"></i> Billing Status</label>
+                        <select name="status" id="id_status" class="form-control">
+                            <option value="">All ({{ total_count }})</option>
+                            <option value="pending" {% if bill_status == "pending" %}selected{% endif %}>
+                                Pending ({{ pending_count }})
+                            </option>
+                            <option value="completed" {% if bill_status == "completed" %}selected{% endif %}>
+                                Completed ({{ completed_count }})
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <i class="fas fa-search mr-2"></i> Apply Filter
+                        </button>
+                    </div>
+                    
+                    <div class="form-group">
+                        <a href="{% url 'pending_pharmacy_invoice_list' %}" class="btn btn-warning btn-block">
+                            <i class="fas fa-calendar-day mr-2"></i> Today
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="summary-grid">
+            <!-- Total Prescriptions Card -->
+            <div class="summary-card total">
+                <div class="icon"><i class="fas fa-prescription-bottle-alt"></i></div>
+                <div class="title">Total Prescriptions</div>
+                <div class="value">{{ total_count }}</div>
+                <div class="mt-2 text-muted small">
+                    <i class="fas fa-calendar"></i> 
+                    {% if start_date == end_date %}
+                        {{ start_date|date:"d M Y" }}
+                    {% else %}
+                        {{ start_date|date:"d M Y" }} - {{ end_date|date:"d M Y" }}
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Pending Bills Card -->
+            <div class="summary-card pending">
+                <div class="icon"><i class="fas fa-clock"></i></div>
+                <div class="title">Pending Bills</div>
+                <div class="value">{{ pending_count }}</div>
+                {% if total_count > 0 %}
+                <div class="mt-2">
+                    <span class="badge badge-warning">
+                        {% widthratio pending_count total_count 100 %}% of total
+                    </span>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Completed Bills Card -->
+            <div class="summary-card completed">
+                <div class="icon"><i class="fas fa-check-circle"></i></div>
+                <div class="title">Completed Bills</div>
+                <div class="value">{{ completed_count }}</div>
+                {% if total_count > 0 %}
+                <div class="mt-2">
+                    <span class="badge badge-success">
+                        {% widthratio completed_count total_count 100 %}% of total
+                    </span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Quick Status Tabs -->
+        <div class="row mb-3">
+            <div class="col-12">
+                <div class="card card-outline card-secondary">
+                    <div class="card-header p-2 bg-light">
+                        <ul class="nav nav-pills">
+                            <li class="nav-item">
+                                <a class="nav-link {% if not bill_status %}active bg-primary{% endif %}" 
+                                   href="?{% if selected_branch_id %}branch={{ selected_branch_id }}&{% endif %}start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}&status=">
+                                    <i class="fas fa-list"></i> All ({{ total_count }})
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if bill_status == 'pending' %}active bg-warning{% endif %}" 
+                                   href="?{% if selected_branch_id %}branch={{ selected_branch_id }}&{% endif %}start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}&status=pending">
+                                    <i class="fas fa-clock"></i> Pending ({{ pending_count }})
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if bill_status == 'completed' %}active bg-success{% endif %}" 
+                                   href="?{% if selected_branch_id %}branch={{ selected_branch_id }}&{% endif %}start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}&status=completed">
+                                    <i class="fas fa-check-circle"></i> Completed ({{ completed_count }})
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Table -->
+        <div class="table-section">
+          <div class="card">
+           <div class="scroll">
+              <!-- /.card-header -->
+              <div class="card-body">
+          
+                    <table id="example1" class="table table-bordered table-striped">
+                   <thead class="bg-primary text-white">
+                            <tr>
+                                <th >#</th>
+                                <th >Date</th>
+                                {% if is_superadmin %}
+                                <th >Branch</th>
+                                {% endif %}
+                                <th >Patient Details</th>
+                                <th >Contact No</th>
+                                <th >Doctor</th>
+                                <th >Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if prescriptions %}
+                                {% for prescription in prescriptions %}
+                                <tr>
+                                    <!-- Serial Number -->
+                                    <td data-label="#">
+                                        <span class="badge badge-secondary">
+                                            {{forloop.counter}}
+                                        </span>
+                                    </td>
+
+                                    <!-- Date -->
+                                    <td data-label="Date">
+                                        <strong>{{ prescription.prescriptiondate|date:"d-m-Y" }}</strong>
+                                        {% if prescription.prescriptiondate == today %}
+                                            <br><span class="badge badge-today mt-1">Today</span>
+                                        {% endif %}
+                                    </td>
+
+                                    <!-- Branch - Only for Superadmin -->
+                                    {% if is_superadmin %}
+                                    <td data-label="Branch">
+                                        {% with doctor_allocations=prescription.prescribeddoctor.staffallocation_set.all %}
+                                            {% if doctor_allocations %}
+                                                {% with first_allocation=doctor_allocations.first %}
+                                                    {% if first_allocation.Branch_Name %}
+                                                        <span class="badge badge-info p-2">
+                                                            <i class="fas fa-store"></i> 
+                                                            {{ first_allocation.Branch_Name.Branch_Name }}
+                                                        </span>
+                                                        {% if doctor_allocations.count > 1 %}
+                                                            <br><small class="text-muted">+{{ doctor_allocations.count|add:"-1" }} more</small>
+                                                        {% endif %}
+                                                    {% else %}
+                                                        <span class="badge badge-secondary p-2">
+                                                            <i class="fas fa-store"></i> 
+                                                            No Branch
+                                                        </span>
+                                                    {% endif %}
+                                                {% endwith %}
+                                            {% else %}
+                                                <span class="badge badge-secondary p-2">
+                                                    <i class="fas fa-store"></i> 
+                                                    Not Allocated
+                                                </span>
+                                            {% endif %}
+                                        {% endwith %}
+                                    </td>
+                                    {% endif %}
+
+                                    <!-- Patient Details -->
+                                    <td data-label="Patient">
+                                        <span class="patient-name">
+                                            {{ prescription.patient.Patient_Name|default:"-" }}
+                                        </span>
+
+                                        <small class="patient-detail-line">
+                                            <i class="fas fa-id-card"></i> 
+                                            MRN: {{ prescription.patient.Medical_Record_Number|default:"-" }}
+                                        </small>
+
+                                        <small class="patient-detail-line">
+                                            <i class="fas fa-map-marker-alt text-danger"></i> 
+                                            {{ prescription.patient.address|default:"No address"|truncatechars:30 }}
+                                        </small>
+
+                                        <small class="text-muted d-flex align-items-center gap-1">
+                                            <i class="fas fa-calendar-alt"></i> 
+                                            <span>Age: {{ prescription.patient.Age|default:"-" }} | Gender: {{ prescription.patient.Gender|default:"-" }}</span>
+                                        </small>
+                                    </td>
+
+                                    <!-- Contact No -->
+                                    <td data-label="Contact">
+                                        {% if prescription.patient.contactno %}
+                                            <a href="tel:{{ prescription.patient.contactno }}" class="text-dark text-decoration-none">
+                                                <i class="fas fa-phone-alt text-muted mr-1"></i> 
+                                                {{ prescription.patient.contactno }}
+                                            </a>
+                                        {% else %}
+                                            <span class="text-muted">—</span>
+                                        {% endif %}
+                                    </td>
+
+                                    <!-- Doctor -->
+                                    <td data-label="Doctor">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i class="fas fa-user-md text-primary"></i>
+                                            <span class="font-weight-bold">
+                                                {{ prescription.prescribeddoctor.Staff_firstname|default:"-" }}
+                                                {{ prescription.prescribeddoctor.Staff_lastname|default:"" }}
+                                            </span>
+                                        </div>
+                                        {% if is_superadmin and prescription.prescribeddoctor.staffallocation_set.first %}
+                                        <small class="text-muted d-block mt-1">
+                                            <i class="fas fa-store-alt"></i>
+                                            {{ prescription.prescribeddoctor.staffallocation_set.first.Branch_Name.Branch_Name|default:"No branch"|truncatechars:20 }}
+                                        </small>
+                                        {% endif %}
+                                    </td>
+
+                                    <!-- Status Badge -->
+                                    <td data-label="Status">
+                                        {% if prescription.invoice_exists %}
+                                            <span class="badge badge-status badge-completed">
+                                                <i class="fas fa-check-circle"></i> Completed
+                                            </span>
+                                        {% else %}
+                                            <span class="badge badge-status badge-pending">
+                                                <i class="fas fa-clock"></i> Pending
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="{% if is_superadmin %}7{% else %}6{% endif %}" class="text-center py-5">
+                                        <i class="fas fa-inbox fa-4x text-muted"></i>
+                                        <h5 class="mt-3 text-muted">No Records Found</h5>
+                                        <p class="text-muted mb-0">
+                                            {% if bill_status == "pending" %}
+                                                All bills are completed for the selected period.
+                                            {% elif bill_status == "completed" %}
+                                                No completed bills found for the selected period.
+                                            {% else %}
+                                                No prescriptions found for the selected criteria.
+                                            {% endif %}
+                                        </p>
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Django Pagination -->
+          
+        </div>
+
+        <!-- Summary Footer with Date Range -->
+        <div class="row mt-4 summary-footer">
+            <div class="col-12">
+                <div class="alert alert-light border mb-0">
+                    <div class="row">
+                        <div class="col-md-4 text-center">
+                            <i class="fas fa-store text-info fa-2x"></i>
+                            <h5 class="mt-2">
+                                {% if is_superadmin %}
+                                    {% if selected_branch_id %}
+                                        {% for branch in branches %}
+                                            {% if branch.id == selected_branch_id %}
+                                                {{ branch.Branch_Name }}
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% else %}
+                                        All Branches
+                                    {% endif %}
+                                {% else %}
+                                    {{ staff_branch_name }}
+                                {% endif %}
+                            </h5>
+                            <p class="text-muted mb-0 small">Branch</p>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <i class="fas fa-calendar-alt text-success fa-2x"></i>
+                            <h5 class="mt-2">
+                                {% if start_date and end_date %}
+                                    {% if start_date == end_date %}
+                                        {{ start_date|date:"d M Y" }}
+                                    {% else %}
+                                        {{ start_date|date:"d M Y" }} - {{ end_date|date:"d M Y" }}
+                                    {% endif %}
+                                {% endif %}
+                            </h5>
+                            <p class="text-muted mb-0 small">Selected Period</p>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="d-flex justify-content-center flex-wrap gap-2">
+                                <div>
+                                    <span class="badge badge-warning p-2">Pending: {{ pending_count }}</span>
+                                </div>
+                                <div>
+                                    <span class="badge badge-success p-2">Completed: {{ completed_count }}</span>
+                                </div>
+                            </div>
+                            <p class="text-muted mt-2 mb-0 small">Total: {{ total_count }} Prescriptions</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </section>
+</div>
+<!-- 
+<script>
+$(document).ready(function() {
+    // Initialize DataTable with responsive settings
+    if ($.fn.DataTable) {
+        $('#example1').DataTable({
+            paging: false,           // Using Django pagination
+            info: false,
+            searching: true,
+            ordering: true,
+            responsive: {
+                details: {
+                    display: $.fn.dataTable.Responsive.display.modal({
+                        header: function(row) {
+                            var data = row.data();
+                            return 'Patient: ' + data[3];
+                        }
+                    }),
+                    renderer: $.fn.dataTable.Responsive.renderer.tableAll({
+                        tableClass: 'table'
+                    })
+                }
+            },
+            dom: 'Bfrtip',
+            buttons: [
+                {
+                    extend: 'copy',
+                    text: '<i class="fas fa-copy"></i> Copy',
+                    className: 'btn btn-sm btn-secondary'
+                },
+                {
+                    extend: 'csv',
+                    text: '<i class="fas fa-file-csv"></i> CSV',
+                    className: 'btn btn-sm btn-success'
+                },
+                {
+                    extend: 'excel',
+                    text: '<i class="fas fa-file-excel"></i> Excel',
+                    className: 'btn btn-sm btn-success'
+                },
+                {
+                    extend: 'pdf',
+                    text: '<i class="fas fa-file-pdf"></i> PDF',
+                    className: 'btn btn-sm btn-danger',
+                    orientation: 'landscape'
+                },
+                {
+                    extend: 'print',
+                    text: '<i class="fas fa-print"></i> Print',
+                    className: 'btn btn-sm btn-info'
+                }
+            ],
+            order: [[1, 'desc']],
+            columnDefs: [
+                { orderable: false, targets: [0] },
+                { responsivePriority: 1, targets: [1, 3, 6] }, // Prioritize Date, Patient, Status
+                { responsivePriority: 2, targets: [2, 4, 5] }  // Branch, Contact, Doctor
+            ],
+            scrollX: true,
+            autoWidth: false,
+            language: {
+                search: "_INPUT_",
+                searchPlaceholder: "Search records..."
+            }
+        });
+    }
+
+    // Initialize Select2
+    if ($.fn.select2) {
+        $('.select2').select2({
+            theme: 'bootstrap4',
+            placeholder: '-- Select --',
+            allowClear: true,
+            width: '100%',
+            dropdownParent: $('.select2').closest('.form-group')
+        });
+    } -->
+
+  
+</script>
+
+{% endblock content %}

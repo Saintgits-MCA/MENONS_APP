@@ -1,0 +1,146 @@
+{% extends 'base.html' %} 
+{% load static %} 
+
+{% block content %}
+
+<div class="content-wrapper">
+  <!-- Page Header -->
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Admission Register</h1>
+        </div>
+      </div>
+
+      <!-- Filter -->
+      <div class="card">
+        <div class="card-body">
+          <form method="GET" action="">
+            <div class="row">
+              <div class="col-lg-3 col-md-6">
+                <div class="form-group">
+                  <label>From Date</label>
+                  <input type="date" class="form-control" name="from_date" value="{{ from_date|default:'' }}" />
+                </div>
+              </div>
+
+              <div class="col-lg-3 col-md-6">
+                <div class="form-group">
+                  <label>To Date</label>
+                  <input type="date" class="form-control" name="to_date" value="{{ to_date|default:'' }}" />
+                </div>
+              </div>
+
+              <div class="col-lg-2 col-md-6">
+                <div class="form-group">
+                  <label>Doctor Name</label>
+                  <select class="form-control" name="doctor">
+                    <option value="">All Doctors</option>
+                    {% for doctor in doctors %}
+                      <option value="{{ doctor.id }}" {% if doctor.id|stringformat:"s" == doctor_name %}selected{% endif %}>
+                        {{ doctor.name }}
+                      </option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+
+              <div class="col-lg-2 col-md-6">
+                <div class="form-group">
+                  <label>&nbsp;</label>
+                  <button type="submit" class="btn btn-primary btn-block">
+                    <i class="fas fa-search mr-1"></i> Search
+                  </button>
+                </div>
+              </div>
+
+              <div class="col-lg-2 col-md-6">
+                <div class="form-group">
+                  <label>&nbsp;</label>
+                  <a href="{% url 'admission_register' %}" class="btn btn-secondary btn-block">
+                    <i class="fas fa-undo mr-1"></i> Reset
+                  </a>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content -->
+  <section class="content">
+    <div class="container-fluid">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="font-weight-bold mb-0">
+            ADMISSION REGISTER FOR THE PERIOD
+            {% if display_from_date or display_to_date %} FOR THE PERIOD FROM
+                    {{ display_from_date|default:"-" }} TO {{ display_to_date|default:"-" }}{% endif %}
+          </h5>
+        </div>
+        <div class="card-body">
+          <table
+            id="example1"
+            class="table table-bordered table-striped table-sm"
+            style="width: 100%"
+          >
+            <thead>
+              <tr>
+                <th>Sl No</th>
+                <th>Date</th>
+                <th>IP Number</th>
+                <th>Patient Details</th>
+                <th>Doctor / Complaint</th>
+                <th>Room</th>
+                <th>Shift</th>
+                <th>Discharge</th>
+                <th>User</th>
+                {% comment %} <th>Action</th> {% endcomment %}
+              </tr>
+            </thead>
+
+            <tbody>
+              {% for patient in patients %}
+              <tr>
+                <td>{{ patient.sl_no }}</td>
+                <td>{{ patient.date|date:"d/m/Y" }}</td>
+                <td>
+                  {{ patient.ip_number }}<br />
+                  <small>{{ patient.mr_number }}</small>
+                </td>
+                <td>
+                  {{ patient.patient_details|safe }}
+                </td>
+                <td>
+                  {{ patient.doctor_complaint|safe }}
+                </td>
+                <td>{{ patient.room }}</td>
+                <td>{{ patient.shift }}</td>
+                <td>{{ patient.discharge }}</td>
+                <td>{{ patient.user }}</td>
+                {% comment %} <td>
+                  <a href="{% url 'edit_admission' patient.admission_id %}" title="Edit">
+                    <img src="{% static 'assets/dist/img/icons/edit.svg' %}" width="20" />
+                  </a>
+                  <a href="{% url 'delete_admission' patient.admission_id %}" onclick="return confirm('Delete this record?');" title="Delete">
+                    <img src="{% static 'assets/dist/img/icons/delete.svg' %}" width="20" />
+                  </a>
+                </td> {% endcomment %}
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="10" class="text-center">No admission records found.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+{% endblock %}

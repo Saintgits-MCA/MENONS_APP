@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<style>
+  .invoice-container {
+    background: #fff;
+    padding: 15px;
+    max-width: 700px;
+    margin: 20px auto;
+    box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+  }
+
+  h2 {
+    text-align: center;
+    margin: 10px 0;
+  }
+
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .box {
+    width: 48%;
+    border: 1px solid #000;
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  .total {
+    text-align: right;
+    font-weight: bold;
+    margin-bottom: 10px;
+  }
+
+  .top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-bottom: 20px;
+  }
+
+  .logo img {
+    width: 100px;
+  }
+
+  .header-center {
+    flex: 1;
+    text-align: center;
+    font-size: 14px;
+  }
+
+  .header-center h6 {
+    margin: 0;
+    font-size: 16px;
+    color: green;
+  }
+
+  .emergency-box {
+    background-color: red;
+    color: white;
+    font-weight: bold;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+
+  @media print {
+    .print-btn {
+      display: none !important;
+    }
+
+    .invoice-container {
+      box-shadow: none;
+      margin: 0;
+      width: 100%;
+      padding: 0;
+    }
+
+    body {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    @page {
+      size: A4 portrait;
+      margin: 15mm 10mm 20mm 10mm;
+    }
+  }
+</style>
+
+<div id="advanceinvoice">
+  <div class="invoice-container">
+    <!-- Top Row -->
+    <div class="top-row">
+      {% for i in objhospt %}
+      <div class="logo">
+        <img src="{{ i.Logo.url }}" alt="{{ i.Name }} Logo">
+      </div>
+      <div class="header-center">
+        <h6>{{ i.Name }}</h6>
+        <div>{{ i.Address }}</div>
+        <div>Phone: {{ i.Contact_no }} | Email: {{ i.Email }} | GST NO: {{ i.GST }}</div>
+        
+      </div>
+      
+      <div class="emergency-box">
+        EMERGENCY ☎{{ i.Contact_no }}
+      </div>
+      {% endfor %}
+    </div>
+
+    <h2>IP Package Payment Receipt</h2>
+
+    <!-- Patient & Bill Details -->
+    <div class="info-row">
+      <div class="box">
+        <strong>Patient Details:</strong><br>
+        <p><strong>Name:</strong> {{ patient.Patient_Name }}</p>
+        <p><strong>MR Number:</strong> {{ patient.Medical_Record_Number }}</p>
+        <p><strong>Contact:</strong> {{ admission.contactnumber }}</p>
+        <p><strong>Admission Date:</strong> {{ admission_date }}</p>
+      </div>
+      <div class="box">
+        <strong>Bill Details:</strong><br>
+        <p><strong>Bill Date:</strong> {{ payment.payment_date }}</p>
+        <p><strong>IP No:</strong> {{ admission.id }}</p>
+        <p><strong>Invoice ID:</strong> {{ payment.id }}</p>
+      </div>
+    </div>
+
+    <!-- Package & Bystander -->
+    <table class="table table-bordered" style="width: 100%; font-size: 14px; margin-bottom: 20px;">
+      <thead style="background-color: #f2f2f2;">
+        <tr>
+          <th colspan="2" style="text-align: center;">Payment Details</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Selected Package</strong></td>
+          <td>{{ admission.package.packagename }}</td>
+        </tr>
+        <tr>
+          <td><strong>Package Duration</strong></td>
+          <td>{{ payment.start_date }} to {{ payment.end_date }}</td>
+        </tr>
+        <tr>
+          <td><strong>Total Package Rate</strong></td>
+          <td>₹{{ payment.total_amount }}</td>
+        </tr>
+        <tr>
+          <td><strong>Discount</strong></td>
+          <td>₹{{ payment.discount }}</td>
+        </tr>
+        <tr>
+          <td><strong>Bystander Charges</strong></td>
+          <td>₹{{ payment.bystander_payment }}</td>
+        </tr>
+        <tr>
+          <td><strong>Amount Paid</strong></td>
+          <td><strong>₹{{ now_paid_amount }}</strong></td>
+        </tr>
+        <tr>
+          <td><strong>Due Amount</strong></td>
+          <td>₹{{ payment.due_amount }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="total" style="font-size: 16px;">
+      Total Paid: ₹{{ now_paid_amount }}
+    </div>
+
+    <div class="footer" style="font-size: 13px;">
+      <p>This is a computer-generated statement and does not require a signature.</p>
+      <p>If you have any billing questions, contact us at: 
+       {% for i in objhospt %}  <a href="mailto:{{ i.Email }}">{{ i.Email }}</a>{%endfor%}
+      </p>
+    </div>
+
+    <div class="print-btn" style="text-align: center; margin-top: 20px;">
+      <button onclick="printInvoice()" class="btn btn-primary">Print Receipt</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function printInvoice() {
+  var invoiceContent = document.getElementById('advanceinvoice').outerHTML;
+  var styles = Array.from(document.querySelectorAll('style')).map(style => style.innerHTML).join('\n');
+
+  var printWindow = window.open('', '_blank');
+  printWindow.document.write('<html><head><title>Receipt</title><style>' + styles + '</style></head><body>' + invoiceContent + '</body></html>');
+  printWindow.document.close();
+  printWindow.print();
+}
+</script>
+{% endblock %}

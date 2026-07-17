@@ -1,0 +1,244 @@
+Normal Value save
+
+INSERT IGNORE INTO menonsdblive.ayurvedaapp_normalvaluemaster(gender, age_from, age_to, min_value, max_value, status, testchild_id, unit_id) VALUES
+-- ===== HEMATOLOGY TESTS =====
+-- 1. Basophiles (testchild_id: 13) - Unit: % (unit_id: 2)
+('Both', NULL, NULL, '0.00', '1.00', 1, 13, 2),
+
+-- 2. Platelet count (testchild_id: 14) - Unit: Lakhs/cumm (unit_id: 5)
+('Both', NULL, NULL, '1.50', '5.00', 1, 14, 5),
+
+-- 3. RBC (testchild_id: 15) - Unit: mill/cumm (unit_id: 4)
+('Both', NULL, NULL, '4.50', '5.50', 1, 15, 4),
+
+-- 4. PCV (testchild_id: 16) - Unit: % (unit_id: 2)
+('Both', NULL, NULL, '40.00', '50.00', 1, 16, 2),
+
+-- 5. MCV (testchild_id: 17) - Unit: FL (unit_id: 10)
+('Both', NULL, NULL, '84.00', '98.00', 1, 17, 10),
+
+-- 6. MCH (testchild_id: 18) - Unit: PG (unit_id: 11)
+('Both', NULL, NULL, '27.00', '34.00', 1, 18, 11),
+
+-- 7. MCHC (testchild_id: 19) - Unit: g/dl (unit_id: 7)
+('Both', NULL, NULL, '32.00', '36.00', 1, 19, 7),
+
+-- ===== BIO CHEMISTRY TESTS =====
+-- 8. Blood Sugar FBS (testchild_id: 25) - Unit: mg/dl (unit_id: 1)
+('Both', NULL, NULL, '70.00', '110.00', 1, 25, 1),
+
+-- 9. Blood Sugar PPBS (testchild_id: 26) - Unit: mg/dl (unit_id: 1)
+('Both', NULL, NULL, '80.00', '140.00', 1, 26, 1),
+
+-- 10. Blood Sugar Random (testchild_id: 27) - Unit: mg/dl (unit_id: 1)
+('Both', NULL, NULL, '80.00', '150.00', 1, 27, 1),
+
+-- 11. Lipid profile (testchild_id: 28) - No range, skip
+
+-- 12. Cholestrol (testchild_id: 29) - Unit: mg/dl (unit_id: 1)
+('Both', NULL, NULL, '150.00', '200.00', 1, 29, 1),
+
+-- 13. Triglycerides (testchild_id: 30) - Unit: mg/dl (unit_id: 1)
+('Both', NULL, NULL, '50.00', '150.00', 1, 30, 1),
+
+-- 14. HDL-cholestrol (testchild_id: 31) - Unit: mg/dl (unit_id: 1)
+('Both', NULL, NULL, '40.00', '60.00', 1, 31, 1),
+
+-- 15. LDL-cholestrol (testchild_id: 32) - Unit: mg/dl (unit_id: 1)
+('Both', NULL, NULL, '70.00', '130.00', 1, 32, 1),
+
+-- 16. VLDL (testchild_id: 33) - Unit: mg/dl (unit_id: 1)
+('Both', NULL, NULL, '10.00', '40.00', 1, 33, 1),
+
+-- 17. Ratio (testchild_id: 34) - Unit: mg/dl (unit_id: 1)
+('Both', NULL, NULL, '0.00', '4.00', 1, 34, 1),
+
+-- 19. Blood urea (testchild_id: 36) - Unit: mg/dl (unit_id: 1)
+('Both', NULL, NULL, '10.00', '40.00', 1, 36, 1),
+
+-- 20. Creatine (testchild_id: 37) - Unit: mg/dl (unit_id: 1)
+('Both', NULL, NULL, '0.60', '1.40', 1, 37, 1),
+
+-- 21. Uric acid (testchild_id: 38) - Unit: mg/dl (unit_id: 1)
+('Both', NULL, NULL, '3.50', '7.50', 1, 38, 1),
+
+-- 22. Calcium (testchild_id: 39) - Unit: mg/dl (unit_id: 1)
+('Both', NULL, NULL, '8.00', '10.50', 1, 39, 1),
+
+
+-- 24. Bilirubin total (testchild_id: 41) - Unit: mg/dl (unit_id: 1)
+('Both', NULL, NULL, '0.30', '1.20', 1, 41, 1),
+
+-- 25. Direct (testchild_id: 42) - Unit: mg/dl (unit_id: 1)
+('Both', NULL, NULL, '0.10', '0.40', 1, 42, 1),
+
+-- 26. Indirect (testchild_id: 43) - Unit: mg/dl (unit_id: 1)
+('Both', NULL, NULL, '0.20', '0.80', 1, 43, 1),
+
+-- 27. SGOT (testchild_id: 44) - Unit: U/L (unit_id: 6)
+('Both', NULL, NULL, '5.00', '40.00', 1, 44, 6),
+
+-- 28. SGPT (testchild_id: 45) - Unit: U/L (unit_id: 6)
+('Both', NULL, NULL, '7.00', '45.00', 1, 45, 6),
+
+-- 29. Alkaline phosphatase (testchild_id: 46) - Unit: U/L (unit_id: 6)
+('Both', NULL, NULL, '45.00', '150.00', 1, 46, 6),
+
+-- 30. Total protien (testchild_id: 47) - Unit: g/dl (unit_id: 7)
+('Both', NULL, NULL, '6.00', '8.30', 1, 47, 7),
+
+-- 31. Albumin (testchild_id: 48) - Unit: g/dl (unit_id: 7)
+('Both', NULL, NULL, '3.50', '5.00', 1, 48, 7),
+
+-- 32. Globulin (testchild_id: 49) - Unit: g/dl (unit_id: 7)
+('Both', NULL, NULL, '2.00', '3.50', 1, 49, 7),
+
+-- 33. A.G Ratio (testchild_id: 50) - Unit: mg/dl (unit_id: 1) - using same as ratio
+('Both', NULL, NULL, '1.00', '2.00', 1, 50, 1),
+
+-- ===== ELECTROLYTES =====
+-- 34. Serum Electrolytes (testchild_id: 56) - No range, skip
+
+-- 35. Sodium (testchild_id: 57) - Unit: mmol/L (unit_id: 8)
+('Both', NULL, NULL, '135.00', '145.00', 1, 57, 8),
+
+-- 36. Pottassium (testchild_id: 58) - Unit: mmol/L (unit_id: 8)
+('Both', NULL, NULL, '3.50', '5.00', 1, 58, 8),
+
+-- 37. Chloride (testchild_id: 59) - Unit: mmol/L (unit_id: 8)
+('Both', NULL, NULL, '96.00', '110.00', 1, 59, 8),
+
+-- ===== DIABETES TESTS =====
+-- 38. HbAlc-Normal (testchild_id: 112) - Unit: % (unit_id: 2)
+('Both', NULL, NULL, '6.00', '8.00', 1, 112, 2),
+
+-- 39. HbAlc-Estimated avg glucose (testchild_id: 113) - Unit: mg/dl (unit_id: 1)
+('Both', NULL, NULL, '0.00', '0.00', 1, 113, 1),
+
+-- 40. GTT-Fasting (testchild_id: 52) - Unit: mg/dl (unit_id: 1)
+('Both', NULL, NULL, '70.00', '110.00', 1, 52, 1),
+
+-- 41. GTT-2 hour blood sugar (testchild_id: 53) - Unit: mg/dl (unit_id: 1)
+('Both', NULL, NULL, '80.00', '140.00', 1, 53, 1),
+
+-- 42. GCT-Fbs (testchild_id: 54) - Unit: mg/dl (unit_id: 1)
+('Both', NULL, NULL, '70.00', '110.00', 1, 54, 1),
+
+-- 43. GCT-1 hour blood sugar (testchild_id: 55) - Unit: mg/dl (unit_id: 1)
+('Both', NULL, NULL, '0.00', '140.00', 1, 55, 1),
+
+-- ===== HORMONES =====
+-- 44. FT3 (testchild_id: 60) - Unit: pmol/L (unit_id: 9)
+('Both', NULL, NULL, '2.02', '4.43', 1, 60, 9),
+
+-- 45. FT4 (testchild_id: 61) - Unit: pmol/L (unit_id: 9)
+('Both', NULL, NULL, '0.90', '1.69', 1, 61, 9),
+
+-- 46. TSH (testchild_id: 62) - Unit: mlU/L (unit_id: 14)
+('Both', NULL, NULL, '0.30', '4.20', 1, 62, 14),
+
+-- 47. Vitamin D (testchild_id: 63) - Unit: ng/mL (unit_id: 15)
+('Both', NULL, NULL, '30.00', '100.00', 1, 63, 15),
+
+-- ===== ADDITIONAL TESTS FROM YOUR DATA =====
+-- 48. Bleeding time (testchild_id: 20) - Unit: minutes (unit_id: 18)
+('Both', NULL, NULL, '1.00', '5.00', 1, 20, 18),
+
+-- 49. Clotting time (testchild_id: 21) - Unit: minutes (unit_id: 18)
+('Both', NULL, NULL, '5.00', '10.00', 1, 21, 18),
+
+-- 50. AEC count (testchild_id: 24) - Unit: cells/cmm (unit_id: 3)
+('Both', NULL, NULL, '40.00', '440.00', 1, 24, 3),
+
+-- 51. Maleria Card (testchild_id: 23) - Unit: Positive/Negative (unit_id: 16)
+('Both', NULL, NULL, 'Negative', 'Negative', 1, 23, 16),
+
+-- 52. Blood group (testchild_id: 22) - Unit: Positive/Negative (unit_id: 16)
+('Both', NULL, NULL, 'A+', 'AB-', 1, 22, 16),
+
+-- 53. HIV (testchild_id: 75) - Unit: Positive/Negative (unit_id: 16)
+('Both', NULL, NULL, 'Negative', 'Negative', 1, 75, 16),
+
+-- 54. HBS Ag (testchild_id: 76) - Unit: Positive/Negative (unit_id: 16)
+('Both', NULL, NULL, 'Negative', 'Negative', 1, 76, 16),
+
+-- 55. HCV (testchild_id: 77) - Unit: Positive/Negative (unit_id: 16)
+('Both', NULL, NULL, 'Negative', 'Negative', 1, 77, 16),
+
+-- 56. VDRL (testchild_id: 74) - Unit: Positive/Negative (unit_id: 16)
+('Both', NULL, NULL, 'Negative', 'Negative', 1, 74, 16),
+
+-- 57. WIDAL (testchild_id: 69) - Unit: Positive/Negative (unit_id: 16)
+('Both', NULL, NULL, 'Negative', 'Negative', 1, 69, 16),
+
+-- 58. S.typhi "O" (testchild_id: 70) - Unit: Positive/Negative (unit_id: 16)
+('Both', NULL, NULL, 'Negative', 'Negative', 1, 70, 16),
+
+-- 59. S.typhi "H" (testchild_id: 71) - Unit: Positive/Negative (unit_id: 16)
+('Both', NULL, NULL, 'Negative', 'Negative', 1, 71, 16),
+
+-- 60. S.para typhi "AH" (testchild_id: 72) - Unit: Positive/Negative (unit_id: 16)
+('Both', NULL, NULL, 'Negative', 'Negative', 1, 72, 16),
+
+-- 61. S.para typhi "BH" (testchild_id: 73) - Unit: Positive/Negative (unit_id: 16)
+('Both', NULL, NULL, 'Negative', 'Negative', 1, 73, 16),
+
+-- 62. Dengue (testchild_id: 79) - Unit: Positive/Negative (unit_id: 16)
+('Both', NULL, NULL, 'Negative', 'Negative', 1, 79, 16),
+
+-- 63. IGM (testchild_id: 80) - Unit: Positive/Negative (unit_id: 16)
+('Both', NULL, NULL, 'Negative', 'Negative', 1, 80, 16),
+
+-- 64. IGG (testchild_id: 81) - Unit: Positive/Negative (unit_id: 16)
+('Both', NULL, NULL, 'Negative', 'Negative', 1, 81, 16),
+
+-- 65. Trop T (testchild_id: 78) - Unit: Positive/Negative (unit_id: 16)
+('Both', NULL, NULL, 'Negative', 'Negative', 1, 78, 16),
+
+-- 66. RA Factor (testchild_id: 68) - Unit: Positive/Negative (unit_id: 16)
+('Both', NULL, NULL, 'Negative', 'Negative', 1, 68, 16),
+
+-- 67. ASO (testchild_id: 67) - Unit: U/L (unit_id: 6)
+('Both', NULL, NULL, '0.00', '200.00', 1, 67, 6),
+
+-- 68. CRP (testchild_id: 66) - Unit: mg/dL (unit_id: 1)
+('Both', NULL, NULL, '0.00', '6.00', 1, 66, 1),
+
+-- 69. AMH (testchild_id: 64) - Unit: ng/mL (unit_id: 15)
+('Both', NULL, NULL, '1.00', '4.00', 1, 64, 15),
+
+-- 70. BHCG (testchild_id: 65) - Unit: iU/L (unit_id: 17)
+('Both', NULL, NULL, '0.00', '5.00', 1, 65, 17),
+
+-- 71. Spectum AFB stain (testchild_id: 82) - Unit: Positive/Negative (unit_id: 16)
+('Both', NULL, NULL, 'Negative', 'Negative', 1, 82, 16),
+
+-- 72. Mantox test (testchild_id: 83) - Unit: Positive/Negative (unit_id: 16)
+('Both', NULL, NULL, 'Negative', 'Negative', 1, 83, 16),
+
+-- 73. Stool Routine (testchild_id: 84) - Unit: Positive/Negative (unit_id: 16)
+('Both', NULL, NULL, 'Negative', 'Negative', 1, 84, 16),
+
+-- 74. Urine (testchild_id: 85) - Unit: Positive/Negative (unit_id: 16)
+('Both', NULL, NULL, 'Negative', 'Negative', 1, 85, 16),
+
+-- 75. Reaction (testchild_id: 86) - Unit: Positive/Negative (unit_id: 16)
+('Both', NULL, NULL, 'Negative', 'Negative', 1, 86, 16),
+
+-- 76. Pus cells (testchild_id: 91) - Unit: cells/cmm (unit_id: 3)
+('Both', NULL, NULL, '0.00', '5.00', 1, 91, 3),
+
+-- 77. RBCS (testchild_id: 92) - Unit: cells/cmm (unit_id: 3)
+('Both', NULL, NULL, '0.00', '2.00', 1, 92, 3),
+
+-- 78. Epithelial cells (testchild_id: 93) - Unit: cells/cmm (unit_id: 3)
+('Both', NULL, NULL, '0.00', '5.00', 1, 93, 3),
+
+-- 79. Urine acetone (testchild_id: 97) - Unit: mg/dl (unit_id: 1)
+('Both', NULL, NULL, '0.00', '0.00', 1, 97, 1),
+
+-- 80. Urine pregnancy test (testchild_id: 100) - Unit: Positive/Negative (unit_id: 16)
+('Both', NULL, NULL, 'Negative', 'Negative', 1, 100, 16),
+
+-- 81. Benedicts test (testchild_id: 111) - Unit: Positive/Negative (unit_id: 16)
+('Both', NULL, NULL, 'Negative', 'Negative', 1, 111, 16);

@@ -1,0 +1,361 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load math_filters %}
+
+{% block content %}
+<style>
+    .form-header {
+        background-color: #00796b !important;
+        color: #fff !important;
+        padding: 15px 20px;
+        margin-bottom: 25px;
+        border-radius: 8px;
+    }
+    .form-container {
+        background: #fff;
+        padding: 20px 30px;
+        max-width: 1200px;
+        margin: 20px auto;
+        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+    }
+    .form-group {
+        margin-bottom: 15px;
+    }
+    .form-group label {
+        font-weight: 600;
+        font-size: 13px;
+        color: #555;
+    }
+    .form-group label.required:after {
+        content: " *";
+        color: red;
+        font-weight: bold;
+    }
+    .form-group input, .form-group select, .form-group textarea {
+        width: 100%;
+        padding: 8px 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+        border-color: #00796b;
+        outline: none;
+    }
+    .proforma-info {
+        background: #e8f5e9;
+        padding: 10px 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+        border-left: 4px solid #00796b;
+    }
+    .items-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+    }
+    .items-table th, .items-table td {
+        border: 1px solid #ddd;
+        padding: 6px;
+        text-align: left;
+    }
+    .items-table th {
+        background: #f5f5f5;
+        font-weight: 600;
+    }
+    .totals-section {
+        margin-top: 20px;
+        text-align: right;
+        padding: 15px;
+        background: #f9f9f9;
+        border-radius: 5px;
+    }
+    .btn-submit {
+        background: #00796b;
+        color: #fff;
+        border: none;
+        padding: 10px 25px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    .btn-submit:hover {
+        background: #005a4e;
+    }
+    .btn-cancel {
+        background: #6c757d;
+        color: #fff;
+        border: none;
+        padding: 10px 25px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    .btn-cancel:hover {
+        background: #545b62;
+    }
+    .error-message {
+        color: red;
+        font-size: 12px;
+        margin-top: 5px;
+        display: none;
+    }
+</style>
+
+<div class="container-fluid">
+    <div class="form-container">
+        <div class="form-header">
+            <h4 style="margin:0; color:#fff;">B2B Tax Invoice (With GST)</h4>
+        </div>
+
+        <div class="proforma-info">
+            <p><strong>Proforma Reference:</strong> {{ proforma.voucher_no }}</p>
+            <p><strong>Proforma Date:</strong> {{ proforma.invoice_date|date:"d-m-Y" }}</p>
+            <p><strong>Buyer from Proforma:</strong> {{ proforma.buyer_name }}</p>
+        </div>
+
+        <form method="POST" id="b2bForm" action="{% url 'b2b_invoice_create' proforma.id %}" novalidate>
+            {% csrf_token %}
+            
+            <!-- Branch Information -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>Source Branch *</label>
+                        <input type="text" value="{{ proforma.branch.Branch_Name }}" readonly class="form-control">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>Destination Branch *</label>
+                        <input type="text" name="destination_branch" value="{{destinationbr}}" readonly class="form-control">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Invoice Date *</label>
+                        <input type="date" name="invoice_date" value="{{ today|date:'Y-m-d' }}" required>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Branch</label>
+                        <input type="text" value="{{ proforma.branch.Branch_Name }}" readonly class="form-control">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Payment Mode</label>
+                        <select name="payment_mode" class="form-control">
+                            <option value="Cash">Cash</option>
+                            <option value="Online">Online</option>
+                            <option value="Credit">Credit</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <h5 style="margin-top: 20px;">Buyer Details (Bill to)</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="required">Buyer Name *</label>
+                        <input type="text" name="buyer_name" value="{{ proforma.buyer_name }}" required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>GSTIN</label>
+                        <input type="text" name="buyer_gstin" value="{{ proforma.buyer_gstin }}">
+                    </div>
+                </div>
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <label class="required">Buyer Address *</label>
+                        <textarea name="buyer_address" rows="2" required>{{ proforma.buyer_address }}</textarea>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>State</label>
+                        <input type="text" name="buyer_state" value="Kerala">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>State Code</label>
+                        <input type="text" name="buyer_state_code" value="32">
+                    </div>
+                </div>
+            </div>
+
+            <h5 style="margin-top: 20px;">Consignee Details (Ship to)</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="required">Consignee Name *</label>
+                        <input type="text" name="consignee_name" value="" required placeholder="Enter consignee name">
+                    </div>
+                </div>
+             
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <label class="required">Consignee Address *</label>
+                        <textarea name="consignee_address" rows="2" required placeholder="Enter complete consignee address"></textarea>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="required">State *</label>
+                        <input type="text" name="consignee_state" value="" required placeholder="Enter state">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="required">State Code *</label>
+                        <input type="text" name="consignee_state_code" value="" required placeholder="Enter state code">
+                    </div>
+                </div>
+            </div>
+
+            <h5 style="margin-top: 20px;">Dispatch Details</h5>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Buyer's Order No.</label>
+                        <input type="text" name="buyers_order_no">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Buyer's Order Date</label>
+                        <input type="date" name="buyers_order_date">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Dispatch Doc No.</label>
+                        <input type="text" name="dispatch_doc_no">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Delivery Note Date</label>
+                        <input type="date" name="delivery_note_date">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Dispatched Through</label>
+                        <input type="text" name="dispatched_through" value="By Road">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Destination</label>
+                        <input type="text" name="destination">
+                    </div>
+                </div>
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <label>Terms of Delivery</label>
+                        <input type="text" name="terms_of_delivery" value="F.O.R. Destination">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Items Table -->
+            <h5 style="margin-top: 20px;">Invoice Items</h5>
+            <div class="table-responsive">
+                <table class="items-table">
+                    <thead>
+                        <tr>
+                            <th>Sl</th>
+                            <th>Description of Goods</th>
+                            <th>HSN/SAC</th>
+                            <th>Qty</th>
+                            <th>Unit</th>
+                            <th>Rate (₹)</th>
+                            <th>Taxable Value</th>
+                            <th>GST %</th>
+                            <th>CGST</th>
+                            <th>SGST</th>
+                            <th>Total (₹)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items %}
+                        <tr>
+                            <td class="text-center">{{ forloop.counter }}</td>
+                            <td>
+                                {{ item.description }}
+                                {% if item.batch_info %}
+                                <br><small>Batch: {{ item.batch_info }}</small>
+                                {% endif %}
+                            </td>
+                            <td>{{ item.hsn_code|default:"-" }}</td>
+                            <td class="text-right">{{ item.quantity|floatformat:0 }}</td>
+                            <td>{{ item.unit }}</td>
+                            <td class="text-right">₹ {{ item.rate|floatformat:2 }}</td>
+                            <td class="text-right">₹ {{ item.quantity|multiply:item.rate|floatformat:2 }}</td>
+                            <td class="text-right">{{ item.gst_percent|floatformat:1 }}%</td>
+                            <td class="text-right">{{ item.gst_percent|divide:2|floatformat:1 }}%</td>
+                            <td class="text-right">{{ item.gst_percent|divide:2|floatformat:1 }}%</td>
+                            <td class="text-right">₹ {{ item.quantity|multiply:item.rate|multiply:item.gst_percent|divide:100|add:item.quantity|multiply:item.rate|floatformat:2 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Totals Section -->
+            <div class="totals-section">
+                <p>Subtotal: <strong>₹ {{ proforma.subtotal|floatformat:2 }}</strong></p>
+                <p>CGST Total: <strong>₹ {{ proforma.gst_total|divide:2|floatformat:2 }}</strong></p>
+                <p>SGST Total: <strong>₹ {{ proforma.gst_total|divide:2|floatformat:2 }}</strong></p>
+                <p style="font-size: 16px; border-top: 2px solid #000; padding-top: 10px;">
+                    Grand Total: <strong>₹ {{ proforma.grand_total|floatformat:2 }}</strong>
+                </p>
+                <p>In Words: <span>{{ proforma.amount_in_words|default:"Zero Only" }}</span></p>
+            </div>
+
+            <div class="form-actions" style="display: flex; justify-content: center; gap: 15px; margin-top: 25px;">
+                <button type="button" class="btn-cancel" onclick="window.location.href='{% url 'proforma_invoice_list' %}'">Cancel</button>
+                <button type="submit" class="btn-submit">Generate B2B Tax Invoice</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Client-side validation to ensure consignee fields are filled
+    document.getElementById('b2bForm').addEventListener('submit', function(e) {
+        let consigneeName = document.querySelector('input[name="consignee_name"]').value.trim();
+        let consigneeAddress = document.querySelector('textarea[name="consignee_address"]').value.trim();
+        let consigneeState = document.querySelector('input[name="consignee_state"]').value.trim();
+        let consigneeStateCode = document.querySelector('input[name="consignee_state_code"]').value.trim();
+        
+        if (!consigneeName) {
+            alert('Please enter Consignee Name');
+            e.preventDefault();
+            return false;
+        }
+        if (!consigneeAddress) {
+            alert('Please enter Consignee Address');
+            e.preventDefault();
+            return false;
+        }
+        if (!consigneeState) {
+            alert('Please enter Consignee State');
+            e.preventDefault();
+            return false;
+        }
+        if (!consigneeStateCode) {
+            alert('Please enter Consignee State Code');
+            e.preventDefault();
+            return false;
+        }
+    });
+</script>
+{% endblock %}

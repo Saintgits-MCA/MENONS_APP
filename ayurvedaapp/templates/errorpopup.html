@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error</title>
+    <!-- Include any necessary CSS files or styles -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .error-container {
+            text-align: center;
+        }
+        .error-message {
+            font-size: 1.5rem;
+            color: #dc3545;
+            margin-bottom: 20px;
+        }
+        .back-link {
+            color: #007bff;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <h1>Error</h1>
+        <p class="error-message">{{ error_message }}</p>
+        <p><a href="{}" class="back-link">Go back to homepage</a></p>
+    </div>
+</body>
+</html>

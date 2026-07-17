@@ -1,0 +1,1341 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="content-wrapper">
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Previous Case History</h1>
+          <h6 class="text-muted"></h6>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="{% url 'index' %}">Home</a></li>
+            <li class="breadcrumb-item active">Case History</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Search Section -->
+  <section class="content">
+    <div class="card card-primary">
+      <div class="card-header">
+        <h3 class="card-title">Search Patient</h3>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-8">
+            <div class="form-group">
+              <label for="mrSearch">MR Number / Phone No / Name</label>
+              <input type="text" id="mrSearch" class="form-control" placeholder="Enter search term">
+            </div>
+          </div>
+          <div class="col-md-4 mt-4">
+            <button id="searchBtn" class="btn btn-primary">Search</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Appointment Assignment Section (Only for superadmin) -->
+    <div class="card mt-3" id="appointmentAssignmentCard" style="display: none;">
+      <div class="card-header bg-warning">
+        <h3 class="card-title"><i class="fas fa-calendar-plus"></i> Assign Appointment</h3>
+      </div>
+      <div class="card-body">
+        <!-- RED Warning Alert for New Dates -->
+        <div class="alert alert-danger mb-3" id="newDateWarning" style="display: none;">
+          <h5 class="alert-heading"><i class="fas fa-exclamation-triangle mr-2"></i> Invalid Appointment Date</h5>
+          <p class="mb-0" id="newDateMessage"></p>
+          <small class="d-block mt-1"><i class="fas fa-calendar-check mr-1"></i> There is no such appointment on this particular date. Choose dates from Recent Visits table.</small>
+        </div>
+        
+        <!-- Success Alert for Assigned Appointments -->
+        <div class="alert alert-success mb-3" id="appointmentSuccessAlert" style="display: none;">
+          <h5 class="alert-heading"><i class="fas fa-check-circle mr-2"></i> Appointment Assigned Successfully!</h5>
+          <p class="mb-0" id="appointmentSuccessMessage"></p>
+          <small class="d-block mt-1"><i class="fas fa-external-link-alt mr-1"></i> The "New Prescription" button is now enabled for this patient.</small>
+        </div>
+        
+        <!-- Duplicate Appointment Warning Alert -->
+        <div class="alert alert-warning mb-3" id="duplicateWarningAlert" style="display: none;">
+          <h5 class="alert-heading"><i class="fas fa-exclamation-triangle mr-2"></i> Duplicate Appointment Assignment</h5>
+          <p class="mb-0" id="duplicateWarningMessage"></p>
+          <div class="mt-2" id="duplicateDetails"></div>
+          <small class="d-block mt-1"><i class="fas fa-calendar-times mr-1"></i> This appointment is already assigned. Please choose a different schedule date.</small>
+        </div>
+        
+        <!-- Main Content Row -->
+        <div class="row">
+          <!-- Left Column: Appointment Form -->
+          <div class="col-md-8">
+            <div class="row">
+              <!-- Appointment ID Display -->
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="appointmentIdTextbox">Appointment ID</label>
+                  <input type="text"
+                         class="form-control"
+                         id="appointmentIdTextbox"
+                         readonly
+                         placeholder="Auto-filled based on selected date">
+                </div>
+              </div>
+              
+              <!-- Date Selection -->
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="appointmentDate">Appointment Date *</label>
+                  <input type="date" class="form-control" id="appointmentDate" required>
+                  <small class="text-muted">Select appointment date (must be from Recent Visits)</small>
+                </div>
+              </div>
+            </div>
+            
+            <div class="row">
+              <!-- Cashistory Schedule Date -->
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="scheduleDate">Select Cashistory Schedule date</label>
+                  <input type="date" class="form-control" id="scheduleDate" min="{{ today|date:'Y-m-d' }}">
+                  <small class="text-muted">Optional: Set schedule date for case history</small>
+                </div>
+              </div>
+              
+              <!-- Branch Selection -->
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="branchSelect">Select Branch *</label>
+                  <select class="form-control" id="branchSelect" required>
+                    <option selected disabled value="">Select Branch</option>
+                    {% for branch in branchobj %}
+                      <option value="{{ branch.id }}">{{ branch.Branch_Name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+            </div>
+            
+            <div class="row">
+              <!-- Doctor Selection -->
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="doctorSelect">Select Doctor *</label>
+                  <select class="form-control" id="doctorSelect" disabled>
+                    <option selected disabled value="">Select branch first</option>
+                  </select>
+                  <small class="text-muted">Only CMO and Associate Doctors</small>
+                </div>
+              </div>
+              
+              <!-- Remarks -->
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="appointmentRemarks">Remarks</label>
+                  <input type="text" class="form-control" id="appointmentRemarks" 
+                         placeholder="Optional remarks">
+                </div>
+              </div>
+            </div>
+            
+            <div class="row">
+              <!-- Doctor Info -->
+              <div class="col-md-6">
+                <div id="doctorInfoCard" style="display: none;">
+                  <div class="alert alert-success p-2">
+                    <h6 class="mb-1"><i class="fas fa-user-md"></i> Selected Doctor</h6>
+                    <div id="doctorDetails" class="small"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Selected Patient Info -->
+            <div class="row mt-2">
+              <div class="col-md-12">
+                <div class="alert alert-info p-2">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0"><i class="fas fa-user-injured"></i> Selected Patient</h6>
+                  </div>
+                  <div id="patientDetails" class="row mt-2">
+                    <div class="col-4">
+                      <small><strong>Name:</strong><br><span id="patientNameDisplay" class="text-dark">-</span></small>
+                    </div>
+                    <div class="col-4">
+                      <small><strong>MR Number:</strong><br><span id="patientMRDisplay" class="text-dark">-</span></small>
+                    </div>
+                    <div class="col-4">
+                      <small><strong>Phone:</strong><br><span id="patientPhoneDisplay" class="text-dark">-</span></small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Assign Appointment Button -->
+            <div class="row mt-3">
+              <div class="col-md-12 text-right">
+                <button id="assignAppointmentBtn" class="btn btn-warning" disabled>
+                  <i class="fas fa-calendar-check"></i> Assign Appointment
+                </button>
+                <small class="text-muted ml-2">Assign appointment to enable "New Prescription" button</small>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Right Column: ALL Visits History (No limit) -->
+          <div class="col-md-4">
+            <!-- 🧾 ALL Visit History Section -->
+            <div class="card h-90">
+              <div class="card-header bg-info text-white py-2">
+                <div class="d-flex justify-content-between align-items-center">
+                  <h6 class="card-title mb-0">
+                    <i class="fas fa-history mr-1"></i> All Visits
+                  </h6>
+                  <span id="visitCountBadge" class="badge badge-light">0</span>
+                </div>
+              </div>
+              <div class="card-body p-0" style="max-height: 300px; overflow-y: auto;">
+                <div class="table-responsive">
+                  <table class="table table-sm table-bordered table-hover mb-0" id="visitHistoryTable">
+                    <thead class="thead-light">
+                      <tr>
+                        <th class="py-1 px-2" style="font-size: 0.8rem;">Date</th>
+                        <th class="py-1 px-2" style="font-size: 0.8rem;">Doctor</th>
+                        <th class="py-1 px-2" style="font-size: 0.8rem;">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <!-- Visit history will be loaded here -->
+                      <tr id="noHistoryRow">
+                        <td colspan="3" class="text-center py-3 text-muted">
+                          <i class="fas fa-info-circle mr-1"></i>
+                          No visit history found
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="p-2 bg-light border-top">
+                  <small class="text-muted">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Showing all visits. Only dates from history can be selected.
+                  </small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal for displaying search results with DataTable -->
+    <div class="modal fade" id="searchModal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title" id="searchModalLabel">Search Results</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <!-- DataTable for displaying search results -->
+            <table id="searchResultsTable" class="display table table-bordered">
+              <thead>
+                <tr>
+                  <th>MR Number</th>
+                  <th>Patient Name</th>
+                  <th>Address</th>
+                  <th>Contact No</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Results will be appended here -->
+              </tbody>
+            </table>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results Table Section (Hidden for superadmin, shown for others) -->
+    {% if not is_superadmin %}
+    <div class="card mt-3" id="resultsTableCard" style="display: none;">
+      <div class="card-header bg-success">
+        <h3 class="card-title text-white"><i class="fas fa-list mr-2"></i> Patients List</h3>
+      </div>
+      <div class="card-body">
+        <table id="resultsTable" class="table table-bordered table-striped">
+          <thead class="bg-primary text-white">
+            <tr>
+              <th>MR Number</th>
+              <th>Patient Name</th>
+              <th>Phone No</th>
+              <th>Address</th>
+              <th>Appointment Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Data will be inserted dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+  </section>
+</div>
+
+<!-- CSRF Token for AJAX -->
+{% csrf_token %}
+
+<!-- Page Data Script -->
+<script id="page-data" type="application/json">
+{
+  "isSuperadmin": {% if is_superadmin %}true{% else %}false{% endif %},
+  "today": "{{ today|date:'Y-m-d' }}",
+  "currentDoctorId": {{ request.session.staffid|default:'null' }}
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  // Get data from JSON script tag
+  const pageData = JSON.parse(document.getElementById('page-data').textContent);
+  const isSuperadmin = pageData.isSuperadmin;
+  const today = pageData.today;
+  const currentDoctorId = pageData.currentDoctorId; // Get current doctor ID
+  
+  // CSRF token setup
+  const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+  
+  // Initialize DataTable for results table (only if not superadmin)
+  let table = null;
+  if (!isSuperadmin) {
+    table = $('#resultsTable').DataTable({
+      paging: true,
+      searching: false,
+      info: true,
+      lengthChange: false,
+      pageLength: 10,
+      ordering: false, // ✅ Disable default DataTable ordering
+      order: [], // ✅ Clear any default ordering
+      columns: [
+        { data: 'mr_number' },
+        { data: 'patient_name' },
+        { data: 'phone' },
+        { data: 'address' },
+        { data: 'appointment_status' },
+        { data: 'action' }
+      ]
+    });
+  }
+
+  // Store selected patient and appointment data
+  let selectedPatientId = null;
+  let selectedPatientData = null;
+  let selectedDoctorId = null;
+  let selectedBranchId = null;
+  let appointmentDate = null;
+  let scheduleDate = null;
+  let appointmentAssigned = false;
+  let patientVisitHistory = [];
+  let currentAssignedAppointment = null; // Store appointment reference
+  let patientAppointments = [];
+
+  // Function to scroll to visit history section
+  window.scrollToVisitHistory = function() {
+    $('html, body').animate({
+      scrollTop: $('#visitHistoryTable').offset().top - 20
+    }, 500);
+  };
+
+  // Function to show results table (only for non-superadmin)
+  function showResultsTable() {
+    if (!isSuperadmin) {
+      $('#resultsTableCard').slideDown();
+    }
+  }
+
+  // Function to hide results table
+  function hideResultsTable() {
+    if (!isSuperadmin) {
+      $('#resultsTableCard').slideUp();
+    }
+  }
+
+  // Function to update prescription button state based on appointment type
+  function updatePrescriptionButtonState($btn, appointmentData) {
+    const appointmentType = appointmentData.appointment_type;
+    const scheduleDate = appointmentData.schedule_date || appointmentData.appointment_date;
+    const assignedDoctorId = appointmentData.doctor_id;
+    const patientId = $btn.data('patient-id');
+    const appointmentId = appointmentData.appointment_id;
+    
+    const todayDate = new Date().toISOString().split('T')[0];
+    const isScheduleDate = (todayDate === scheduleDate);
+    const isAssignedDoctor = (currentDoctorId == assignedDoctorId);
+    
+    let prescriptionUrl = '';
+    let buttonEnabled = false;
+    let buttonTitle = '';
+    let buttonClass = 'btn-secondary';
+    
+    if (appointmentType === 'assigned') {
+      // ✅ ASSIGNED APPOINTMENT LOGIC
+      if (isScheduleDate && isAssignedDoctor) {
+        // ✅ TODAY IS SCHEDULE DATE + CORRECT DOCTOR
+        prescriptionUrl = `/create_casehistory/?ids=${patientId}` +
+                        `&assigned_appointment_id=${appointmentId}` +
+                        `&schedule_date=${scheduleDate}` +
+                        `&created_at=${scheduleDate}`;
+        
+        buttonEnabled = true;
+        buttonClass = 'btn-success';
+        buttonTitle = `Create prescription for schedule date: ${scheduleDate}`;
+      } else {
+        // ❌ NOT SCHEDULE DATE OR NOT ASSIGNED DOCTOR
+        buttonEnabled = false;
+        buttonClass = 'btn-secondary';
+        
+        if (!isScheduleDate && !isAssignedDoctor) {
+          buttonTitle = `Available only on ${scheduleDate} for assigned doctor`;
+        } else if (!isScheduleDate) {
+          buttonTitle = `Prescription available only on schedule date: ${scheduleDate}`;
+        } else if (!isAssignedDoctor) {
+          buttonTitle = 'Only assigned doctor can create prescription';
+        }
+      }
+    } else {
+      // ✅ REGULAR APPOINTMENT LOGIC - ALWAYS ENABLED
+      prescriptionUrl = `/create_casehistory/?ids=${patientId}` +
+                       `&appointment_id=${appointmentId}` +
+                       `&created_at=${scheduleDate}`;
+      
+      buttonEnabled = true;
+      buttonClass = 'btn-success';
+      buttonTitle = 'Create prescription';
+    }
+    
+    // Update the button
+    if ($btn.is('button')) {
+      // Convert button to link if enabled
+      if (buttonEnabled) {
+        const newAnchor = $('<a>', {
+          class: `btn ${buttonClass} btn-sm prescription-btn`,
+          href: prescriptionUrl,
+          'data-patient-id': patientId,
+          'data-appointment-id': appointmentId,
+          'data-schedule-date': scheduleDate,
+          'data-appointment-type': appointmentType,
+          'data-doctor-id': assignedDoctorId,
+          'data-patient-data': JSON.stringify($btn.data('patient-data')),
+          title: buttonTitle,
+          html: '<i class="fas fa-file-medical"></i> New Prescription'
+        });
+        $btn.replaceWith(newAnchor);
+      } else {
+        // Keep as disabled button
+        $btn
+          .prop('disabled', true)
+          .removeClass('btn-success')
+          .addClass('btn-secondary')
+          .attr('title', buttonTitle);
+      }
+    } else if ($btn.is('a')) {
+      // Update existing link
+      if (buttonEnabled) {
+        $btn
+          .attr('href', prescriptionUrl)
+          .removeClass('btn-secondary')
+          .addClass('btn-success')
+          .prop('disabled', false)
+          .attr('title', buttonTitle);
+      } else {
+        // Convert link to disabled button
+        const newButton = $('<button>', {
+          class: `btn ${buttonClass} btn-sm prescription-btn`,
+          disabled: true,
+          'data-patient-id': patientId,
+          'data-appointment-id': appointmentId,
+          'data-schedule-date': scheduleDate,
+          'data-appointment-type': appointmentType,
+          'data-doctor-id': assignedDoctorId,
+          'data-patient-data': JSON.stringify($btn.data('patient-data')),
+          title: buttonTitle,
+          html: '<i class="fas fa-file-medical"></i> New Prescription'
+        });
+        $btn.replaceWith(newButton);
+      }
+    }
+  }
+
+  // Function to add patient to results table (only for non-superadmin) with LIFO order
+  // ✅ UPDATED: Only add to table if appointment_type is 'assigned'
+  function addPatientToResultsTable(patientData, appointmentData = null) {
+    if (isSuperadmin) return; // Skip for superadmin
+    
+    console.log('Checking patient for results table:', patientData, appointmentData);
+    
+    // ✅ CRITICAL: Only show in table if appointment is 'assigned' type
+    if (!appointmentData || !appointmentData.has_appointment || appointmentData.appointment_type !== 'assigned') {
+      console.log('Patient not added to table - not an assigned appointment');
+      hideResultsTable(); // Hide table if no assigned appointments
+      return;
+    }
+    
+    let appointmentStatus = 'No appointment assigned';
+    let hasExistingAppointment = false;
+    let appointmentId = null;
+    let appointmentType = null;
+    let doctorId = null;
+    let scheduleDate = null;
+    
+    if (appointmentData && appointmentData.has_appointment) {
+      hasExistingAppointment = true;
+      appointmentId = appointmentData.appointment_id;
+      appointmentType = appointmentData.appointment_type || 'regular';
+      doctorId = appointmentData.doctor_id || null;
+      scheduleDate = appointmentData.schedule_date || appointmentData.appointment_date;
+      
+      // Build status HTML based on appointment type
+      if (appointmentType === 'assigned') {
+        // Assigned appointment status
+        appointmentStatus = '<div class="text-dark">' +
+          '<strong><i class="fas fa-calendar-plus"></i> Assigned for Prescription</strong><br>' +
+          '<small><strong>Appointment ID:</strong> ' + appointmentData.appointment_id + '</small><br>' +
+          '<small>Doctor: ' + appointmentData.doctor_name + '</small><br>' +
+          '<small>Appointment Date: ' + appointmentData.appointment_date + '</small>';
+
+        // Show schedule date
+        if (appointmentData.schedule_date) {
+          appointmentStatus += '<br><small>Schedule Date: <strong>' + appointmentData.schedule_date + '</strong></small>';
+        }
+        
+        // Show TokenNo if available
+        if (appointmentData.tokenno) {
+          appointmentStatus += '<br><small>Token No: <strong>' + appointmentData.tokenno + '</strong></small>';
+        }
+        
+        if (appointmentData.is_linked) {
+          appointmentStatus += '<br><small class="text-info"></small>';
+        }
+        
+        appointmentStatus += '<br><small>Status: Assigned for Prescription</small>' +
+                          '</div>';
+      }
+    }
+    
+    // Action button - includes both New Prescription and View buttons
+    let actionBtn = '';
+    
+    // VIEW BUTTON - Always show this regardless of appointment status
+    const viewUrl = '/casehistory_view/?ids=' + patientData.id;
+    const viewBtn = '<a href="' + viewUrl + '" ' +
+      'class="btn btn-info btn-sm mr-1" ' +
+      'title="View Patient History">' +
+      '<i class="fas fa-eye"></i>' +
+      '</a>';
+    
+    if (hasExistingAppointment && appointmentType === 'assigned') {
+      // Create prescription button with appropriate state
+      const prescriptionBtn = '<button class="btn btn-secondary btn-sm prescription-btn" ' +
+        'data-patient-id="' + patientData.id + '" ' +
+        'data-appointment-id="' + appointmentId + '" ' +
+        'data-appointment-type="' + appointmentType + '" ' +
+        'data-schedule-date="' + scheduleDate + '" ' +
+        'data-doctor-id="' + doctorId + '" ' +
+        'data-patient-data=\'' + JSON.stringify(patientData) + '\' ' +
+        'title="Loading...">' +
+        '<i class="fas fa-file-medical"></i> New Prescription' +
+        '</button>';
+      
+      actionBtn = viewBtn + ' ' + prescriptionBtn;
+      
+      // Update button state based on appointment type
+      setTimeout(() => {
+        const $btn = $('.prescription-btn[data-appointment-id="' + appointmentId + '"]');
+        if ($btn.length) {
+          updatePrescriptionButtonState($btn, {
+            appointment_type: appointmentType,
+            schedule_date: scheduleDate,
+            doctor_id: doctorId,
+            appointment_id: appointmentId
+          });
+        }
+      }, 100);
+    } else {
+      // ❌ No assigned appointment → DO NOT ADD TO TABLE
+      console.log('Patient has no assigned appointment, skipping table addition');
+      return;
+    }
+    
+    // Create row data
+    const rowData = {
+      'mr_number': patientData.Medical_Record_Number || patientData.id,
+      'patient_name': patientData.Patient_Name,
+      'phone': patientData.contactno || 'N/A',
+      'address': patientData.address || 'N/A',
+      'appointment_status': appointmentStatus,
+      'action': '<div class="btn-group">' + actionBtn + '</div>'
+    };
+    
+    // ✅ CRITICAL CHANGE: Add new patient at the TOP (LIFO) instead of bottom
+    // Get current data
+    const currentData = table.rows().data().toArray();
+    
+    // Clear table
+    table.clear();
+    
+    // Add new patient FIRST (at position 0)
+    table.row.add(rowData);
+    
+    // Then add all existing rows AFTER the new one
+    currentData.forEach(data => {
+      table.row.add(data);
+    });
+    
+    // Draw the table
+    table.draw(false);
+    
+    // Show results table (only if we have assigned appointments)
+    if (table.rows().count() > 0) {
+      showResultsTable();
+    } else {
+      hideResultsTable();
+    }
+    
+    // Attach click handler to prescription buttons
+    $(document).off('click', '.prescription-btn').on('click', '.prescription-btn', handlePrescriptionButtonClick);
+  }
+
+  // Function to handle prescription button click
+  function handlePrescriptionButtonClick(e) {
+    const $btn = $(this);
+    
+    // Don't prevent default if button is enabled
+    if ($btn.prop('disabled')) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const appointmentType = $btn.data('appointment-type');
+      const scheduleDate = $btn.data('schedule-date');
+      const assignedDoctorId = $btn.data('doctor-id');
+      
+      // Get today's date
+      const todayDate = new Date().toISOString().split('T')[0];
+      
+      // Different messages based on appointment type
+      if (appointmentType === 'assigned') {
+        if (todayDate !== scheduleDate) {
+          alert(`Prescription is only available on schedule date: ${scheduleDate}`);
+        } else if (currentDoctorId != assignedDoctorId) {
+          alert('Only assigned doctor can create prescription for this appointment');
+        }
+      } else {
+        // Regular appointment - superadmin can assign new appointment
+        if (isSuperadmin) {
+          selectedPatientId = $btn.data('patient-id');
+          selectedPatientData = $btn.data('patient-data');
+          
+          // Show patient info
+          $('#patientNameDisplay').text(selectedPatientData.Patient_Name);
+          $('#patientMRDisplay').text(selectedPatientData.Medical_Record_Number || selectedPatientId);
+          $('#patientPhoneDisplay').text(selectedPatientData.contactno || 'N/A');
+          
+          loadPatientVisitHistory(selectedPatientId);
+          $('#appointmentAssignmentCard').show();
+          $('html, body').animate({
+            scrollTop: $('#appointmentAssignmentCard').offset().top - 20
+          }, 500);
+          
+          updateAssignButton();
+        } else {
+          alert('Only superadmin can assign appointments for patients without existing appointments.');
+        }
+      }
+      return false;
+    }
+  }
+
+  // Function to load patient visit history (show ALL visits - no 5 limit)
+  function loadPatientVisitHistory(patientId) {
+    if (!patientId) {
+      $('#noHistoryRow').show();
+      return;
+    }
+    
+    $.ajax({
+      url: '/get_patient_visit_history/',
+      data: { patient_id: patientId },
+      success: function(data) {
+        patientVisitHistory = data.history || [];
+        
+        // Clear table and hide "no history" row
+        $('#visitHistoryTable tbody').empty();
+        $('#noHistoryRow').hide();
+        
+        if (patientVisitHistory.length > 0) {
+          // Update badge with total count
+          $('#visitCountBadge').text(patientVisitHistory.length);
+          
+          // Add ALL visits to table
+          patientVisitHistory.forEach(function(visit, index) {
+            const dateParts = visit.date.split('-');
+            const shortDate = dateParts[0] + '-' + dateParts[1];
+            
+            let doctorDisplay = visit.doctor;
+            if (doctorDisplay.length > 15) {
+              const names = doctorDisplay.split(' ');
+              doctorDisplay = names[0] + (names.length > 1 ? ' ' + names[1].charAt(0) + '.' : '');
+            }
+            
+            let row = `<tr ${index === 0 ? 'class="table-info"' : ''}>
+              <td class="py-1 px-2" style="font-size: 0.8rem;">
+                <small><strong>${shortDate}</strong></small>
+                <br><small class="text-muted">${dateParts[2]}</small>
+              </td>
+              <td class="py-1 px-2" style="font-size: 0.8rem;" title="${visit.doctor}">
+                ${doctorDisplay}
+              </td>
+              <td class="py-1 px-2" style="font-size: 0.8rem;">
+                <span class="badge ${getStatusBadgeClass(visit.status)} py-1" style="font-size: 0.7rem;">
+                  ${getShortStatus(visit.status)}
+                </span>
+              </td>
+            </tr>`;
+            $('#visitHistoryTable tbody').append(row);
+          });
+        } else {
+          $('#noHistoryRow').show();
+          $('#visitCountBadge').text('0');
+        }
+      },
+      error: function() {
+        console.error('Failed to load visit history');
+        $('#noHistoryRow').show();
+        $('#visitCountBadge').text('0');
+      }
+    });
+  }
+
+  // Helper function to get short status
+  function getShortStatus(status) {
+    const statusMap = {
+      'Scheduled': 'Sch',
+      'Confirmed': 'Conf',
+      'Pending': 'Pend',
+      'Online': 'Online',
+      'Consultation': 'Cons',
+      'Followup': 'F/Up',
+      'Revisit': 'Revisit',
+      'Assigned for Prescription': 'Assigned',
+      'Assigned': 'Assigned',
+      'default': status.substring(0, 4)
+    };
+    
+    return statusMap[status] || statusMap['default'];
+  }
+
+  // Helper function to get badge class based on status
+  function getStatusBadgeClass(status) {
+    const statusClasses = {
+      'Scheduled': 'badge-info',
+      'Confirmed': 'badge-success',
+      'Pending': 'badge-warning',
+      'Online': 'badge-primary',
+      'Consultation': 'badge-info',
+      'Followup': 'badge-success',
+      'Revisit': 'badge-primary',
+      'Assigned for Prescription': 'badge-warning',
+      'Assigned': 'badge-warning',
+      'default': 'badge-secondary'
+    };
+    
+    return statusClasses[status] || statusClasses['default'];
+  }
+
+  // Function to check if appointment date is NOT in history
+  function checkDateNotInHistory(selectedDate) {
+    if (!selectedDate || patientVisitHistory.length === 0) return true;
+    
+    const dateObj = new Date(selectedDate);
+    const formattedSelectedDate = `${String(dateObj.getDate()).padStart(2, '0')}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${dateObj.getFullYear()}`;
+    
+    const isNewDate = !patientVisitHistory.some(visit => visit.date === formattedSelectedDate);
+    
+    // Hide duplicate warning when date changes
+    if (isNewDate) {
+      $('#duplicateWarningAlert').hide();
+    }
+    
+    return isNewDate;
+  }
+
+  // Appointment Date Change Handler with appointment ID storage
+  $('#appointmentDate').change(function() {
+    appointmentDate = $(this).val(); // YYYY-MM-DD
+    if (!appointmentDate) {
+      $('#appointmentIdTextbox').val('');
+      currentAssignedAppointment = null; // Clear the reference
+      updateAssignButton();
+      return;
+    }
+
+    // Convert YYYY-MM-DD to DD-MM-YYYY for matching
+    const parts = appointmentDate.split('-'); // ["YYYY", "MM", "DD"]
+    const formattedDate = parts[2] + '-' + parts[1] + '-' + parts[0]; // "DD-MM-YYYY"
+
+    // Find matching visit in history
+    let match = patientVisitHistory.find(v => v.date === formattedDate);
+    
+    // Update the textbox
+    $('#appointmentIdTextbox').val(match ? match.appointment_id : '');
+    
+    // CRITICAL FIX: Store the appointment reference
+    if (match) {
+      currentAssignedAppointment = {
+        id: match.appointment_id,
+        date: formattedDate
+      };
+      console.log('Selected appointment:', currentAssignedAppointment);
+    } else {
+      currentAssignedAppointment = null; // Clear if no match
+    }
+    
+    // Date validation
+    if (selectedPatientId && appointmentDate) {
+      const isNewDate = checkDateNotInHistory(appointmentDate);
+      
+      if (isNewDate && patientVisitHistory.length > 0) {
+        const selectedDateObj = new Date(appointmentDate);
+        const formattedSelectedDate = selectedDateObj.toLocaleDateString('en-IN', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+          weekday: 'short'
+        });
+        
+        $('#newDateMessage').html(
+          `The selected date <strong>${formattedSelectedDate}</strong> is not found in the patient's visit history.`
+        );
+        $('#newDateWarning').show();
+      } else {
+        $('#newDateWarning').hide();
+      }
+    } else if (!selectedPatientId) {
+      $('#newDateWarning').hide();
+    }
+    
+    updateAssignButton();
+  });
+
+  // Schedule date change handler
+  $('#scheduleDate').change(function() {
+    scheduleDate = $(this).val();
+  });
+
+  // Branch change handler
+  $('#branchSelect').change(function() {
+    selectedBranchId = $(this).val();
+    var doctorSelect = $('#doctorSelect');
+    
+    if (!selectedBranchId) {
+      doctorSelect.html('<option selected disabled value="">Select a branch first</option>').prop('disabled', true);
+      $('#doctorInfoCard').hide();
+      selectedDoctorId = null;
+      updateAssignButton();
+      return;
+    }
+
+    doctorSelect.html('<option selected disabled value="">Loading doctors...</option>').prop('disabled', true);
+    $('#doctorInfoCard').hide();
+
+    $.ajax({
+      url: "{% url 'get_doctors_by_branch' %}",
+      data: { branch: selectedBranchId },
+      success: function(data) {
+        if (data.doctors && data.doctors.length > 0) {
+          var cmoDoctors = [];
+          var associateDoctors = [];
+          
+          for (var i = 0; i < data.doctors.length; i++) {
+            var doctor = data.doctors[i];
+            if (doctor.designation_id == 2) {
+              cmoDoctors.push(doctor);
+            } else if (doctor.designation_id == 3) {
+              associateDoctors.push(doctor);
+            }
+          }
+          
+          var optionsHtml = '<option selected disabled value="">Select Doctor</option>';
+          
+          if (cmoDoctors.length > 0) {
+            optionsHtml += '<optgroup label="Chief Medical Officers (CMO) - ' + cmoDoctors.length + ' available">';
+            for (var i = 0; i < cmoDoctors.length; i++) {
+              var doctor = cmoDoctors[i];
+              optionsHtml += '<option value="' + doctor.id + '">' + doctor.name + ' - ' + doctor.department + '</option>';
+            }
+            optionsHtml += '</optgroup>';
+          }
+          
+          if (associateDoctors.length > 0) {
+            optionsHtml += '<optgroup label="Associate Doctors - ' + associateDoctors.length + ' available">';
+            for (var i = 0; i < associateDoctors.length; i++) {
+              var doctor = associateDoctors[i];
+              optionsHtml += '<option value="' + doctor.id + '">' + doctor.name + ' - ' + doctor.department + '</option>';
+            }
+            optionsHtml += '</optgroup>';
+          }
+          
+          doctorSelect.html(optionsHtml).prop('disabled', false);
+          
+          if (doctorSelect.find('option').length > 1) {
+            var firstOption = doctorSelect.find('option:not(:disabled)').eq(1);
+            if (firstOption.length) {
+              doctorSelect.val(firstOption.val()).trigger('change');
+            }
+          }
+        } else {
+          doctorSelect.html('<option selected disabled value="">No doctors available in this branch</option>').prop('disabled', true);
+        }
+        updateAssignButton();
+      },
+      error: function() {
+        doctorSelect.html('<option selected disabled value="">Error loading doctors</option>').prop('disabled', true);
+        updateAssignButton();
+      }
+    });
+  });
+
+  // Doctor change handler
+  $('#doctorSelect').change(function() {
+    selectedDoctorId = $(this).val();
+    var doctorInfoCard = $('#doctorInfoCard');
+    var doctorDetails = $('#doctorDetails');
+    
+    if (!selectedDoctorId) {
+      doctorInfoCard.hide();
+      updateAssignButton();
+      return;
+    }
+
+    var selectedOption = $(this).find('option:selected');
+    var doctorName = selectedOption.text();
+    var doctorGroup = selectedOption.parent('optgroup').attr('label');
+    
+    doctorDetails.html(`<div class="mb-0">
+      <strong>${doctorName}</strong><br>
+      <small>${doctorGroup ? doctorGroup.split(' - ')[0] : 'Doctor'}</small>
+    </div>`);
+    doctorInfoCard.show();
+    
+    updateAssignButton();
+  });
+
+  // Update Assign Appointment button state
+  function updateAssignButton() {
+    const assignBtn = $('#assignAppointmentBtn');
+    
+    const allFieldsFilled = selectedPatientId && selectedBranchId && selectedDoctorId && appointmentDate;
+    const isNewDate = checkDateNotInHistory(appointmentDate);
+    
+    if (allFieldsFilled && isSuperadmin && !isNewDate) {
+      assignBtn.prop('disabled', false);
+    } else {
+      assignBtn.prop('disabled', true);
+    }
+  }
+
+  // Assign Appointment Button Handler with appointment ID
+  $('#assignAppointmentBtn').click(function() {
+    if (!selectedPatientId || !selectedPatientData || !selectedDoctorId || !selectedBranchId || !appointmentDate) {
+      alert('Please fill all required fields');
+      return;
+    }
+
+    const isNewDate = checkDateNotInHistory(appointmentDate);
+    if (isNewDate) {
+      alert('You can only assign appointments for dates that exist in the patient\'s visit history. Please select a date from Recent Visits.');
+      return;
+    }
+
+    if (!isSuperadmin) {
+      alert('Only superadmin can assign appointments');
+      return;
+    }
+
+    const remarks = $('#appointmentRemarks').val() || '';
+    const assignBtn = $(this);
+    
+    // Hide any previous alerts
+    $('#appointmentSuccessAlert').hide();
+    $('#duplicateWarningAlert').hide();
+    
+    assignBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Assigning...');
+    
+    const appointmentData = {
+      patient_id: selectedPatientId,
+      doctor_id: selectedDoctorId,
+      branch_id: selectedBranchId,
+      appointment_date: appointmentDate,
+      schedule_date: scheduleDate,
+      remarks: remarks,
+      appnid: currentAssignedAppointment ? currentAssignedAppointment.id : null, // Now correctly sends appointment ID
+      csrfmiddlewaretoken: csrftoken
+    };
+    
+    console.log('Sending appointment data:', appointmentData);
+    
+    $.ajax({
+      url: "{% url 'create_appointment_for_prescription' %}",
+      type: 'POST',
+      data: appointmentData,
+      success: function(response) {
+        if (response.success) {
+          // Success - appointment assigned
+          currentAssignedAppointment = response.appointment;
+          appointmentAssigned = true;
+          
+          const appointmentDateObj = new Date(appointmentDate);
+          const formattedAppointmentDate = appointmentDateObj.toLocaleDateString('en-IN', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
+          });
+          
+          const scheduleDateDisplay = response.appointment.schedule_date || formattedAppointmentDate;
+          
+          // UPDATED SUCCESS MESSAGE WITH TOKENNO
+          let successMessage = `Appointment assigned to <strong>${selectedPatientData.Patient_Name}</strong> ` +
+            `on <strong>${formattedAppointmentDate}</strong> with Dr. ${response.appointment.doctor_name}.<br>` +
+            `<small>Prescription available on: <strong>${scheduleDateDisplay}</strong> (for assigned doctor only)</small>`;
+          
+          // Add TokenNo to message if available
+          if (response.appointment.tokenno) {
+            successMessage += `<br><small>Token No: <strong>${response.appointment.tokenno}</strong></small>`;
+          }
+          
+          $('#appointmentSuccessMessage').html(successMessage);
+          $('#appointmentSuccessAlert').show();
+          $('#duplicateWarningAlert').hide();
+          
+          // Only add to results table for non-superadmin users IF it's an assigned appointment
+          if (!isSuperadmin) {
+            addPatientToResultsTable(selectedPatientData, {
+              has_appointment: true,
+              appointment_id: response.appointment.id,
+              appointment_type: 'assigned', // Mark as assigned appointment
+              doctor_name: response.appointment.doctor_name,
+              doctor_id: response.appointment.doctor_id, // Include doctor ID
+              appointment_date: formattedAppointmentDate,
+              schedule_date: scheduleDateDisplay,
+              status: 'Assigned for Prescription',
+              is_linked: response.appointment.is_linked || false,
+              tokenno: response.appointment.tokenno || null
+            });
+          }
+
+          // Update prescription button state
+          const todayDate = new Date().toISOString().split('T')[0];
+          const scheduleDateParam = response.appointment.schedule_date || appointmentDate;
+          
+          setTimeout(() => {
+            $('.prescription-btn').each(function() {
+              const $btn = $(this);
+              if ($btn.data('patient-id') == selectedPatientId) {
+                updatePrescriptionButtonState($btn, {
+                  appointment_type: 'assigned',
+                  schedule_date: scheduleDateParam,
+                  doctor_id: response.appointment.doctor_id,
+                  appointment_id: response.appointment.id
+                });
+              }
+            });
+          }, 500);
+          
+          loadPatientVisitHistory(selectedPatientId);
+          $('#newDateWarning').hide();
+          
+          setTimeout(function() {
+            resetAppointmentForm();
+          }, 3000);
+        } else {
+          // Check if it's a duplicate error
+          if (response.is_duplicate) {
+            // Show duplicate warning
+            const appointmentDateObj = new Date(appointmentDate);
+            const formattedAppointmentDate = appointmentDateObj.toLocaleDateString('en-IN', {
+              day: '2-digit',
+              month: 'short',
+              year: 'numeric',
+              weekday: 'short'
+            });
+            
+            $('#duplicateWarningMessage').html(
+              `<strong>Appointment ID ${response.duplicate_details.appointment_id}</strong> for date <strong>${formattedAppointmentDate}</strong> is already assigned.`
+            );
+            
+            // Show duplicate details
+            let duplicateDetailsHtml = `<div class="small">
+              <strong>Already assigned to:</strong><br>
+              <div class="ml-2">
+                • Doctor: ${response.duplicate_details.assigned_doctor}<br>
+                • Branch: ${response.duplicate_details.assigned_branch}<br>
+                • Schedule Date: ${response.duplicate_details.schedule_date}
+              </div>
+            </div>`;
+            
+            $('#duplicateDetails').html(duplicateDetailsHtml);
+            $('#duplicateWarningAlert').show();
+            
+            // Auto-hide after 10 seconds
+            setTimeout(function() {
+              $('#duplicateWarningAlert').fadeOut();
+            }, 10000);
+          } else {
+            // Regular error
+            alert('Error: ' + response.error);
+          }
+          
+          assignBtn.prop('disabled', false).html('<i class="fas fa-calendar-check"></i> Assign Appointment');
+        }
+      },
+      error: function(xhr, status, error) {
+        console.error('Error:', error);
+        alert('Failed to assign appointment. Please try again.');
+        assignBtn.prop('disabled', false).html('<i class="fas fa-calendar-check"></i> Assign Appointment');
+      }
+    });
+  });
+
+  // Reset appointment form
+  function resetAppointmentForm() {
+    selectedPatientId = null;
+    selectedPatientData = null;
+    selectedDoctorId = null;
+    selectedBranchId = null;
+    appointmentDate = null;
+    scheduleDate = null;
+    appointmentAssigned = false;
+    patientVisitHistory = [];
+    currentAssignedAppointment = null; // Clear appointment reference
+    
+    setTimeout(function() {
+      $('#appointmentSuccessAlert').hide();
+    }, 5000);
+    
+    $('#doctorInfoCard').hide();
+    $('#newDateWarning').hide();
+    $('#duplicateWarningAlert').hide(); // Clear duplicate warning
+    $('#doctorSelect').html('<option selected disabled value="">Select branch first</option>').prop('disabled', true);
+    $('#branchSelect').val('');
+    $('#appointmentRemarks').val('');
+    $('#appointmentDate').val('');
+    $('#scheduleDate').val('');
+    $('#appointmentIdTextbox').val('');
+    $('#visitCountBadge').text('0');
+    $('#noHistoryRow').show();
+    $('#visitHistoryTable tbody').empty();
+    $('#visitHistoryTable tbody').append(`
+      <tr id="noHistoryRow">
+        <td colspan="3" class="text-center py-3 text-muted">
+          <i class="fas fa-info-circle mr-1"></i>
+          No visit history found
+        </td>
+      </tr>
+    `);
+    $('#assignAppointmentBtn').prop('disabled', true).html('<i class="fas fa-calendar-check"></i> Assign Appointment');
+    
+    $('#patientNameDisplay').text('-');
+    $('#patientMRDisplay').text('-');
+    $('#patientPhoneDisplay').text('-');
+    
+    if (isSuperadmin) {
+      $('#appointmentAssignmentCard').show();
+    }
+  }
+
+  // BONUS: Make visit history rows clickable
+  $(document).on('click', '#visitHistoryTable tbody tr:not(#noHistoryRow)', function() {
+    const rowIndex = $(this).index();
+    const visit = patientVisitHistory[rowIndex];
+    
+    if (visit && visit.date) {
+      // Convert DD-MM-YYYY to YYYY-MM-DD
+      const dateParts = visit.date.split('-');
+      const formattedDate = dateParts[2] + '-' + dateParts[1] + '-' + dateParts[0];
+      
+      // Set the appointment date
+      $('#appointmentDate').val(formattedDate).trigger('change');
+      
+      // Highlight the selected row
+      $('#visitHistoryTable tbody tr').removeClass('table-primary');
+      $(this).addClass('table-primary');
+    }
+  });
+
+  // Search button handler
+  $('#searchBtn').on('click', function() {
+    let query = $('#mrSearch').val().trim();
+
+    if (query === '') {
+      alert('Please enter a search term.');
+      return;
+    }
+
+    if (!isSuperadmin && table) {
+      table.clear().draw();
+      hideResultsTable(); // Hide table on new search
+    }
+    
+    if (isSuperadmin) {
+      $('#appointmentAssignmentCard').show();
+    }
+    
+    resetAppointmentForm();
+
+    let modalTable = $('#searchResultsTable').DataTable({
+      paging: true,
+      searching: true,
+      info: true,
+      lengthChange: true,
+      pageLength: 10,
+      destroy: true
+    });
+
+    modalTable.clear().draw();
+
+    fetch('/search_mrno?query=' + encodeURIComponent(query))
+      .then(function(response) {
+        return response.json();
+      })
+      .then(function(data) {
+        if (data.length > 0) {
+          data.forEach(item => {
+            let actionBtn = `<button class="btn btn-primary select-patient-btn" data-id="${item.id}" 
+                                data-name="${item.Patient_Name}" 
+                                data-mrno="${item.Medical_Record_Number || 'N/A'}" 
+                                data-contact="${item.contactno || 'N/A'}"
+                                data-address="${item.address || 'N/A'}">
+                              Select
+                            </button>`;
+
+            modalTable.row.add([
+              item.Medical_Record_Number || 'N/A',
+              item.Patient_Name,
+              item.address || 'N/A',
+              item.contactno || 'N/A',
+              actionBtn
+            ]).draw(false);
+          });
+
+          $('#searchModal').modal('show');
+        } else {
+          alert('No matching records found.');
+          if (isSuperadmin) {
+            $('#appointmentAssignmentCard').hide();
+          }
+        }
+      })
+      .catch(function(error) {
+        console.error('Error:', error);
+        alert('There was an error retrieving the data.');
+        if (isSuperadmin) {
+          $('#appointmentAssignmentCard').hide();
+        }
+      });
+  });
+
+  // Handle patient selection from modal
+  $(document).on('click', '.select-patient-btn', function() {
+    selectedPatientId = $(this).data('id');
+    selectedPatientData = {
+      id: selectedPatientId,
+      Patient_Name: $(this).data('name'),
+      Medical_Record_Number: $(this).data('mrno'),
+      contactno: $(this).data('contact'),
+      address: $(this).data('address')
+    };
+    
+    console.log('Patient selected:', selectedPatientData);
+    
+    $('#searchModal').modal('hide');
+    
+    $('#patientNameDisplay').text(selectedPatientData.Patient_Name);
+    $('#patientMRDisplay').text(selectedPatientData.Medical_Record_Number);
+    $('#patientPhoneDisplay').text(selectedPatientData.contactno);
+    
+    loadPatientVisitHistory(selectedPatientId);
+    
+    if (!isSuperadmin && table) {
+      table.clear().draw();
+      hideResultsTable(); // Hide initially until we know appointment type
+    }
+    
+    fetchPatientAppointmentStatus(selectedPatientId);
+    
+    $('html, body').animate({
+      scrollTop: $('#appointmentAssignmentCard').offset().top - 20
+    }, 500);
+    
+    updateAssignButton();
+  });
+
+  // Function to search for patient appointment status
+  function fetchPatientAppointmentStatus(patientId) {
+    fetch('/check_patient_appointment?patient_id=' + patientId)
+      .then(function(response) {
+        return response.json();
+      })
+      .then(function(apptData) {
+        console.log('Appointment data:', apptData);
+        
+        if (!isSuperadmin) {
+          // Ensure appointment_type is set
+          apptData.appointment_type = apptData.appointment_type || 'regular';
+          apptData.doctor_id = apptData.doctor_id || null;
+          
+          // ✅ Only add to table if appointment_type is 'assigned'
+          addPatientToResultsTable(selectedPatientData, apptData);
+        }
+        
+        // Update any existing prescription buttons
+        setTimeout(() => {
+          $('.prescription-btn').each(function() {
+            const $btn = $(this);
+            if ($btn.data('patient-id') == patientId && apptData.has_appointment) {
+              updatePrescriptionButtonState($btn, {
+                appointment_type: apptData.appointment_type,
+                schedule_date: apptData.schedule_date || apptData.appointment_date,
+                doctor_id: apptData.doctor_id,
+                appointment_id: apptData.appointment_id
+              });
+            }
+          });
+        }, 100);
+      })
+      .catch(function(error) {
+        console.error('Error checking appointment:', error);
+        
+        if (!isSuperadmin) {
+          // Don't add to table on error
+          hideResultsTable();
+        }
+      });
+  }
+  
+  // Initial event delegation setup
+  $(document).on('click', '.prescription-btn', handlePrescriptionButtonClick);
+});
+</script>
+
+{% endblock %}

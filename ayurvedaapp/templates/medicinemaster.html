@@ -1,0 +1,148 @@
+
+
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Item Master Details</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item">
+                {%if medmngview == '1'%}
+                  <a href="{% url 'medicinemastertable'%}?menumanagement_id={{ idmngmnt }}">View All</a>
+                {%endif%}</li>
+              <li class="breadcrumb-item active">Item Master</li>
+            </ol>
+          </div>
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+
+      <div class="row">
+        <div class="col-md-12">
+          <div class="card card-primary">
+            <div class="card-header">
+              <h3 class="card-title">Item Master</h3>
+
+              <div class="card-tools">
+                <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                  <!-- <i class="fas fa-minus"></i> -->
+                </button>
+              </div>
+            </div>
+             <form method="POST", action="{% url 'medicinemasterdt' %}?menumanagement_id={{ idmngmnt }}">
+                {% csrf_token %}
+      <div class="row">
+          <div class="col-md-6">
+              <div class="card">
+             
+                <div class="card-body">
+                  <div class="form-group">
+                    <label for="exampleInputBranchName">Item Code</label>
+                     <input type="text" class="form-control" id="exampleInputAddress" name="itmcode" placeholder="Enter Item Code "> 
+                     
+                </div>
+               <div class="form-group">
+                  <label for="exampleInputBranchName">Item Name</label>
+                  <input type="text" class="form-control" id="exampleInputAddress" name="itmnm" placeholder="Enter Item " required> 
+               </div>
+               <div class="form-group">
+                  <label for="exampleInputBranchName">Generic  Name</label>
+                  <input type="text" class="form-control" id="exampleInputgenericname" name="genericname" placeholder="Enter Generic Name">
+               </div>
+               <div class="form-group">
+                <label for="exampleInputBranchName">Base Unit</label>
+                <select class="form-control" name="bsunt" required>
+                    <option selected disabled value="">Select</option>
+                    {% for i in un %}
+                      <option value="{{i.id}}">{{i.symbol}}</option>
+                    {% endfor %}
+                </select>
+               </div>
+               <div class="form-group">
+                <label for="exampleInputBranchName">Tax Percentage</label>
+                <select class="form-control" name="taxpg" required>
+                    <option selected disabled value="">Select</option>
+                    {% for i in tx %}
+                      <option value="{{i.id}}">{{i.taxrate}}%</option>
+                    {% endfor %}
+                </select>
+               </div>
+                </div>
+              </div>
+            </div>
+                
+              <div class="col-md-6">
+              <div class="card">
+           
+                <div class="card-body">
+                  <div class="form-group">
+                    <label for="exampleInputPincode">Hsn Code</label>
+                    <input type="type" class="form-control" name="hsn"  placeholder="Enter Hsn Code" id="exampleInputbystname" >
+                   
+                  </div>
+                  <div class="form-group">
+                    <label for="exampleInputHouse">Subcategory</label>
+                  <select class="form-control" id="sbcategory" name="sbcategory" >
+                      <option  selected disabled value="">--Select Subcategory--</option>
+                          {% for sbcat in subcategoryobj %}
+                              <option value="{{ sbcat.id }}" >{{sbcat.Subcategory_name }} </option>
+                          {% endfor %}
+                      </select>
+                  
+                  </div>
+                    <div class="form-group">
+                      <label for="exampleInputPincode">Rack Number</label>
+                      <input type="type" class="form-control" name="rackno"  placeholder="Enter Rack Number" id="exampleInputbystname" >
+                     
+                    </div>
+
+                  <div class="form-group">
+                     <label for="exampleInputPhno">Side Effect</label>
+                     <textarea  class="form-control"  name="sideeffect"></textarea>
+                    </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% if message %}
+          <p style="color:red;">{{message}}</p> 
+{% endif %}
+    <div class="card-footer">
+                   {% if messages %}
+        {% for message in messages %}
+        <p style="color:green;">{{message}}</p> 
+        {% endfor %}
+        {% endif %}
+        {%if medmngadd == '1'%}
+                  <button type="submit" class="btn btn-primary">Submit</button>
+                  {%endif%}
+                
+                </div>
+              </form>
+            <!-- /.card-body -->
+          </div>
+          <!-- /.card -->
+        </div>
+     
+      </div>
+
+      
+    </section>
+    <!-- /.content -->
+  </div>
+  <!-- /.content-wrapper -->
+ 
+ {% endblock %}
+ 

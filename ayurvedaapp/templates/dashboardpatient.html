@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Patient Details</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item">
+                {%if ptdtmngadd == '1'%}
+                  <a href="{% url 'patientdetails'%}?menumanagement_id={{ idmngmnt}}">Add</a>
+               {%endif%}
+              </li>
+              <li class="breadcrumb-item active"> Patient Details</li>
+            </ol>
+          </div>
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-12">
+            
+            <!-- /.card -->
+            <div class="card">
+           <div class="scroll">
+              <!-- /.card-header -->
+              <div class="card-body">
+                <table id="example1" class="table table-bordered table-striped">
+                  <thead>
+                
+                  <tr>
+                    <th>SL No</th>
+                    <th>MRNo</th>
+                    <th>Patient Name</th>
+                    <th>Age</th>
+                    <th>Gender</th>
+                    <!-- <th>House Name</th> -->
+                    <th>Country</th>
+                    <th>State</th>
+                    <th>District</th>
+                    <!-- <th>City</th>
+                    <th>Status</th> -->
+                    <th>Contact No</th>
+                    <th>Date</th>
+             
+                   </tr>
+                  </thead>
+                  <tbody>
+  {% for i in objpatientdetailtable %}
+                  <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{i.Medical_Record_Number}}</td>
+                    <td>{{i.Patient_Name}}</td>
+                    <td>{{i.Age}}</td>
+                    <td>{{i.Gender}}</td>
+                    <!-- <td>{{i.Housename}}</td> -->
+                    <td>{{i.country.Country_Name}}</td>
+                    <td>{{i.state.State_Name}}</td>
+                    <td>{{i.district}}</td>
+                    <!-- <td>{{i.city.City_name}}</td>
+                    {% if i.Status == "active"%}
+                    <td>Op</td>
+                    {%else%}
+                <td>Ip</td> -->
+<!--               
+                {%endif%} -->
+                    <td>{{i.contactno}}</td>
+                    <td>{{i.Date}}</td>
+                   
+                 <!-- {% if ptdtmngdelete == '1' %}
+                   <a href="{% url 'delpatientdetls'%}?ids={{i.id}}"><i class="nav-icon " style="width:20px"><img src="{% static 'assets/dist/img/icons/delete.svg'%}"  class=" img-squre "  style="width:20px"></i></a>
+              {%endif%} -->
+                         </td>
+                  </tr>
+                  
+
+  {% endfor %}
+                  </tbody>
+                 
+                </table>
+              </div>
+            </div>
+              <!-- /.card-body -->
+            </div>
+            <!-- /.card -->
+          </div>
+          <!-- /.col -->
+        </div>
+        <!-- /.row -->
+      </div>
+      <!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+  </div>
+  
+    
+  <!-- /.content-wrapper -->
+  {% endblock %}

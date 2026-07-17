@@ -1,0 +1,246 @@
+<!-- stock_transfer_list.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="content-wrapper">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Stock Transfers</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item active">Stock Transfers</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="container-fluid">
+            <!-- Statistics Cards -->
+            <div class="row">
+                <div class="col-lg-2 col-6">
+                    <div class="small-box bg-info">
+                        <div class="inner">
+                            <h3>{{ stats.pending }}</h3>
+                            <p>Pending Verification</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-6">
+                    <div class="small-box bg-warning">
+                        <div class="inner">
+                            <h3>{{ stats.verified }}</h3>
+                            <p>Verified</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-6">
+                    <div class="small-box bg-primary">
+                        <div class="inner">
+                            <h3>{{ stats.approved }}</h3>
+                            <p>Approved</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-6">
+                    <div class="small-box bg-success">
+                        <div class="inner">
+                            <h3>{{ stats.delivered }}</h3>
+                            <p>Delivered</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-6">
+                    <div class="small-box bg-danger">
+                        <div class="inner">
+                            <h3>{{ stats.rejected }}</h3>
+                            <p>Rejected</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-6">
+                    <div class="small-box bg-secondary">
+                        <div class="inner">
+                            <h3>{{ stats.total_quantity }}</h3>
+                            <p>Total Quantity</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Transfer List</h3>
+                    <div class="card-tools">
+                       
+                        <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+
+                    <!-- Filter Form -->
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <form method="GET" class="form-inline flex-wrap">
+                                <div class="form-group mr-2 mb-2">
+                                    <select name="type" class="form-control">
+                                        <option value="">All Transfers</option>
+                                        <option value="sent"     {% if transfer_type == 'sent' %}selected{% endif %}>Sent</option>
+                                        <option value="received" {% if transfer_type == 'received' %}selected{% endif %}>Received</option>
+                                    </select>
+                                </div>
+                                <div class="form-group mr-2 mb-2">
+                                    <select name="status" class="form-control">
+                                        <option value="">All Status</option>
+                                        <option value="pending"    {% if status == 'pending' %}selected{% endif %}>Pending</option>
+                                        <option value="verified"   {% if status == 'verified' %}selected{% endif %}>Verified</option>
+                                        <option value="approved"   {% if status == 'approved' %}selected{% endif %}>Approved</option>
+                                        <option value="in_transit" {% if status == 'in_transit' %}selected{% endif %}>In Transit</option>
+                                        <option value="completed"  {% if status == 'completed' %}selected{% endif %}>Completed</option>
+                                        <option value="rejected"   {% if status == 'rejected' %}selected{% endif %}>Rejected</option>
+                                        <option value="cancelled"  {% if status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                                    </select>
+                                </div>
+                                <div class="form-group mr-2 mb-2">
+                                    <input type="text" name="search" class="form-control"
+                                        placeholder="Search transfer / branch..." value="{{ search }}" style="width:200px;">
+                                </div>
+                                <div class="form-group mr-2 mb-2">
+                                    <input type="date" name="from_date" class="form-control" value="{{ from_date }}">
+                                </div>
+                                <div class="form-group mr-2 mb-2">
+                                    <input type="date" name="to_date" class="form-control" value="{{ to_date }}">
+                                </div>
+                                <button type="submit" class="btn btn-primary mr-2 mb-2">Filter</button>
+                                <a href="{% url 'stock_transfer_list' %}" class="btn btn-secondary mb-2">Reset</a>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Transfer No</th>
+                                    <th>Date</th>
+                                    <th>From Branch</th>
+                                    <th>To Branch</th>
+                                    <th>Items</th>
+                                    <th>Total Qty</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for transfer in page_obj %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ transfer.transfer_number }}</strong>
+                                        {% if transfer.purchase_order %}
+                                        <br><small class="text-muted">PO: {{ transfer.purchase_order.po_number }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ transfer.created_at|date:"d-m-Y H:i" }}</td>
+                                    <td>{{ transfer.from_branch.Branch_Name }}</td>
+                                    <td>{{ transfer.to_branch.Branch_Name }}</td>
+                                    <td>{{ transfer.total_items }}</td>
+                                    <td>{{ transfer.total_quantity }}</td>
+                                    <td>
+                                        {% if transfer.status == 'pending' %}
+                                            <span class="badge badge-warning">Pending Verification</span>
+                                        {% elif transfer.status == 'verified' %}
+                                            <span class="badge badge-info">Verified</span>
+                                        {% elif transfer.status == 'approved' %}
+                                            <span class="badge badge-primary">Approved</span>
+                                        {% elif transfer.status == 'in_transit' %}
+                                            <span class="badge badge-secondary">In Transit</span>
+                                        {% elif transfer.status == 'delivered' %}
+                                            <span class="badge badge-success">Delivered</span>
+                                        {% elif transfer.status == 'completed' %}
+                                            <span class="badge badge-success">Completed</span>
+                                        {% elif transfer.status == 'rejected' %}
+                                            <span class="badge badge-danger">Rejected</span>
+                                        {% elif transfer.status == 'cancelled' %}
+                                            <span class="badge badge-dark">Cancelled</span>
+                                        {% else %}
+                                            <span class="badge badge-dark">{{ transfer.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'stock_transfer_detail' %}?transferid={{transfer.id}}"
+                                            class="btn btn-sm btn-info">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="8" class="text-center text-muted">No stock transfers found.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+ {% if messages %}
+                {% for message in messages %}
+                  <div class="alert alert-success">{{ message }}</div>
+                {% endfor %}
+              {% endif %}
+                    <!-- Pagination -->
+                    {% if page_obj.has_other_pages %}
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <nav aria-label="Page navigation">
+                                <ul class="pagination justify-content-center">
+                                    {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link"
+                                            href="?page={{ page_obj.previous_page_number }}{% if status %}&status={{ status }}{% endif %}{% if transfer_type %}&type={{ transfer_type }}{% endif %}{% if search %}&search={{ search }}{% endif %}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}">
+                                            &laquo; Previous
+                                        </a>
+                                    </li>
+                                    {% endif %}
+
+                                    {% for num in page_obj.paginator.page_range %}
+                                        {% if page_obj.number == num %}
+                                            <li class="page-item active">
+                                                <span class="page-link">{{ num }}</span>
+                                            </li>
+                                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                            <li class="page-item">
+                                                <a class="page-link"
+                                                    href="?page={{ num }}{% if status %}&status={{ status }}{% endif %}{% if transfer_type %}&type={{ transfer_type }}{% endif %}{% if search %}&search={{ search }}{% endif %}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}">
+                                                    {{ num }}
+                                                </a>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+
+                                    {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link"
+                                            href="?page={{ page_obj.next_page_number }}{% if status %}&status={{ status }}{% endif %}{% if transfer_type %}&type={{ transfer_type }}{% endif %}{% if search %}&search={{ search }}{% endif %}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}">
+                                            Next &raquo;
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                </div><!-- /.card-body -->
+            </div><!-- /.card -->
+
+        </div><!-- /.container-fluid -->
+    </section>
+</div>
+{% endblock %}

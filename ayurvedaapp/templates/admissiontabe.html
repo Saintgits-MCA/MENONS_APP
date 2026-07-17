@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="content-wrapper">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Patient Room Booking List</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{% url 'admission' %}">Add New Booking</a></li>
+                        <li class="breadcrumb-item active">Patient Room Bookings</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <table id="example1" class="table table-bordered table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>SL No</th>
+                                        <th>MR No</th>
+                                        <th>Admission Date</th>
+                                        <th>Admitted Time</th>
+                                        <th>Doctor</th>
+                                        <th>Department</th>
+                                        <th>Accommodation</th>
+                                        <th>Room/Ward</th>
+                                        <th>Floor</th>
+                                       <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for booking in patient_room_bookings %}
+                                    <tr>
+                                        <td>{{ forloop.counter }}</td>
+                                        <td>{{ booking.MR_Number.Medical_Record_Number }}</td>
+                                        <td>{{ booking.Admission_Date }}</td>
+                                        <td>{{ booking.admissiontime|time:"h:i A" }}</td>
+                                        <td>{{ booking.admitteddoctor.Staff.Staff_firstname }}</td>
+                                        <td>{{ booking.admitteddepartmnt.Department_Name}}</td>
+                                        <td>{{ booking.accommodation_type }}</td>
+                                        <td>
+                                            {% if booking.accommodation_type == "Room" %}
+                                                Room: {{ booking.room_number.Roomno }}
+                                            {% else %}
+                                                Bed: {{ booking.bed_number.wardbedno }}
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ booking.floor_number }}</td>
+                                        <td>
+                                            <a href="{% url 'editroomadmission'%}?ids={{booking.id}}"><i class="nav-icon " style="width:20px"><img src="{% static 'assets/dist/img/icons/edit.svg'%}"  class=" img-squre "  style="width:20px"></i></a>
+                                
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+{% endblock %}

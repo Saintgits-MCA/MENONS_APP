@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="content-wrapper">
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Edit Role Assignment</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item">
+              {%if roleassgnview == '1'%}<a href="{% url 'roleassigntable' %}?menumanagement_id={{ idmngmnt }}">View All</a></li>
+            {%endif%}<li class="breadcrumb-item active">Edit Role Assign</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="content">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card card-primary">
+          <div class="card-header">
+            <h3 class="card-title">Edit Role Assign Details</h3>
+          </div>
+          <form method="POST" action="{% url 'editroleassign' %}?menumanagement_id={{ idmngmnt }}">
+            {% csrf_token %}
+            <div class="row">
+              <div class="col-md-6">
+                <div class="card-body">
+                  <div class="form-group">
+                    <label for="roleSelect">Role</label>
+                    <select class="form-control" name="rolename" required>
+                      <option selected disabled value="">Select</option>
+                      {% for role in rolobj %}
+                      <option value="{{ role.id }}" {% if role.id == rolobjs.roleid_id %}selected{% endif %}>{{ role.rolename }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="branchSelect">Branch Name</label>
+                    <select class="form-control" name="branchname" id="branchSelect" required>
+                      <option selected disabled value="">Select</option>
+                      {% for branch in branchobj %}
+                      <option value="{{ branch.id }}" {% if branch.id == rolobjs.Branch_Name_id %}selected{% endif %}>{{ branch.Branch_Name }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="staffSelect">Staff Name</label>
+                    <select class="form-control" name="staffname" id="staffSelect" required>
+                      <option selected disabled value="">Select</option>
+                      <!-- Options will be populated by JavaScript -->
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>Status</label><br>
+                    <input type="hidden" name="id" value="{{rolobjs.id}}">
+                    <input type="radio" value="True" name="status" id="status_active" {% if rolobjs.status == True %}checked{% endif %} required>
+                    <label for="status_active">Active</label>
+                    <input type="radio" value="False" id="status_inactive" name="status" {% if rolobjs.status == False %}checked{% endif %} required>
+                    <label for="status_inactive">Inactive</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="card-footer">
+              {% if messages %}
+              {% for message in messages %}
+              <p style="color:green;">{{ message }}</p>
+              {% endfor %}
+              {% endif %}
+              {%if  roleassgnedit == '1'%}
+              <button type="submit" class="btn btn-primary">Submit</button>
+          
+          {%endif%}  </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+<script type="text/javascript">
+  $(document).ready(function() {
+    var branchSelect = $('#branchSelect');
+    var staffSelect = $('#staffSelect');
+
+    var initialBranchId = branchSelect.val();
+    var initialStaffId = "{{ rolobjs.Staff_id }}";  // preselected staff id from context
+
+    if (initialBranchId) {
+      loadStaff(initialBranchId, initialStaffId);
+    }
+
+    branchSelect.change(function() {
+      var branchId = $(this).val();
+      loadStaff(branchId, null);
+    });
+
+    function loadStaff(branchId, selectedStaffId) {
+      staffSelect.empty().append('<option disabled selected>Loading staff...</option>');
+
+      $.ajax({
+        url: '{% url "get_staff_by_branch" %}',
+        data: { 'branch': branchId },  // ✅ matches request.GET.get('branch')
+        success: function(data) {
+          staffSelect.empty();
+          staffSelect.append('<option disabled selected value="">Select</option>');
+
+          if (data.staff && data.staff.length > 0) {
+            $.each(data.staff, function(key, value) {
+              var option = $('<option>', {
+                value: value.id,
+                text: value.Staff_firstname + ' ' + value.Staff_lastname + ' (' + value.deprt + ')'
+              });
+
+              if (selectedStaffId && selectedStaffId == value.id) {
+                option.attr('selected', 'selected');
+              }
+
+              staffSelect.append(option);
+            });
+          } else {
+            staffSelect.append('<option disabled>No staff found</option>');
+          }
+        },
+        error: function() {
+          staffSelect.empty();
+          staffSelect.append('<option disabled>Error loading staff</option>');
+        }
+      });
+    }
+  });
+</script>
+
+{% endblock %}

@@ -1,0 +1,1086 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<head>
+  <style type="text/css">
+    /*Acco*/
+.ac-container {
+    /*max-width: 400px;*/
+    max-width: 1600px;
+}
+.ac-container label {
+    height: 30px !important;
+    line-height: 21px !important;
+    font-size: 12px !important;
+    font-family: 'Open Sans','Arial Narrow',Arial,sans-serif !important;
+    padding: 5px 20px;
+    position: relative;
+    z-index: 20;
+    display: block;
+    height: 30px;
+    cursor: pointer;
+    color: #777;
+    text-shadow: 1px 1px 1px rgba(255,255,255,0.8);
+    line-height: 33px;
+    font-size: 19px;
+    background: #fff;
+    background: -moz-linear-gradient(top,#fff 1%,#eaeaea 100%);
+    background: -webkit-gradient(linear,left top,left bottom,color-stop(1%,#fff),color-stop(100%,#eaeaea));
+    background: -webkit-linear-gradient(top,#fff 1%,#eaeaea 100%);
+    background: -o-linear-gradient(top,#fff 1%,#eaeaea 100%);
+    background: -ms-linear-gradient(top,#fff 1%,#eaeaea 100%);
+    background: linear-gradient(top,#fff 1%,#eaeaea 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fff',endColorstr='#eaeaea',GradientType=0 );
+    box-shadow: 0 0 0 1px rgba(155,155,155,0.3),1px 0 0 rgba(255,255,255,0.9) inset,0 2px 2px rgba(0,0,0,0.1);
+    font-size: 12px;
+    height: 30px;
+    line-height: 20px;
+}
+
+.ac-container {
+    width: 100%;
+    margin: 10px auto 30px auto;
+    text-align: left;
+}
+
+.ac-container label:hover {
+    background: #fff;
+}
+
+.ac-container input:checked + label,.ac-container input:checked + label:hover {
+    background: #f1f2f3;
+    color: #666;
+    text-shadow: 0 1px 1px rgba(255,255,255,0.6);
+    box-shadow: 0 0 0 1px rgba(155,155,155,0.3),0 2px 2px rgba(0,0,0,0.1);
+    height: 30px;
+    line-height: 21px;
+    font-size: 13px;
+}
+
+.ac-container label:hover:after,.ac-container input:checked + label:hover:after {
+    content: '';
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    right: 13px;
+    top: 7px;
+    background: transparent url(../images/arrow_down.png) no-repeat center center;
+}
+
+.ac-container input:checked + label:hover:after {
+    background-image: url(../images/arrow_up.png);
+}
+
+/*.ac-container input {
+    display: none;
+}
+*/
+#ac-1,#ac-2,#ac-3,#ac-4,#ac-5,#ac-6,#ac-7,#ac-8,#ac-9,#ac-10{
+  display: none;
+}
+.ac-container article {
+    background: rgba(255,255,255,0.5);
+    margin-top: -1px;
+    overflow: hidden;
+    height: 0;
+    position: relative;
+    z-index: 10;
+    -webkit-transition: height 0.3s ease-in-out,box-shadow 0.6s linear;
+    -moz-transition: height 0.3s ease-in-out,box-shadow 0.6s linear;
+    -o-transition: height 0.3s ease-in-out,box-shadow 0.6s linear;
+    -ms-transition: height 0.3s ease-in-out,box-shadow 0.6s linear;
+    transition: height 0.3s ease-in-out,box-shadow 0.6s linear;
+}
+
+.ac-container article p {
+    font-style: normal;
+    color: #777;
+    line-height: 23px;
+    font-size: 10px;
+    padding: 20px;
+    text-shadow: 1px 1px 1px rgba(255,255,255,0.8);
+    font: normal normal 12px 'Open Sans';
+}
+
+.ac-container input:checked ~ article {
+    -webkit-transition: height 0.5s ease-in-out,box-shadow 0.1s linear;
+    -moz-transition: height 0.5s ease-in-out,box-shadow 0.1s linear;
+    -o-transition: height 0.5s ease-in-out,box-shadow 0.1s linear;
+    -ms-transition: height 0.5s ease-in-out,box-shadow 0.1s linear;
+    transition: height 0.5s ease-in-out,box-shadow 0.1s linear;
+    box-shadow: 0 0 0 1px rgba(155,155,155,0.3);
+}
+
+.ac-container input:checked ~ article.ac-small {
+    height: 300px;
+}
+
+.ac-container input:checked ~ article.ac-medium {
+    height: 310px;
+}
+
+.ac-container input:checked ~ article.ac-large {
+    height: 550px;
+}
+
+.ac-container input:checked ~ article.ac-large1 {
+    height: 780px;
+}
+
+.card-body{
+  overflow: scroll;
+  height: 600px;
+}
+
+.ac-container input[type="checkbox"] {
+  display: none;
+}
+
+.ac-container article {
+  display: none;
+}
+
+.ac-container input:checked ~ article {
+  display: block;
+}
+
+/* Styling for labels to indicate whether the section is open or closed */
+.ac-container label {
+  cursor: pointer;
+}
+
+.ac-container input[type="checkbox"] + label::before {
+  content: "\25BA"; /* Unicode for right-pointing triangle */
+  display: inline-block;
+  margin-right: 10px;
+}
+
+.ac-container input[type="checkbox"]:checked + label::before {
+  content: "\25BC"; /* Unicode for down-pointing triangle */
+}
+
+</style>
+
+<script type="text/javascript">
+    document.addEventListener("DOMContentLoaded", function() {
+      var checkboxes = document.querySelectorAll('.ac-container input[type="checkbox"]');
+  
+      checkboxes.forEach(function(checkbox) {
+        checkbox.addEventListener('change', function() {
+          if (this.checked) {
+            checkboxes.forEach(function(otherCheckbox) {
+              if (otherCheckbox !== checkbox) {
+                otherCheckbox.checked = false;
+              }
+            });
+          }
+        });
+      });
+    });
+  </script>
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Case History  Details </h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">{% if csehsadd == '1'%}
+              <li class="breadcrumb-item"><a href="{%url 'savepatient'%}?menumanagement_id={{ idmngmnt }}">Add</a></li>
+              {%endif%}
+              <li class="breadcrumb-item active">Case History</li>
+            </ol>
+          </div>
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-12">
+            <div class="card">
+              <div class="scroll">
+                
+                <form method="POST", action="{% url 'case' %}?menumanagement_id={{ idmngmnt }}">
+                    {% csrf_token %}
+                <div class="card-body">
+                    <div class="form-group">
+                        <label for="mrSearch">MR Number</label>
+                        <input type="text" id="mrSearch" class="form-control" placeholder="Type MR Number">
+                        <select class="form-control" name="mrnum" id="mrDropdown" required>
+                          <option selected disabled value="">Select</option>
+                        </select>
+                      </div>
+                      <button type="submit" class="btn btn-primary">Submit</button>
+
+<!-- TreamtmentPlan -->
+<div class="row">
+  <div class="col-md-12">
+<section class="ac-container">
+    <div class="row">
+      <div class="col-md-12">
+
+      <input id="ac-2" name="accordion-1" type="checkbox"  >
+      <label for="ac-2">Chief Complaints With Duration</label>
+
+      <article class="ac-large">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-body1">
+
+
+<table  class="table table-bordered table-striped">
+<thead>
+  <th>SL.No</th>
+  <th>Date</th>
+  <th>Complaint</th>
+  </tr>
+  </thead>
+  <tbody>
+    {% for i in Complaintsobj %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>{{i.Current_Date}}</td>
+        <td>{{ i.complaints }}</td>
+      </tr>
+    {%endfor%}
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</div>
+</article>
+</div>
+</div>
+</section>
+</div>
+</div>
+
+
+
+<section class="ac-container">
+    <div class="row">
+      <div class="col-md-12">
+        <input id="ac-1" name="accordion-1" type="checkbox"  >
+        <label for="ac-1">Preliminary Data</label>
+
+      <article class="ac-large">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-body1">
+
+
+
+
+<table  class="table table-bordered table-striped">
+<thead>
+  <tr>
+    <th>SL.No</th>
+    <th>Address</th>
+    <th>Age</th>
+    <th>Gender</th>
+    <th>Marital Status</th>
+    <th>Place</th>
+    <th>Phone Number</th>
+    <th>Occupation</th>
+  
+    </tr>
+    </thead>
+    <tbody>
+      {% for i in Preliminarydataobj %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{i.Address}}</td>
+          <td>{{ i.Age }}</td>
+          <td>{{ i.Gender }}</td>
+          <td>{{i.Marital_status}}</td>
+          <td>{{ i.Place }}</td>
+          <td>{{ i.Phone_number }}</td>
+          <td>{{ i.Occupation }}</td>
+        </tr>
+      {%endfor%}
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</div>
+</article>
+</div>
+</div>
+</section>
+
+<div>
+
+<div class="row">
+  <div class="col-md-12">
+    <section class="ac-container">
+  <input id="ac-3" name="accordion-1" type="checkbox">
+  <label for="ac-3">History</label>
+  <article class="ac-small">
+                  <div class="row">
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-body">
+<table  class="table table-bordered table-striped">
+  <thead>
+    <th>SL.No</th>
+    <th>Date</th>
+    <th>Family History Description</th>
+    </tr>
+    </thead>
+    <tbody>
+      {% for i in familyHistoryobj %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{i.Current_Date}}</td>
+          <td>{{ i.familyhistorydt }}</td>
+        </tr>
+      {%endfor%}
+  </tbody>
+  </table>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+              <div class="card-body">
+  <table  class="table table-bordered table-striped">
+    <thead>
+      <th>SL.No</th>
+      <th>Date</th>
+      <th>Personal History Description</th>
+      </tr>
+      </thead>
+      <tbody>
+        {% for i in personalHistoryobj %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{i.Current_Date}}</td>
+            <td>{{ i.personalHistorydt }}</td>
+          </tr>
+        {%endfor%}
+    </tbody>
+    </table>
+              </div>
+            </div>
+          </div>
+            <!-- /.card-body -->
+        
+      </div>
+  </article>
+</section>
+</div>
+</div>
+<div class="row">
+  <div class="col-md-12">
+<section class="ac-container">
+    <div class="row">
+      <div class="col-md-12">
+
+      <input id="ac-4" name="accordion-1" type="checkbox"  >
+      <label for="ac-4">H/O PRESENT ILLNESS</label>
+
+      <article class="ac-large">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-body1">
+
+
+
+
+<table  class="table table-bordered table-striped">
+<thead>
+<tr>
+  <th>SL.No</th>
+  <th>Date</th>
+  <th>H/O PRESENT ILLNESS Details</th>
+  
+</tr>
+</thead> 
+<tbody>
+{% for i in hopresentillnessobj %}
+<tr>
+  <td>{{ forloop.counter }}</td>
+  <td>{{i.Current_Date}}</td>
+  <td>{{ i.hopresentillnessdetails }}</td>
+ 
+ 
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</div>
+</article>
+</div>
+</div>
+</section>
+</div>
+</div>
+
+
+</div>
+   
+<div class="row">
+  <div class="col-md-12">
+<section class="ac-container">
+  <input id="ac-5" name="accordion-1" type="checkbox">
+  <label for="ac-5">H/O PAST ILLNESS</label>
+  <article class="ac-medium">
+         
+     
+<table  class="table table-bordered table-striped">
+  <thead>
+  <tr>
+    <th>SL.No</th>
+    <th>Date</th>
+    <th>Description</th>  
+  </tr>
+  </thead> 
+  <tbody>
+  {% for i in hopastillnessobj %}
+  <tr>
+    <td>{{ forloop.counter }}</td>
+    <td>{{i.Current_Date}}</td>
+    <td>{{ i.hopastillnessdetails }}</td>
+    
+  </tr>
+  {% endfor %}
+  </tbody>
+  </table>
+  </article>
+  </section>
+</div>
+
+<div>
+  </div>
+  </div>
+
+  
+<div class="row">
+  <div class="col-md-12">
+<section class="ac-container">
+  <input id="ac-6" name="accordion-1" type="checkbox">
+          <label for="ac-6">MENUSTRAL HISTORY</label>
+          <article class="ac-large">
+            <div class="row">
+                  <div class="col-md-12">
+                       
+     
+<table  class="table table-bordered table-striped">
+  <thead>
+  <tr>
+    <th>SL.No</th>
+    <th>Date</th>
+    <th>Menuarche </th>
+    <th>Menopause</th>
+    <th>Bleeding</th>
+    <th>Other Complaints </th>
+    <th>Interval</th>
+    <th>Clots</th>
+    <th>Colour</th> 
+  </tr>
+  </thead> 
+  <tbody>
+  {% for i in menustralhistoryobj %}
+  <tr>
+    <td>{{ forloop.counter }}</td>
+    <td>{{i.Current_Date}}</td>
+    <td>{{i.menarche}}</td>
+    <td>{{ i.menopauose }}</td>
+    <td>{{ i.bleeding}}</td>
+    <td>{{i.Complaints}}</td>
+    <td>{{i.interval}}</td>
+    <td>{{ i.clots }}</td>
+    <td>{{ i.colour}}</td>
+    
+  </tr>
+  {% endfor %}
+  </tbody>
+  </table> 
+              </div>
+            </div>
+          </article>
+        </div>
+</div>
+
+<div class="row">
+  <div class="col-md-12">
+<section class="ac-container">
+  <input id="ac-7" name="accordion-1" type="checkbox">
+  <label for="ac-7">OBSTRETIC HISTORY</label>
+  <article class="ac-large">
+    <div class="row">
+
+    <div class="col-md-12">
+                
+     
+<table  class="table table-bordered table-striped">
+  <thead>
+  <tr>
+    <th>SL.No</th>
+    <th>Date</th>
+    <th>G/P/A/L</th>
+    <th>LMMP</th>
+    <th>EDD </th>
+  </tr>
+  </thead> 
+  <tbody>
+  {% for i in obstretichistoryobj %}
+  <tr>
+    <td>{{ forloop.counter }}</td>
+    <td>{{i.Current_Date}}</td>
+    <td>{{ i.gpal }}</td>
+    <td>{{ i.lma}}</td>
+    <td>{{i.edd}}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+  </table> 
+  </div>
+  </div>
+  </article>
+  </section>
+  </div>
+  </div>
+  
+  <div class="row">
+    <div class="col-md-12">
+  <section class="ac-container">
+    <input id="ac-8" name="accordion-1" type="checkbox">
+    <label for="ac-8">DASVIDH PARIKSHA</label>
+    <article class="ac-large">
+      <div class="row">
+          <div class="col-md-12">
+                     
+     
+<table  class="table table-bordered table-striped">
+  <thead>
+  <tr>
+    <th>SL.No</th>
+    <th>Date</th>
+    <th>Prakiti</th>
+    <th>Vikriti</th>
+    <th>Saar</th>
+    <th>Samhanan</th>
+    <th>Satmya</th>
+    <th>Pramana</th>
+    <th>Satva</th>
+    <th>Aahar Shakti</th>
+    <th>Vyayam Shakti</th>
+    <th>Vaya</th>
+  </tr>
+  </thead> 
+  <tbody>
+  {% for i in dashvidhparikshaobj %}
+  <tr>
+    <td>{{ forloop.counter }}</td>
+    <td>{{i.Current_Date}}</td>
+    <td>{{ i.prakriti}}</td>
+    <td>{{i.vikriti}}</td>
+    <td>{{i.saar}}</td>
+    <td>{{i.samhanan}}</td>
+    <td>{{i.satmya}}</td>
+    <td>{{i.pramana}}</td>
+    <td>{{i.satva}}</td>
+
+    <td>{{i.aharshakti}}</td>
+    <td>{{i.vyayamshakti}}</td>
+    <td>{{i.vaya}}</td>
+
+  </tr>
+  {% endfor %}
+  </tbody>
+  </table> 
+          </div>
+              <!-- /.card-body -->
+          
+        </div>
+</article>
+</div>
+</div>
+
+
+<div class="row">
+  <div class="col-md-12">
+<section class="ac-container">
+  <input id="ac-9" name="accordion-1" type="checkbox">
+  <label for="ac-9">GENERAL PHYSICAL EXAMINATION</label>
+  <article class="ac-large">
+      <div class="row">
+          <div class="col-md-12">
+              <!-- General Physical Examination Card -->
+              <div class="card card-primary">
+                 
+                  <div class="card-body">
+                      <!-- General Physical Examination Form -->
+                      <div class="card card-primary">
+                  <div class="card-header">
+                      <h5 class="card-title">GENERAL PHYSICAL EXAMINATION</h5>
+                      <div class="card-tools">
+                          <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                              <!-- <i class="fas fa-minus"></i> -->
+                          </button>
+                      </div>
+                  </div>
+                  <div class="card-body">
+                      <div class="row">
+                          <!-- First Column -->
+                          <div class="col-md-12">
+                             
+<table  class="table table-bordered table-striped">
+  <thead>
+  <tr>
+    <th>SL.No</th>
+    <th>Date</th>
+    <th>Pulse</th>
+    <th>Temperature</th>
+    <th>BP</th>
+    <th>Weight</th>
+    <th>BMI</th>
+    <th>Lips</th>
+
+    <th>Throat</th>
+    <th>Tooth</th>
+    <th>SPO2</th>
+    <th>Nutritional Status</th>
+  
+  </tr>
+  </thead> 
+  <tbody>
+  {% for i in generalphysicalexaminationobj %}
+  <tr>
+    <td>{{ forloop.counter }}</td>
+    <td>{{i.Date}}</td>
+    <td>{{ i.pulse}}</td>
+    <td>{{i.temperature}}</td>
+    <td>{{i.bp}}</td>
+    <td>{{i.weight}}</td>
+    <td>{{i.bmi}}</td>
+    <td>{{i.lips}}</td>
+    <td>{{i.throat}}</td>
+    <td>{{i.spo2}}</td>
+    <td>{{i.nutriionalstatus}}</td>
+    <td>{{i.tooth}}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+  </table> 
+                          </div>
+                         
+                      </div>
+                  </div>
+              </div>
+             
+          </div>
+      </div>
+  </article>
+  </section>
+</div>
+</div>
+
+
+<div class="row">
+  <div class="col-md-12">
+<section class="ac-container">
+  <input id="ac-10" name="accordion-1" type="checkbox">
+  <label for="ac-10">SYSTEMATIC EXAMINATION</label>
+  <article class="ac-medium">
+      <div class="row">
+          <div class="col-md-12">
+              <!-- Natural Diagnosis/Pulse Diagnosis -->
+                             
+<table  class="table table-bordered table-striped">
+  <thead>
+  <tr>
+    <th>SL.No</th>
+    <th>Date</th>
+    <th>Description</th>
+    <!-- <th>PROVISIONAL DIAGNOSIS</th> -->
+  </tr>
+  </thead> 
+  <tbody>
+  {% for i in systematicExaminationobj %}
+  <tr>
+    <td>{{ forloop.counter }}</td>
+   <td>{{i.Current_Date}}</td>
+    <td>{{i.sysexamination}}</td>
+  
+  </tr>
+  {% endfor %}
+  </tbody>
+  </table> 
+          </div>
+         
+      </div>
+  </article>
+</section>
+</div>
+</div>
+
+
+
+<div class="row">
+  <div class="col-md-12">
+<section class="ac-container">
+  <input id="ac-11" name="accordion-1" type="checkbox">
+  <label for="ac-11">ASHTAVIDH PARIKSHA</label>
+  <article class="ac-medium">
+      <div class="row">
+          <div class="col-md-12">
+              <!-- Natural Diagnosis/Pulse Diagnosis -->
+                             
+<table  class="table table-bordered table-striped">
+  <thead>
+  <tr>
+    <th>SL.No</th>
+    <th>Date</th>
+    <th>Nadi</th>
+    <th>Mala</th>
+    <th>Mutra</th>
+    <th>Jivha</th>
+    <th>Shobda</th>
+   <th>Sparsha</th>
+    <th>Drishti</th>
+    <th>Aakriti</th>
+    
+  </tr>
+  </thead> 
+  <tbody>
+  {% for i in Ashtavidhparikshaobj %}
+  <tr>
+    <td>{{ forloop.counter }}</td>
+   <td>{{i.Current_Date}}</td>
+    <td>{{i.naadi}}</td>
+    <td>{{ i.mala }}</td>
+    <td>{{i.mutra}}</td>
+     <td>{{i.jivha}}</td>
+     <td>{{ i.Shobda}}</td>
+     <td>{{i.sparsha}}</td>
+      <td>{{i.drishti}}</td>
+      <td>{{i.Aakriti}}</td>
+     
+  </tr>
+  {% endfor %}
+  </tbody>
+  </table> 
+          </div>
+         
+      </div>
+  </article>
+</section>
+</div>
+</div>
+
+
+
+<div class="row">
+  <div class="col-md-12">
+<section class="ac-container">
+  <input id="ac-12" name="accordion-1" type="checkbox">
+  <label for="ac-12">VYADHI PARIKSHA </label>
+  <article class="ac-medium">
+      <div class="row">
+          <div class="col-md-12">
+              <!-- Natural Diagnosis/Pulse Diagnosis -->
+                             
+<table  class="table table-bordered table-striped">
+  <thead>
+  <tr>
+    <th>SL.No</th>
+    <th>Date</th>
+    <th>Nidana</th>
+    <th>Purvaroopa</th>
+    <th>Roopa</th>
+    <th>Upshaya-Anupshaya</th>
+  
+    
+  </tr>
+  </thead> 
+  <tbody>
+  {% for i in vyadhiparikshaobj %}
+  <tr>
+    <td>{{ forloop.counter }}</td>
+   <td>{{i.Current_Date}}</td>
+    <td>{{i.Nidana}}</td>
+    <td>{{ i.Purvaroopa }}</td>
+    <td>{{i.Roopa}}</td>
+     <td>{{i.UpshayaAnupshaya}}</td>
+    
+     
+  </tr>
+  {% endfor %}
+  </tbody>
+  </table> 
+          </div>
+         
+      </div>
+  </article>
+</section>
+</div>
+</div>
+
+
+<div class="row">
+  <div class="col-md-12">
+<section class="ac-container">
+  <input id="ac-13" name="accordion-1" type="checkbox">
+  <label for="ac-13">SAMPRAPTI GHARTAKA </label>
+  <article class="ac-medium">
+      <div class="row">
+          <div class="col-md-12">
+              <!-- Natural Diagnosis/Pulse Diagnosis -->
+                             
+<table  class="table table-bordered table-striped">
+  <thead>
+  <tr>
+    <th>SL.No</th>
+    <th>Date</th>
+    <th>Dosha</th>
+    <th>Samuthan</th>
+    <th>Adhistana</th>
+    <th>Rog Marg</th>
+    <th>Dushya</th>
+    <th>Srotas</th>
+    <th>Srotodushti</th>
+  </tr>
+  </thead> 
+  <tbody>
+  {% for i in sampraptighatakaobj %}
+  <tr>
+    <td>{{ forloop.counter }}</td>
+   <td>{{i.Current_Date}}</td>
+    <td>{{i.dosha}}</td>
+    <td>{{ i.samuthan }}</td>
+    <td>{{i.adhistana}}</td>
+     <td>{{i.rogmarg}}</td>
+     <td>{{i.dushya}}</td>
+     <td>{{i.srotas}}</td>
+     <td>{{i.srotodushi}}</td>
+    
+     
+  </tr>
+  {% endfor %}
+  </tbody>
+  </table> 
+          </div>
+         
+      </div>
+  </article>
+</section>
+</div>
+</div>
+
+
+<div class="row">
+  <div class="col-md-12">
+<section class="ac-container">
+  <input id="ac-14" name="accordion-1" type="checkbox">
+  <label for="ac-14">LAB INVESTIGATION</label>
+  <article class="ac-medium">
+      <div class="row">
+          <div class="col-md-12">
+              <!-- Natural Diagnosis/Pulse Diagnosis -->
+                             
+<table  class="table table-bordered table-striped">
+  <thead>
+  <tr>
+    <th>SL.No</th>
+    <th>Date</th>
+    <th>description</th>
+    
+  </tr>
+  </thead> 
+  <tbody>
+  {% for i in labinvestigationobj %}
+  <tr>
+    <td>{{ forloop.counter }}</td>
+   <td>{{i.Current_Date}}</td>
+    <td>{{i.description}}</td>
+ 
+     
+  </tr>
+  {% endfor %}
+  </tbody>
+  </table> 
+          </div>
+         
+      </div>
+  </article>
+</section>
+</div>
+</div>
+
+
+<div class="row">
+  <div class="col-md-12">
+<section class="ac-container">
+  <input id="ac-14" name="accordion-1" type="checkbox">
+  <label for="ac-14">DIFFERENTIAL DIAGNOSIS</label>
+  <article class="ac-medium">
+      <div class="row">
+          <div class="col-md-12">
+              <!-- Natural Diagnosis/Pulse Diagnosis -->
+                             
+<table  class="table table-bordered table-striped">
+  <thead>
+  <tr>
+    <th>SL.No</th>
+    <th>Date</th>
+    <th>Description</th>
+    
+  </tr>
+  </thead> 
+  <tbody>
+  {% for i in differentialdiagnosisobj %}
+  <tr>
+    <td>{{ forloop.counter }}</td>
+    <td>{{i.Current_Date}}</td>
+    <td>{{i.description}}</td>
+ </tr>
+  {% endfor %}
+  </tbody>
+  </table> 
+          </div>
+         
+      </div>
+  </article>
+</section>
+</div>
+</div>
+<div class="row">
+  <div class="col-md-12">
+<section class="ac-container">
+  <input id="ac-15" name="accordion-1" type="checkbox">
+  <label for="ac-15">DIAGNOSIS</label>
+  <article class="ac-medium">
+      <div class="row">
+          <div class="col-md-12">
+              <!-- Natural Diagnosis/Pulse Diagnosis -->
+                             
+<table  class="table table-bordered table-striped">
+  <thead>
+  <tr>
+    <th>SL.No</th>
+    <th>Date</th>
+    <th>Description</th>
+    <!-- <th>PROVISIONAL DIAGNOSIS</th> -->
+  </tr>
+  </thead> 
+  <tbody>
+  {% for i in Diagnosisobj %}
+  <tr>
+    <td>{{ forloop.counter }}</td>
+   <td>{{i.Current_Date}}</td>
+    <td>{{i.description}}</td>
+  
+  </tr>
+  {% endfor %}
+  </tbody>
+  </table> 
+          </div>
+         
+      </div>
+  </article>
+</section>
+</div>
+</div>
+<div class="row">
+  <div class="col-md-12">
+<section class="ac-container">
+  <input id="ac-15" name="accordion-1" type="checkbox">
+  <label for="ac-15">TREATMENT DIAGNOSIS</label>
+  <article class="ac-medium">
+      <div class="row">
+          <div class="col-md-12">
+              <!-- Natural Diagnosis/Pulse Diagnosis -->
+                             
+<table  class="table table-bordered table-striped">
+  <thead>
+  <tr>
+    <th>SL.No</th>
+    <th>Date</th>
+    <th>Description</th>
+    <!-- <th>PROVISIONAL DIAGNOSIS</th> -->
+  </tr>
+  </thead> 
+  <tbody>
+  {% for i in treatmentadvisedobj %}
+  <tr>
+    <td>{{ forloop.counter }}</td>
+   <td>{{i.Current_Date}}</td>
+    <td>{{i.treatmentadviseddescription}}</td>
+  
+  </tr>
+  {% endfor %}
+  </tbody>
+  </table> 
+          </div>
+         
+      </div>
+  </article>
+</section>
+</div>
+</div>
+</form>
+
+
+                
+              </div>
+              <!-- /.card-body -->
+            </div>
+            <!-- /.card -->
+          </div>
+          <!-- /.col -->
+        </div>
+        <!-- /.row -->
+      </div>
+      <!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+  </div>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    $(document).ready(function () {
+      $('#mrSearch').on('input', function() {
+        var query = $(this).val();
+        if (query.length >= 2) {  // Start searching after 2 characters
+          $.ajax({
+            type: 'GET',
+            url: "{% url 'search_mrno' %}",
+            data: { query: query },
+            success: function(data) {
+              var dropdown = $('#mrDropdown');
+              dropdown.empty();
+              if (data.length > 0) {
+                data.forEach(function(item) {
+                  dropdown.append('<option value="' + item.id + '">' + item.Medical_Record_Number + '</option>');
+                });
+                dropdown.val(data[0].id);  // Select the first matching MR number
+              } else {
+                dropdown.append('<option selected disabled value="">No matching MR numbers found</option>');
+              }
+            }
+          });
+        }
+      });
+    });
+</script>
+
+  <!-- /.content-wrapper -->
+{% endblock %}

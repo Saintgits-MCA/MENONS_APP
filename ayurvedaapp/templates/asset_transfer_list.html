@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Asset Management</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item">
+                            {% if assetview == '1' %}
+                                <a href="{% url 'asset_list' %}?menumanagement_id={{ idmngmnt }}">Asset List</a>
+                            {% endif %}
+                        </li>
+                        <li class="breadcrumb-item active">Transfer History</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+        <div class="container-fluid">
+            <!-- Action Buttons -->
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="btn-group float-right">
+                        {% if assetadd == '1' %}
+                            <a href="{% url 'asset_add' %}?menumanagement_id={{ idmngmnt }}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Add Asset
+                            </a>
+                        {% endif %}
+                        <a href="{% url 'asset_list' %}?menumanagement_id={{ idmngmnt }}" class="btn btn-info">
+                            <i class="fas fa-list"></i> Asset List
+                        </a>
+                        <a href="{% url 'asset_report' %}?menumanagement_id={{ idmngmnt }}" class="btn btn-success">
+                            <i class="fas fa-chart-bar"></i> Reports
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transfer List Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Asset Transfer History</h3>
+                    <div class="card-tools">
+                        <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                            <!-- <i class="fas fa-minus"></i> -->
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="example1" class="table table-bordered table-striped table-sm" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Transfer No</th>
+                                    <th>Asset ID</th>
+                                    <th>Asset Name</th>
+                                    <th>Branch</th>
+                                    <th>From Department</th>
+                                    <th>To Department</th>
+                                    <th>Transfer Date</th>
+                                    <th>Received By</th>
+                                    <th>Transferred By</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for transfer in transfers %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ transfer.transfer_number }}</td>
+                                    <td>{{ transfer.asset.asset_id }}</td>
+                                    <td>{{ transfer.asset.asset_name }}</td>
+                                    <td>{{ transfer.branch.Branch_Name|default:'' }}</td>
+                                    <td>{{ transfer.from_department.Department_Name|default:'-' }}</td>
+                                    <td>{{ transfer.to_department.Department_Name|default:'-' }}</td>
+                                    <td>{{ transfer.transfer_date|date:'Y-m-d' }}</td>
+                                    <td>{{ transfer.received_by|default:'-' }}</td>
+                                    <td>{{ transfer.transferred_by.Staff.Staff_firstname|default:'-' }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                             {% comment %} {% if assetedit == '1' and transfer.is_editable %} {% endcomment %}
+                                                <a href="{% url 'asset_transfer_edit' %}?id={{ transfer.id }}&menumanagement_id={{ idmngmnt }}" class="btn btn-primary" title="Edit Transfer">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                            {% comment %} {% endif %} {% endcomment %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="11" class="text-center text-muted">
+                                        <i class="fas fa-exchange-alt"></i> No transfers found.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+{% endblock %}

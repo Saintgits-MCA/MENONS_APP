@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Staff  Details </h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item">
+                <a href="{% url 'staffdetailtable'%}?menumanagement_id={{ idmngmnt }}">View All</a></li>
+              <li class="breadcrumb-item active">Staff </li>
+            </ol>
+          </div>
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+
+      <div class="row">
+        <div class="col-md-12">
+          <div class="card card-primary">
+            <div class="card-header">
+              <h3 class="card-title">Staff Details </h3>
+
+              <div class="card-tools">
+                <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                  <!-- <i class="fas fa-minus"></i> -->
+                </button>
+              </div>
+            </div>
+             <form method="POST", action="{% url 'editstaffdetail' %}?menumanagement_id={{ idmngmnt }}">
+             
+                {% csrf_token %}
+      <div class="row">
+          <div class="col-md-6">
+              <div class="card">
+             
+             
+                <div class="card-body">
+                    <div class="form-group">
+                    <label for="exampleInputFirstName">Staff First Name</label>
+                    <input type="hidden" name="stfid" value="{{objedstfdet.id}}">
+                    <input type="text" class="form-control" id="exampleInputFirstName" name="firstname" placeholder="Enter  First Name" 
+                    value="{{objedstfdet.Staff_firstname}}">
+                  </div>
+                   <div class="form-group">
+                    <label for="exampleInputEmail1">Staff Last Name</label>
+                    <input type="text" class="form-control" id="exampleInputLastName" name="lastname" placeholder="Enter  Last Name" value="{{objedstfdet.Staff_lastname}}">
+                  </div>
+
+                  <div class="form-group">
+                      <label for="exampleInputManagerName">Gender</label>
+                      <br>
+                      <input type="radio" id="maleRadio" name="gender" value="Male" {% if objedstfdet.Gender == 'Male' %}checked{% endif %}>
+                      <label for="maleRadio">Male</label>
+
+                      <input type="radio" id="femaleRadio" name="gender" value="Female" {% if objedstfdet.Gender == 'Female' %}checked{% endif %}>
+                      <label for="femaleRadio">Female</label>
+
+                      <input type="radio" id="otherRadio" name="gender" value="Others" {% if objedstfdet.Gender == 'Others' %}checked{% endif %}>
+                      <label for="otherRadio">Others</label>
+                  </div>
+                  <div class="form-group">
+                    <label for="exampleInputHouse">Address</label>
+                  <textarea id="address" class="form-control" name="address"></textarea>
+                  </div>
+                  <div class="form-group">
+                    <label for="exampleInputManagerName">Email</label>
+                    <input type="text" class="form-control" id="exampleInputEmail" name="email" placeholder="Enter Email" value="{{objedstfdet.Email}}">
+                  </div>
+                  <div class="form-group">
+                    <label for="exampleInputContactNo">Contact No</label>
+                    <input type="text" class="form-control" id="exampleInputContactNo" name="contactnum" placeholder="Enter Contact No" value="{{objedstfdet.contactno}}" >
+                  </div>        
+                  <!-- <div class="form-group">
+                    <label for="exampleInputPincode">Pincode</label>
+                      <input type="text" class="form-control" id="exampleInputPincode" name="pincode" placeholder="Enter Pincode" value="{{objedstfdet.Pincode}}" >
+                  </div>
+                  
+                  <div class="form-group">
+                    <label for="exampleInputRegisterNo">Country</label>
+                     <select class="form-control" name="country">
+                        <option selected>Select</option>
+                                        {% for i in countryobj %}
+
+                      <option value="{{i.id}}" {% if i.id == objedstfdet.Country_id %}selected{% endif %}>{{i.Country_Name}}</option>
+                                        {% endfor %}
+                    
+                      </select>
+                  </div> -->
+                  <!-- <div class="form-group">
+                    <label for="exampleInputRegisterNo">State</label>
+                   <select class="form-control" name="state">
+                        <option selected>Select</option>
+                        {% for i in stateobj %}
+                          <option value="{{i.id}}" {% if i.id == objedstfdet.State_id %}selected{% endif %}>{{i.State_Name}}</option>
+                        {% endfor %}
+                      </select>
+                  </div> -->
+                   <!-- <div class="form-group">
+                    <label for="exampleInputRegisterNo">District</label>
+                   <select class="form-control" name="district">
+                        <option selected>Select</option>
+                        {% for i in districtobj %}
+
+                         <option value="{{i.id}}" {% if i.id == objedstfdet.District_id %}selected{% endif %}>{{i.District_name}}</option>
+                        {% endfor %}
+                      </select>
+                  </div> -->
+                  <!-- <div class="form-group">
+                    <label for="exampleInputRegisterNo">City</label>
+                   <select class="form-control" name="city">
+                        <option selected>Select</option>
+                                        {% for i in cityobj %}
+
+                      <option value="{{i.id}}" {% if i.id == objedstfdet.City_id %}selected{% endif %}>{{i.City_name}}</option>
+                                        {% endfor %}
+                      </select>
+                  </div> -->
+                </div>
+              </div>
+            </div>
+                <!-- /.card-body -->
+             
+              <div class="col-md-6">
+              <div class="card">
+             
+             
+                <div class="card-body">
+                    
+                  <div class="form-group">
+                    <label for="exampleInputContactNo">Qualification</label>
+                    <textarea class="form-control" name="qualification">
+                      {{objedstfdet.Qualification}}
+                    </textarea>
+                    
+                  </div>
+                   <!-- <div class="form-group">
+                    <label for="exampleInputemail">Experience</label>
+                    <input type="text" class="form-control" id="exampleInputExperience" name="experience" placeholder="Enter Experience" value="{{objedstfdet.Experience}}">
+                  </div> -->
+                   <!-- <label for="exampleInputFile">Certificate Upload</label>
+                    <div class="input-group">
+                      <div class="custom-file">
+                        <input type="file" class="custom-file-input" id="exampleInputFile" name="uploadfile" value="{{objedstfdet.Certificate_upload}}">
+                        <label class="custom-file-label" for="exampleInputFile">Choose file</label>
+                      </div>
+                      <div class="input-group-append">
+                        <span class="input-group-text" id="">Upload</span>
+                      </div>
+                    </div> -->
+                       <div class="form-group">
+                    <label for="exampleInputRegisterNo">Joining Date</label>
+                    <input type="date" class="form-control" id="exampleInputdate" name="joiningdate" value="{{objedstfdet.Joining_date|date:'Y-m-d' }}">
+                  </div>
+                  <div class="form-group">
+                    <label for="exampleInputemail">Pancard Number</label>
+                    <input type="text" class="form-control" id="exampleInputpancard" name="pancardnum" placeholder="Enter Pancard Number" value="{{objedstfdet.Pancard_No}}">
+                  </div>
+               <!--    <div class="form-group">
+                    <label for="exampleInputemail">Adhar</label>
+                    <input type="text" class="form-control" id="exampleInputExperience" placeholder="Enter Experience">
+                  </div> -->
+                </div>
+              </div>
+            </div>
+          </div>
+                <div class="card-footer">
+                  {% if messages %}
+        {% for message in messages %}
+        <p style="color:green;">{{message}}</p> 
+        {% endfor %}
+        {% endif %}
+                  <button type="submit" class="btn btn-primary">Submit</button>
+                </div>
+              </form>
+            <!-- /.card-body -->
+          </div>
+          <!-- /.card -->
+        </div>
+     
+      </div>
+
+      
+    </section>
+    <!-- /.content -->
+  </div>
+  <!-- /.content-wrapper -->
+{% endblock %}

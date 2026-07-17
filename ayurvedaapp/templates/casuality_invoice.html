@@ -1,0 +1,769 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="content-wrapper">
+   
+        
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12 col-sm-6">
+                    <h3 class="mb-2 mb-sm-0"><i class="fas fa-ambulance"></i> Casuality Invoice</h3>
+                </div>
+                <div class="col-12 col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{% url 'casuality_invoice_list' %}">Casuality Invoice List</a></li>
+                        <li class="breadcrumb-item active">New Invoice</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="container-fluid">
+              {% if messages %}
+                {% for message in messages %}
+                  <div class="alert alert-info">{{ message }}</div>
+                {% endfor %}
+              {% endif %}
+            <div class="row">
+                <div class="col-12">
+                    <div class="card card-primary card-outline">
+                        <div class="card-header d-flex flex-wrap align-items-center justify-content-between">
+                            <h3 class="card-title mb-2 mb-sm-0">
+                                <i class="fas fa-file-invoice"></i> Invoice #{{ invoice_no }}
+                            </h3>
+                            <div class="card-tools  d-flex ml-auto">
+                                <span class="badge badge-info">
+                                    <i class="fas fa-calendar mr-2"></i> {{ today|date:"d-m-Y" }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <form id="invoiceForm" method="POST" action="{%url 'save_casuality_invoice'%}" onsubmit="return validateInvoiceForm()">
+                            {% csrf_token %}
+                            <div class="card-body">
+                                
+                                <!-- Hospital Header -->
+                                <div class="row mb-3">
+                                    <div class="col-12 text-center">
+                                        {% for h in objhospt %}
+                                        <img src="{{ h.Logo.url }}" alt="{{ h.Name }}" class="img-fluid" style="max-width:150px;max-height:100px;">
+                                        <h4>{{ h.Name }}</h4>
+                                        <p class="small">{{ h.Address }} | Phone: {{ h.Contact_no }}</p>
+                                        <input type="hidden" name="hospital_id" value="{{ h.id }}">
+                                        {% endfor %}
+                                        {% for b in brname %}
+                                        <p class="small">Branch: {{ b.Branch_Name }} | GST: {{ b.gstno }}</p>
+                                        <input type="hidden" name="branch_id" value="{{ b.id }}">
+                                        {% endfor %}
+                                    </div>
+                                </div>
+
+                                <!-- Patient Details Section -->
+                                <div class="invoice-details">
+                                    <h4>Bill To:</h4>
+                                    
+                                    <!-- Toggle buttons - Responsive -->
+                                    <div class="row mb-3">
+                                        <div class="col-12  g-4">
+                                            <div class="btn-group btn-group-toggle d-flex flex-wrap" data-toggle="buttons">
+                                                <label class="btn btn-outline-primary active flex-fill mr-2">
+                                                    <input type="radio" name="customerType" value="registered" onchange="toggleCustomerType()" checked> Registered Patient
+                                                </label>
+                                                <label class="btn btn-outline-primary flex-fill">
+                                                    <input type="radio" name="customerType" value="unregistered" onchange="toggleCustomerType()"> Unregistered Customer
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Registered Patient Section -->
+                                    <div id="registeredPatientSection">
+                                        <div class="row">
+                                            <div class="col-sm-12 col-md-4">
+                                                <div class="form-group">
+                                                    <label for="mrSearch">MR Number/Phone/Name:</label>
+                                                    <div class="input-group">
+                                                        <input type="text" id="mrSearch" class="form-control" placeholder="Search..." />
+                                                        <div class="input-group-append">
+                                                            <button id="searchBtn" type="button" class="btn btn-primary">
+                                                                <i class="fas fa-search"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-12 col-md-4">
+                                                <div class="form-group">
+                                                    <label for="mrDropdown">Select Patient</label>
+                                                    <select class="form-control" name="patient_id" id="mrDropdown">
+                                                        <option selected disabled value="">Select</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-12 col-md-4">
+                                                <div class="form-group">
+                                                    <label for="billdate">Date</label>
+                                                    <input type="date" class="form-control" id="billdate" name="billdate" />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="row">
+                                            <div class="col-sm-12 col-md-4">
+                                                <div class="form-group">
+                                                    <label for="ptname">Patient Name</label>
+                                                    <input type="text" id="ptname" name="patient_name" class="form-control" readonly />
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-12 col-md-4">
+                                                <div class="form-group">
+                                                    <label for="ptcontact">Contact Number</label>
+                                                    <input type="text" id="ptcontact" name="patient_phone" class="form-control" readonly />
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-12 col-md-4">
+                                                <div class="form-group">
+                                                    <label for="ptmrno">MR Number</label>
+                                                    <input type="text" id="ptmrno" name="patient_mr_no" class="form-control" readonly />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-sm-12 col-md-4">
+                                                <div class="form-group">
+                                                    <label for="ptgender">Gender</label>
+                                                    <input type="text" id="ptgender" name="patient_gender" class="form-control" readonly />
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-12 col-md-4">
+                                                <div class="form-group">
+                                                    <label for="ptage">Age</label>
+                                                    <input type="text" id="ptage" name="patient_age" class="form-control" readonly />
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-12 col-md-12">
+                                                <div class="form-group">
+                                                    <label for="ptaddress">Address</label>
+                                                    <textarea id="ptaddress" name="patient_address" class="form-control" rows="2" readonly></textarea>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Unregistered Customer Section -->
+                                    <div id="unregisteredCustomerSection" style="display: none;">
+                                        <div class="row">
+                                            <div class="col-sm-12 col-md-4">
+                                                <div class="form-group">
+                                                    <label for="unregName">Patient Name</label>
+                                                    <input type="text" id="unregName" name="unreg_name" class="form-control" placeholder="Enter customer name" />
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-12 col-md-4">
+                                                <div class="form-group">
+                                                    <label for="unregContact">Contact Number</label>
+                                                    <input type="text" id="unregContact" name="unreg_contact" class="form-control" placeholder="Enter contact number" />
+                                                </div>
+                                            </div>
+
+                                            <div class="col-sm-12 col-md-4">
+                                                <div class="form-group">
+                                                    <label for="unregDate">Date</label>
+                                                    <input type="date" class="form-control" id="unregDate" name="unreg_date" />
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-12 col-md-4">
+                                                <div class="form-group">
+                                                    <label for="unregAge">Age</label>
+                                                    <input type="number" id="unregAge" name="unreg_age" class="form-control" onwheel="this.blur()" placeholder="Enter Age" />
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-12 col-md-4">
+                                                <div class="form-group">
+                                                    <label for="unregGender">Gender</label>
+                                                    <select type="gender" id="unregGender" name="unreg_gender" class="form-control" placeholder="Enter contact number" />
+                                                <option value="">Choose Gender</option>
+                                                <option value="Male">Male</option>
+                                                <option value="Female">Female</option>
+                                                </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-12 col-md-4">
+                                                <div class="form-group">
+                                                    <label for="unregAddress">Address</label>
+                                                    <input type="text" id="unregAddress" name="unreg_address" class="form-control" placeholder="Enter Address" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div id="registrationAlert" class="alert alert-info registration-alert" style="display: none;">
+    <i class="fas fa-info-circle"></i> 
+    <strong>Patient Registration Mode:</strong> Please fill patient details and click Register Patient to create a new patient record. After registration, you can create invoice for this patient.
+</div>
+                                </div>
+
+                                <!-- Procedures Section -->
+                                <div class="row mt-3">
+                                    <div class="col-12">
+                                        <div class="card card-primary">
+                                            <div class="card-header">
+                                                <h5 class="card-title mb-0">
+                                                    <i class="fas fa-stethoscope"></i> Procedures
+                                                </h5>
+                                            
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row mb-3">
+                                                    <div class="col-12">
+                                                        <label>Add Procedure:</label>
+                                                        <div class="position-relative">
+                                                            <input type="text" id="procedureSearchInput" class="form-control" placeholder="Search for procedures..." autocomplete="off" />
+                                                            <div id="procedureSearchResults" class="autocomplete-dropdown"></div>
+                                                        </div>
+                                                        <button type="button" id="addProcedureBtn" class="btn btn-success btn-sm" disabled>
+                                                                       Add Selected
+                                                                    </button>
+                                                    </div>
+                                                </div>
+                                                  
+                                                <div class="table-responsive">
+                                                    <table class="table table-bordered table-striped table-sm">
+                                                        <thead class="thead-light">
+                                                            <tr>
+                                                                <th width="5%">#</th>
+                                                                <th width="40%">Procedure</th>
+                                                                <th width="10%">Qty</th>
+                                                                <th width="15%">Rate (₹)</th>
+                                                                {% comment %} <th width="10%">Tax %</th> {% endcomment %}
+                                                                <th width="15%">Amount (₹)</th>
+                                                                <th width="5%">Action</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody id="itemsTableBody">
+                                                            <!-- Rows added dynamically -->
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Invoice Summary - Responsive Layout -->
+                                <div class="row mt-3">
+                                    <div class="col-lg-6 offset-lg-6 col-md-8 offset-md-4 col-sm-12">
+                                        <div class="">
+                                                <h5 class=" mb-0">Invoice Summary</h5>
+                                                <div class="p-2 p-md-3">
+                                                <div class="row mb-2">
+                                                    <div class="col-6"><strong>Subtotal:</strong></div>
+                                                    <div class="col-6"><input type="text" id="subtotal" name="subtotal" class="form-control form-control-sm text-right" readonly value="0"></div>
+                                                </div>
+                                                {% comment %} <div class="row mb-2">
+                                                    <div class="col-6"><strong>Tax Amount:</strong></div>
+                                                    <div class="col-6"><input type="text" id="taxAmount" name="tax_amount" class="form-control form-control-sm text-right"  value="0"></div>
+                                                </div> {% endcomment %}
+                                                <div class="row mb-2">
+                                                    <div class="col-6"><strong>Discount:</strong></div>
+                                                    <div class="col-6"><input type="number" id="discount" name="discount" class="form-control form-control-sm text-right" value="0" min="0" onwheel="this.blur()" onchange="updateTotal()"></div>
+                                                </div>
+                                                <div class="row mb-2">
+                                                    <div class="col-6"><strong>Consultation Fee:</strong></div>
+                                                    <div class="col-6"><input type="number" id="consultationFee" name="consultation_fee" class="form-control form-control-sm text-right" value="0" min="0" onwheel="this.blur()" onchange="updateTotal()"></div>
+                                                </div>
+                                                <div class="row mb-2">
+                                                    <div class="col-6"><strong>Registration Fee:</strong></div>
+                                                    <div class="col-6"><input type="number" id="registrationFee" name="registration_fee" class="form-control form-control-sm text-right" value="0" min="0" onwheel="this.blur()" onchange="updateTotal()"></div>
+                                                </div>
+                                                <hr class="my-2">
+                                                <div class="row">
+                                                    <div class="col-6"><strong>Grand Total:</strong></div>
+                                                    <div class="col-6"><input type="text" id="grandTotal" name="total" class="form-control form-control-sm text-right font-weight-bold" readonly value="0"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Payment Mode Section - Responsive -->
+                                <div class="row mt-3">
+                                    <div class="col-lg-6 offset-lg-6 col-md-8 offset-md-4 col-sm-12">
+                                        <div class="">
+                                                <h5 class=" mb-0">Payment Details</h5>
+                                                 <div class=" p-2 p-md-3">
+                                                <div class="form-group mb-2">
+                                                    <label>Payment Mode:</label>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="cashCheck" name="payment_modes" value="Cash" checked onchange="togglePaymentInputs()">
+                                                        <label class="form-check-label" for="cashCheck">Cash</label>
+                                                        <input type="number" class="form-control mt-1 payment-input" id="cashInput" name="cash_amount" placeholder="Amount" min="0" onwheel="this.blur()" style="display: block;">
+                                                    </div>
+                                                    <div class="form-check mt-2">
+                                                        <input class="form-check-input" type="checkbox" id="gpayCheck" name="payment_modes" value="GPay" onchange="togglePaymentInputs()">
+                                                        <label class="form-check-label" for="gpayCheck">Online Payment</label>
+                                                        <input type="number" class="form-control mt-1 payment-input" id="gpayInput" name="gpay_amount" placeholder="Amount" style="display: none" min="0" onwheel="this.blur()">
+                                                    </div>
+                                                    <div class="form-check mt-2">
+                                                        <input class="form-check-input" type="checkbox" id="cardCheck" name="payment_modes" value="Card" onchange="togglePaymentInputs()">
+                                                        <label class="form-check-label" for="cardCheck">Card</label>
+                                                        <input type="number" class="form-control mt-1 payment-input" id="cardInput" name="card_amount" placeholder="Amount" style="display: none" min="0" onwheel="this.blur()">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <input type="hidden" name="item_count" id="itemCount" value="0">
+                                <input type="hidden" name="tax_percentage" id="taxPercentage" value="0">
+
+                                <div class="card-footer text-left">
+                                    <button type="submit" id="submitBtn" class="btn btn-primary btn-md px-4 px-md-5">
+                                        <i class="fas fa-save"></i> Save Invoice
+                                    </button>
+                                    <button type="reset" class="btn btn-danger btn-md ml-2 px-4 px-md-5">Reset</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Search Results Modal -->
+<div class="modal fade" id="searchModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Search Results</h5>
+                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body p-3">
+                <div class="table-responsive">
+                    <table id="searchResultsTable" class="table table-bordered mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>MR Number</th>
+                                <th>Patient Name</th>
+                                <th>Address</th>
+                                <th>Contact</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.autocomplete-dropdown {
+    position: absolute;
+    background: white;
+    border: 1px solid #ddd;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    width: 100%;
+    display: none;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.autocomplete-dropdown div {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+}
+.autocomplete-dropdown div:hover {
+    background-color: #f0f0f0;
+}
+.payment-input {
+    display: none;
+}
+@media (max-width: 768px) {
+    .card-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+    }
+    .card-tools {
+        margin-top: 8px;
+    }
+    .table th, .table td {
+        padding: 6px 4px;
+        font-size: 12px;
+    }
+    .btn {
+        font-size: 14px;
+    }
+    h4 {
+        font-size: 18px;
+    }
+    .small {
+        font-size: 11px;
+    }
+}
+@media (max-width: 576px) {
+    .btn-group-toggle .btn {
+        font-size: 12px;
+        padding: 6px 8px;
+    }
+}
+</style>
+
+<script src="{% static 'assets/js/jquery-3.6.0.min.js' %}"></script>
+<script src="{% static 'assets/plugins/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'assets/plugins/datatables/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'assets/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js' %}"></script>
+
+<script>
+    let procedureCounter = 0;
+    let selectedProcedure = null;
+
+$(document).ready(function() {
+    // Check if we have patient data to auto-fill
+    const autoFillPatient = {{ auto_fill_patient|safe }};
+    
+    if (autoFillPatient && autoFillPatient.id) {
+        // Set patient details
+        $("#mrDropdown").html(`<option value="${autoFillPatient.id}" selected>${autoFillPatient.mrno} - ${autoFillPatient.name}</option>`);
+        $("#ptname").val(autoFillPatient.name);
+        $("#ptcontact").val(autoFillPatient.contact || '');
+        $("#ptmrno").val(autoFillPatient.mrno);
+        $("#ptgender").val(autoFillPatient.gender || '');
+        $("#ptage").val(autoFillPatient.age || '');
+        $("#ptaddress").val(autoFillPatient.address || '');
+        
+        }
+});
+    $(document).ready(function() {
+     
+        let table = $("#searchResultsTable").DataTable({
+            paging: true,
+            searching: true,
+            info: true,
+            lengthChange: true,
+            pageLength: 10,
+            responsive: true
+        });
+
+        // Search patient
+        $("#searchBtn").on("click", function() {
+            let query = $("#mrSearch").val();
+            if (query.trim() === "") {
+                alert("Please enter a search term.");
+                return;
+            }
+
+            table.clear().draw();
+
+            fetch(`/search_mrno?query=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.length > 0) {
+                        data.forEach((item) => {
+                            let actionBtn = `<button class="btn btn-primary btn-sm select-btn" 
+                                                data-id="${item.id}" 
+                                                data-name="${item.Patient_Name}" 
+                                                data-mrno="${item.Medical_Record_Number}" 
+                                                data-contact="${item.contactno}"
+                                                data-gender="${item.Gender}"
+                                                data-age="${item.Age}"
+                                                data-address="${item.address}">
+                                              Select
+                                            </button>`;
+                            table.row.add([
+                                item.Medical_Record_Number,
+                                item.Patient_Name,
+                                item.address || "N/A",
+                                item.contactno,
+                                actionBtn
+                            ]).draw(false);
+                        });
+                        $("#searchModal").modal("show");
+                    } else {
+                        alert("No matching records found.");
+                    }
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    alert("Error retrieving data.");
+                });
+        });
+
+        // Select patient
+        $("#searchResultsTable tbody").on("click", ".select-btn", function() {
+            $("#mrDropdown").html(`<option value="${$(this).data("id")}" selected>${$(this).data("mrno")} - ${$(this).data("name")}</option>`);
+            $("#ptname").val($(this).data("name"));
+            $("#ptcontact").val($(this).data("contact"));
+            $("#ptmrno").val($(this).data("mrno"));
+            $("#ptgender").val($(this).data("gender"));
+            $("#ptage").val($(this).data("age"));
+            $("#ptaddress").val($(this).data("address"));
+            $("#searchModal").modal("hide");
+        });
+
+        // Set dates
+        const today = new Date().toISOString().split('T')[0];
+        $("#billdate").val(today);
+        $("#unregDate").val(today);
+
+        togglePaymentInputs();
+        toggleCustomerType();
+    });
+
+   function toggleCustomerType() {
+    const isRegistered = $("input[name='customerType']:checked").val() === 'registered';
+    
+    // Toggle patient sections
+    $("#registeredPatientSection").toggle(isRegistered);
+    $("#unregisteredCustomerSection").toggle(!isRegistered);
+    
+    // Get all sections to hide/show
+    const proceduresCard = $(".card:has(#procedureSearchInput)").closest('.row.mt-3');
+    const invoiceSummaryCard = $(".row:has(#subtotal)").closest('.row.mt-3');
+    const paymentCard = $(".row:has(#cashCheck)").closest('.row.mt-3');
+    const resetButton = $("button[type='reset']");
+    const submitBtn = $("#submitBtn");
+    
+    if (!isRegistered) {
+        // HIDE all billing-related sections
+        proceduresCard.hide();
+        invoiceSummaryCard.hide();
+        paymentCard.hide();
+        
+        // Show registration alert
+        $("#registrationAlert").show();
+        
+        // Change button text and style for patient registration
+        submitBtn.html('<i class="fas fa-user-plus"></i> Register Patient')
+                 .removeClass('btn-primary')
+                 .addClass('btn-success');
+        
+        // Add hidden field to identify this as patient registration only
+        if ($("input[name='patient_registration_only']").length === 0) {
+            $('<input>').attr({
+                type: 'hidden',
+                name: 'patient_registration_only',
+                value: 'true'
+            }).appendTo('#invoiceForm');
+        }
+        
+        // Make unregistered fields required
+        $("#unregName").prop('required', true);
+        $("#unregContact").prop('required', true);
+        
+    } else {
+        // SHOW all billing-related sections
+        proceduresCard.show();
+        invoiceSummaryCard.show();
+        paymentCard.show();
+        
+        // Hide registration alert
+        $("#registrationAlert").hide();
+        
+        // Change button text back to Save Invoice
+        submitBtn.html('<i class="fas fa-save"></i> Save Invoice')
+                 .removeClass('btn-success')
+                 .addClass('btn-primary');
+        
+        // Remove hidden field
+        $("input[name='patient_registration_only']").remove();
+        
+        // Remove required from unregistered fields
+        $("#unregName").prop('required', false);
+        $("#unregContact").prop('required', false);
+        
+        // Clear unregistered form fields
+        $("#unregName").val('');
+        $("#unregContact").val('');
+        $("#unregAge").val('');
+        $("#unregGender").val('');
+        $("#unregAddress").val('');
+    }
+}
+    // Search procedures
+    $("#procedureSearchInput").on("keyup", function() {
+        const input = $(this).val();
+        const results = $("#procedureSearchResults");
+        results.empty().hide();
+
+        if (input.length < 2) {
+            $("#addProcedureBtn").prop("disabled", true);
+            selectedProcedure = null;
+            return;
+        }
+
+        fetch(`/search_procedures_for_invoice?term=${encodeURIComponent(input)}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.length) {
+                    data.forEach(item => {
+                        const div = $("<div>").text(`${item.label} - ₹${item.rate}`)
+                            .on("click", () => selectProcedure(item));
+                        results.append(div);
+                    });
+                    results.show();
+                }
+            })
+            .catch(err => console.error(err));
+    });
+
+    function selectProcedure(procedure) {
+        selectedProcedure = procedure;
+        $("#procedureSearchInput").val(procedure.label);
+        $("#procedureSearchResults").hide();
+        $("#addProcedureBtn").prop("disabled", false);
+    }
+
+    $("#addProcedureBtn").on("click", function() {
+        if (!selectedProcedure) {
+            alert("Please select a procedure first.");
+            return;
+        }
+        addProcedureToInvoice(selectedProcedure);
+        selectedProcedure = null;
+        $("#procedureSearchInput").val("");
+        $("#addProcedureBtn").prop("disabled", true);
+    });
+
+    function addProcedureToInvoice(procedure) {
+        procedureCounter++;
+        $("#itemCount").val(procedureCounter);
+        
+        const row = `<tr>
+            <td class="sl-no">${procedureCounter}</td>
+            <td>
+                <input type="hidden" name="procedure_id_${procedureCounter}" value="${procedure.id}">
+                <input type="text" name="procedure_name_${procedureCounter}" value="${procedure.label}" class="form-control form-control-sm" readonly>
+            </td>
+            <td><input type="number" name="quantity_${procedureCounter}" class="form-control form-control-sm quantity" value="1" min="1" onwheel="this.blur()" onchange="updateTotal()"></td>
+            <td><input type="number" name="rate_${procedureCounter}" class="form-control form-control-sm rate" value="${procedure.rate}"  onchange="updateTotal()"></td>
+            {% comment %} <td><input type="number" name="tax_${procedureCounter}" class="form-control form-control-sm tax" value="${procedure.tax}" readonly></td> {% endcomment %}
+            <td><input type="number" name="amount_${procedureCounter}" class="form-control form-control-sm amount" value="${procedure.rate}" readonly></td>
+            <td class="text-center"><button type="button" class="btn btn-sm btn-danger" onclick="removeProcedure(this)"><i class="fas fa-trash"></i></button></td>
+        </tr>`;
+        
+        $("#itemsTableBody").append(row);
+        updateTotal();
+    }
+
+    function removeProcedure(btn) {
+        $(btn).closest("tr").remove();
+        renumberProcedures();
+        updateTotal();
+    }
+
+    function renumberProcedures() {
+        $("#itemsTableBody tr").each(function(index) {
+            const newNum = index + 1;
+            $(this).find(".sl-no").text(newNum);
+            $(this).find("input").each(function() {
+                const name = $(this).attr("name");
+                if (name) $(this).attr("name", name.replace(/_\d+_/, `_${newNum}_`));
+            });
+        });
+        procedureCounter = $("#itemsTableBody tr").length;
+        $("#itemCount").val(procedureCounter);
+    }
+
+    function updateTotal() {
+        let subtotal = 0, totalTax = 0;
+        
+        $("#itemsTableBody tr").each(function() {
+            const qty = parseFloat($(this).find(".quantity").val()) || 0;
+            const rate = parseFloat($(this).find(".rate").val()) || 0;
+            const taxPercent = parseFloat($(this).find(".tax").val()) || 0;
+            const amount = qty * rate;
+            const tax = amount * taxPercent / 100;
+            
+            $(this).find(".amount").val(amount.toFixed(2));
+            subtotal += amount;
+            totalTax += tax;
+        });
+
+        const discount = parseFloat($("#discount").val()) || 0;
+        const consFee = parseFloat($("#consultationFee").val()) || 0;
+        const regFee = parseFloat($("#registrationFee").val()) || 0;
+        const grandTotal = subtotal + totalTax + consFee + regFee - discount;
+
+        $("#subtotal").val(subtotal.toFixed(2));
+        {% comment %} $("#taxAmount").val(totalTax.toFixed(2)); {% endcomment %}
+        $("#grandTotal").val(grandTotal.toFixed(2));
+    }
+$(document).on('input', '.rate', function() {
+    updateTotal();
+});
+
+$(document).on('input', '.quantity', function() {
+    updateTotal();
+});
+    function togglePaymentInputs() {
+        $(".payment-input").hide();
+        if ($("#cashCheck").is(":checked")) $("#cashInput").show();
+        if ($("#gpayCheck").is(":checked")) $("#gpayInput").show();
+        if ($("#cardCheck").is(":checked")) $("#cardInput").show();
+        
+        if (!$("#cashCheck").is(":checked")) $("#cashInput").val("");
+        if (!$("#gpayCheck").is(":checked")) $("#gpayInput").val("");
+        if (!$("#cardCheck").is(":checked")) $("#cardInput").val("");
+    }
+
+    function validatePaymentAmounts() {
+        const total = parseFloat($("#grandTotal").val()) || 0;
+        let paid = 0;
+        if ($("#cashCheck").is(":checked")) paid += parseFloat($("#cashInput").val()) || 0;
+        if ($("#gpayCheck").is(":checked")) paid += parseFloat($("#gpayInput").val()) || 0;
+        if ($("#cardCheck").is(":checked")) paid += parseFloat($("#cardInput").val()) || 0;
+        return Math.abs(paid - total) < 0.01;
+    }
+
+    function validateInvoiceForm() {
+    const isRegistered = $("input[name='customerType']:checked").val() === 'registered';
+    
+    // For unregistered (patient registration only)
+    if (!isRegistered) {
+        const patientName = $("#unregName").val().trim();
+        if (!patientName) {
+            alert("Please enter patient name to register.");
+            $("#unregName").focus();
+            return false;
+        }
+        return true;
+    }
+     const patientId = $("#mrDropdown").val();
+    if (!patientId || patientId === 'Select') {
+        alert("Please select a registered patient.");
+        $("#mrDropdown").focus();
+        return false;
+    }
+    
+    // For registered patients (normal invoice validation)
+    if ($("#itemsTableBody tr").length === 0) {
+        alert("Please add at least one procedure.");
+        return false;
+    }
+    if (!$("#cashCheck").is(":checked") && !$("#gpayCheck").is(":checked") && !$("#cardCheck").is(":checked")) {
+        alert("Please select at least one payment mode.");
+        return false;
+    }
+    if (!validatePaymentAmounts()) {
+        alert("Payment amounts do not match the invoice total.");
+        return false;
+    }
+    $("#submitBtn").prop("disabled", true).html('<i class="fas fa-spinner fa-spin"></i> Submitting...');
+    return true;
+}
+</script>
+
+{% endblock %}

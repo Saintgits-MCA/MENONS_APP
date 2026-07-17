@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="content-wrapper">
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Hospital Details</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item">
+               
+                    <a href="{% url 'hospital' %}">Add</a>
+             
+              <li class="breadcrumb-item active">Hospital</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </section>
+  <section class="content">
+    <div class="container-fluid">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title"> Registered Hospitals</h3>
+        </div>
+        
+        <div class="card-body">
+            <table id="example1" class="table table-bordered table-striped">
+                <thead>
+              <tr>
+                <th>SL No</th>
+                <th>Name</th>
+                <th>Address</th>
+                <th>Register No</th>
+                <th>GST</th>
+                <th>Manager Name</th>
+                <th>Contact No</th>
+                <th>Email</th>
+                <th>Logo</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for hospital in hospitals %}
+                <tr>
+                  <td>{{ forloop.counter }}</td>
+                  <td>{{ hospital.Name }}</td>
+                  <td>{{ hospital.Address }}</td>
+                  <td>{{ hospital.Register_no }}</td>
+                  <td>{{ hospital.GST }}</td>
+                  <td>{{ hospital.Manager_name }}</td>
+                  <td>{{ hospital.Contact_no }}</td>
+                  <td>{{ hospital.Email }}</td>
+                  <td>
+                    {% if hospital.Logo %}
+                      <img src="{{ hospital.Logo.url }}" alt="Hospital Logo" width="50" height="50">
+                    {% else %}
+                      No logo
+                    {% endif %}
+                  </td>
+                  <td>
+                    <a href="{% url 'edithospital' %}?ids={{hospital.id}}">
+                      <img src="{% static 'assets/dist/img/icons/edit.svg' %}" class="img-square" style="width:20px" alt="Edit Icon">
+                    </a>
+                  </td>
+            </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+{% endblock %}

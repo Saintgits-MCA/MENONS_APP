@@ -1,0 +1,854 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="content-wrapper">
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Insert Case History</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="{% url 'case_history_list' %}">View All</a></li>
+            <li class="breadcrumb-item active">Insert Case History</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="content">
+    <div class="card card-primary">
+      <div class="card-header">
+        <h3 class="card-title">Patient Case History Form</h3>
+      </div>
+      <div class="card-body">
+        <form method="POST" action="{% url 'addcasehistory' %}"enctype="multipart/form-data" id="caseHistoryForm">
+          {% csrf_token %}
+          <!-- Patient Search and Selection -->
+          <div class="row">
+              <div class="col-md-8">
+                  <div class="form-group">
+                      <label for="mrSearch">MR Number/PhoneNo/Name</label>
+                      <input type="text" id="mrSearch" class="form-control" placeholder="Type MR Number">
+                  </div>
+              </div>
+              <div class="col-md-4 mt-4">
+                  <button type="button" id="searchBtn" class="btn btn-primary">Search</button>
+              </div>
+          </div>
+          
+          <!-- Patient and Status Selection -->
+          <div class="row">
+              <div class="col-md-3">
+                  <div class="form-group">
+                      <label for="mrDropdown">Selected MR Number/Patient</label>
+                      <select class="form-control" name="mrnum" id="mrDropdown" required>
+                          <option selected disabled value="">Select</option>
+                          {% for patient in patients %}
+                              <option value="{{ patient.id }}">{{ patient.name }}</option>
+                          {% endfor %}
+                      </select>
+                  </div>
+              </div>
+              <div class="col-md-3">
+                  <div class="form-group">
+                      <label>Status:</label>
+                      <select name="status" id="appointment_type" class="form-control" required>
+                          <option value="">-Select-</option>
+                          <option value="Consultation">Consultation</option>
+                          <option value="Followup">Follow Up</option>
+                      </select>
+                  </div>
+              </div>
+          </div>
+          
+          <!-- Basic Information -->
+          <div class="row">
+              <div class="col-md-3">
+                  <div class="form-group">
+                      <label for="age">Age</label>
+                      <input type="number" class="form-control" name="age" placeholder="Enter Age" min="0">
+                  </div>
+              </div>
+              <div class="col-md-3">
+                  <div class="form-group">
+                      <label for="height">Height (cm)</label>
+                      <input type="number" name="height" class="form-control" placeholder="Enter Height (cm)" step="0.1">
+
+                  </div>
+              </div>
+              <div class="col-md-3">
+                  <div class="form-group">
+                      <label for="weight">Weight (kg)</label><input type="number" class="form-control" name="weight" placeholder="Enter Weight (kg)" step="0.1">
+                  </div>
+              </div>
+          </div>
+          
+          <!-- Complaints and Drug History -->
+          <div class="row">
+              <div class="col-md-6">
+                  <div class="form-group">
+                      <label for="chiefComplaint">Chief Complaint</label>
+                      <input type="text" class="form-control" id="chiefComplaint" name="chief_complaint" required>
+                  </div>
+              </div>
+              <div class="col-md-6">
+                  <div class="form-group">
+                      <label for="drugHistory">Drug History</label>
+                      <textarea class="form-control" id="drugHistory" name="drug_history" rows="3"></textarea>
+                  </div>
+              </div>
+          </div>
+          <div class="form-group">
+            <label >Test Needed</label>
+            <input type="text" class="form-control"  name="testneeded" >
+        </div>
+         <!-- Upload Reports Section -->
+     
+<div class="mb-3">
+  <div class="form-group">
+      <label for="uploaded_file">Result Upload</label>
+      <div class="row">
+          <div class="col-md-3">
+            <div id="fileUploadSection">
+              <!-- Your existing HTML with file list -->
+              <input type="file" id="singleFileUpload" class="form-control-file" multiple accept=".jpg,.pdf,.png">
+              <ul id="file-list" class="list-unstyled mt-2"></ul>
+          </div>
+          </div>
+        
+      </div>
+      <!-- Hidden field to hold selected files in JavaScript -->
+      <input type="hidden" name="uploaded_files" id="uploaded_files">
+  </div>
+</div>
+
+        
+      
+          <!-- Pre
+           sent Complaint and Diagnosis -->
+          <div class="form-group">
+              <label for="presentComplaint">History of Present Complaint</label>
+              <textarea class="form-control" id="presentComplaint" name="present_complaint" rows="4" required></textarea>
+          </div>
+          <div class="form-group">
+              <label for="finalDiagnosis">Final Diagnosis</label>
+              <input type="text" class="form-control" id="finalDiagnosis" name="final_diagnosis" required>
+          </div>
+          
+         <!-- Medicine Section -->
+         <div class="form-group">
+          <label for="medicineSearch">Search Medicine</label>
+          <input type="text" id="medicineSearch" class="form-control" placeholder="Type Medicine Name">
+          <button type="button" id="searchMedicineBtn" class="btn btn-primary mt-2" data-toggle="modal" data-target="#medicineModal">Search</button>
+      </div>
+
+      <div class="table-responsive mt-3">
+        <h5>Prescription</h5>
+        <!-- Hidden input for storing selected medicines -->
+        <input type="hidden" id="selectedMedicinesInput" name="selectedMedicinesInput">
+        
+        <table class="table table-bordered" id="selectedMedicineTable">
+          <thead>
+            <tr>
+              <th>Medicine Name</th>
+              <th>Count</th>
+              <th>Dosage</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="selectedMedicineBody"></tbody>
+        </table>
+      </div>
+         <!-- Treatment Selection Section -->
+          
+<h5>Treatment Details</h5>
+<div class="row">
+    <div class="col-md-8">
+        <div class="form-group">
+            <label for="treatmentSearch">Search Treatment</label>
+            <input type="text" id="treatmentSearch" class="form-control" placeholder="Type Treatment Name">
+        </div>
+    </div>
+    <div class="col-md-4 mt-4">
+        <button type="button" id="searchTreatmentBtn" class="btn btn-primary" data-toggle="modal" data-target="#treatmentModal">Search</button>
+    </div>
+</div>
+
+<!-- Selected Treatments Display -->
+<!-- Selected Treatments Display -->
+<div class="table-responsive mt-3">
+  <table class="table table-bordered" id="selectedTreatmentTable">
+      <thead>
+          <tr>
+              <th>Treatment Name</th>
+              <th>Time</th>
+              <th>Date</th>
+              <th>Handled By Staff</th>
+              <th>Handled By Assistant</th>
+              <th>Action</th>
+          </tr>
+      </thead>
+      <tbody id="selectedTreatmentBody">
+          <!-- Selected treatments will be added here dynamically -->
+      </tbody>
+  </table>
+</div>
+
+<!-- Hidden input to store selected treatments -->
+<input type="hidden" name="selected_treatments" id="selectedTreatmentsInput">
+
+<!-- Treatment Search Modal -->
+<div class="modal fade" id="treatmentModal" tabindex="-1" role="dialog" aria-labelledby="treatmentModalLabel" aria-hidden="true">
+<div class="modal-dialog modal-lg" role="document">
+  <div class="modal-content">
+    <div class="modal-header bg-primary text-white">
+      <h5 class="modal-title" id="treatmentModalLabel">Search Treatment</h5>
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+    <div class="modal-body">
+      <!-- DataTable for treatment search results -->
+      <table id="treatmentResultsTable" class="display table table-bordered">
+        <thead>
+          <tr>
+            <th>Select</th>
+            <th>Treatment Name</th>
+            <th>Rate</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Results will be dynamically added here -->
+        </tbody>
+      </table>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-success" id="addSelectedTreatments">Add Selected</button>
+      <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+    </div>
+  </div>
+</div>
+</div>
+
+          <!-- Diet and Doctor Assignment -->
+          <div class="row">
+              <div class="col-md-6">
+                  <div class="form-group mt-4">
+                      <label for="diet">Diet Plan</label>
+                      <select class="form-control" id="diet" name="diet" >
+                          <option value="">--Select--</option>
+                          {% for diet in diets %}
+                              <option value="{{ diet.id }}">{{ diet.name }}</option>
+                          {% endfor %}
+                      </select>
+                  </div>
+              </div>
+              <div class="col-md-6">
+                  <div class="form-group mt-4">
+                      <label for="additionalNotes">Additional Notes</label>
+                      <textarea class="form-control" id="additionalNotes" name="notes" rows="3"></textarea>
+                  </div>
+              </div>
+          </div>
+          
+          <div class="row">
+              <div class="col-md-4">
+                  <div class="form-group mt-4">
+                      
+                        <label for="doctorDropdown">Assigned Doctor</label>
+                        <select id="doctorDropdown" name="doctor" class="form-control" required>
+                          <option value="">Select Doctor</option>
+                          <!-- Populated dynamically by JavaScript -->
+                        </select>
+                     
+                      
+                  </div>
+              </div>
+
+              <div class="col-md-4 mt-4">
+                  <div class="form-group">
+                      <label for="followUpDate">Next Follow-up Date:</label>
+                      <input type="date" name="follow_up_date" id="followUpDate" class="form-control" required>
+                  </div>
+              </div>
+       
+          </div>
+          <button type="submit" class="btn btn-success mt-3">Save Case History</button>
+      </form>
+  </div>
+  
+      </div>
+    
+  </section>
+<!-- Medicine Search Modal -->
+<div class="modal fade" id="medicineModal" tabindex="-1" role="dialog" aria-labelledby="medicineModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="medicineModalLabel">Search Medicine</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <table id="medicineResultsTable" class="display table table-bordered">
+          <thead>
+            <tr>
+              <th>Select</th>
+              <th>Medicine Name</th>
+              <th>Rate</th>
+              <th>Quantity</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Results will be dynamically added here -->
+          </tbody>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-success" id="addSelectedMedicines">Add Selected</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Modal for displaying search results with DataTable -->
+<div class="modal" id="searchModal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="searchModalLabel">Search Results</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <!-- DataTable for displaying search results -->
+        <table id="searchResultsTable" class="display table table-bordered">
+          <thead>
+            <tr>
+              <th>MR Number</th>
+              <th>Patient Name</th>
+              <th>Address</th>
+              <th>Contact No</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Results will be appended here -->
+          </tbody>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>$(document).ready(function () {
+  let searchTable = $('#searchResultsTable').DataTable({
+      paging: true,
+      searching: true,
+      info: true,
+      lengthChange: true,
+      pageLength: 10
+  });
+
+  // Handle Search Button click
+  $('#searchBtn').on('click', function () {
+      const query = $('#mrSearch').val().trim();
+      if (!query) return alert('Please enter a search term.');
+
+      searchTable.clear().draw(); // Clear previous search results
+
+      // Fetch search results
+      fetch(`/search_mrno?query=${query}`)
+          .then(res => res.json())
+          .then(data => {
+              if (!data.length) return alert('No matching records found.');
+
+              data.forEach(item => {
+                  searchTable.row.add([
+                      item.Medical_Record_Number,
+                      item.Patient_Name,
+                      item.Housename || 'N/A',
+                      item.contactno,
+                      `<button class="btn btn-primary select-btn" data-id="${item.id}" 
+                          data-name="${item.Patient_Name}" 
+                          data-mrno="${item.Medical_Record_Number}" 
+                          data-contact="${item.contactno}"
+                          data-address="${item.Housename || 'N/A'}">Select</button>`
+                  ]).draw(false);
+              });
+
+              // Show modal without fade effect
+              $('#searchModal').modal({ backdrop: 'static', keyboard: true });
+              // Ensure no lingering backdrop
+              $('.modal-backdrop').removeClass('fade');
+          })
+          .catch(err => {
+              console.error('Error fetching search:', err);
+              alert('Error retrieving data.');
+          });
+  });
+
+  // Handle select button click inside the table
+  $('#searchResultsTable').on('click', '.select-btn', function () {
+      const btn = $(this);
+      const id = btn.data('id');
+      const name = btn.data('name');
+      const contact = btn.data('contact');
+      const mrno = btn.data('mrno');
+      const address = btn.data('address');
+
+      // Set selected values
+      $('#mrDropdown').html(`<option value="${id}" selected>${mrno}</option>`);
+      $('#mrnoid').val(id);
+      $('#exampleInputAddress').val(`${name} - ${contact}`);
+
+      // Fetch patient status and update accordingly
+      fetch(`/check_patient_status?mr_number=${id}`)
+          .then(res => res.json())
+          .then(data => {
+              if (data.status === 'Consultation') {
+                  $('#appointment_type').val('Consultation');
+                  $('#followUpContainer').show();
+                  $('#followUpLabel').text('Consultation Date:');
+              } else if (data.status === 'Followup') {
+                  $('#appointment_type').val('Followup');
+                  $('#followUpContainer').show();
+                  $('#followUpLabel').text('Next Follow-up Date:');
+              } else {
+                  $('#appointment_type').val('');
+                  $('#followUpContainer').hide();
+              }
+          })
+          .catch(err => {
+              console.error('Error fetching patient status:', err);
+          });
+  // Fetch assigned doctor details for the selected MR Number
+  fetch(`/get_assigned_doctor?mrno=${id}`)  // Backend endpoint to fetch doctor data
+  .then(response => response.json())
+  .then(data => {
+    const doctorDropdown = $('#doctorDropdown');
+    doctorDropdown.empty();  // Clear existing options
+
+    if (data.success) {
+      const doctors = data.doctors;  // List of all doctors
+      const assignedDoctor = data.assigned_doctor;  // Assigned doctor details
+
+      // If an assigned doctor exists, add it as the first option and select it
+      if (assignedDoctor) {
+        doctorDropdown.append(
+          `<option value="${assignedDoctor.id}" selected>${assignedDoctor.full_name}</option>`
+        );
+      } else {
+        // If no assigned doctor, add a placeholder option
+        doctorDropdown.append('<option value="" selected>No doctor assigned</option>');
+      }
+
+      // Add all other doctors to the dropdown, ensuring no duplicates
+      doctors.forEach(doctor => {
+        if (!assignedDoctor || doctor.id !== assignedDoctor.id) {  // Avoid duplicating the assigned doctor
+          doctorDropdown.append(
+            `<option value="${doctor.id}">${doctor.full_name}</option>`
+          );
+        }
+      });
+    } else {
+      // Handle errors returned from the server
+      alert('Error fetching doctor data: ' + data.error);
+      doctorDropdown.append('<option value="">Error loading doctors</option>');
+    }
+  })
+  .catch(error => {
+    // Handle network or server errors
+    console.error('Error:', error);
+    alert('There was an error retrieving the doctor data.');
+    doctorDropdown.append('<option value="">Error loading doctors</option>');
+  });
+
+// Hide the modal after selecting a patient
+$('#searchModal').modal('hide');
+
+  });
+
+  // Remove lingering backdrop when modal is hidden
+  $('.modal').on('hidden.bs.modal', function () {
+      $('.modal-backdrop').remove();
+  });
+
+  // Prevent fade effect on modal display
+  $('.modal').on('show.bs.modal', function () {
+      $(this).removeClass('fade');
+  });
+});
+
+  </script>
+  
+<script>$(document).ready(function() {
+  // Initialize the DataTable for medicine results
+  let medicineResultsTable = $('#medicineResultsTable').DataTable({
+    paging: true,
+    searching: true,
+    info: true,
+    lengthChange: true,
+    pageLength: 10
+  });
+
+  let selectedMedicines = [];
+
+  // Search for medicines via AJAX
+  $('#searchMedicineBtn').on('click', function() {
+    let query = $('#medicineSearch').val().trim();
+
+    if (query.length < 4) {
+      alert('Please enter at least 4 characters to search.');
+      return;
+    }
+    if (query === '') {
+      alert('Please enter a medicine name.');
+      return;
+    }
+
+    medicineResultsTable.clear().draw();  // Clear previous results
+
+    fetch(`/fetch_medicines/?query=${query}`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.length > 0) {
+          data.forEach(item => {
+            let checkbox = `<input type="checkbox" class="medicine-checkbox" 
+              data-id="${item.id}" 
+              data-name="${item.itemname}" 
+              data-rate="${item.rate}" 
+              data-qty="${item.qty}" 
+              data-physicalstockid="${item.physicalstockid}">`;
+
+            medicineResultsTable.row.add([
+              checkbox,
+              item.itemname,
+              item.rate,
+              item.qty
+            ]).draw(false);
+          });
+
+          $('#medicineSearch').val('');  // Clear the search field
+          $('#medicineModal').modal('show');  // Show the modal with search results
+        } else {
+          alert('No medicines found.');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Error fetching medicine data.');
+      });
+  });
+
+  // Add selected medicines to the treatment list
+  $('#addSelectedMedicines').on('click', function() {
+    $('.medicine-checkbox:checked').each(function() {
+      let id = $(this).data('id');
+      let name = $(this).data('name');
+      let physicalstockid = $(this).data('physicalstockid');
+
+      if (!selectedMedicines.some(m => m.id === id)) {
+        selectedMedicines.push({
+          id,
+          name,
+          physicalstockid,
+          count: 1,  // Default count
+          dosage: '', // Default dosage
+          time: ''    // Default time
+        });
+
+        let row = `<tr data-id="${id}">
+          <td>
+            ${name}
+            <input type="hidden" name="physicalstockid[]" value="${physicalstockid}" required>
+            <input type="hidden" name="medicine_id[]" value="${id}" required>
+          </td>
+          <td><input type="number" class="form-control medicine_count" name="medicine_count[]" min="1" value="1" required></td>
+          <td><input type="text" class="form-control medicine_dosage" name="medicine_dosage[]" required></td>
+          <td><button type="button" class="btn btn-danger btn-sm remove-medicine">Remove</button></td>
+        </tr>`;
+
+        $('#selectedMedicineBody').append(row);
+      }
+    });
+
+    // Update hidden input with selected medicines
+    $('#selectedMedicinesInput').val(JSON.stringify(selectedMedicines));
+
+    // Hide the modal after selection
+    $('#medicineModal').modal('hide');
+  });
+
+  // Remove medicine from the list
+  $('#selectedMedicineBody').on('click', '.remove-medicine', function() {
+    let row = $(this).closest('tr');
+    let id = row.data('id');
+    selectedMedicines = selectedMedicines.filter(m => m.id !== id);
+    $('#selectedMedicinesInput').val(JSON.stringify(selectedMedicines));
+    row.remove();
+  });
+
+  // Update changes in count/dosage
+  $('#selectedMedicineBody').on('change', '.medicine_count, .medicine_dosage, .medicine_time', function() {
+    let row = $(this).closest('tr');
+    let id = row.data('id');
+    let updated = selectedMedicines.find(m => m.id === id);
+    if (updated) {
+      updated.count = row.find('.medicine_count').val();
+      updated.dosage = row.find('.medicine_dosage').val();
+      updated.time = row.find('.medicine_time').val();
+      $('#selectedMedicinesInput').val(JSON.stringify(selectedMedicines));
+    }
+  });
+});
+
+</script>
+<script>
+ $(document).ready(function() {
+    // Initialize the DataTable for treatment search
+    let treatmentResultsTable = $('#treatmentResultsTable').DataTable({
+        paging: true,
+        searching: true,
+        info: true,
+        lengthChange: true,
+        pageLength: 10
+    });
+
+    let selectedTreatments = [];
+
+    // Search for treatments via AJAX
+    $('#searchTreatmentBtn').on('click', function() {
+        let query = $('#treatmentSearch').val().trim();
+
+        if (query === '') {
+            alert('Please enter a treatment name.');
+            return;
+        }
+
+        treatmentResultsTable.clear().draw();  // Clear previous results
+
+        fetch(`/search_treatmentcasehistory?query=${query}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.length > 0) {
+                    data.forEach(item => {
+                        let checkbox = `<input type="checkbox" class="treatment-checkbox" 
+                            data-id="${item.id}" 
+                            data-name="${item.Treatment_name}" 
+                            data-rate="${item.Rate}" 
+                            data-description="${item.Description}">`;
+
+                        treatmentResultsTable.row.add([
+                            checkbox, 
+                            item.Treatment_name,
+                            item.Rate,
+                            item.Description || 'N/A'
+                        ]).draw(false);
+                    });
+
+                    $('#treatmentSearch').val('');  // Clear the search field
+                    $('#treatmentModal').modal('show');  // Show the modal with search results
+                } else {
+                    alert('No treatments found.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error fetching treatment data.');
+            });
+    });
+
+    // Add selected treatments to the list
+    $('#addSelectedTreatments').on('click', function() {
+        $('.treatment-checkbox:checked').each(function() {
+            let id = $(this).data('id');
+            let name = $(this).data('name');
+
+            if (!selectedTreatments.some(treatment => treatment.id === id)) {
+                selectedTreatments.push({ id, name });
+
+                let row = `<tr data-id="${id}">
+                    <td><input type="text" class="form-control" name="treatment_name[]" value="${name}" readonly></td>
+                    <td><input type="time" class="form-control treatment_time" name="treatment_time[]" required></td>
+                    <td><input type="date" class="form-control treatment_date" name="treatment_date[]" required></td>
+                      <td>
+                                  {% for staff in stffdt %}
+                                      <div class="form-check">
+                                          <input class="form-check-input handled-checkbox" type="checkbox" 
+                                              name="handled_by[{{ treatment.id }}][]" value="{{ staff.id }}">
+                                          <label class="form-check-label">
+                                              {{ staff.Staff.Staff_firstname }} {{ staff.Staff.Staff_lastname }}
+                                          </label>
+                                      </div>
+                                  {% endfor %}
+                                  </td>
+                                  <td>  
+                                    {% for staff in stffdt %}
+                                      <div class="form-check">
+                                          <input class="form-check-input given-checkbox" type="checkbox" 
+                                              name="given_by[{{ treatment.id }}][]" value="{{ staff.id }}">
+                                          <label class="form-check-label">
+                                              {{ staff.Staff.Staff_firstname }} {{ staff.Staff.Staff_lastname }}
+                                          </label>
+                                      </div>
+                                    {% endfor %}
+                                </td>
+                    <td><button type="button" class="btn btn-danger btn-sm remove-treatment">Remove</button></td>
+                </tr>`;
+
+                $('#selectedTreatmentBody').append(row);
+            }
+        });
+
+        // Update hidden input with selected treatments
+        $('#selectedTreatmentsInput').val(JSON.stringify(selectedTreatments));
+
+        // Hide the modal after selection
+        $('#treatmentModal').modal('hide');
+    });
+
+    // Remove selected treatment from the list
+    $('#selectedTreatmentBody').on('click', '.remove-treatment', function() {
+        let row = $(this).closest('tr');
+        let id = row.data('id');
+        selectedTreatments = selectedTreatments.filter(treatment => treatment.id !== id);
+        $('#selectedTreatmentsInput').val(JSON.stringify(selectedTreatments));
+        row.remove();
+    });
+
+    // Update treatment details (time, date, etc.)
+    $('#selectedTreatmentBody').on('change', '.treatment_time, .treatment_date', function() {
+        let row = $(this).closest('tr');
+        let id = row.data('id');
+        let updated = selectedTreatments.find(treatment => treatment.id === id);
+        if (updated) {
+            updated.time = row.find('.treatment_time').val();
+            updated.date = row.find('.treatment_date').val();
+            $('#selectedTreatmentsInput').val(JSON.stringify(selectedTreatments));
+        }
+    });
+});
+
+
+</script>
+<script>
+    // Array to keep track of selected files
+    let selectedFiles = [];
+    // Handle the addition of files one by one
+    document.getElementById('singleFileUpload').addEventListener('change', function() {
+        const files = Array.from(this.files); // Get all selected files
+        files.forEach(file => {
+            // Check if the file is already in the list to avoid duplicates
+            if (!selectedFiles.some(f => f.name === file.name)) {
+                selectedFiles.push(file); // Add to selected files array
+                // Add the file to the UI list
+                const fileList = document.getElementById('file-list');
+                const li = document.createElement('li');
+                li.className = "list-group-item d-flex justify-content-between align-items-center";
+                li.textContent = file.name;
+
+                // Create a "View" link
+                const viewLink = document.createElement('a');
+                viewLink.href = URL.createObjectURL(file);
+                viewLink.textContent = 'View';
+                viewLink.target = '_blank'; // Open in a new tab
+                viewLink.className = "btn btn-link";
+
+                // Create a "Remove" button
+                const removeButton = document.createElement('button');
+                removeButton.textContent = 'Remove';
+                removeButton.className = "btn btn-danger btn-sm";
+                removeButton.onclick = function () {
+                    removeFile(file.name, li);
+                };
+
+                li.appendChild(viewLink);
+                li.appendChild(removeButton);
+
+                fileList.appendChild(li);
+            }
+        });
+        // Clear the input so the user can upload another file
+        this.value = '';
+    });
+    // Function to remove file from the list
+    function removeFile(fileName, listItem) {
+        // Remove the file from the selected files array
+        selectedFiles = selectedFiles.filter(file => file.name !== fileName);
+        // Remove the corresponding list item
+        listItem.remove();
+    }
+
+    document.getElementById('caseHistoryForm').addEventListener('submit', function(e) {
+    e.preventDefault();  // Prevent default form submission
+
+    let formData = new FormData(this);
+    
+    // Collect selected treatments
+    let collectedTreatments = [];
+    $('#selectedTreatmentBody tr').each(function() {
+        let treatment_id = $(this).data('id');
+        let treatment_time = $(this).find('.treatment_time').val();
+        let treatment_date = $(this).find('.treatment_date').val();
+        
+        let handled_by = [];
+        $(this).find('.handled-checkbox:checked').each(function() {
+            handled_by.push($(this).val()); // Collect selected staff IDs
+        });
+
+        let given_by = [];
+        $(this).find('.given-checkbox:checked').each(function() {
+            given_by.push($(this).val()); // Collect selected assistant IDs
+        });
+
+        if (!treatment_date) {
+            alert('Please select a treatment date for all treatments.');
+            return false;
+        }
+
+        collectedTreatments.push({
+            id: treatment_id,
+            treatment_time: treatment_time,
+            treatment_date: treatment_date,
+            handled_by: handled_by,  // Send as an array
+            given_by: given_by       // Send as an array
+        });
+    });
+
+    // Store treatments in hidden input field
+    formData.append("selected_treatments", JSON.stringify(collectedTreatments));
+
+    // Send FormData to Django
+    fetch('{% url "addcasehistory" %}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Case history saved successfully.');
+            window.location.href = "/addcasehistory/";
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An unexpected error occurred. Check the console for details.');
+    });
+});
+</script>
+
+  
+{% endblock %}

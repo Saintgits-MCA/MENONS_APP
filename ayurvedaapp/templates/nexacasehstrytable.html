@@ -1,0 +1,464 @@
+
+
+{% load static %}
+{% block content %}
+<head>
+  <style type="text/css">
+    /*Acco*/
+    .ac-container {
+    /*max-width: 400px;*/
+    max-width: 1600px;
+}
+.ac-container label {
+    height: 30px !important;
+    line-height: 21px !important;
+    font-size: 12px !important;
+    font-family: 'Open Sans','Arial Narrow',Arial,sans-serif !important;
+    padding: 5px 20px;
+    position: relative;
+    z-index: 20;
+    display: block;
+    height: 30px;
+    cursor: pointer;
+    color: #777;
+    text-shadow: 1px 1px 1px rgba(255,255,255,0.8);
+    line-height: 33px;
+    font-size: 19px;
+    background: #fff;
+    background: -moz-linear-gradient(top,#fff 1%,#eaeaea 100%);
+    background: -webkit-gradient(linear,left top,left bottom,color-stop(1%,#fff),color-stop(100%,#eaeaea));
+    background: -webkit-linear-gradient(top,#fff 1%,#eaeaea 100%);
+    background: -o-linear-gradient(top,#fff 1%,#eaeaea 100%);
+    background: -ms-linear-gradient(top,#fff 1%,#eaeaea 100%);
+    background: linear-gradient(top,#fff 1%,#eaeaea 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fff',endColorstr='#eaeaea',GradientType=0 );
+    box-shadow: 0 0 0 1px rgba(155,155,155,0.3),1px 0 0 rgba(255,255,255,0.9) inset,0 2px 2px rgba(0,0,0,0.1);
+    font-size: 12px;
+    height: 30px;
+    line-height: 20px;
+}
+
+.ac-container {
+    width: 100%;
+    margin: 10px auto 30px auto;
+    text-align: left;
+}
+
+.ac-container label:hover {
+    background: #fff;
+}
+
+.ac-container input:checked + label,.ac-container input:checked + label:hover {
+    background: #f1f2f3;
+    color: #666;
+    text-shadow: 0 1px 1px rgba(255,255,255,0.6);
+    box-shadow: 0 0 0 1px rgba(155,155,155,0.3),0 2px 2px rgba(0,0,0,0.1);
+    height: 30px;
+    line-height: 21px;
+    font-size: 13px;
+}
+
+.ac-container label:hover:after,.ac-container input:checked + label:hover:after {
+    content: '';
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    right: 13px;
+    top: 7px;
+    background: transparent url(../images/arrow_down.png) no-repeat center center;
+}
+
+.ac-container input:checked + label:hover:after {
+    background-image: url(../images/arrow_up.png);
+}
+
+/*.ac-container input {
+    display: none;
+}
+*/
+#ac-1,#ac-2,#ac-3,#ac-4,#ac-5,#ac-6,#ac-7,#ac-8,#ac-9,#ac-10{
+  display: none;
+}
+.ac-container article {
+    background: rgba(255,255,255,0.5);
+    margin-top: -1px;
+    overflow: hidden;
+    height: 0;
+    position: relative;
+    z-index: 10;
+    -webkit-transition: height 0.3s ease-in-out,box-shadow 0.6s linear;
+    -moz-transition: height 0.3s ease-in-out,box-shadow 0.6s linear;
+    -o-transition: height 0.3s ease-in-out,box-shadow 0.6s linear;
+    -ms-transition: height 0.3s ease-in-out,box-shadow 0.6s linear;
+    transition: height 0.3s ease-in-out,box-shadow 0.6s linear;
+}
+
+.ac-container article p {
+    font-style: normal;
+    color: #777;
+    line-height: 23px;
+    font-size: 10px;
+    padding: 20px;
+    text-shadow: 1px 1px 1px rgba(255,255,255,0.8);
+    font: normal normal 12px 'Open Sans';
+}
+
+.ac-container input:checked ~ article {
+    -webkit-transition: height 0.5s ease-in-out,box-shadow 0.1s linear;
+    -moz-transition: height 0.5s ease-in-out,box-shadow 0.1s linear;
+    -o-transition: height 0.5s ease-in-out,box-shadow 0.1s linear;
+    -ms-transition: height 0.5s ease-in-out,box-shadow 0.1s linear;
+    transition: height 0.5s ease-in-out,box-shadow 0.1s linear;
+    box-shadow: 0 0 0 1px rgba(155,155,155,0.3);
+}
+
+.ac-container input:checked ~ article.ac-small {
+    height: 300px;
+}
+
+.ac-container input:checked ~ article.ac-medium {
+    height: 310px;
+}
+
+.ac-container input:checked ~ article.ac-large {
+    height: 550px;
+}
+
+.ac-container input:checked ~ article.ac-large1 {
+    height: 780px;
+}
+
+.card-body{
+  overflow: scroll;
+  height: 600px;
+}
+
+.ac-container input[type="checkbox"] {
+  display: none;
+}
+
+.ac-container article {
+  display: none;
+}
+
+.ac-container input:checked ~ article {
+  display: block;
+}
+
+/* Styling for labels to indicate whether the section is open or closed */
+.ac-container label {
+  cursor: pointer;
+}
+
+.ac-container input[type="checkbox"] + label::before {
+  content: "\25BA"; /* Unicode for right-pointing triangle */
+  display: inline-block;
+  margin-right: 10px;
+}
+
+.ac-container input[type="checkbox"]:checked + label::before {
+  content: "\25BC"; /* Unicode for down-pointing triangle */
+}
+</style>
+
+
+<script type="text/javascript">
+  document.addEventListener("DOMContentLoaded", function() {
+    var checkboxes = document.querySelectorAll('.ac-container input[type="checkbox"]');
+
+    checkboxes.forEach(function(checkbox) {
+      checkbox.addEventListener('change', function() {
+        if (this.checked) {
+          checkboxes.forEach(function(otherCheckbox) {
+            if (otherCheckbox !== checkbox) {
+              otherCheckbox.checked = false;
+            }
+          });
+        }
+      });
+    });
+  });
+</script>
+  <!-- Content Wrapper. Contains page content -->
+ 
+  <section class="content">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-12">
+          <div class="card">
+            <div class="scroll">
+              
+              <div class="card-body">
+               
+<!-- TreamtmentPlan -->
+<div class="row">
+<div class="col-md-12">
+<section class="ac-container">
+  <div class="row">
+    <div class="col-md-12">
+
+    <input id="ac-2" name="accordion-1" type="checkbox"  >
+    <label for="ac-2">Chief Complaints With Duration</label>
+
+    <article class="ac-large">
+          <div class="row">
+              <div class="col-md-12">
+                  <div class="card">
+                      <div class="card-body1">
+
+
+<table  class="table table-bordered table-striped">
+<thead>
+<th>SL.No</th>
+<th>Date</th>
+<th>Complaint</th>
+</tr>
+</thead>
+<tbody>
+  {% for i in Complaintsobj %}
+    <tr>
+      <td>{{ forloop.counter }}</td>
+      <td>{{i.Current_Date}}</td>
+      <td>{{ i.complaints }}</td>
+    </tr>
+  {%endfor%}
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</div>
+</article>
+</div>
+</div>
+</section>
+</div>
+</div>
+
+
+<div>
+
+     
+<div class="row">
+<div class="col-md-12">
+<section class="ac-container">
+  <div class="row">
+    <div class="col-md-12">
+
+    <input id="ac-4" name="accordion-1" type="checkbox"  >
+    <label for="ac-4">H/O PRESENT ILLNESS</label>
+
+    <article class="ac-large">
+          <div class="row">
+              <div class="col-md-12">
+                  <div class="card">
+                      <div class="card-body1">
+
+
+
+
+<table  class="table table-bordered table-striped">
+<thead>
+<tr>
+<th>SL.No</th>
+<th>Date</th>
+<th>H/O PRESENT ILLNESS Details</th>
+
+</tr>
+</thead> 
+<tbody>
+{% for i in hopresentillnessobj %}
+<tr>
+<td>{{ forloop.counter }}</td>
+<td>{{i.Current_Date}}</td>
+<td>{{ i.hopresentillnessdetails }}</td>
+
+
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</div>
+</article>
+</div>
+</div>
+</section>
+</div>
+</div>
+
+
+</div>
+ 
+
+<div class="row">
+  <div class="col-md-12">
+<section class="ac-container">
+  <input id="ac-8" name="accordion-1" type="checkbox">
+  <label for="ac-8">DASVIDH PARIKSHA</label>
+  <article class="ac-large">
+    <div class="row">
+        <div class="col-md-12">
+                   
+   
+<table  class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Drug History</th>
+            <th>Complaint</th>
+            <th>Diagnosis</th>
+            <th>Test Needed</th>
+            <th>Report Uploaded</th>
+        </tr>
+    </thead>
+<tbody>
+{% for i in dashvidhparikshaobj %}
+<tr>
+  <td>{{ forloop.counter }}</td>
+  <td>{{i.Current_Date}}</td>
+  <td>{{ i.prakriti}}</td>
+  <td>{{i.vikriti}}</td>
+  <td>{{i.saar}}</td>
+  <td>{{i.samhanan}}</td>
+  <td>{{i.satmya}}</td>
+  <td>{{i.pramana}}</td>
+  <td>{{i.satva}}</td>
+
+  <td>{{i.aharshakti}}</td>
+  <td>{{i.vyayamshakti}}</td>
+  <td>{{i.vaya}}</td>
+
+</tr>
+{% endfor %}
+</tbody>
+</table> 
+        </div>
+            <!-- /.card-body -->
+        
+      </div>
+</article>
+</div>
+</div>
+
+
+
+
+<div class="row">
+<div class="col-md-12">
+<section class="ac-container">
+<input id="ac-10" name="accordion-1" type="checkbox">
+<label for="ac-10">SYSTEMATIC EXAMINATION</label>
+<article class="ac-medium">
+    <div class="row">
+        <div class="col-md-12">
+            <!-- Natural Diagnosis/Pulse Diagnosis -->
+                           
+<table  class="table table-bordered table-striped">
+<thead>
+<tr>
+  <th>SL.No</th>
+  <th>Date</th>
+  <th>Description</th>
+  <!-- <th>PROVISIONAL DIAGNOSIS</th> -->
+</tr>
+</thead> 
+<tbody>
+{% for i in systematicExaminationobj %}
+<tr>
+  <td>{{ forloop.counter }}</td>
+ <td>{{i.Current_Date}}</td>
+  <td>{{i.sysexamination}}</td>
+
+</tr>
+{% endfor %}
+</tbody>
+</table> 
+        </div>
+       
+    </div>
+</article>
+</section>
+</div>
+</div>
+
+
+
+<div class="row">
+<div class="col-md-12">
+<section class="ac-container">
+<input id="ac-11" name="accordion-1" type="checkbox">
+<label for="ac-11">ASHTAVIDH PARIKSHA</label>
+<article class="ac-medium">
+    <div class="row">
+        <div class="col-md-12">
+            <!-- Natural Diagnosis/Pulse Diagnosis -->
+                           
+<table  class="table table-bordered table-striped">
+<thead>
+<tr>
+  <th>SL.No</th>
+  <th>Date</th>
+  <th>Nadi</th>
+  <th>Mala</th>
+  <th>Mutra</th>
+  <th>Jivha</th>
+  <th>Shobda</th>
+ <th>Sparsha</th>
+  <th>Drishti</th>
+  <th>Aakriti</th>
+  
+</tr>
+</thead> 
+<tbody>
+{% for i in Ashtavidhparikshaobj %}
+<tr>
+  <td>{{ forloop.counter }}</td>
+ <td>{{i.Current_Date}}</td>
+  <td>{{i.naadi}}</td>
+  <td>{{ i.mala }}</td>
+  <td>{{i.mutra}}</td>
+   <td>{{i.jivha}}</td>
+   <td>{{ i.Shobda}}</td>
+   <td>{{i.sparsha}}</td>
+    <td>{{i.drishti}}</td>
+    <td>{{i.Aakriti}}</td>
+   
+</tr>
+{% endfor %}
+</tbody>
+</table> 
+        </div>
+       
+    </div>
+</article>
+</section>
+</div>
+</div>
+
+
+
+</form>
+
+
+              
+            </div>
+            <!-- /.card-body -->
+          </div>
+          <!-- /.card -->
+        </div>
+        <!-- /.col -->
+      </div>
+      <!-- /.row -->
+    </div>
+    <!-- /.container-fluid -->
+  </section>
+  <!-- /.content -->
+</div>
+
+
+<!-- /.content-wrapper -->
+{% endblock %}

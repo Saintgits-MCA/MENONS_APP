@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="content-wrapper" style="background: #f4f7fc;">
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card" style="border-radius: 24px; border: none; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);">
+                        <div class="card-header bg-white" style="border-radius: 24px 24px 0 0; border-bottom: 1px solid #e9edf2;">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h3 class="card-title mb-0" style="font-weight: 600; color: #1f3b4c;">
+                                    <i class="fas fa-file-invoice-dollar me-2" style="color: #2b7a62;"></i> Purchase Invoices
+                                </h3>
+                                <a href="{% url 'purchase_invoice' %}" class="btn btn-primary" style="border-radius: 40px;">
+                                    <i class="fas fa-plus me-2"></i> New Purchase Invoice
+                                </a>
+                            </div>
+                        </div>
+                        <div class="card-body" style="padding: 1.8rem;">
+                            
+                            <!-- Filter Section -->
+                            <div class="row mb-4">
+    <div class="col-md-3">
+        <div class="form-group">
+            <label>From Date</label>
+            <input type="date" class="form-control" id="from_date" value="{{ from_date }}" style="border-radius: 14px;">
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="form-group">
+            <label>To Date</label>
+            <input type="date" class="form-control" id="to_date" value="{{ to_date }}" style="border-radius: 14px;">
+        </div>
+    </div>
+    <div class="col-md-3">
+    <div class="form-group">
+        <div class="d-flex" style="gap: 10;">
+            <button class="btn btn-secondary flex-fill" id="filterBtn" >
+                <i class="fas fa-search mr-2"></i> Filter
+            </button>
+            <button type="reset" class="btn btn-danger flex-fill ml-3" id="resetBtn">
+                <i class="fas fa-undo "></i> Reset
+            </button>
+        </div>
+    </div>
+</div>
+</div>
+                            
+                            <!-- Invoices Table -->
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover" id="example2" style="width: 100%;">
+                                    <thead style="background: #f9fbfd;">
+                                        <tr>
+                                            <th>SL No.</th>
+                                            <th>Invoice No</th>
+                                            <th>Invoice Date</th>
+                                            <th>Supplier</th>
+                                            <th>Store</th>
+                                            <th>Supplier Bill No</th>
+                                            <th>Subtotal (₹)</th>
+                                            <th>GST (₹)</th>
+                                            <th>Grand Total (₹)</th>
+                                            <th>Created By</th>
+                                            {% comment %} <th>Created Date</th> {% endcomment %}
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for invoice in invoices %}
+                                        <tr>
+                                            <td>{{forloop.counter }}</td>
+                                            <td>
+                                                <strong>{{ invoice.invoice_number }}</strong>
+                                            </td>
+                                            <td>{{ invoice.invoice_date|date:"d-m-Y" }}</td>
+                                            <td>{{ invoice.supplier.shopname }}</td>
+                                            <td>{{ invoice.store.storename }}</td>
+                                            <td>{{ invoice.supplier_bill_number|default:"-" }}</td>
+                                            <td class="text-right">₹ {{ invoice.subtotal|floatformat:2 }}</td>
+                                            <td class="text-right">₹ {{ invoice.total_gst|floatformat:2 }}</td>
+                                            <td class="text-right">
+                                                <strong>₹ {{ invoice.grand_total|floatformat:2 }}</strong>
+                                            </td>
+                                            <td>{{invoice.created_by.Staff.Staff_firstname|default:'-'}} {{invoice.created_by.Staff.Staff_lastname}}</td>
+                                            {% comment %} <td>{{ invoice.created_date|date:"d-m-Y H:i" }}</td> {% endcomment %}
+                                            <td class="text-center">
+                                                <div class="btn-group">
+                                                    <a href="{% url 'purchase_invoice_detail' %}?ids={{invoice.id}}" class="btn btn-info btn-sm" title="View Details">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                  
+                                                    {% comment %} <button type="button" class="btn btn-danger btn-sm" onclick="deleteInvoice({{ invoice.id }}, '{{ invoice.invoice_number }}')" title="Delete">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button> {% endcomment %}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="11" class="text-center text-muted py-5">
+                                                <i class="fas fa-file-invoice fa-3x mb-3 d-block"></i>
+                                                No purchase invoices found
+                                                <br>
+                                                <a href="{% url 'purchase_invoice' %}" class="btn btn-primary mt-3">
+                                                    <i class="fas fa-plus"></i> Create First Invoice
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                    <tfoot style="background: #f9fbfd; font-weight: bold;">
+                                        <tr>
+                                           <td colspan="6" class="text-right"><strong>Total:</strong></td>
+                                            <td class="text-right"><strong id="totalSubtotal">{{ total_subtotal|floatformat:2 }}</strong></td>
+                                            <td class="text-right"><strong id="totalGst">{{ total_gst|floatformat:2 }}</strong></td>
+                                            <td class="text-right"><strong id="totalGrandTotal">{{ total_grand_total|floatformat:2 }}</strong></td>
+                                            <td colspan="2"></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script>
+$(document).ready(function() {
+    // Filter functionality
+    $('#filterBtn').click(function() {
+        applyFilters();
+    });
+    
+    // Reset button - clears filters and reloads page without filters
+    $('#resetBtn').click(function() {
+        // Clear the date inputs
+        $('#from_date').val('');
+        $('#to_date').val('');
+        // Redirect to the same page without query parameters
+        window.location.href = window.location.pathname;
+    });
+    
+    // Enter key support
+    $('#from_date, #to_date').on('keypress', function(e) {
+        if (e.which === 13) {
+            applyFilters();
+        }
+    });
+    
+    function applyFilters() {
+        let fromDate = $('#from_date').val();
+        let toDate = $('#to_date').val();
+        
+        // Build URL with query parameters
+        let url = window.location.pathname + '?';
+        if (fromDate) url += 'from_date=' + fromDate + '&';
+        if (toDate) url += 'to_date=' + toDate + '&';
+        
+        // Remove trailing & or ?
+        url = url.replace(/[?&]$/, '');
+        
+        // Redirect to the new URL (page will reload with filters)
+        window.location.href = url;
+    }
+});
+
+function deleteInvoice(invoiceId, invoiceNumber) {
+    if (confirm(`Are you sure you want to delete invoice ${invoiceNumber}? This action cannot be undone.`)) {
+        $.ajax({
+            url: `/purchase-invoice/delete/${invoiceId}/`,
+            method: "POST",
+            headers: {
+                'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
+            },
+            success: function(response) {
+                if (response.success) {
+                    alert(response.message);
+                    location.reload();
+                } else {
+                    alert('Error: ' + response.error);
+                }
+            },
+            error: function(xhr) {
+                alert('Error deleting invoice: ' + (xhr.responseJSON?.error || 'Unknown error'));
+            }
+        });
+    }
+}
+
+function deleteInvoice(invoiceId, invoiceNumber) {
+    if (confirm(`Are you sure you want to delete invoice ${invoiceNumber}? This action cannot be undone.`)) {
+        $.ajax({
+            url: `/purchase-invoice/delete/${invoiceId}/`,
+            method: "POST",
+            headers: {
+                'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
+            },
+            success: function(response) {
+                if (response.success) {
+                    alert(response.message);
+                    location.reload();
+                } else {
+                    alert('Error: ' + response.error);
+                }
+            },
+            error: function(xhr) {
+                alert('Error deleting invoice: ' + (xhr.responseJSON?.error || 'Unknown error'));
+            }
+        });
+    }
+}
+</script>
+
+<style>
+.card { border-radius: 20px; border: 1px solid #eef2f8; margin-bottom: 20px; }
+.card-header { background: white; border-radius: 20px 20px 0 0; border-bottom: 1px solid #eef2f8; padding: 1rem 1.2rem; }
+.form-control { border-radius: 14px; border: 1px solid #e2e8f0; padding: 10px 15px; }
+.btn { border-radius: 40px; padding: 10px 25px; }
+.table th { background: #f9fbfd; }
+.table td { vertical-align: middle; }
+.btn-group .btn { border-radius: 4px; margin: 0 2px; }
+</style>
+
+{% endblock %}

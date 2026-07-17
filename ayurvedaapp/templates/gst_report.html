@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="content-wrapper">
+
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>HSN Wise GST Report</h1>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="content">
+    <div class="container-fluid">
+      <div class="card">
+        <div class="card-body">
+          
+<form method="get">
+          <div class="row">
+            <div class="col-md-3">
+ <label>From Date:</label>
+    <input type="date" class="form-control"  name="start_date" value="{{ start_date|date:'Y-m-d' }}">
+
+            </div>
+             <div class="col-md-3">
+ 
+    <label>To Date:</label>
+    <input type="date" class="form-control"  name="end_date" value="{{ end_date|date:'Y-m-d' }}">
+
+            </div>
+             <div class="col-md-3">
+              <br>
+  {% if is_superadmin %}
+        <select name="branch" class="form-control" >
+            <option value="">All Branches</option>
+            {% for b in branches %}
+                <option value="{{ b.id }}"
+                    {% if selected_branch == b.id %}selected{% endif %}>
+                    {{ b.Branch_Name }}
+                </option>
+            {% endfor %}
+        </select>
+    {% endif %}
+            </div>
+            <div class="col-md-3">
+              <br>
+ <button type="submit"class="btn btn-primary">Search</button>
+            </div>
+          </div>
+   
+   
+
+   
+</form>
+
+          <table id="example1" class="table table-bordered table-striped">
+            <thead>
+              <tr>
+                <th>Sl No</th>
+                <th>HSN Code</th>
+              
+                <th>UQC</th>
+                <th>Quantity</th>
+                <th>Tax Rate (%)</th>
+                <th>Taxable Value</th>
+                <th>CGST</th>
+                <th>SGST</th>
+                <th>IGST</th>
+                <th>Total Tax</th>
+                <th>Total Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in report_data %}
+              <tr>
+                <td>{{ row.sl_no }}</td>
+                <td>{{ row.hsn_code }}</td>
+                <td>{{ row.uqc|default:row.unit }}</td>
+                <td>{{ row.quantity }}</td>
+                <td>{{ row.tax_rate|floatformat:2 }}</td>
+                <td class="text-right">{{ row.taxable_value|floatformat:2 }}</td>
+                <td class="text-right">{{ row.cgst|floatformat:2 }}</td>
+                <td class="text-right">{{ row.sgst|floatformat:2 }}</td>
+                <td class="text-right">{{ row.igst|floatformat:2 }}</td>
+                <td class="text-right">{{ row.total_tax|floatformat:2 }}</td>
+                <td class="text-right">{{ row.total_value }}</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="11" class="text-center text-danger">
+                  No records found
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+            <tfoot>
+              <tr>
+                <th colspan="5" class="text-right">GRAND TOTAL</th>
+                <th class="text-right">{{ total_taxable|floatformat:2 }}</th>
+                <th class="text-right">{{ total_cgst|floatformat:2 }}</th>
+                <th class="text-right">{{ total_sgst|floatformat:2 }}</th>
+                <th class="text-right">{{ total_igst|floatformat:2 }}</th>
+                <th class="text-right">
+                  {{ total_cgst|add:total_sgst|add:total_igst|floatformat:2 }}
+                </th>
+                <th class="text-right">{{ grand_total|floatformat:2 }}</th>
+              </tr>
+            </tfoot>
+
+          </table>
+
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

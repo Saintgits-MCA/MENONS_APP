@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<!-- Content Wrapper -->
+<div class="content-wrapper">
+  <!-- Content Header -->
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Treatment Details</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item active">Treatment</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content -->
+  <section class="content">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-12">
+          <div class="card card-primary">
+            <div class="card-header">
+              <h3 class="card-title">Filter Treatment Details</h3>
+            </div>
+            <form method="POST" action="{% url 'treatmentlistrecord' %}">
+              {% csrf_token %}
+              <div class="row">
+                  <div class="col-md-12">
+                      <div class="card">
+                          <div class="card-body">
+                              <div class="row">
+                                  <div class="col-md-6">
+                                      <div class="form-group">
+                                          <label for="exampleInputDate">Select Date</label>
+                                          <input type="date" class="form-control" name="sdate" id="exampleInputDate" 
+                                                 value="{{ selected_date }}" required>
+                                      </div>
+                                  </div>
+                              </div>
+                          </div>
+                          <div class="card-footer">
+                              <button type="submit" class="btn btn-primary">Submit</button>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          </form>
+          
+          </div>
+        </div>
+      </div>
+      
+      <!-- Treatment Table -->
+      <div class="row">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">
+                Treatment Details for {{ selected_date }} 
+                (Total Treatments: {{ treatment_count }})
+              </h3>
+            </div>
+            <div class="card-body">
+              <table id="example1" class="table table-bordered table-striped">
+                <thead>
+                  <tr>
+                    <th>Treatment Name</th>
+                    <th>Patient Name</th>
+                    <th>Handled By</th>
+                    <th>Given By</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% if treatment_data %}
+                    {% for treatment in treatment_data %}
+                      <tr>
+                        <td>{{ treatment.treatment_name }}</td>
+                        <td>{{ treatment.patient_name }}</td>
+                        <td>{{ treatment.handled_by }}</td>
+                        <td>{{ treatment.given_by }}</td>
+                        <td>{{ treatment.treatment_date }}</td>
+                      </tr>
+                    {% endfor %}
+                  {% else %}
+                    <tr>
+                      <td colspan="5" class="text-center">No treatments available for the selected date.</td>
+                    </tr>
+                  {% endif %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+{% endblock %}

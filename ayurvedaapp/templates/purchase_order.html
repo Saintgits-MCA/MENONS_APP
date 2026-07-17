@@ -1,0 +1,385 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    .purchase-order-container {
+        background: #fff;
+        padding: 15px;
+        max-width: 1200px;
+        margin: 20px auto;
+        box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+        border-radius: 5px;
+    }
+
+    .top-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border: 1px solid #ccc;
+        padding: 10px;
+        margin-bottom: 20px;
+    }
+
+    .logo img {
+        width: 100px;
+    }
+
+    .header-center {
+        flex: 1;
+        text-align: center;
+        font-size: 14px;
+    }
+
+    .header-center h6 {
+        margin: 0;
+        font-size: 16px;
+        color: green;
+    }
+
+    .emergency-box {
+        background-color: red;
+        color: white;
+        font-weight: bold;
+        padding: 8px 12px;
+        border-radius: 4px;
+        font-size: 14px;
+        white-space: nowrap;
+    }
+
+    h4 {
+        text-align: center;
+        margin: 10px 0;
+        color: #333;
+    }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        gap: 15px;
+    }
+
+    .box {
+        flex: 1;
+        border: 1px solid #000;
+        padding: 10px;
+        font-size: 14px;
+    }
+
+    .order-details table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .order-details th,
+    .order-details td {
+        border: 1px solid black;
+        padding: 8px;
+        font-size: 12px;
+        text-align: left;
+        vertical-align: top;
+    }
+
+    .order-details th {
+        background-color: #f5f5f5;
+        font-weight: bold;
+    }
+
+    .total {
+        text-align: right;
+        font-weight: bold;
+        margin: 15px 0;
+        padding-top: 10px;
+        border-top: 2px solid #000;
+    }
+
+    .amount-words {
+        font-weight: bold;
+        margin: 10px 0;
+    }
+
+    .terms-section {
+        margin: 15px 0;
+        padding: 10px;
+        border: 1px solid #ccc;
+        background: #f9f9f9;
+    }
+
+    .terms-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        font-size: 12px;
+    }
+
+    .term-item {
+        margin-bottom: 5px;
+    }
+
+    .term-label {
+        font-weight: bold;
+        display: inline-block;
+        width: 140px;
+    }
+
+    .approval-section {
+        margin: 15px 0;
+        padding: 10px;
+        border: 1px solid #ccc;
+    }
+
+    .approval-grid {
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        font-size: 12px;
+    }
+
+    .approval-item {
+        flex: 1;
+    }
+
+    .signature-box {
+        display: flex;
+        justify-content: space-between;
+        margin: 20px 0;
+        padding: 10px;
+        border: 1px solid #ccc;
+    }
+
+    .signature-item {
+        text-align: center;
+        flex: 1;
+        font-size: 12px;
+    }
+
+    .signature-line {
+        margin-top: 30px;
+        border-top: 1px solid #000;
+        padding-top: 5px;
+        width: 150px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .footer {
+        margin-top: 15px;
+        text-align: center;
+        font-size: 11px;
+    }
+
+    .print-btn {
+        text-align: center;
+        margin: 20px 0;
+    }
+
+    .btn-group {
+        margin-bottom: 20px;
+    }
+
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+        body {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        @page {
+            size: A4;
+            margin: 1cm;
+        }
+        .purchase-order-container {
+            padding: 0;
+            margin: 0;
+        }
+        .signature-line {
+            margin-top: 20px;
+        }
+    }
+</style>
+
+<div class="container">
+    <div class="btn-group no-print">
+        <a href="{% url 'purchase_order_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> New Purchase Order
+        </a>
+        <a href="{% url 'purchase_order_list' %}" class="btn btn-info">
+            <i class="fas fa-list"></i> View All
+        </a>
+    </div>
+
+    {% if recent_pos %}
+    <div class="card no-print mb-4">
+        <div class="card-header">
+            <h5>Recent Purchase Orders</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered">
+                    <thead>
+                        <tr>
+                            <th>PO Number</th>
+                            <th>Date</th>
+                            <th>Supplier Name</th>
+                            <th>Amount</th>
+                            <th>Actions</th>
+                        </thead>
+                    <tbody>
+                        {% for po in recent_pos %}
+                        <tr>
+                            <td>{{ po.po_number }}</td>
+                            <td>{{ po.po_date|date:"d-m-Y" }}</td>
+                            <td>{{ po.supplier_name|truncatechars:40 }}</td>
+                            <td>₹ {{ po.grand_total|floatformat:2 }}</td>
+                            <td>
+                                <a href="{% url 'purchase_order_view' po.id %}" class="btn btn-sm btn-info">View</a>
+                                <a href="{% url 'purchase_order_print' po.id %}" class="btn btn-sm btn-primary" target="_blank">Print</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="purchase-order-container" id="purchase-order">
+        <div class="top-row">
+            {% for i in objhospt %}
+            <div class="logo">
+                <img src="{{ i.Logo.url }}" alt="{{ i.Name }} Logo">
+            </div>
+            {% endfor %}
+            <div class="header-center">
+                {% for x in brname %}
+                <h6>{{ x.hosporclinic|default:"Johnmarian Wellness Clinic" }}</h6>
+                <div>{{ x.Branch_Address }}</div>
+                <div>Phone: {{ x.Branch_contactno }}</div>
+                {% endfor %}
+            </div>
+            <div class="emergency-box">EMERGENCY ☎8289821234</div>
+        </div>
+
+        <h4>PURCHASE ORDER / INDENT</h4>
+
+        <!-- Sample Content - This would be replaced with dynamic data -->
+        <div class="info-row">
+            <div class="box">
+                <p><strong>Purchase Order No:</strong> PO-2024-03-001</p>
+                <p><strong>Date:</strong> 06.03.2026</p>
+            </div>
+            <div class="box">
+                <strong>Supplier Details:</strong><br>
+                <p><strong>To:</strong> JOHNMARIANS WELLNESS CLINIC</p>
+                <p>C/O SAMVEDA HEAL WELL ZONE PVT. LTD</p>
+                <p>VARATYAKKU, MUKKAM ROAD, KUNNAMANGALAM</p>
+                <p>KOZHIKODE - 673571</p>
+            </div>
+        </div>
+
+        <div class="order-details">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Sl.No</th>
+                        <th>Item</th>
+                        <th>Quantity</th>
+                        <th>Unit</th>
+                        <th>Unit Rate</th>
+                        <th>Total Amount</th>
+                    </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>JM Ecoflora</td>
+                        <td>50</td>
+                        <td>BTL</td>
+                        <td>139.80</td>
+                        <td>6,990.00</td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>Mygut 1*10</td>
+                        <td>50</td>
+                        <td>STRP</td>
+                        <td>101.70</td>
+                        <td>5,085.00</td>
+                    </tr>
+                    <tr style="background-color: #f5f5f5; font-weight: bold;">
+                        <td colspan="5" style="text-align: right;"><strong>Total Amount:</strong></td>
+                        <td><strong>₹ 41,574.42</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="total">
+            <p><strong>Total Amount: ₹ 41,574.42</strong></p>
+        </div>
+
+        <div class="amount-words">
+            In Words: Rupees Forty One Thousand Five Hundred Seventy Four Only
+        </div>
+
+        <div class="terms-section">
+            <div class="terms-grid">
+                <div class="term-item"><span class="term-label">Expected date of delivery:</span> 15.03.2026</div>
+                <div class="term-item"><span class="term-label">Payment Terms:</span> Advance</div>
+                <div class="term-item"><span class="term-label">GST:</span> As applicable (18%, 12% as per items)</div>
+                <div class="term-item"><span class="term-label">Mode of Transport:</span> JEYEM PARCEL SERVICE</div>
+            </div>
+        </div>
+
+        <div class="approval-section">
+            <div class="approval-grid">
+                <div class="approval-item"><strong>Approved by:</strong></div>
+                <div class="approval-item"><strong>Name:</strong> Dr. Naveen Vasu</div>
+                <div class="approval-item"><strong>Designation:</strong> Chief Consulting Physician</div>
+                <div class="approval-item"><strong>Signature:</strong></div>
+            </div>
+        </div>
+
+        <div class="signature-box">
+            <div class="signature-item"><strong>Prepared by:</strong><div class="signature-line">(Store Incharge)</div></div>
+            <div class="signature-item"><strong>Checked by:</strong><div class="signature-line">(Accounts)</div></div>
+            <div class="signature-item"><strong>Approved by:</strong><div class="signature-line">(Dr. Naveen Vasu)</div></div>
+        </div>
+
+        <div class="footer">
+            <p>This is a computer-generated statement and requires no signature.</p>
+            <p>For billing and general queries, please mail: <a href="mailto:johnmarianwellness@gmail.com">johnmarianwellness@gmail.com</a></p>
+        </div>
+
+        <div class="print-btn no-print">
+            <button onclick="printPurchaseOrder()" class="btn btn-primary">Print Purchase Order</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function printPurchaseOrder() {
+    var orderContent = document.getElementById("purchase-order").outerHTML;
+    var styles = Array.from(document.querySelectorAll("style"))
+        .map(style => style.innerHTML)
+        .join("\n");
+
+    var printWindow = window.open("", "_blank");
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+            <head>
+                <title>Purchase Order</title>
+                <style>${styles}</style>
+            </head>
+            <body onload="window.print(); window.onafterprint = function(){ window.close(); }">
+                ${orderContent}
+            </body>
+        </html>
+    `);
+    printWindow.document.close();
+}
+</script>
+{% endblock %}

@@ -1,0 +1,4 @@
+Database host address:Tisseratma.mysql.pythonanywhere-services.com
+Username:Tisseratma
+projectupoadedpath /home1/drabhijithkarma/HMS
+/home/atmanaturalwellness/atmamainT/atmaproject/media/home/atmanaturalwellness/atmamainT/atmaproject/media

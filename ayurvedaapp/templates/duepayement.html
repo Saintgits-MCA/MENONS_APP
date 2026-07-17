@@ -1,0 +1,352 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<head>
+    <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"> -->
+    <style>
+        .largetextarea {
+            height: 120px;
+        }
+    </style>
+</head>
+
+<div class="content-wrapper">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                     <h1>Package Due Payment</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item active">Package Due</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                  
+<h3 class="card-title">Due Payment Details</h3>
+
+                    </div>
+                    <form  id="duepayement" method="POST" action="{% url 'duepayemnt' %}">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card-body">
+                                    <div class="form-group">
+                                        <label>MR Number/Phone No/Name</label>
+                                        <div class="input-group"> 
+                                            <input type="text" id="mrSearch" class="form-control" placeholder="Type MR Number" required>
+                                            <button type="button" id="searchBtn" class="btn btn-primary">Search</button>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <p><strong>MRNO:</strong> <span id="mrno"></span></p>
+                                        <input type="hidden" id="pt_id" name="pt_id">
+                                        <input type="hidden" id="ipno" name="ipno">
+                                        <p><strong>Patient Name:</strong> <span id="ptname"></span></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card-body">
+                                    <p><strong>Contact Number:</strong> <span id="contactno"></span></p>
+                                    <p><strong>Age:</strong> <span id="age"></span></p>
+                                    <p><strong>Diagnosis:</strong> <span id="diagnosis"></span></p>
+                                    <p><strong>Admission Date:</strong> <span id="admissiondate"></span></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card-body">
+                                    <div class="form-group">
+                                        <label>Selected Package</label>
+                                        <input type="text" id="selectedpckg" class="form-control" readonly>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Package Per Day Rate</label>
+                                        <input type="number" id="perdayrate" class="form-control" min="0" step="0.01" onchange="calculatePackageBilling()" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card-body">
+                               <label>Total Package Rate</label>
+                                    <input type="number" id="totalpckrate" class="form-control" readonly>
+                                    <label>Amount Paid</label>
+                                    <input type="number" id="amntpaid" class="form-control" min="0" readonly>
+                                    <label>Amount Due</label>
+                                    <input type="number" id="amntdue" class="form-control" readonly></div>
+                            </div>
+                        </div>
+
+                        <div class="card-body">
+                           <div class="row">
+    <div class="form-group col-md-3">
+        <label>Previous Total Due (₹)</label>
+        <input type="number" id="previousAmntDue"  name="amntdue" class="form-control" readonly>
+    </div>
+
+    <div class="form-group col-md-3">
+        <label>Paying Amount For Package (₹)</label>
+        <input type="number" id="amount_paying" name="amount_paying" class="form-control" min="0" oninput="calculateDueSummary()">
+    </div>
+<div class="form-group">
+    <label>Include Bystander Payment in This Transaction?</label><br>
+    <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="bystander_payment_option" id="bystanderYes" value="yes">
+        <label class="form-check-label" for="bystanderYes">Yes</label>
+    </div>
+    <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="bystander_payment_option" id="bystanderNo" value="no" checked>
+        <label class="form-check-label" for="bystanderNo">No</label>
+    </div>
+</div>
+</div>
+<!-- Bystander Input Section (initially hidden) -->
+                    <div id="bystanderSection" style="display: none;">
+                                        <div class="row">
+                                            <div class="form-group col-md-3">
+                                                <label for="bystanderDays">Bystander Stay - Number of Days:</label>
+                                                <input type="number" class="form-control" id="bystanderDays" name="bystander_days" placeholder="Enter number of days" min="0" oninput="calculateBystanderAmount(); calculateDueSummary();">
+                                            </div>
+                                            <div class="form-group col-md-3">
+                                                <label for="bystanderRate">Bystander Stay - Rate per Day (₹):</label>
+                                                <input type="number" class="form-control" id="bystanderRate" name="bystander_rate" placeholder="Enter rate per day" min="0" oninput="calculateBystanderAmount(); calculateDueSummary();">
+                                            </div>
+                                            <div class="form-group col-md-6">
+                                                <label>Total Bystander Charges Paid on  This Payment (₹):</label>
+                                                <input type="number" id="bystanderTotal" name="bystander_total" class="form-control" readonly>
+                                            </div>
+                                        </div>
+                    </div>
+<!-- </div> -->
+                        <!-- </div> -->
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="form-group col-md-3">
+                                    <label>Total Paid Now (₹)</label>
+                                    <input type="number" id="totalPaidNow" name="total_paid_now" class="form-control" readonly>
+                                </div>
+
+                                <div class="form-group col-md-3">
+                                    <label>Remaining Due After Payment (₹)</label>
+                                    <input type="number" id="remainingDue" name="remaining_due" class="form-control" readonly>
+                                </div>
+                        </div>
+                        </div>
+                      
+                </div>
+                  <div class="card-footer">
+                            <button type="submit" class="btn btn-primary">Submit</button>
+                        </div>
+                    </form>
+            </div>
+        </div>
+    </section>
+</div>
+<!-- Search Patient Modal -->
+<div class="modal fade" id="searchModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Search Results</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <table id="searchResultsTable" class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>MR Number</th>
+                            <th>Patient Name</th>
+                            <th>Contact No</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Message Modal -->
+<div class="modal fade" id="messageModal" tabindex="-1" role="dialog" aria-labelledby="messageModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="messageModalLabel">Validation Error</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="messageBody">
+        <!-- Dynamic error messages will appear here -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+ document.getElementById('duepayement').addEventListener('submit', function (e) {
+    let isValid = true;
+    let errorMsg = [];
+
+  // Validate MR number selected (pt_id should be filled)
+  const ptId = document.getElementById('pt_id').value.trim();
+  if (!ptId) {
+    errors.push("Please select a patient.");
+  }
+  // Validate amount paying for package
+  const amountPaying = parseFloat(document.getElementById('amount_paying').value) || 0;
+  const previousDue = parseFloat(document.getElementById('previousAmntDue').value) || 0;
+  if (amountPaying <= 0) {
+    errors.push("Please enter a valid amount to pay for the package.");
+  }
+  if (amountPaying > previousDue) {
+    errors.push("Amount paying cannot be greater than the previous due amount.");
+  }
+  // Validate per day rate (optional check)
+  const perDayRate = parseFloat(document.getElementById('perdayrate').value) || 0;
+  if (perDayRate <= 0) {
+    errors.push("Invalid package per day rate.");
+  }
+  // Validate Bystander payment if selected
+  const bystanderYesChecked = document.getElementById('bystanderYes').checked;
+  if (bystanderYesChecked) {
+    const bystanderDays = parseInt(document.getElementById('bystanderDays').value) || -1;
+    const bystanderRate = parseFloat(document.getElementById('bystanderRate').value) || -1;
+    if (bystanderDays < 0) {
+      errors.push("Please enter valid number of bystander stay days.");
+    }
+    if (bystanderRate < 0) {
+      errors.push("Please enter valid bystander rate per day.");
+    }
+  }
+
+ if (!isValid) {
+      e.preventDefault();
+      // Display errors in a modal or alert
+      document.getElementById('messageBody').innerHTML = `<ul>${errorMsg.map(msg => `<li>${msg}</li>`).join('')}</ul>`;
+      $('#messageModal').modal('show');
+    }
+  });
+</script>
+<script>
+    // Calculate Total Bystander Amount
+    const bystanderDaysInput = document.getElementById('bystanderDays');
+    const bystanderRateInput = document.getElementById('bystanderRate');
+    const bystanderTotalInput = document.getElementById('bystanderTotal');
+    bystanderDaysInput.addEventListener('input', calculateBystanderAmount);
+    bystanderRateInput.addEventListener('input', calculateBystanderAmount);
+    function calculateBystanderAmount() {
+      const bystanderDays = parseFloat(bystanderDaysInput.value) || 0;
+      const bystanderRate = parseFloat(bystanderRateInput.value) || 0;
+      const bystanderTotal = bystanderDays * bystanderRate;
+      bystanderTotalInput.value = bystanderTotal.toFixed(2);
+    }
+    function initDatePickers() {
+        flatpickr("#start_date", { dateFormat: "Y-m-d" });
+        flatpickr("#end_date", { dateFormat: "Y-m-d" });
+    }
+   function calculateDueSummary() {
+    const previousDue = parseFloat(document.getElementById('previousAmntDue').value) || 0;
+    const amountPayingNow = parseFloat(document.getElementById('amount_paying').value) || 0;
+    const bystanderTotal = parseFloat(document.getElementById('bystanderTotal').value) || 0;
+
+    // Calculate Total Paid Now
+    const totalPaid = amountPayingNow + bystanderTotal;
+    document.getElementById('totalPaidNow').value = totalPaid.toFixed(2);
+
+    // Calculate Remaining Due
+    const remainingDue = previousDue - amountPayingNow;
+    document.getElementById('remainingDue').value = remainingDue.toFixed(2);
+}
+</script>
+<script>
+    document.getElementById('bystanderYes').addEventListener('change', function () {
+        document.getElementById('bystanderSection').style.display = 'block';
+    });
+    document.getElementById('bystanderNo').addEventListener('change', function () {
+        document.getElementById('bystanderSection').style.display = 'none';
+        document.getElementById('bystanderDays').value = '';
+        document.getElementById('bystanderRate').value = '';
+        document.getElementById('bystanderTotal').value = '';
+        calculateDueSummary(); // Recalculate if hiding
+    });
+</script>
+<script>
+    $(document).ready(function () {
+    const table = $('#searchResultsTable').DataTable({ paging: true, searching: true });
+    $('#searchBtn').on('click', function () {
+        const query = $('#mrSearch').val().trim();
+        if (!query) {
+            alert('Please enter a search term.');
+            return;
+        }
+        fetch(`/ipsearch_patinetwithpackage?query=${query}`)
+            .then(res => res.json())
+            .then(data => {
+                table.clear().draw();
+                if (data.length) {
+                    data.forEach(item => {
+                        const btn = `<button class="btn btn-primary select-btn"
+                            data-mrno="${item.Medical_Record_Number}" 
+                            data-name="${item.Patient_Name}" 
+                            data-contact="${item.contactno}" 
+                            data-admissiondate="${item.Admission_Date}" 
+                            data-patientid="${item.patientid}" 
+                            data-age="${item.age}" 
+                            data-diagnosis="${item.diagnosis}" 
+                            data-ipnoid="${item.ip_id}" 
+                            data-totamnt="${item.total_package_amount}" 
+                            data-paidamnt="${item.amount_paid}" 
+                            data-dueamnt="${item.due_amount}" 
+                            data-pckname="${item.package}" 
+                            data-start_date="${item.start_date || ''}"
+                            data-pckperrate="${item.perdaypckrate}">Select</button>`;
+                        table.row.add([item.Medical_Record_Number, item.Patient_Name, item.contactno || 'N/A', btn]).draw(false);
+                    });
+                    $('#searchModal').modal('show');
+                } else {
+                    alert('No admitted patients with a Package.');
+                }
+            }).catch(err => {
+                console.error(err);
+                alert('Error retrieving data.');
+            });
+    });
+    $('#searchResultsTable tbody').on('click', '.select-btn', function () {
+        const btn = $(this);
+        $('#pt_id').val(btn.data('patientid'));
+        $('#ipno').val(btn.data('ipnoid'));
+        $('#mrno').text(btn.data('mrno'));
+        $('#ptname').text(btn.data('name'));
+        $('#contactno').text(btn.data('contact'));
+        $('#age').text(btn.data('age'));
+        $('#diagnosis').text(btn.data('diagnosis'));
+        $('#admissiondate').text(btn.data('admissiondate'));
+        $('#totalpckrate').val(btn.data('totamnt'));
+        $('#amntpaid').val(btn.data('paidamnt'));
+        $('#amntdue').val(btn.data('dueamnt'));
+         $('#previousAmntDue').val(btn.data('dueamnt'));
+        $('#selectedpckg').val(btn.data('pckname'));
+        $('#perdayrate').val(btn.data('pckperrate'));
+        $('#start_date').val(btn.data('start_date'));
+        $('#searchModal').modal('hide');
+    });
+    initDatePickers();
+});
+</script>
+
+
+{% endblock %}

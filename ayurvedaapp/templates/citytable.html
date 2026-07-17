@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>City Details</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item">
+                {%if  cityadd == '1'%}<a href="{% url 'city' %}?menumanagement_id={{ idmngmnt }}">Add</a>
+              {%endif%}</li>
+              <li class="breadcrumb-item active"> City</li>
+            </ol>
+          </div>
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-12">
+            
+            <!-- /.card -->
+
+            <div class="card">
+           <div class="scroll">
+              <!-- /.card-header -->
+              <div class="card-body">
+                <table id="example1" class="table table-bordered table-striped">
+                  <thead>
+                     <tr>
+                      <th>SL No</th>
+                    <th>City Name</th>
+                    <th>Action</th>
+                  
+                  
+                  </tr>
+                  </thead>
+                  <tbody>
+  {% for i in objcitytable %}
+                  <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{i.City_name}}</td>
+                    <td>
+                      {% if cityedit == '1'%}
+                 <a href="{% url 'editcity'%}?ids={{i.id}}"><i class="nav-icon " style="width:20px"><img src="{% static 'assets/dist/img/icons/edit.svg'%}"  class=" img-squre "  style="width:20px"></i></a>
+                 {%endif%}
+                     <!-- <a href="{% url 'delcity'%}?ids={{i.id}}"><i class="nav-icon " style="width:20px"><img src="{% static 'assets/dist/img/icons/delete.svg'%}"  class=" img-squre "  style="width:20px"></i></a> -->
+
+                         </td>
+                  </tr> 
+
+  {% endfor %}
+
+                  </tbody>
+                 
+                </table>
+              </div>
+            </div>
+              <!-- /.card-body -->
+            </div>
+            <!-- /.card -->
+          </div>
+          <!-- /.col -->
+        </div>
+        <!-- /.row -->
+      </div>
+      <!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+  </div>
+  <!-- /.content-wrapper -->
+{% endblock %}

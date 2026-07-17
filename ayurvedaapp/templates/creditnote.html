@@ -1,0 +1,498 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<style>
+  /* Custom styles */
+  .invoice-header {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .patient-details {
+    margin-bottom: 20px;
+  }
+</style>
+
+<div class="content-wrapper">
+  <!-- Content Header (Page header) -->
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Credit Invoice</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="#">Home</a></li>
+            <li class="breadcrumb-item active">Credit Invoice</li>
+          </ol>
+        </div>
+      </div>
+    </div><!-- /.container-fluid -->
+  </section>
+
+  <section class="content">
+    <div class="container-fluid">
+      <form id="invoiceForm" method="POST" action="{% url 'savecreditinvoice' %}">
+        {% csrf_token %}
+        <div class="row">
+          <div class="col-12">
+            <div class="invoice p-3 mb-3">
+              <div class="container">
+                <div class="row">
+                  <div class="col">
+                    <div class="invoice-header">
+                      {% for i in objhospt %}
+                      <h2>{{ i.Name }}</h2>
+                      <p>
+                        <input type="hidden" class="form-control" value="{{ i.id }}" name="hosptname">
+                        {{ i.Address }}<br>
+                        GST NO: {{ i.GST }}<br>
+                        Phone: {{ i.Contact_no }}<br>
+                        Email: {{ i.Email }}
+                        {% endfor %}
+                        <br>
+                        {% for x in brname %}
+                        Branch: {{ x.Branch_Name }}
+                        <input type="hidden" class="form-control" value="{{ x.id }}" name="branchname">
+                        {% endfor %}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-sm-4 invoice-col">
+                    <address>
+                      <label for="invno">Invoice No</label>
+                      <select class="form-control" name="invno" id="invno">
+                        <option selected>Select</option>
+                        {% for i in invno %}
+                        <option value="{{ i.id }}">{{ i.Invoicenumber }}</option>
+                        {% endfor %}
+                      </select>
+                      <label>Name</label>
+                      <input type="text" class="form-control" name="ptname" id="ptname">
+                      <label>Date Issued:</label>
+                      <input type="text" class="form-control" id="ptphno">
+                      <input type="text" class="form-control" name="ptmrno"  id="ptmrno">
+                      
+                    </address>
+                  </div>
+                  <div class="col-sm-4">
+                  </div>
+                  <div class="col-sm-4 invoice-col">
+                    <b>Date: {{ today }}</b><br>
+                    <b>Credit Note No: {{ crninv_id }}</b><br>
+                    <input type="hidden" class="form-control" value="{{ crninv_id }}" name="crninvno">
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-12">
+                    <table class="table table-bordered">
+                      <thead>
+                        <tr>
+                          <th>Sl. No</th>
+                          <th>Particulars
+                            <input type="text"  class="form-control"  id="searchInput" placeholder="Search for medicine...">
+                            <input type="hidden" id="medid" name="medid">
+                            <input type="hidden" id="supid" name="supid">
+                            <input type="hidden" id="comp_id" name="comp_id">
+                            
+                            <select class="form-control" name="particulars" id="searchResults"onchange="updateCurrentStock()" >
+                              <option selected>Select</option> 
+                            </select>
+                          </th>
+                          <th>Unit
+                            <!-- <input type="text"  class="form-control"  id="searchunit" placeholder="Unit">
+                            
+                            <input type="hidden" id="unid" name="unid" > -->
+                            <select class="form-control" id="unid" name="unid" id="unitResults" onchange="updateCurrentStock()">
+                              <option selected>Select</option>
+                              {% for i in  un %}
+                              <option value="{{i.id}}">{{i.unitname}}</option>
+                              {%endfor%}
+                          </select>
+                          </th>
+                          <th>Mfg</th>
+                          <th>Description</th>
+                          <th>Return Qty</th>
+                          <th>Rate</th>
+                          <th>Amount</th>
+                          <th>
+                            <button type="button" style="width:60px;height: 40px;" class="btn btn-primary" id="addBtn">Add</button>
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody id="tbody">
+                        <tr class="recordsheet">
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-12">
+                    <div class="table-responsive">
+                      <table class="table">
+                        <tr>
+                          <th style="width:50%">Total:</th>
+                          <td><input type="text" class="form-control" id="totsubtoal" name="totsubtoal"></td>
+                        </tr>
+                        <tr>
+                          <th>Tax Percentage</th>
+                          <td><input type="text" class="form-control" id="taxperc" name="taxperc" oninput="totaltaxinctx(this)"></td>
+                          <td><input type="hidden" class="form-control" id="totdis"></td>
+                        </tr>
+                       
+                        <tr>
+                          <th>Total Including Tax:</th>
+                          <td><input type="text" class="form-control" id="totalIncludingTax" name="totalIncludingTax"></td>
+                          <input type="hidden" id="record_count" name="record_count" value="1">
+                        </tr>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+                <div class="card-footer">
+                  <button type="submit" class="btn btn-primary">Submit</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </section>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script>
+  $(document).ready(function () {
+    function updatePatientDetails() {
+      var selectedInvoiceNumber = $("#invno").val();
+      $.ajax({
+        type: "GET",
+        url: "{% url 'get_invoice_details' %}",  // Update this URL based on your project structure
+        data: { invNumber: selectedInvoiceNumber },
+        success: function (data) {
+          $("#ptname").val(data.Patient_Name);
+          $("#ptphno").val(data.patientissueddate);
+          $("#ptmrno").val(data.mrno);
+        },
+        error: function (xhr, status, error) {
+          console.error("Error fetching invoice details:", error);
+        },
+      });
+    }
+
+    $("#invno").on("change", updatePatientDetails);
+
+  });
+</script>
+<script>
+  let treatmentCounter = 0;
+  
+  document.getElementById('addBtn').addEventListener('click', function() {
+      addRecordSheetRow();
+  });
+  function addRecordSheetRow() {
+    var inputField = document.getElementById('searchResults');
+    var selectedValue = inputField.value;
+    var medField = document.getElementById('medid');
+    var selectedId = medField.value;
+    var unitField = document.getElementById('unid');
+    var selectedunId = unitField.value;
+    var suppField = document.getElementById('supid');
+    var selectedsppId = suppField.value;
+    var comp_id = document.getElementById('comp_id');
+    var selectedcomp_id= comp_id.value;
+    
+    var tbody = document.getElementById('tbody');
+    treatmentCounter++;
+    var newRow = document.createElement('tr');
+    newRow.classList.add('recordsheet');
+
+    $.ajax({
+        type: 'GET',
+        url: '/fetch_name_by_id/',
+        data: {
+            id: selectedId,
+            batchid: selectedValue,
+            unid: selectedunId,
+            selectedsppId:selectedsppId,
+            compid:selectedcomp_id
+           
+
+        }, 
+        success: function(response) {
+         
+            if (response.hasOwnProperty('error')) {
+                // Display an alert with the error message
+                alert(response.error);
+                // Stop further execution
+                return;
+            }
+
+            // Create and populate the input fields with fetched values
+            newRow.innerHTML = `
+                <td><input type="text" class="form-control sl" name="sl${treatmentCounter}" value="${treatmentCounter}"></td>
+                <td><input type="text" class="form-control particular" name="particular${treatmentCounter}" value="${response.name}"><br>
+                  
+                <td><input type="text" class="form-control un" name="un${treatmentCounter}" value="${response.un_name}"></td>
+                <input type="hidden" class="form-control sup_id" name="sup${treatmentCounter}" value="${response.spn}" id="sup">
+                <td><input type="text" class="form-control mfg" name="mfg${treatmentCounter}" value="${response.comname}">
+                  <input type="hidden" class="form-control compid" id="compid" name="compid${treatmentCounter}" value="${response.comid}"></td>
+                 <input type="hidden" class="form-control med_id" name="med_id${treatmentCounter}">
+                 <td><input type="text" class="form-control desc" name="desc${treatmentCounter}"></td>
+              
+                <td><input type="text" class="form-control quantity" name="quantity${treatmentCounter}" oninput="calculateSubtotal(this)"  onchange="checkStock(this)" required></td>
+                <td><input type="text" class="form-control amount" name="amount${treatmentCounter}" value="${response.rate}" oninput="calculateSubtotal(this)"></td>
+                <td><input type="text" class="form-control subtotal" name="subtotal${treatmentCounter}"   readonly></td>
+                <input type="hidden" name="form-control treatmentCounter" value="${treatmentCounter}">
+                <td><button type="button" class="btn btn-danger remove-item">Remove</button></td>
+            `;
+           
+            // Append the new row to the tbody
+            tbody.appendChild(newRow);
+           
+            // Update the record count
+            document.getElementById('record_count').value = treatmentCounter;
+          // Function to remove a row from the table
+
+// Attach event listener to remove button
+$("table").on("click", ".remove-item", function () {
+    var row = $(this).closest("tr");
+    var subtotal = parseFloat(row.find('.subtotal').val()) || 0;
+    
+    // Deduct the subtotal of the removed row from the total subtotal
+    var totalSubtotal = parseFloat($("#totsubtoal").val()) || 0;
+    totalSubtotal -= subtotal;
+    $("#totsubtoal").val(totalSubtotal.toFixed(2));
+
+    // Remove the row from the table
+    row.remove();
+
+    // Update the total subtotal
+    updateTotalSubtotal();
+    totaltaxinctx();
+});
+
+            // Attach event listener to remove button
+            // $("table").on("click", ".remove-item", function () {
+            //     var row = $(this).closest("tr");
+            //     row.remove();
+            // });
+        },
+        error: function(xhr, status, error) {
+            // Display a generic error message
+            console.error("Error fetching name:", error);
+            alert("Medicine does not have this unit type. ");
+        }
+    });
+}
+
+// Event listener for the input event on the 'particular' input fields
+
+function calculateSubtotal(inputElement) {
+ var row = inputElement.closest('tr');
+ var quantity = row.querySelector('.quantity').value;
+ 
+ var amount = row.querySelector('.amount').value;
+ var subtotal = row.querySelector('.subtotal');
+ // Calculate subtotal and update the subtotal field
+ subtotal.value = (quantity * amount).toFixed(2);
+ updateTotalSubtotal();
+ totaltaxinctx();
+}
+function updateTotalSubtotal() {
+var subtotalElements = document.querySelectorAll('.subtotal');
+var totalSubtotal = 0;
+subtotalElements.forEach(function (element) {
+ totalSubtotal += parseFloat(element.value) || 0;
+});
+document.getElementById('totsubtoal').value = totalSubtotal.toFixed(2);
+}
+function calculatetax() {
+var totalSubtotal = parseFloat(document.getElementById('totsubtoal').value) || 0;
+var taxPercentage = parseFloat(document.getElementById('taxperc').value) || 0;
+
+var taxAmount = (totalSubtotal * (taxPercentage / 100)).toFixed(2);
+var totamount = (totalSubtotal + parseFloat(taxAmount)).toFixed(2);
+
+document.getElementById('totdis').value = taxAmount;
+}
+
+function totaltaxinctx(){
+var subtotal = parseFloat(document.getElementById('totsubtoal').value) || 0;
+var taxPercentage = parseFloat(document.getElementById('taxperc').value) || 0;
+
+var taxAmount =(subtotal * (taxPercentage / 100)).toFixed(2);
+var totamount = (subtotal + parseFloat(taxAmount)).toFixed(2);
+
+// var taxAmount = (subtotal * (taxPercentage / 100)).toFixed(2);
+// Calculate the total amount before discount and tax
+// var totalBeforeDiscountAndTax = subtotal + shippingAmount;
+
+// Apply discount to the total amount
+// var totalAfterDiscount = totalBeforeDiscountAndTax - disc;
+
+// Calculate the total amount including tax
+// var totalAmount = totalAfterDiscount + taxAmount;
+var tottax = ( parseFloat(totamount)).toFixed(2);
+document.getElementById('totalIncludingTax').value = tottax;
+
+}
+</script>
+
+<script>
+function validateAndSubmitForm() {
+    // Validate subtotal field
+    var subtotal = document.getElementById('totsubtoal').value.trim();
+    if (subtotal === '' || isNaN(parseFloat(subtotal))) {
+        // Display an alert if subtotal is empty or not a valid number
+        alert('Please enter a valid subtotal value.');
+        return false; // Prevent form submission
+    }
+
+    // If validation passes, submit the form
+    document.getElementById('invoiceForm').submit();
+}
+
+// Attach the validateAndSubmitForm function to the form submission event
+document.getElementById('invoiceForm').addEventListener('submit', function(event) {
+    // Prevent default form submission
+    event.preventDefault();
+    
+    // Call the validateAndSubmitForm function
+    validateAndSubmitForm();
+});
+
+</script>
+
+<script>
+  // Function to validate tax percentage input
+  function validateTaxPercentage(inputElement) {
+    var inputValue = inputElement.value.trim();
+
+    // Check if the input value ends with "%" symbol
+    if (inputValue.endsWith('%')) {
+      // Display an alert if "%" symbol is present
+      alert("Tax percentage should be a number. Do not include '%' symbol.");
+      // Remove the "%" symbol from input value
+      inputElement.value = inputValue.slice(0, -1);
+    }
+  }
+
+  // Add event listener for input event on tax percentage input field
+  document.getElementById('taxperc').addEventListener('input', function() {
+    validateTaxPercentage(this);
+  });
+</script>
+
+<script>
+  function checkStock(inputElement) {
+      var quantity = inputElement.value;
+      var medId =  document.getElementById('medid');// Assuming you have a data attribute for the medicine ID
+      var med_id=medId.value;
+      
+      var batchId =  document.getElementById('searchResults');// Assuming you have a data attribute for the medicine ID
+      var batchId_id=batchId.value;
+      var comp_id = document.getElementById('comp_id');
+      var selectedcomp_id= comp_id.value;
+     
+      var row = inputElement.closest('tr');
+      
+      // Make an AJAX request to your Django view
+      $.ajax({
+          type: 'GET',
+          url: '/get_reorder_level/', // Update with your Django view URL
+          data: {
+              'med_id': med_id,
+              'quantity': quantity,
+              'batchId':batchId_id,
+              'compid':selectedcomp_id
+
+          },
+          success: function(response) {
+            if (response.stock_status === 'Stock depleted') {
+            clearInputFields(row);
+            row.remove();
+            alert('Stock has only ' + response.available_stock + ' quantity. Please reorder.');
+        } else if (response.stock_status === 'Out Of Stock') {
+            clearInputFields(row);
+            row.remove();
+            alert('The item is out of stock. Please reorder.');
+        } else if (response.stock_status === 'Stock below reorder level') {
+            alert('Stock is below reorder level. Available quantity: ' + response.available_stock);
+        } else if (response.stock_status === 'Stock available') {
+            // No action needed if stock is available
+        }
+
+          },
+          error: function(xhr, status, error) {
+              console.error("Error checking stock:", error);
+          }
+      });
+  }
+  function clearInputFields(row) {
+    // Get all input fields in the row that need to be cleared
+    var inputFields = row.querySelectorAll('.form-control');
+    
+    // Loop through each input field and clear its value
+    inputFields.forEach(function(field) {
+        field.value = '';
+    });
+
+    // Update the total subtotal
+    updateTotalSubtotal();
+}
+  </script>
+  
+<script>
+  $(document).ready(function() {
+    $('#searchInput').keyup(function() {
+        var query = $(this).val();
+        if (query.length >= 3) {
+            $.ajax({
+                url: "{% url 'search_medicine' %}",
+                data: {
+                    'term': query
+                },
+                dataType: 'json',
+                success: function(data) {
+                    $('#searchResults').empty();
+                    $.each(data, function(index, item) {
+                        $('#searchResults').append('<option value="' + item.batchno + '">' + item.item_name +' - Batch No: ' + item.batchno + '</option>');
+                        $('#searchResults option:last').data('med-id', item.item_id);
+                        $('#searchResults option:last').data('sup-id', item.supplier_name);
+                        $('#searchResults option:last').data('comp-id', item.compid);
+                       
+
+                    });
+
+                    // Trigger the change event on searchResults dropdown to select the first option
+                    $('#searchResults').trigger('change');
+                }
+            });
+        } else {
+            $('#searchResults').empty();
+        }
+    });
+
+    $('#searchResults').change(function() {
+      var selectedOption = $(this).find(':selected');
+        var selectedMedId = selectedOption.data('med-id');
+        var selectedsupId = selectedOption.data('sup-id');
+        var selectedcomId = selectedOption.data('comp-id');
+        // Assign the selected medicine ID and supplier ID to the hidden input fields
+        $('#medid').val(selectedMedId);
+        $('#supid').val(selectedsupId);
+        $('#comp_id').val(selectedcomId);
+    });
+    // get unit
+ 
+    
+});
+
+</script>
+
+{% endblock %}

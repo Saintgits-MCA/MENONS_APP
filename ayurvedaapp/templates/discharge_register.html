@@ -1,0 +1,397 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="content-wrapper">
+
+    <!-- Page Header -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>DISCHARGE REGISTER</h1>
+                </div>
+                <div class="col-sm-6 text-right">
+                    <button type="button" class="btn btn-primary btn-sm" onclick="printFullReport()">
+                        <i class="fas fa-print"></i> Print Full Report
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filter Card -->
+            <div class="card">
+                <div class="card-body">
+                    <form method="GET" action="" id="filterForm">
+                        <div class="row">
+                            <div class="col-lg-3 col-md-6 col-sm-12">
+                                <div class="form-group">
+                                    <label>From Date</label>
+                                    <input type="date" class="form-control" name="from_date" value="{{ from_date|default:'' }}" id="fromDate">
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 col-sm-12">
+                                <div class="form-group">
+                                    <label>To Date</label>
+                                    <input type="date" class="form-control" name="to_date" value="{{ to_date|default:'' }}" id="toDate">
+                                </div>
+                            </div>
+                            <div class="col-lg-2 col-md-6 col-sm-12">
+                                <div class="form-group">
+                                    <label>Doctor Name</label>
+                                    <select class="form-control" name="doctor" id="doctorFilter">
+                                        <option value="">All Doctors</option>
+                                        {% for doctor in doctors %}
+                                            <option value="{{ doctor.id }}" {% if doctor.id|stringformat:"s" == doctor_name %}selected{% endif %}>
+                                                {{ doctor.name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-lg-2 col-md-6 col-sm-6">
+                                <div class="form-group">
+                                    <label>&nbsp;</label>
+                                    <button type="submit" class="btn btn-primary btn-block">
+                                        <i class="fas fa-search mr-1"></i> Search
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-lg-2 col-md-6 col-sm-6">
+                                <div class="form-group">
+                                    <label>&nbsp;</label>
+                                    <button type="button" class="btn btn-secondary btn-block" onclick="resetFilters()">
+                                        <i class="fas fa-undo mr-1"></i> Reset
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <section class="content">
+        <div class="container-fluid">
+            <div class="card">
+                <div class="card-header">
+                    <div class="row align-items-center">
+                        <div class="col-md-12">
+                            <h5 class="font-weight-bold mb-0">
+                                DISCHARGE REGISTER FOR THE PERIOD
+                                {% if display_from_date or display_to_date %}
+                                    FROM {{ display_from_date|default:"-" }} TO {{ display_to_date|default:"-" }}
+                                {% endif %}
+                            </h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped table-hover table-sm w-100" id="dischargeTable">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px;">Sl.No</th>
+                                    <th style="width: 100px;">Date</th>
+                                    <th style="width: 80px;">Room</th>
+                                    <th style="width: 100px;">IP Number</th>
+                                    <th>Patient</th>
+                                    <th style="width: 100px;">Adm.Date</th>
+                                    <th style="width: 70px;" class="text-center">Days</th>
+                                    <th>Remarks</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if discharge_data %}
+                                    {% regroup discharge_data by discharged_date as date_groups %}
+                                    {% for date_group in date_groups %}
+                                        <!-- Date Group Header -->
+                                        <tr style="font-weight: bold;">
+                                            <td colspan="8">
+                                                <strong>Dated : {{ date_group.grouper|date:"d/m/Y" }}</strong>
+                                            </td>
+                                        </tr>
+                                        {% for item in date_group.list %}
+                                        <tr>
+                                            <td>{{ forloop.parentloop.counter }}.{{ forloop.counter }}</td>
+                                            <td>{{ item.discharged_date|date:"d/m/Y" }}</td>
+                                            <td>{{ item.room }}</td>
+                                            <td>{{ item.ip_number }}</td>
+                                            <td>
+                                                {{ item.patient_name }}
+                                                {% if item.address %}
+                                                    <br><small style="color: #6c757d;">{{ item.address }}</small>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ item.admission_date|date:"d/m/Y"|default:"-" }}</td>
+                                            <td class="text-center">{{ item.days_stayed }}</td>
+                                            <td>{{ item.remarks }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="8" class="text-center">No discharge records found.</td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div class="row mt-3">
+                        <div class="col-sm-12 col-md-5">
+                            <div class="dataTables_info" role="status" aria-live="polite">
+                                Showing {{ discharge_data.start_index }} to {{ discharge_data.end_index }} of {{ discharge_data.paginator.count }} entries
+                            </div>
+                        </div>
+                        <div class="col-sm-12 col-md-7">
+                            <div class="dataTables_paginate paging_simple_numbers">
+                                <ul class="pagination">
+                                    {% if discharge_data.has_previous %}
+                                        <li class="paginate_button page-item previous">
+                                            <a href="?page=1{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}{% if doctor_name %}&doctor={{ doctor_name }}{% endif %}" class="page-link">First</a>
+                                        </li>
+                                        <li class="paginate_button page-item previous">
+                                            <a href="?page={{ discharge_data.previous_page_number }}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}{% if doctor_name %}&doctor={{ doctor_name }}{% endif %}" class="page-link">Previous</a>
+                                        </li>
+                                    {% else %}
+                                        <li class="paginate_button page-item previous disabled">
+                                            <span class="page-link">First</span>
+                                        </li>
+                                        <li class="paginate_button page-item previous disabled">
+                                            <span class="page-link">Previous</span>
+                                        </li>
+                                    {% endif %}
+
+                                    {% for num in discharge_data.paginator.page_range %}
+                                        {% if discharge_data.number == num %}
+                                            <li class="paginate_button page-item active">
+                                                <span class="page-link">{{ num }}</span>
+                                            </li>
+                                        {% elif num > discharge_data.number|add:'-3' and num < discharge_data.number|add:'3' %}
+                                            <li class="paginate_button page-item">
+                                                <a href="?page={{ num }}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}{% if doctor_name %}&doctor={{ doctor_name }}{% endif %}" class="page-link">{{ num }}</a>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+
+                                    {% if discharge_data.has_next %}
+                                        <li class="paginate_button page-item next">
+                                            <a href="?page={{ discharge_data.next_page_number }}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}{% if doctor_name %}&doctor={{ doctor_name }}{% endif %}" class="page-link">Next</a>
+                                        </li>
+                                        <li class="paginate_button page-item next">
+                                            <a href="?page={{ discharge_data.paginator.num_pages }}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}{% if doctor_name %}&doctor={{ doctor_name }}{% endif %}" class="page-link">Last</a>
+                                        </li>
+                                    {% else %}
+                                        <li class="paginate_button page-item next disabled">
+                                            <span class="page-link">Next</span>
+                                        </li>
+                                        <li class="paginate_button page-item next disabled">
+                                            <span class="page-link">Last</span>
+                                        </li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Hidden Print Area -->
+<div id="printArea" style="display: none; padding: 20px; min-height: 100vh; position: relative;">
+    <!-- Hospital Header -->
+    {% if hospital %}
+    <div style="text-align: center; margin-bottom: 20px;">
+        <h2 style="margin: 0; font-weight: bold; font-size: 20px;">{{ hospital.Name }}</h2>
+        <p style="margin: 0; font-size: 14px;">{{ hospital.Address }}</p>
+        {% if hospital.GST and hospital.GST|lower != "none" %}
+        <p style="margin: 0; font-size: 14px;"><strong>TIN:</strong> {{ hospital.GST }}</p>
+        {% endif %}
+        <h4 style="margin: 10px 0; font-size: 18px;">Discharge Register</h4>
+        <p style="margin: 0; font-size: 14px;">
+            <strong>Period:</strong> 
+            {% if display_from_date and display_to_date %}
+                {{ display_from_date }} To {{ display_to_date }}
+            {% else %}
+                All Dates
+            {% endif %}
+        </p>
+        <hr style="border: 1px solid #000; margin: 10px 0;">
+    </div>
+    {% endif %}
+
+    <!-- Full Table for Print -->
+    <div style="min-height: 70vh;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+            <thead>
+                <tr style="">
+                    <th style="border: 1px solid #000; padding: 4px; text-align: left;">Sl.No</th>
+                    <th style="border: 1px solid #000; padding: 4px; text-align: left;">Date</th>
+                    <th style="border: 1px solid #000; padding: 4px; text-align: left;">Room</th>
+                    <th style="border: 1px solid #000; padding: 4px; text-align: left;">IP Number</th>
+                    <th style="border: 1px solid #000; padding: 4px; text-align: left;">Patient</th>
+                    <th style="border: 1px solid #000; padding: 4px; text-align: left;">Adm.Date</th>
+                    <th style="border: 1px solid #000; padding: 4px; text-align: center;">Days</th>
+                    <th style="border: 1px solid #000; padding: 4px; text-align: left;">Remarks</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if all_discharge_data %}
+                    {% regroup all_discharge_data by discharged_date as date_groups %}
+                    {% for date_group in date_groups %}
+                        <tr style="font-weight: bold;">
+                            <td colspan="8" style="border: 1px solid #000; padding: 4px;">
+                                <strong>Dated : {{ date_group.grouper|date:"d/m/Y" }}</strong>
+                            </td>
+                        </tr>
+                        {% for item in date_group.list %}
+                        <tr>
+                            <td style="border: 1px solid #000; padding: 3px; text-align: left;">{{ forloop.parentloop.counter }}.{{ forloop.counter }}</td>
+                            <td style="border: 1px solid #000; padding: 3px; text-align: left;">{{ item.discharged_date|date:"d/m/Y" }}</td>
+                            <td style="border: 1px solid #000; padding: 3px; text-align: left;">{{ item.room }}</td>
+                            <td style="border: 1px solid #000; padding: 3px; text-align: left;">{{ item.ip_number }}</td>
+                            <td style="border: 1px solid #000; padding: 3px; text-align: left;">
+                                {{ item.patient_name }}
+                                {% if item.address %}
+                                    <br><span style="color: #666; font-size: 10px;">{{ item.address }}</span>
+                                {% endif %}
+                            </td>
+                            <td style="border: 1px solid #000; padding: 3px; text-align: left;">{{ item.admission_date|date:"d/m/Y"|default:"-" }}</td>
+                            <td style="border: 1px solid #000; padding: 3px; text-align: center;">{{ item.days_stayed }}</td>
+                            <td style="border: 1px solid #000; padding: 3px; text-align: left;">{{ item.remarks }}</td>
+                        </tr>
+                        {% endfor %}
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="8" style="border: 1px solid #000; padding: 4px; text-align: center;">
+                            No discharge records found.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Footer - Positioned at bottom of page -->
+    <div style="position: absolute; bottom: 0; left: 0; right: 0; text-align: center; font-size: 11px; color: #666; padding: 10px 0;">
+        <hr style="border: 1px solid #ddd; margin: 10px 0;">
+        <p style="margin: 0;"><strong>*** This is a computer generated report ***</strong></p>
+        <p style="margin: 0;">Generated on: {% now "d/m/Y H:i:s" %}</p>
+    </div>
+</div>
+
+<style>
+@media print {
+    .card-tools, .form-group, .btn, #filterForm, .pagination, .dataTables_info, .dataTables_paginate {
+        display: none !important;
+    }
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+    .card-header {
+        background: white !important;
+        border-bottom: 2px solid #000 !important;
+    }
+    .table {
+        font-size: 11px !important;
+    }
+    .table-bordered {
+        border: 1px solid #000 !important;
+    }
+    .table-bordered th,
+    .table-bordered td {
+        border: 1px solid #000 !important;
+        padding: 3px !important;
+    }
+    .table-striped tbody tr:nth-of-type(odd) {
+        background-color: #f9f9f9 !important;
+    }
+}
+
+.pagination {
+    margin: 0;
+    float: right;
+}
+
+.pagination .page-link {
+    padding: 6px 12px;
+    margin: 0 2px;
+    border-radius: 4px;
+}
+
+.pagination .active .page-link {
+    background-color: #007bff;
+    border-color: #007bff;
+    color: white;
+}
+
+.pagination .disabled .page-link {
+    color: #6c757d;
+    pointer-events: none;
+    background-color: #fff;
+    border-color: #dee2e6;
+}
+
+.dataTables_info {
+    padding-top: 8px;
+    color: #6c757d;
+}
+
+@media (max-width: 768px) {
+    .table-responsive {
+        overflow-x: auto;
+    }
+    .table {
+        font-size: 11px !important;
+    }
+    .table th, .table td {
+        padding: 3px !important;
+        white-space: nowrap;
+    }
+}
+</style>
+
+<script>
+function resetFilters() {
+    document.getElementById('fromDate').value = '';
+    document.getElementById('toDate').value = '';
+    document.getElementById('doctorFilter').value = '';
+    document.getElementById('filterForm').submit();
+}
+
+function printFullReport() {
+    var printContent = document.getElementById('printArea').innerHTML;
+    
+    var printWindow = window.open('', '_blank', 'width=1000,height=800');
+    printWindow.document.write('<html><head><title>Discharge Register Report</title>');
+    printWindow.document.write('<style>');
+    printWindow.document.write('body { padding: 20px; font-family: Arial, sans-serif; margin: 0; padding: 0; }');
+    printWindow.document.write('.print-container { padding: 20px; min-height: 100vh; position: relative; }');
+    printWindow.document.write('.table { width: 100%; border-collapse: collapse; font-size: 11px; }');
+    printWindow.document.write('.table th, .table td { border: 1px solid #000; padding: 4px; }');
+    printWindow.document.write('@page { size: A4; margin: 12mm; }');
+    printWindow.document.write('@media print { body { margin: 0; padding: 0; } }');
+    printWindow.document.write('.footer-print { position: absolute; bottom: 0; left: 0; right: 0; text-align: center; font-size: 10px; color: #666; padding: 10px 0; }');
+    printWindow.document.write('</style>');
+    printWindow.document.write('</head><body>');
+    printWindow.document.write('<div class="print-container">');
+    printWindow.document.write(printContent);
+    printWindow.document.write('</div>');
+    printWindow.document.write('</body></html>');
+    printWindow.document.close();
+    
+    setTimeout(function() {
+        printWindow.print();
+        printWindow.close();
+    }, 500);
+}
+</script>
+{% endblock %}

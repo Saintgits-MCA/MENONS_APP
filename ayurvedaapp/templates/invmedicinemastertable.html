@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Item Master Details </h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item">
+                {%if medadd  == '1'%}<a href="{% url 'inventorymasterdt' %}?menumanagement_id={{ idmngmnt }}">Add</a>
+              {%endif%}</li>
+              <li class="breadcrumb-item active"> Item Master </li>
+            </ol>
+          </div>
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-12">
+            
+            <!-- /.card -->
+
+            <div class="card">
+           <div class="scroll">
+              <!-- /.card-header -->
+              <div class="card-body">
+                <table id="example1" class="table table-bordered table-striped">
+                  <thead>
+                     <tr>
+                      <th>SL No</th>
+                      <th>Item Code</th>
+                      <th>Item Name</th>
+                      <!-- <th>Company</th> -->
+                      <th>Generic Name</th>
+                      <th>Base Quantity</th>
+                      <th>Tax Percentage</th>
+                      <th>Hsn Code</th>
+                      <th>Category</th>
+                      <th>Rack number</th>
+                      <th>Sideeffect</th>
+                      <th>Action</th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                {% for i in mdnm %}
+                    <tr>
+                      <td>{{ forloop.counter }}</td>
+                      <td>{{i.itemcode}}</td>
+                      <td>{{i.itemnm}}</td>
+                      <!-- <td>{{i.Comapany_name.Comapany_name}}</td> -->
+                      <td>{{i.Generic_name}}</td>
+                      <td>{{i.bsuntid.unit}}</td>
+                      <td>{{i.taxpercentage.taxrate}}</td>
+                      <td>{{i.hsncode}}</td>
+                      <td>{{i.category_name.Category_name}}</td>
+                      <td>{{i.racknumber}}</td>
+                      <td>{{i.Sideeffect}}</td>
+                      {%if mededit == '1'%}
+                      <td>
+                          <a href="{% url 'inventoryeditmedicinemaster' %}?ids={{i.id}}"><i class="nav-icon " style="width:20px"><img src="{% static 'assets/dist/img/icons/edit.svg'%}"  class=" img-squre "  style="width:20px"></i></a>
+                        
+                      </td>
+                      {% endif %}
+                      <!-- <a href="{% url 'delcity'%}?ids={{i.id}}"><i class="nav-icon " style="width:20px"><img src="{% static 'assets/dist/img/icons/delete.svg'%}"  class=" img-squre "  style="width:20px"></i></a> -->
+                    </tr> 
+                {% endfor %}
+
+                  </tbody>
+                 
+                </table>
+                {% if messages %}
+                {% for message in messages %}
+                <p style="color:green;">{{message}}</p> 
+                {% endfor %}
+                {% endif %}
+              </div>
+            </div>
+              <!-- /.card-body -->
+            </div>
+            <!-- /.card -->
+          </div>
+          <!-- /.col -->
+        </div>
+        <!-- /.row -->
+      </div>
+      <!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+  </div>
+  <!-- /.content-wrapper -->
+{% endblock %}

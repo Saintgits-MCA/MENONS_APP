@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Personal Information Details</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item">
+                {%if dptview == '1'%}
+                <a href="{% url 'departmenttable' %}?menumanagement_id={{ idmngmnt }}">View</a>
+              {%endif%}</li>
+              <li class="breadcrumb-item active">Personal Information</li>
+            </ol>
+          </div>
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+
+      <div class="row">
+        <div class="col-md-8">
+          <div class="card card-primary">
+            <div class="card-header">
+              <h3 class="card-title">Personal Information</h3>
+
+              <div class="card-tools">
+                <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                  <!-- <i class="fas fa-minus"></i> -->
+                </button>
+              </div>
+            </div>
+               <form method="POST", action="{% url 'savepersonalinfo' %}">
+                {% csrf_token %}
+          <div class="row">
+          <!-- <div class="col-lg-6" >
+              <div class="card"> -->
+                <div class="card-body">
+                    <div class="form-group">
+                        <label for="exampleInputBranchName">Mrno</label>
+                         <input type="text" class="form-control" value="{{mrno}}" name="mrno" readonly required> 
+                    </div>
+                    <div class="form-group">
+                        <label for="exampleInputBranchName">Age</label>
+                        <input type="text" class="form-control"  name="age" placeholder="Enter Age" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="exampleInputBranchName">Weight</label>
+                        <input type="text" class="form-control" name="weight" placeholder="Enter Weight" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="exampleInputBranchName">Height</label>
+                        <input type="text" class="form-control"  name="height" placeholder="Enter Height" required> 
+                    </div>
+                </div>
+        
+             
+            </div>
+              <div class="card-footer">
+                {% if messages %}
+                    {% for message in messages %}
+                        <p style="color:green;">{{message}}</p> 
+                    {% endfor %}
+                {% endif %}
+               
+                  <button type="submit" class="btn btn-primary">Submit</button>
+             
+                </div>
+              </form>
+          
+            <!-- /.card-body -->
+          </div>
+          <!-- /.card -->
+        </div>
+     
+      </div>
+
+      
+    </section>
+    <!-- /.content -->
+  </div>
+  <!-- /.content-wrapper -->
+
+ {% endblock %}

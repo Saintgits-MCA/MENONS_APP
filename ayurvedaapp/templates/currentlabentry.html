@@ -1,0 +1,2633 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<style>
+/* === Enhanced Styling Matching tabcasehistory.html === */
+:root {
+  --primary-color: #00796b;
+  --secondary-color: #009688;
+  --success-color: #28a745;
+  --light-bg: #f8f9fa;
+}
+
+body {
+  font-family: "Segoe UI", sans-serif;
+  background-color: var(--light-bg);
+  font-size: 16px;
+}
+
+.content-wrapper {
+  background: #f3f6fb;
+  padding: 20px;
+}
+
+/* Patient Details - Matching tabcasehistory design */
+.patient-details {
+  background: #fff;
+  border-radius: 14px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px 20px;
+}
+
+.patient-details .field {
+  display: flex;
+  gap: 6px;
+  font-size: 16px;
+}
+
+.patient-details .label {
+  font-weight: 700;
+  color: #6b7280;
+}
+
+.patient-details .value {
+  color: #1f2937;
+  font-weight: 600;
+}
+
+/* Search Box Styling */
+.search-wrapper {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  margin-bottom: 20px;
+}
+
+.search-box {
+  display: flex;
+  gap: 12px;
+  align-items: end;
+}
+
+.search-box .form-control {
+  border-radius: 8px;
+  padding: 10px 15px;
+  font-size: 16px;
+  border: 1px solid #e5e7eb;
+}
+
+.search-box .btn {
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-weight: 600;
+}
+
+/* Main Card Styling */
+.main-card {
+  background: white;
+  border-radius: 14px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.card-header-custom {
+  background: linear-gradient(135deg, #00796b, #009688);
+  color: white;
+  padding: 16px 20px;
+  border-bottom: none;
+}
+
+.card-header-custom h3 {
+  margin: 0;
+  font-weight: 700;
+  font-size: 1.4rem;
+}
+
+/* Tabs Styling */
+.tabs-container {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.tab-buttons {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.tab-button {
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  background: white;
+  color: #333;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.tab-button.active {
+  background: linear-gradient(135deg, #00796b, #009688);
+  color: white;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* Form Styling */
+.form-section {
+  background: #f8f9fa;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.form-section h5 {
+  color: var(--primary-color);
+  margin-bottom: 15px;
+  font-weight: 600;
+}
+
+/* Table Styling */
+.table-container {
+  background: white;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.table-custom {
+  margin-bottom: 0;
+  width: 100%;
+}
+
+.table-custom thead {
+  background: linear-gradient(135deg, #00796b, #009688);
+}
+
+.table-custom thead th {
+  background: linear-gradient(135deg, #00796b, #009688) !important;
+  color: white;
+  border: none;
+  padding: 12px 15px;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.table-custom tbody td {
+  padding: 12px 15px;
+  vertical-align: middle;
+  border-bottom: 1px solid #eee;
+  font-size: 16px;
+}
+
+.table-custom tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+/* Button Styling */
+.btn-custom-primary {
+  background: linear-gradient(135deg, #00796b, #009688);
+  border: none;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-custom-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 121, 107, 0.3);
+  color: white;
+}
+
+.btn-custom-success {
+  background: linear-gradient(135deg, #28a745, #20c997);
+  border: none;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.btn-custom-danger {
+  background: linear-gradient(135deg, #dc3545, #e35d6a);
+  border: none;
+  color: white;
+  padding: 8px 15px;
+  border-radius: 6px;
+}
+
+/* Autocomplete Styling */
+.autocomplete-list {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: white;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  z-index: 1050;
+}
+
+.autocomplete-list .list-group-item {
+  border: none;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  padding: 12px 15px;
+  transition: all 0.2s ease;
+  font-size: 16px;
+}
+
+.autocomplete-list .list-group-item:hover {
+  background-color: #f8f9fa;
+  transform: translateX(2px);
+}
+
+.autocomplete-list .list-group-item:last-child {
+  border-bottom: none;
+}
+
+/* Normal File Upload Styling */
+.file-upload-container-normal {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 15px;
+  background: #fafafa;
+  transition: all 0.3s ease;
+}
+
+.file-upload-container-normal:hover {
+  border-color: #00796b;
+  background: #f8f9fa;
+}
+
+.file-upload-container-normal.dragover {
+  border-color: #00796b;
+  background: #e0f2f1;
+  border-style: dashed;
+}
+
+.file-upload-container-normal .form-control {
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 14px;
+}
+
+.file-upload-container-normal .form-control:focus {
+  border-color: #00796b;
+  box-shadow: 0 0 0 2px rgba(0, 121, 107, 0.1);
+}
+
+.file-upload-container-normal .btn-outline-secondary {
+  border: 1px solid #e5e7eb;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.file-upload-container-normal .btn-outline-secondary:hover {
+  background-color: #f8f9fa;
+  border-color: #dc3545;
+  color: #dc3545;
+}
+
+/* Total Amount Field Styling */
+.total-amount-container {
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  border-radius: 10px;
+  padding: 15px 20px;
+  border-left: 4px solid var(--primary-color);
+}
+
+.total-amount-input {
+  max-width: 300px;
+}
+
+.total-amount-input .input-group-text {
+  background: linear-gradient(135deg, #00796b, #009688);
+  color: white;
+  border: none;
+  font-weight: 600;
+}
+
+.total-amount-input .form-control {
+  border: 1px solid #e5e7eb;
+  border-left: none;
+  padding: 10px 15px;
+  font-size: 16px;
+}
+
+.total-amount-input .form-control:focus {
+  border-color: #00796b;
+  box-shadow: 0 0 0 2px rgba(0, 121, 107, 0.1);
+}
+
+/* Modal Styling - Enlarged Search Modal */
+.modal-xl-custom {
+  max-width: 90%;
+  width: 90%;
+  margin: 20px auto;
+}
+
+.modal-header-custom {
+  background: linear-gradient(135deg, #00796b, #009688);
+  color: white;
+  border-bottom: none;
+  border-radius: 0;
+}
+
+.modal-title {
+  font-weight: 700;
+}
+
+/* Previous Lab Results Styling - Updated to match screenshot */
+.previous-results-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-height: 600px;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.previous-results-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.previous-results-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.previous-results-container::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.previous-results-container::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+.result-date-group {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  overflow: hidden;
+  min-height: fit-content;
+}
+
+.result-date-header {
+  background: #009688;
+  color: white;
+  padding: 12px 20px;
+  border-bottom: none;
+  font-weight: 600;
+  font-size: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.result-date-header .date {
+  font-weight: 700;
+  color: white;
+}
+
+.result-date-header .time {
+  color: #e0f2f1;
+  font-size: 14px;
+}
+
+.result-tests-container {
+  padding: 0;
+}
+
+.result-test-row {
+  display: grid;
+  grid-template-columns: 35% 20% 20% 10% 15%;
+  padding: 15px 20px;
+  border-bottom: 1px solid #f1f1f1;
+  align-items: center;
+}
+
+.result-test-row:last-child {
+  border-bottom: none;
+}
+
+.result-test-name {
+  font-weight: 600;
+  color: #343a40;
+  font-size: 15px;
+}
+
+.result-test-value {
+  text-align: center;
+  font-weight: 700;
+  color: #00796b;
+  font-size: 15px;
+}
+
+.result-test-range {
+  text-align: center;
+  color: #6c757d;
+  font-size: 14px;
+}
+
+.result-test-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.result-report-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.no-results-message {
+  text-align: center;
+  padding: 40px 20px;
+  color: #6c757d;
+}
+
+.no-results-message i {
+  font-size: 48px;
+  margin-bottom: 15px;
+  opacity: 0.5;
+}
+
+.no-results-message p {
+  margin: 0;
+  font-size: 16px;
+}
+
+/* PDF Report Styling */
+.pdf-report-container {
+  margin: 10px 20px 15px 20px;
+  padding: 15px;
+  background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+  border-radius: 8px;
+  border-left: 4px solid #4caf50;
+}
+
+.pdf-report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.pdf-report-title {
+  font-weight: 600;
+  color: #2e7d32;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+}
+
+.pdf-report-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.pdf-view-btn {
+  background: linear-gradient(135deg, #00796b, #009688);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pdf-view-btn:hover {
+  background: linear-gradient(135deg, #005a4f, #00796b);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 121, 107, 0.3);
+}
+
+/* Centered Toast Styling */
+.alert-toast {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 9999;
+  min-width: 300px;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  text-align: center;
+}
+
+.alert-toast .close {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+}
+
+/* Results Header Row */
+.results-header-row {
+  display: grid;
+  grid-template-columns: 35% 20% 20% 10% 15%;
+  padding: 12px 20px;
+  background-color: #f1f8ff;
+  border-bottom: 2px solid #dee2e6;
+  font-weight: 700;
+  color: #495057;
+  font-size: 15px;
+}
+
+.results-header-item {
+  text-align: center;
+}
+
+.results-header-item:first-child {
+  text-align: left;
+}
+
+/* Group Actions Styling */
+.group-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.edit-group-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.edit-group-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-1px);
+}
+
+/* Group Test Rows in Modal */
+.group-test-row:last-child {
+  border-bottom: none !important;
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+.group-test-row .form-control[readonly] {
+  background-color: #f8f9fa;
+  border-color: #e9ecef;
+}
+
+/* Requisition Date Styling */
+.requisition-date-badge {
+  background: linear-gradient(135deg, #6c757d, #495057);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 15px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 10px;
+}
+
+.requisition-date-cell {
+  background-color: #f8f9fa;
+  border-left: 3px solid #00796b;
+}
+
+/* Test Date Field Styling */
+.test-date-input {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+}
+
+.test-date-input:focus {
+  background-color: white;
+  border-color: #00796b;
+  box-shadow: 0 0 0 0.2rem rgba(0, 121, 107, 0.25);
+}
+
+/* Date Time Display Styling */
+.date-time-display {
+  font-size: 14px;
+  color: #495057;
+}
+
+.date-time-display .date {
+  font-weight: 600;
+  color: #00796b;
+}
+
+.date-time-display .time {
+  font-weight: 500;
+  color: #6c757d;
+}
+
+.test-row-item {
+  padding: 10px;
+  border-bottom: 1px solid #dee2e6;
+  background: white;
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+.test-row-item:last-child {
+  border-bottom: none;
+}
+
+.group-test-header {
+  background: linear-gradient(135deg, #00796b, #009688);
+  color: white;
+  padding: 10px 15px;
+  border-radius: 8px 8px 0 0;
+  margin-bottom: 15px;
+}
+
+.group-test-item {
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  transition: all 0.3s ease;
+}
+
+.group-test-item:hover {
+  border-color: #00796b;
+  box-shadow: 0 2px 8px rgba(0, 121, 107, 0.1);
+}
+
+.group-test-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6c757d;
+  margin-bottom: 4px;
+}
+
+/* Removed Tests Section */
+.removed-tests-section {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 10px;
+  padding: 15px;
+  margin-top: 20px;
+}
+
+.removed-tests-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.removed-tests-header h6 {
+  color: #856404;
+  font-weight: 600;
+  margin: 0;
+}
+
+.removed-tests-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.removed-test-item {
+  background: white;
+  border: 1px solid #ffc107;
+  border-radius: 6px;
+  padding: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.removed-test-item:hover {
+  border-color: #00796b;
+  box-shadow: 0 2px 8px rgba(0, 121, 107, 0.1);
+}
+
+.removed-test-info {
+  flex-grow: 1;
+}
+
+.removed-test-name {
+  font-weight: 600;
+  color: #343a40;
+  margin-bottom: 4px;
+}
+
+.removed-test-date {
+  font-size: 12px;
+  color: #6c757d;
+}
+
+.removed-test-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-restore {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-restore:hover {
+  background: #218838;
+  transform: translateY(-1px);
+}
+
+.btn-restore:disabled {
+  background: #6c757d;
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Report status badges */
+.report-status-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.report-status-available {
+  background: linear-gradient(135deg, #28a745, #20c997);
+  color: white;
+}
+
+.report-status-unavailable {
+  background: linear-gradient(135deg, #6c757d, #495057);
+  color: white;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .modal-xl-custom {
+    max-width: 95%;
+    width: 95%;
+  }
+}
+
+@media (max-width: 992px) {
+  .modal-xl-custom {
+    max-width: 98%;
+    width: 98%;
+    margin: 10px auto;
+  }
+  
+  .table-custom thead th,
+  .table-custom tbody td {
+    padding: 10px 8px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 768px) {
+  .patient-details {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  
+  .search-box {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .search-box .form-group {
+    width: 100%;
+  }
+  
+  .search-box .btn {
+    width: 100%;
+  }
+  
+  .tab-buttons {
+    flex-direction: column;
+  }
+  
+  .tab-button {
+    width: 100%;
+    text-align: center;
+  }
+  
+  .table-responsive {
+    font-size: 14px;
+  }
+  
+  .result-test-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 15px;
+  }
+  
+  .result-test-name,
+  .result-test-value,
+  .result-test-range,
+  .result-report-section,
+  .result-test-actions {
+    text-align: left;
+    padding: 5px 0;
+  }
+  
+  .result-test-value,
+  .result-test-range {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
+  }
+  
+  .result-test-value::before {
+    content: "Result Value: ";
+    font-weight: 600;
+    color: #666;
+  }
+  
+  .result-test-range::before {
+    content: "Normal Range: ";
+    font-weight: 600;
+    color: #666;
+  }
+  
+  .result-report-section::before {
+    content: "Report Status: ";
+    font-weight: 600;
+    color: #666;
+    margin-right: 10px;
+  }
+  
+  .result-test-actions {
+    justify-content: flex-start;
+    padding-top: 10px;
+  }
+  
+  .pdf-report-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .pdf-report-actions {
+    align-self: flex-end;
+  }
+  
+  .results-header-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    text-align: left !important;
+  }
+  
+  .results-header-item {
+    text-align: left !important;
+  }
+  
+  .modal-xl-custom {
+    max-width: 100%;
+    width: 100%;
+    margin: 0;
+    height: 100vh;
+  }
+  
+  .previous-results-container {
+    max-height: 400px;
+  }
+  
+  .group-actions {
+    flex-direction: column;
+    gap: 5px;
+  }
+  
+  /* Adjust table columns for mobile */
+  .table-custom thead {
+    display: none;
+  }
+  
+  .table-custom tbody tr {
+    display: block;
+    margin-bottom: 15px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    padding: 15px;
+  }
+  
+  .table-custom tbody td {
+    display: block;
+    text-align: right;
+    padding: 8px 10px;
+    border-bottom: 1px solid #f5f5f5;
+  }
+  
+  .table-custom tbody td:before {
+    content: attr(data-label);
+    float: left;
+    font-weight: 600;
+    color: #00796b;
+  }
+  
+  .table-custom tbody td:last-child {
+    border-bottom: none;
+  }
+  
+  /* Modal responsive adjustments */
+  .modal-lg, .modal-xl {
+    max-width: 100%;
+    margin: 0;
+  }
+  
+  .modal-body {
+    padding: 15px;
+  }
+  
+  .test-row-item .row {
+    flex-direction: column;
+  }
+  
+  .test-row-item .col-md-5,
+  .test-row-item .col-md-3,
+  .test-row-item .col-md-1 {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+  
+  /* Removed tests responsive */
+  .removed-test-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .removed-test-actions {
+    align-self: flex-end;
+  }
+  
+  /* Search modal table responsive */
+  #searchResultsTable_wrapper {
+    overflow-x: auto;
+  }
+  
+  #searchResultsTable {
+    min-width: 600px;
+  }
+  
+  /* Total amount responsive */
+  .total-amount-container {
+    padding: 15px;
+  }
+  
+  .total-amount-input {
+    max-width: 100%;
+  }
+  
+  .d-flex.justify-content-between.align-items-center.mt-4 {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .d-flex.justify-content-between.align-items-center.mt-4 .btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 576px) {
+  .patient-details {
+    grid-template-columns: 1fr;
+  }
+  
+  .content-wrapper {
+    padding: 10px;
+  }
+  
+  .search-wrapper,
+  .tabs-container,
+  .form-section {
+    padding: 15px;
+  }
+  
+  .card-header-custom h3 {
+    font-size: 1.2rem;
+  }
+  
+  .btn-custom-primary,
+  .btn-custom-success {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+  
+  .modal-xl-custom .modal-body {
+    padding: 10px;
+  }
+  
+  .modal-xl-custom .modal-footer {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .modal-xl-custom .modal-footer .btn {
+    width: 100%;
+  }
+}
+
+/* Animation for new rows */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.new-row {
+  animation: fadeInUp 0.5s ease;
+}
+
+/* Badge Styling */
+.badge-custom {
+  background: linear-gradient(135deg, #00796b, #009688);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  gap: 5px;
+  justify-content: center;
+}
+
+.btn-action {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.btn-action:hover {
+  transform: scale(1.1);
+}
+
+.btn-edit {
+  background: #007bff;
+  color: white;
+}
+
+.btn-delete {
+  background: #dc3545;
+  color: white;
+}
+
+/* Scrollable results section */
+.scrollable-results {
+  position: relative;
+}
+
+.results-count-indicator {
+  position: absolute;
+  top: -10px;
+  right: 10px;
+  background: #00796b;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  z-index: 10;
+}
+
+/* Status badges */
+.status-badge-pending {
+  background: linear-gradient(135deg, #ffc107, #ff9800);
+  color: white;
+}
+
+.status-badge-completed {
+  background: linear-gradient(135deg, #28a745, #20c997);
+  color: white;
+}
+
+.status-badge-error {
+  background: linear-gradient(135deg, #dc3545, #e35d6a);
+  color: white;
+}
+
+/* Mobile table labels */
+@media (max-width: 768px) {
+  .table-custom tbody td[data-label="Lab Test"]::before {
+    content: "Lab Test: ";
+  }
+  
+  .table-custom tbody td[data-label="Result Value"]::before {
+    content: "Result Value: ";
+  }
+  
+  .table-custom tbody td[data-label="Normal Range"]::before {
+    content: "Normal Range: ";
+  }
+  
+  .table-custom tbody td[data-label="Status"]::before {
+    content: "Status: ";
+  }
+  
+  .table-custom tbody td[data-label="Test Date"]::before {
+    content: "Test Date: ";
+  }
+  
+  .table-custom tbody td[data-label="Requisition Date"]::before {
+    content: "Requisition Date: ";
+  }
+  
+  .table-custom tbody td[data-label="Actions"]::before {
+    content: "Actions: ";
+  }
+}
+</style>
+
+<div class="content-wrapper">
+  <!-- Header Section -->
+  <section class="content-header">
+    <div class="page-header">
+      <h1>Lab Results Management</h1>
+    </div>
+  </section>
+
+  <!-- Search Section -->
+  <div class="search-wrapper mt-4">
+    <div class="search-box">
+      <div class="form-group flex-grow-1">
+        <label for="mrSearch" class="form-label fw-semibold">Search Patient by MR Number</label>
+        <input type="text" id="mrSearch" class="form-control" placeholder="Enter MR Number to search...">
+      </div>
+      <div class="form-group">
+        <button id="searchBtn" class="btn btn-custom-primary">
+          <i class="fas fa-search me-2"></i>Search Patient
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Card -->
+  <div class="main-card">
+    <!-- Card Header -->
+    <div class="card-header-custom">
+      <h3><i class="fas fa-flask me-2"></i>Patient Lab Results</h3>
+    </div>
+
+    <!-- Patient Details -->
+    <div class="card-body">
+      <div class="patient-details">
+        <div class="field"><span class="label">MR No:</span> <span class="value" id="mrDropdown">-</span></div>
+        <div class="field"><span class="label">Name:</span> <span class="value" id="ptname">-</span></div>
+        <div class="field"><span class="label">Age:</span> <span class="value" id="ptage">-</span></div>
+        <div class="field"><span class="label">Gender:</span> <span class="value" id="ptgender">-</span></div>
+        <div class="field"><span class="label">Phone:</span> <span class="value" id="ptphno">-</span></div>
+        <div class="field"><span class="label">Address:</span> <span class="value" id="ptaddress">-</span></div>
+      </div>
+
+      <!-- Tabs Navigation -->
+      <div class="tabs-container">
+        <div class="tab-buttons">
+          <button class="tab-button active" data-tab="labresults">
+            <i class="fas fa-file-medical me-2"></i>Lab Results
+          </button>
+        </div>
+
+        <!-- Lab Results Tab Content -->
+        <div id="labresults" class="tab-content active">
+          <!-- Removed Tests Section -->
+          <div class="removed-tests-section" id="removedTestsSection" style="display: none;">
+            <div class="removed-tests-header">
+              <h6><i class="fas fa-trash-restore me-2"></i>Removed Tests - Available for Re-entry</h6>
+              <span class="badge bg-warning" id="removedTestsCount">0</span>
+            </div>
+            <div class="removed-tests-list" id="removedTestsList">
+              <!-- Removed tests will be displayed here -->
+            </div>
+          </div>
+
+          <!-- Lab Results Form -->
+          <div class="form-section">
+            <form id="labResultForm" method="POST" enctype="multipart/form-data">
+              {% csrf_token %}
+              <input type="hidden" name="labptid" id="labptid">
+              
+              <!-- Report File Upload - Normal Size -->
+              <div class="form-group mb-4">
+                <label for="reportFile" class="form-label fw-semibold">
+                  <i class="fas fa-file-pdf me-2 text-danger"></i>Lab Report (PDF)
+                </label>
+                <div class="file-upload-container-normal">
+                  <div class="d-flex align-items-center gap-3">
+                    <div class="flex-grow-1">
+                      <input type="file" id="reportFile" name="report_file" accept="application/pdf" class="form-control">
+                    </div>
+                    <button type="button" class="btn btn-outline-secondary" onclick="clearFileInput()">
+                      <i class="fas fa-times"></i>
+                    </button>
+                  </div>
+                  <div id="fileName" class="mt-2 text-success fw-semibold small"></div>
+                  <small class="form-text text-muted">
+                    <i class="fas fa-info-circle me-1"></i>Upload a single PDF report for all lab tests
+                  </small>
+                </div>
+              </div>
+
+              <!-- Lab Results Table -->
+              <div class="table-container">
+                <table class="table table-custom">
+                  <thead>
+                    <tr>
+                      <th style="width: 25%;">Lab Test</th>
+                      <th style="width: 12%;">Result Value</th>
+                      <th style="width: 12%;">Normal Range</th>
+                      <th style="width: 12%;">Status</th>
+                      <th style="width: 19%;">Test Date</th>
+                      <th style="width: 10%;">Requisition Date</th>
+                      <th style="width: 10%;">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="labresult-body">
+                    <tr class="labresult-row">
+                      <td data-label="Lab Test">
+                        <input type="text" name="labtest[]" class="form-control labtest-input" placeholder="Search lab test..." autocomplete="off">
+                        <div class="autocomplete-list list-group position-absolute w-100" style="display: none;"></div>
+                        <input type="hidden" name="labtest_id[]" class="labtest-id">
+                        <input type="hidden" name="requisition_id[]" class="requisition-id">
+                      </td>
+                      <td data-label="Result Value">
+                        <input type="text" name="result_value[]" class="form-control" placeholder="Enter result...">
+                      </td>
+                      <td data-label="Normal Range">
+                        <input type="text" name="normal_value[]" class="form-control" placeholder="Normal range...">
+                      </td>
+                      <td data-label="Status">
+                        <span class="badge status-badge-pending">Pending</span>
+                      </td>
+                      <td data-label="Test Date">
+                        <input type="date" name="test_date[]" class="form-control test-date-input" value="{{ today|date:'Y-m-d' }}">
+                      </td>
+                      <td data-label="Requisition Date" class="requisition-date-cell">
+                        <span class="text-muted">-</span>
+                      </td>
+                      <td data-label="Actions">
+                        <button type="button" class="btn btn-custom-danger remove-row">
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Form Actions with Total Amount Field -->
+              <div class="d-flex justify-content-between align-items-center mt-4">
+                <!-- Total Amount Field - Added Here -->
+                <div class="total-amount-container flex-grow-1 me-3">
+                  <div class="d-flex align-items-center">
+                    <div class="me-3">
+                      <!-- <i class="fas fa-rupee-sign fs-5 text-primary"></i> -->
+                    </div>
+                    <div class="total-amount-input">
+                      <label for="totalAmount" class="form-label fw-semibold mb-1">
+                        Total Bill Amount <span class="text-muted fw-normal">(Optional)</span>
+                      </label>
+                      <div class="input-group">
+                        <span class="input-group-text">₹</span>
+                        <input type="number" 
+                               step="0.01" 
+                               min="0" 
+                               class="form-control" 
+                               id="totalAmount" 
+                               name="total_amount" 
+                               placeholder="Enter total amount">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                &nbsp;
+                <button type="submit" class="btn btn-custom-primary">
+                  <i class="fas fa-save me-2"></i>Save Lab Results
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Previous Lab Results -->
+          <div class="form-section scrollable-results">
+            <h5>
+              <i class="fas fa-history me-2"></i>Previous Lab Results
+              <span class="badge bg-primary ms-2" id="resultsCount" style="display: none;"></span>
+            </h5>
+            <div class="previous-results-container" id="previousResultsContainer">
+              <div class="no-results-message">
+                <i class="fas fa-inbox"></i>
+                <p>No lab results available</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Search Modal - Enlarged -->
+<div class="modal fade" id="searchModal" tabindex="-1">
+  <div class="modal-dialog modal-xl-custom">
+    <div class="modal-content">
+      <div class="modal-header modal-header-custom">
+        <h5 class="modal-title"><i class="fas fa-search me-2"></i>Search Results</h5>
+        <button type="button" class="close text-white" data-dismiss="modal">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="table-container">
+          <div class="table-responsive">
+            <table id="searchResultsTable" class="table table-custom">
+              <thead>
+                <tr>
+                  <th>MR Number</th>
+                  <th>Patient Name</th>
+                  <th>Age</th>
+                  <th>Gender</th>
+                  <th>Address</th>
+                  <th>Contact No</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Lab Result Modal -->
+<div class="modal fade" id="editLabResultModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header modal-header-custom">
+        <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Edit Lab Result</h5>
+        <button type="button" class="close text-white" data-dismiss="modal">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form id="editLabResultForm">
+        <div class="modal-body">
+          <input type="hidden" id="editResultId" name="result_id">
+          <div class="form-group">
+            <label for="editLabTest" class="form-label fw-semibold">Lab Test</label>
+            <input type="text" id="editLabTest" class="form-control" readonly>
+          </div>
+          <div class="form-group">
+            <label for="editResultValue" class="form-label fw-semibold">Result Value</label>
+            <input type="text" id="editResultValue" name="result_value" class="form-control">
+          </div>
+          <div class="form-group">
+            <label for="editNormalValue" class="form-label fw-semibold">Normal Value</label>
+            <input type="text" id="editNormalValue" name="normal_value" class="form-control">
+          </div>
+          <div class="form-group">
+            <label for="editTestDate" class="form-label fw-semibold">Test Date</label>
+            <input type="date" id="editTestDate" name="test_date" class="form-control">
+          </div>
+          <div class="form-group">
+            <label for="editReportFile" class="form-label fw-semibold">Update Report (PDF)</label>
+            <input type="file" id="editReportFile" name="report_file" accept="application/pdf" class="form-control">
+            <small class="form-text text-muted">Leave empty to keep current report</small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-custom-primary">
+            <i class="fas fa-check me-2"></i>Update Lab Result
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Group Lab Results Modal -->
+<div class="modal fade" id="editGroupLabResultModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header modal-header-custom">
+        <h5 class="modal-title">
+          <i class="fas fa-edit me-2"></i>Edit Group Lab Results
+        </h5>
+        <button type="button" class="close text-white" data-dismiss="modal">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form id="editGroupLabResultForm">
+        <div class="modal-body">
+          <!-- Date and Time Display -->
+          <div class="form-group">
+            <div class="alert alert-info">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <strong><i class="fas fa-calendar-alt me-2"></i>Test Date:</strong>
+                  <span id="groupDateDisplay" class="ml-2"></span>
+                </div>
+                <div>
+                  <strong><i class="fas fa-clock me-2"></i>Test Time:</strong>
+                  <span id="groupTimeDisplay" class="ml-2"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <input type="hidden" id="editGroupDate" name="group_date">
+          <input type="hidden" id="editGroupTime" name="group_time">
+          <input type="hidden" id="editGroupPatientId" name="patient_id">
+          
+          <!-- Group Report File -->
+          <div class="form-group">
+            <label for="editGroupReportFile" class="form-label fw-semibold">
+              <i class="fas fa-file-pdf me-2 text-danger"></i>Update Group Report (PDF)
+            </label>
+            <input type="file" id="editGroupReportFile" name="report_file" accept="application/pdf" class="form-control">
+            <small class="form-text text-muted">
+              This will update the report for all tests in this group. Leave empty to keep current report.
+            </small>
+          </div>
+          
+          <!-- Individual Tests in this Group -->
+          <div class="form-group">
+            <label class="form-label fw-semibold">
+              <i class="fas fa-flask me-2"></i>Test Results for this Date/Time
+            </label>
+            <div id="groupTestResultsContainer" class="border rounded p-3 bg-light" style="max-height: 400px; overflow-y: auto;">
+              <!-- Dynamic content will be inserted here -->
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-custom-primary">
+            <i class="fas fa-save me-2"></i>Update All Results
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== Enhanced JavaScript with Better UI/UX =====
+
+// Store removed tests in memory
+let removedTests = [];
+let currentPatientId = null;
+
+// Get today's date in YYYY-MM-DD format
+function getTodayDate() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+// Helper function to format date for display
+function formatDateForDisplay(dateString) {
+  if (!dateString || dateString === 'Unknown Date') return 'Unknown Date';
+  
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      return dateString; // Return as-is if invalid date
+    }
+    
+    // Format as DD/MM/YYYY
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    
+    return `${day}/${month}/${year}`;
+  } catch (e) {
+    return dateString;
+  }
+}
+
+// Show centered toast message
+function showToast(message, type) {
+  if (typeof type === 'undefined') type = 'success';
+  const toast = $(`
+    <div class="alert alert-${type === 'success' ? 'success' : 'danger'} alert-toast alert-dismissible fade show" role="alert">
+      <strong>${type === 'success' ? '✅ Success!' : '❌ Error!'}</strong> ${message}
+      <button type="button" class="close" data-dismiss="alert">
+        <span>&times;</span>
+      </button>
+    </div>
+  `);
+  $('body').append(toast);
+  setTimeout(function() { toast.alert('close'); }, 5000);
+}
+
+// Clear file input function
+function clearFileInput() {
+  $('#reportFile').val('');
+  $('#fileName').text('').removeClass('text-success text-danger');
+}
+
+// Add a removed test to the list
+function addToRemovedTests(testData) {
+  // Check if test already exists in removed tests
+  const existingIndex = removedTests.findIndex(test => 
+    test.id === testData.id || 
+    (test.test === testData.test && test.date === testData.date)
+  );
+  
+  if (existingIndex === -1) {
+    removedTests.push(testData);
+    updateRemovedTestsDisplay();
+  }
+}
+
+// Update the removed tests display
+function updateRemovedTestsDisplay() {
+  const container = $("#removedTestsList");
+  const countBadge = $("#removedTestsCount");
+  const section = $("#removedTestsSection");
+  
+  container.empty();
+  
+  if (removedTests.length > 0) {
+    countBadge.text(removedTests.length);
+    section.show();
+    
+    removedTests.forEach((test, index) => {
+      const testItem = $(`
+        <div class="removed-test-item">
+          <div class="removed-test-info">
+            <div class="removed-test-name">${test.test || 'Unknown Test'}</div>
+            <div class="removed-test-date">
+              <i class="fas fa-calendar-alt me-1"></i>
+              ${test.date || 'Unknown Date'} 
+              ${test.time ? `<i class="fas fa-clock ms-2 me-1"></i>${test.time}` : ''}
+            </div>
+          </div>
+          <div class="removed-test-actions">
+            <button class="btn btn-restore" data-index="${index}">
+              <i class="fas fa-redo me-1"></i>Restore
+            </button>
+          </div>
+        </div>
+      `);
+      container.append(testItem);
+    });
+  } else {
+    section.hide();
+  }
+}
+
+// Restore a removed test to the lab results form
+function restoreTestToForm(testIndex) {
+  if (testIndex < 0 || testIndex >= removedTests.length) return;
+  
+  const test = removedTests[testIndex];
+  
+  // Create a new row in the lab results form
+  const newRow = $(`
+    <tr class="labresult-row new-row">
+      <td data-label="Lab Test">
+        <input type="text" name="labtest[]" class="form-control" value="${test.test}" readonly>
+        <input type="hidden" name="labtest_id[]" value="${test.labtest_id || ''}">
+        <input type="hidden" name="requisition_id[]" value="${test.requisition_id || ''}">
+      </td>
+      <td data-label="Result Value">
+        <input type="text" name="result_value[]" class="form-control" value="${test.result_value || ''}" placeholder="Enter result...">
+      </td>
+      <td data-label="Normal Range">
+        <input type="text" name="normal_value[]" class="form-control" value="${test.normal_value || ''}" placeholder="Normal range...">
+      </td>
+      <td data-label="Status">
+        <span class="badge status-badge-completed">Restored</span>
+      </td>
+      <td data-label="Test Date">
+        <input type="date" name="test_date[]" class="form-control test-date-input" value="${test.test_date || getTodayDate()}">
+      </td>
+      <td data-label="Requisition Date" class="requisition-date-cell">
+        <span class="text-muted">${test.requisition_date || '-'}</span>
+      </td>
+      <td data-label="Actions">
+        <button type="button" class="btn btn-custom-danger remove-row">
+          <i class="fas fa-trash"></i>
+        </button>
+      </td>
+    </tr>
+  `);
+  
+  $("#labresult-body").append(newRow);
+  
+  // Remove from removed tests list
+  removedTests.splice(testIndex, 1);
+  updateRemovedTestsDisplay();
+  
+  showToast("Test restored to form for re-entry", "success");
+}
+
+// File upload handling for normal size
+$(document).ready(function() {
+  // File input change handler
+  $('#reportFile').on('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.type !== 'application/pdf') {
+        showToast('Please select a PDF file only.', 'error');
+        $(this).val('');
+        $('#fileName').text('').removeClass('text-success').addClass('text-danger');
+        return;
+      }
+      $('#fileName').text('Selected: ' + file.name).removeClass('text-danger').addClass('text-success');
+    } else {
+      $('#fileName').text('').removeClass('text-success text-danger');
+    }
+  });
+
+  // Drag and drop functionality
+  const fileUploadContainer = $('.file-upload-container-normal');
+  fileUploadContainer.on('dragover', function(e) {
+    e.preventDefault();
+    $(this).addClass('dragover');
+  });
+
+  fileUploadContainer.on('dragleave', function(e) {
+    e.preventDefault();
+    $(this).removeClass('dragover');
+  });
+
+  fileUploadContainer.on('drop', function(e) {
+    e.preventDefault();
+    $(this).removeClass('dragover');
+    const files = e.originalEvent.dataTransfer.files;
+    if (files.length > 0) {
+      $('#reportFile')[0].files = files;
+      $('#reportFile').trigger('change');
+    }
+  });
+});
+
+// Enhanced search functionality
+$(document).ready(function () {
+  let searchTable = $("#searchResultsTable").DataTable({
+    responsive: true,
+    language: {
+      emptyTable: "No patients found matching your search criteria"
+    },
+    dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>tip',
+    pageLength: 10,
+    autoWidth: false,
+    columns: [
+      { width: "15%" },
+      { width: "20%" },
+      { width: "10%" },
+      { width: "10%" },
+      { width: "20%" },
+      { width: "15%" },
+      { width: "10%" }
+    ]
+  });
+
+  // Function to search patient by MR number (updated to use search_labmrno)
+  function searchPatient(query) {
+    if (!query) return;
+    searchTable.clear().draw();
+
+    // Show loading
+    const searchBtn = $('#searchBtn');
+    const originalText = searchBtn.html();
+    searchBtn.html('<i class="fas fa-spinner fa-spin me-2"></i>Searching...');
+    searchBtn.prop('disabled', true);
+
+    // UPDATED: Changed from /search_mrno to /search_labmrno
+    fetch(`/search_labmrno?query=${encodeURIComponent(query)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        searchBtn.html(originalText);
+        searchBtn.prop('disabled', false);
+        
+        if (!data.length) {
+          showToast("No matching records found.", "error");
+          return;
+        }
+
+        // Pick the first match directly
+        let item = data[0];
+        currentPatientId = item.id;
+        $("#labptid").val(item.id);
+        $("#mrDropdown").text(item.Medical_Record_Number);
+        $("#ptname").text(item.Patient_Name);
+        // UPDATED: Use display_age instead of Age
+        $("#ptage").text(item.display_age || 'N/A');
+        $("#ptphno").text(item.contactno);
+        $("#ptgender").text(item.Gender);
+        $("#ptaddress").text(item.address || "N/A");
+
+        // Clear removed tests when switching patients
+        removedTests = [];
+        updateRemovedTestsDisplay();
+        
+        loadPatientHistoryAndPending(item.id);
+        showToast("Patient " + item.Patient_Name + " selected successfully!", "success");
+      })
+      .catch(() => {
+        searchBtn.html(originalText);
+        searchBtn.prop('disabled', false);
+        showToast("Error retrieving data.", "error");
+      });
+  }
+
+  // Manual search button
+  $("#searchBtn").on("click", function () {
+    const query = $("#mrSearch").val().trim();
+    if (!query) {
+      showToast("Please enter a search term.", "error");
+      return;
+    }
+    searchPatient(query);
+  });
+
+  // Search modal functionality - UPDATED to use display_age
+  $("#searchResultsTable").on("click", ".select-btn", function () {
+    const btn = $(this);
+    const id = btn.data("id");
+    
+    currentPatientId = id;
+    $("#labptid").val(id);
+    $("#mrDropdown").text(btn.data("mrno"));
+    $("#ptname").text(btn.data("name"));
+    $("#ptage").text(btn.data("age") || 'N/A');
+    $("#ptphno").text(btn.data("contact"));
+    $("#ptgender").text(btn.data("gender"));
+    $("#ptaddress").text(btn.data("address"));
+
+    // Clear removed tests when switching patients
+    removedTests = [];
+    updateRemovedTestsDisplay();
+    
+    loadPatientHistoryAndPending(id);
+    $("#searchModal").modal("hide");
+    showToast("Patient " + btn.data("name") + " selected successfully!", "success");
+  });
+
+  // Remove Row from Lab Results Form
+  $("#labresult-body").on("click", ".remove-row", function () {
+    const row = $(this).closest("tr");
+    const testName = row.find("input[name='labtest[]']").val();
+    
+    if (testName) {
+      // Collect test data before removing
+      const testData = {
+        test: testName,
+        labtest_id: row.find("input[name='labtest_id[]']").val(),
+        result_value: row.find("input[name='result_value[]']").val(),
+        normal_value: row.find("input[name='normal_value[]']").val(),
+        test_date: row.find("input[name='test_date[]']").val(),
+        requisition_id: row.find("input[name='requisition_id[]']").val(),
+        requisition_date: row.find(".requisition-date-cell span").text(),
+        date: new Date().toLocaleDateString(),
+        time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+      };
+      
+      // Add to removed tests list
+      addToRemovedTests(testData);
+    }
+    
+    if ($("#labresult-body .labresult-row").length > 1) {
+      row.fadeOut(300, function() {
+        $(this).remove();
+      });
+    } else {
+      showToast("At least one lab test entry must remain.", "error");
+    }
+  });
+
+  // Restore removed test
+  $(document).on("click", ".btn-restore", function() {
+    const testIndex = $(this).data("index");
+    restoreTestToForm(testIndex);
+  });
+
+  // Submit Lab Results - UPDATED to include total_amount
+  $("#labResultForm").submit(function (e) {
+    e.preventDefault();
+    
+    if (!$("#labptid").val()) {
+      showToast("Please select a patient first!", "error");
+      return;
+    }
+
+    const submitBtn = $(this).find('button[type="submit"]');
+    const originalText = submitBtn.html();
+    submitBtn.html('<i class="fas fa-spinner fa-spin me-2"></i>Saving...');
+    submitBtn.prop('disabled', true);
+
+    let formData = new FormData();
+    let reportFile = $("#reportFile")[0].files[0];
+
+    // Add the single report file
+    if (reportFile) {
+      formData.append("report_file", reportFile);
+    }
+    
+    // Add total amount if provided
+    let totalAmount = $("#totalAmount").val();
+    if (totalAmount && totalAmount.trim() !== '') {
+      formData.append("total_amount", totalAmount);
+    }
+    
+    // Collect all test data
+    let hasTests = false;
+    $("#labresult-body .labresult-row").each(function (index) {
+      let labtestId = $(this).find("input[name='labtest_id[]']").val();
+      let labtestName = $(this).find("input[name='labtest[]']").val();
+      let testDate = $(this).find("input[name='test_date[]']").val();
+      let requisitionId = $(this).find("input[name='requisition_id[]']").val();
+      
+      // Only add rows with valid test data
+      if (labtestId || labtestName) {
+        hasTests = true;
+        formData.append("labtest_id[]", labtestId || "");
+        formData.append("labtest[]", labtestName || "");
+        formData.append("test_date[]", testDate || getTodayDate());
+        formData.append("requisition_id[]", requisitionId || "");
+        formData.append("result_value[]", $(this).find("input[name='result_value[]']").val());
+        formData.append("normal_value[]", $(this).find("input[name='normal_value[]']").val());
+      }
+    });
+
+    if (!hasTests) {
+      showToast("Please add at least one lab test.", "error");
+      submitBtn.html(originalText);
+      submitBtn.prop('disabled', false);
+      return;
+    }
+
+    formData.append("labptid", $("#labptid").val());
+    formData.append("csrfmiddlewaretoken", $("input[name=csrfmiddlewaretoken]").val());
+
+    $.ajax({
+      url: "{% url 'save_lab_results' %}",
+      type: "POST",
+      data: formData,
+      processData: false,
+      contentType: false,
+      success: function (response) {
+        submitBtn.html(originalText);
+        submitBtn.prop('disabled', false);
+        
+        if (response.success) {
+          showToast(response.message || "Lab results saved successfully!");
+          $("#labResultForm")[0].reset();
+          $("#fileName").text("");
+          clearFileInput();
+          
+          // Clear removed tests after successful save
+          removedTests = [];
+          updateRemovedTestsDisplay();
+          
+          // Reset to single row
+          $("#labresult-body").empty().append(
+            '<tr class="labresult-row">' +
+            '<td data-label="Lab Test">' +
+            '<input type="text" name="labtest[]" class="form-control labtest-input" placeholder="Search lab test..." autocomplete="off">' +
+            '<div class="autocomplete-list list-group position-absolute w-100" style="display: none;"></div>' +
+            '<input type="hidden" name="labtest_id[]" class="labtest-id">' +
+            '<input type="hidden" name="requisition_id[]" class="requisition-id">' +
+            '</td>' +
+            '<td data-label="Result Value">' +
+            '<input type="text" name="result_value[]" class="form-control" placeholder="Enter result...">' +
+            '</td>' +
+            '<td data-label="Normal Range">' +
+            '<input type="text" name="normal_value[]" class="form-control" placeholder="Normal range...">' +
+            '</td>' +
+            '<td data-label="Status">' +
+            '<span class="badge status-badge-pending">Pending</span>' +
+            '</td>' +
+            '<td data-label="Test Date">' +
+            '<input type="date" name="test_date[]" class="form-control test-date-input" value="' + getTodayDate() + '">' +
+            '</td>' +
+            '<td data-label="Requisition Date" class="requisition-date-cell">' +
+            '<span class="text-muted">-</span>' +
+            '</td>' +
+            '<td data-label="Actions">' +
+            '<button type="button" class="btn btn-custom-danger remove-row">' +
+            '<i class="fas fa-trash"></i>' +
+            '</button>' +
+            '</td>' +
+            '</tr>'
+          );
+          
+          loadPatientHistoryAndPending($("#labptid").val());
+        } else {
+          showToast("Error: " + response.error, "error");
+        }
+      },
+      error: function() {
+        submitBtn.html(originalText);
+        submitBtn.prop('disabled', false);
+        showToast("Something went wrong while saving lab results.", "error");
+      }
+    });
+  });
+
+  // Autocomplete for Lab Test
+  $(document).on("input", ".labtest-input", function () {
+    let input = $(this);
+    let query = input.val();
+    let list = input.siblings(".autocomplete-list");
+    let hiddenField = input.siblings(".labtest-id");
+    
+    if (query.length < 2) { 
+      list.hide().empty(); 
+      return; 
+    }
+
+    $.ajax({
+      url: "{% url 'search_labtests' %}",
+      data: { term: query },
+      success: function (data) {
+        list.empty();
+        if (data.length === 0) {
+          list.hide();
+          return;
+        }
+        
+        data.forEach(function (item) {
+          let option = $("<button>")
+            .addClass("list-group-item list-group-item-action")
+            .text(item.label)
+            .attr("type", "button")
+            .on("click", function () {
+              input.val(item.value);
+              hiddenField.val(item.id);
+              list.hide().empty();
+              // Update status badge
+              input.closest('tr').find('.badge').removeClass('status-badge-pending').addClass('status-badge-completed').text('Selected');
+              // Set test date to today
+              input.closest('tr').find('input[name="test_date[]"]').val(getTodayDate());
+            });
+          list.append(option);
+        });
+        list.show();
+      }
+    });
+  });
+
+  // Delete Lab Result from Previous Results
+  $(document).on("click", ".delete-lab-result", function() {
+    const resultId = $(this).data("id");
+    const testRow = $(this).closest('.result-test-row');
+    const testName = testRow.find('.result-test-name').text().trim();
+    const resultValue = testRow.find('.result-test-value').text().trim();
+    const normalValue = testRow.find('.result-test-range').text().trim();
+    const dateGroup = $(this).closest('.result-date-group');
+    const dateTime = dateGroup.find('.date').text().trim() + ' ' + dateGroup.find('.time').text().trim();
+    
+    if (!resultId) {
+      showToast("Error: Cannot delete this result - missing ID", "error");
+      return;
+    }
+    
+    if (!confirm("Are you sure you want to delete this lab result? It will be moved to 'Removed Tests' section for re-entry.")) {
+      return;
+    }
+    
+    const deleteBtn = $(this);
+    deleteBtn.html('<i class="fas fa-spinner fa-spin"></i>');
+    deleteBtn.prop('disabled', true);
+    
+    // Store test data before deleting
+    const testData = {
+      id: resultId,
+      test: testName,
+      result_value: resultValue,
+      normal_value: normalValue,
+      date: dateTime,
+      time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+    };
+    
+    $.ajax({
+      url: "{% url 'delete_lab_result' %}",
+      type: "POST",
+      data: {
+        result_id: resultId,
+        csrfmiddlewaretoken: $("input[name=csrfmiddlewaretoken]").val()
+      },
+      success: function(response) {
+        deleteBtn.html('<i class="fas fa-trash"></i>');
+        deleteBtn.prop('disabled', false);
+        
+        if (response.success) {
+          // Add to removed tests
+          addToRemovedTests(testData);
+          
+          // Remove from display
+          testRow.fadeOut(300, function() {
+            $(this).remove();
+            // If this was the last test in the group, remove the entire group
+            const remainingTests = dateGroup.find('.result-test-row').length;
+            if (remainingTests === 0) {
+              dateGroup.fadeOut(300, function() {
+                $(this).remove();
+                updateResultsCount();
+              });
+            }
+          });
+          
+          showToast("Lab result moved to 'Removed Tests' section", "success");
+        } else {
+          showToast("Error: " + response.error, "error");
+        }
+      },
+      error: function() {
+        deleteBtn.html('<i class="fas fa-trash"></i>');
+        deleteBtn.prop('disabled', false);
+        showToast("Something went wrong while deleting lab result.", "error");
+      }
+    });
+  });
+
+  // Group Edit Functionality
+  $(document).on("click", ".edit-group-btn", function() {
+    const displayDate = $(this).data("date");
+    const patientId = $("#labptid").val();
+    
+    if (!patientId) {
+      showToast("Please select a patient first!", "error");
+      return;
+    }
+    
+    // Parse date and time
+    const dateParts = displayDate.split(' ');
+    const dateOnly = dateParts[0];
+    const timeOnly = dateParts.length > 1 ? dateParts[1] : "00:00";
+    
+    // Set modal displays
+    $("#groupDateDisplay").text(dateOnly);
+    $("#groupTimeDisplay").text(timeOnly);
+    $("#editGroupDate").val(dateOnly);
+    $("#editGroupTime").val(timeOnly);
+    $("#editGroupPatientId").val(patientId);
+    
+    // Load group results
+    loadGroupResultsForEditing(patientId, dateOnly, timeOnly);
+    
+    $("#editGroupLabResultModal").modal("show");
+  });
+
+  // Submit Group Edit Form
+  $("#editGroupLabResultForm").submit(function(e) {
+    e.preventDefault();
+    
+    const patientId = $("#editGroupPatientId").val();
+    const groupDate = $("#editGroupDate").val();
+    const groupTime = $("#editGroupTime").val();
+    
+    if (!patientId || !groupDate) {
+      showToast("Missing required data.", "error");
+      return;
+    }
+    
+    const submitBtn = $(this).find('button[type="submit"]');
+    const originalText = submitBtn.html();
+    submitBtn.html('<i class="fas fa-spinner fa-spin me-2"></i>Updating Group...');
+    submitBtn.prop('disabled', true);
+    
+    const formData = new FormData();
+    formData.append("patient_id", patientId);
+    formData.append("group_date", groupDate);
+    formData.append("group_time", groupTime || "00:00");
+    
+    // Collect all data
+    const resultIds = $("input[name='result_ids[]']").map(function() {
+      return $(this).val();
+    }).get();
+    
+    const resultValues = $("input[name='result_values[]']").map(function() {
+      return $(this).val();
+    }).get();
+    
+    const normalValues = $("input[name='normal_values[]']").map(function() {
+      return $(this).val();
+    }).get();
+    
+    const testDates = $("input[name='test_dates[]']").map(function() {
+      return $(this).val();
+    }).get();
+    
+    // Append all arrays
+    resultIds.forEach(id => formData.append("result_ids[]", id));
+    resultValues.forEach(value => formData.append("result_values[]", value));
+    normalValues.forEach(value => formData.append("normal_values[]", value));
+    testDates.forEach(date => formData.append("test_dates[]", date));
+    
+    // Add report file if provided
+    const reportFile = $("#editGroupReportFile")[0].files[0];
+    if (reportFile) {
+      if (reportFile.type !== 'application/pdf') {
+        showToast("Please select a PDF file only.", "error");
+        submitBtn.html(originalText);
+        submitBtn.prop('disabled', false);
+        return;
+      }
+      formData.append("report_file", reportFile);
+    }
+    
+    formData.append("csrfmiddlewaretoken", $("input[name=csrfmiddlewaretoken]").val());
+    
+    $.ajax({
+      url: "{% url 'update_group_lab_results' %}",
+      type: "POST",
+      data: formData,
+      processData: false,
+      contentType: false,
+      success: function(response) {
+        submitBtn.html(originalText);
+        submitBtn.prop('disabled', false);
+        
+        if (response.success) {
+          showToast(`Successfully updated ${response.updated_count || 0} lab results!`);
+          $("#editGroupLabResultModal").modal("hide");
+          loadPatientHistoryAndPending(patientId);
+        } else {
+          showToast("Error: " + response.error, "error");
+        }
+      },
+      error: function() {
+        submitBtn.html(originalText);
+        submitBtn.prop('disabled', false);
+        showToast("Something went wrong while updating group results.", "error");
+      }
+    });
+  });
+
+  // ===== Auto search when page loads with MRNO in URL (from currentlabtest.html) =====
+  const urlParams = new URLSearchParams(window.location.search);
+  const mrno = urlParams.get("mrno");
+  if (mrno) {
+    $("#mrSearch").val(mrno);
+    searchPatient(mrno);
+  }
+});
+
+// Update results count
+function updateResultsCount() {
+  const groups = $(".result-date-group").length;
+  if (groups > 0) {
+    $('#resultsCount').text(groups + ' date groups').show();
+  } else {
+    $('#resultsCount').hide();
+  }
+}
+
+// Load group results for editing
+function loadGroupResultsForEditing(patientId, dateOnly, timeOnly) {
+  const container = $("#groupTestResultsContainer");
+  container.html(`
+    <div class="text-center py-3">
+      <div class="spinner-border text-primary" role="status">
+        <span class="sr-only">Loading...</span>
+      </div>
+      <p class="mt-2 text-muted">Loading lab results for ${dateOnly} ${timeOnly}</p>
+    </div>
+  `);
+  
+  $.ajax({
+    url: "/get_lab_results/",
+    data: { patient_id: patientId },
+    success: function(response) {
+      container.empty();
+      
+      if (response.success && response.results && response.results.length > 0) {
+        // Filter results for the specific date and time
+        const groupResults = response.results.filter(function(result) {
+          // Get the full datetime from result
+          const resultDateTime = result.date || result.created_at;
+          if (!resultDateTime) return false;
+          
+          // Extract date and time parts
+          const resultParts = resultDateTime.split(' ');
+          const resultDate = resultParts[0];
+          const resultTime = resultParts.length > 1 ? resultParts[1] : "00:00";
+          
+          // Compare both date and approximate time
+          return resultDate === dateOnly && resultTime === timeOnly;
+        });
+        
+        if (groupResults.length === 0) {
+          container.html(`
+            <div class="text-center py-4">
+              <i class="fas fa-search fa-2x text-muted mb-3"></i>
+              <p class="text-muted">No results found for ${dateOnly} at ${timeOnly}</p>
+            </div>
+          `);
+          return;
+        }
+        
+        // Create a header for the group
+        container.append(`
+          <div class="mb-3">
+            <h6 class="fw-semibold mb-2">
+              <i class="fas fa-list me-2"></i>
+              ${groupResults.length} test${groupResults.length !== 1 ? 's' : ''} found
+            </h6>
+          </div>
+        `);
+        
+        // Create editable fields for each test
+        groupResults.forEach(function(result, index) {
+          const testId = result.id || '';
+          const testName = result.test || 'Unknown Test';
+          const resultValue = result.result_value || '';
+          const normalValue = result.normal_value || '';
+          const testDate = result.labtestdate || dateOnly;
+          
+          const testRow = $(`
+            <div class="test-row-item mb-3 pb-3 ${index < groupResults.length - 1 ? 'border-bottom' : ''}">
+              <div class="row align-items-center">
+                <div class="col-md-5 mb-2">
+                  <label class="form-label small text-muted mb-1">Test Name</label>
+                  <div class="input-group">
+                    <span class="input-group-text bg-light">
+                      <i class="fas fa-flask text-primary"></i>
+                    </span>
+                    <input type="text" class="form-control" value="${testName}" readonly>
+                  </div>
+                </div>
+                <div class="col-md-3 mb-2">
+                  <label class="form-label small text-muted mb-1">Result Value</label>
+                  <input type="text" name="result_values[]" 
+                         class="form-control" 
+                         value="${resultValue}" 
+                         placeholder="Enter result...">
+                </div>
+                <div class="col-md-3 mb-2">
+                  <label class="form-label small text-muted mb-1">Normal Range</label>
+                  <input type="text" name="normal_values[]" 
+                         class="form-control" 
+                         value="${normalValue}" 
+                         placeholder="Normal range...">
+                </div>
+                <div class="col-md-1 mb-2">
+                  <label class="form-label small text-muted mb-1">Test Date</label>
+                  <input type="date" name="test_dates[]" 
+                         class="form-control" 
+                         value="${testDate.split(' ')[0]}">
+                </div>
+              </div>
+              <input type="hidden" name="result_ids[]" value="${testId}">
+            </div>
+          `);
+          container.append(testRow);
+        });
+        
+        // Add a summary at the bottom
+        container.append(`
+          <div class="alert alert-light mt-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <small class="text-muted">
+                <i class="fas fa-info-circle me-1"></i>
+                All changes will be applied to ${groupResults.length} test${groupResults.length !== 1 ? 's' : ''} in this group.
+              </small>
+              <span class="badge bg-primary">Group: ${dateOnly}</span>
+            </div>
+          </div>
+        `);
+        
+      } else {
+        container.html(`
+          <div class="text-center py-4">
+            <i class="fas fa-exclamation-circle fa-2x text-warning mb-3"></i>
+            <p class="text-muted">No lab results available for this patient</p>
+          </div>
+        `);
+      }
+    },
+    error: function() {
+      container.html(`
+        <div class="text-center py-4">
+          <i class="fas fa-exclamation-triangle fa-2x text-danger mb-3"></i>
+          <p class="text-danger">Error loading lab results</p>
+        </div>
+      `);
+    }
+  });
+}
+
+// Helper function to load patient history with requisition dates - MODIFIED FOR GROUP-LEVEL REPORT HANDLING
+function loadPatientHistoryAndPending(patientId) {
+  currentPatientId = patientId;
+  
+  // Load pending tests WITH REQUISITION DATES
+  $.ajax({
+    url: "/get_pending_labtests/",
+    data: { mrno: patientId },
+    success: function(tests) {
+      const tbody = $("#labresult-body");
+      tbody.empty();
+      if (!tests || tests.length === 0) {
+        tbody.append(
+          '<tr class="labresult-row">' +
+          '<td data-label="Lab Test">' +
+          '<input type="text" name="labtest[]" class="form-control labtest-input" placeholder="Search lab test..." autocomplete="off">' +
+          '<div class="autocomplete-list list-group position-absolute w-100" style="display: none;"></div>' +
+          '<input type="hidden" name="labtest_id[]" class="labtest-id">' +
+          '<input type="hidden" name="requisition_id[]" class="requisition-id">' +
+          '</td>' +
+          '<td data-label="Result Value">' +
+          '<input type="text" name="result_value[]" class="form-control" placeholder="Enter result...">' +
+          '</td>' +
+          '<td data-label="Normal Range">' +
+          '<input type="text" name="normal_value[]" class="form-control" placeholder="Normal range...">' +
+          '</td>' +
+          '<td data-label="Status">' +
+          '<span class="badge status-badge-pending">Pending</span>' +
+          '</td>' +
+          '<td data-label="Test Date">' +
+          '<input type="date" name="test_date[]" class="form-control test-date-input" value="' + getTodayDate() + '">' +
+          '</td>' +
+          '<td data-label="Requisition Date" class="requisition-date-cell">' +
+          '<span class="text-muted">-</span>' +
+          '</td>' +
+          '<td data-label="Actions">' +
+          '<button type="button" class="btn btn-custom-danger remove-row">' +
+          '<i class="fas fa-trash"></i>' +
+          '</button>' +
+          '</td>' +
+          '</tr>'
+        );
+      } else {
+        tests.forEach(function(t) {
+          const requisitionDate = t.created_at ? 
+            `<span class="requisition-date-badge"><i class="fas fa-calendar me-1"></i>${t.created_at}</span>` : 
+            '<span class="text-muted">No date</span>';
+          
+          tbody.append(
+            '<tr class="labresult-row">' +
+            '<td data-label="Lab Test">' +
+            '<input type="hidden" name="labtest_id[]" value="' + t.id + '">' +
+            '<input type="hidden" name="requisition_id[]" value="' + (t.requisition_id || '') + '">' +
+            '<input type="text" class="form-control" value="' + t.testname + '" readonly>' +
+            '</td>' +
+            '<td data-label="Result Value">' +
+            '<input type="text" name="result_value[]" class="form-control" placeholder="Enter result...">' +
+            '</td>' +
+            '<td data-label="Normal Range">' +
+            '<input type="text" name="normal_value[]" class="form-control" value="' + (t.normal_value || "") + '" placeholder="Normal range...">' +
+            '</td>' +
+            '<td data-label="Status">' +
+            '<span class="badge status-badge-pending">Pending Test</span>' +
+            '</td>' +
+            '<td data-label="Test Date">' +
+            '<input type="date" name="test_date[]" class="form-control test-date-input" value="' + (t.created_at || getTodayDate()) + '">' +
+            '</td>' +
+            '<td data-label="Requisition Date" class="requisition-date-cell">' + requisitionDate + '</td>' +
+            '<td data-label="Actions">' +
+            '<button type="button" class="btn btn-custom-danger remove-row">' +
+            '<i class="fas fa-trash"></i>' +
+            '</button>' +
+            '</td>' +
+            '</tr>'
+          );
+        });
+      }
+    },
+    error: function() {
+      console.error("Error loading pending tests");
+      const tbody = $("#labresult-body");
+      tbody.empty().append(
+        '<tr class="labresult-row">' +
+        '<td data-label="Lab Test">' +
+        '<input type="text" name="labtest[]" class="form-control labtest-input" placeholder="Search lab test..." autocomplete="off">' +
+        '<div class="autocomplete-list list-group position-absolute w-100" style="display: none;"></div>' +
+        '<input type="hidden" name="labtest_id[]" class="labtest-id">' +
+        '<input type="hidden" name="requisition_id[]" class="requisition-id">' +
+        '</td>' +
+        '<td data-label="Result Value">' +
+        '<input type="text" name="result_value[]" class="form-control" placeholder="Enter result...">' +
+        '</td>' +
+        '<td data-label="Normal Range">' +
+        '<input type="text" name="normal_value[]" class="form-control" placeholder="Normal range...">' +
+        '</td>' +
+        '<td data-label="Status">' +
+        '<span class="badge status-badge-pending">Pending</span>' +
+        '</td>' +
+        '<td data-label="Test Date">' +
+        '<input type="date" name="test_date[]" class="form-control test-date-input" value="' + getTodayDate() + '">' +
+        '</td>' +
+        '<td data-label="Requisition Date" class="requisition-date-cell">' +
+        '<span class="text-muted">-</span>' +
+        '</td>' +
+        '<td data-label="Actions">' +
+        '<button type="button" class="btn btn-custom-danger remove-row">' +
+        '<i class="fas fa-trash"></i>' +
+        '</button>' +
+        '</td>' +
+        '</tr>'
+      );
+    }
+  });
+
+  // Load existing lab results
+  $.ajax({
+    url: "/get_lab_results/",
+    data: { patient_id: patientId },
+    success: function(response) {
+      const container = $("#previousResultsContainer");
+      container.empty();
+      
+      if (response.success && response.results && response.results.length > 0) {
+        console.log(`Loaded ${response.results.length} existing lab results`);
+        
+        // Group results by date and time - MODIFIED TO TRACK GROUP-LEVEL REPORT STATUS
+        const groupedResults = {};
+        response.results.forEach(function(result) {
+          const resultDateTime = result.date || result.created_at || 'Unknown Date';
+          if (!groupedResults[resultDateTime]) {
+            groupedResults[resultDateTime] = {
+              tests: [],
+              hasReport: false,
+              report_file: null,
+              report_file_name: null
+            };
+          }
+          groupedResults[resultDateTime].tests.push(result);
+          
+          // Update group's report status - if ANY test has a report, the group has a report
+          if (result.report_file && !groupedResults[resultDateTime].hasReport) {
+            groupedResults[resultDateTime].hasReport = true;
+            groupedResults[resultDateTime].report_file = result.report_file;
+            groupedResults[resultDateTime].report_file_name = result.report_file_name;
+          }
+        });
+        
+        const dateKeys = Object.keys(groupedResults);
+        
+        // Update results count indicator
+        updateResultsCount();
+        
+        // Sort dates in descending order (most recent first)
+        dateKeys.sort(function(a, b) {
+          return new Date(b) - new Date(a);
+        });
+        
+        // Create date groups
+        dateKeys.forEach(function(dateTime) {
+          const [datePart, timePart] = dateTime.split(' ');
+          const timeDisplay = timePart ? timePart : '';
+          const groupData = groupedResults[dateTime];
+          
+          const dateGroup = $(
+            '<div class="result-date-group">' +
+            '<div class="result-date-header">' +
+            '<div>' +
+            '<span class="date">' + datePart + '</span>' +
+            (timeDisplay ? '<span class="time ms-2">' + timeDisplay + '</span>' : '') +
+            '</div>' +
+            '<div class="group-actions">' +
+            '<button class="btn btn-sm edit-group-btn" ' +
+            'data-date="' + dateTime + '">' +
+            '<i class="fas fa-edit me-1"></i>Edit Group' +
+            '</button>' +
+            '</div>' +
+            '</div>' +
+            '<div class="result-tests-container"></div>' +
+            '</div>'
+          );
+          
+          const testsContainer = dateGroup.find(".result-tests-container");
+          
+          // Add PDF report section if ANY test in the group has a report
+          if (groupData.hasReport && groupData.report_file) {
+            testsContainer.append(
+              '<div class="pdf-report-container">' +
+              '<div class="pdf-report-header d-flex justify-content-between align-items-center">' +
+              '<div class="pdf-report-title">' +
+              '<i class="fas fa-file-pdf me-2 text-danger"></i>' +
+              ' Lab Report Document' +
+              '</div>' +
+              '<div class="pdf-report-actions">' +
+              '<a href="' + groupData.report_file + '" ' +
+              'target="_blank"' +
+              'class="btn btn-sm btn-primary pdf-view-btn">' +
+              '<i class="fas fa-external-link-alt me-1"></i>View PDF' +
+              '</a>' +
+              '</div>' +
+              '</div>' +
+              '</div>'
+            );
+          }
+          
+          // Add header row with updated column names
+          testsContainer.append(
+            '<div class="results-header-row">' +
+            '<div>Lab Test</div>' +
+            '<div>Result Value</div>' +
+            '<div>Normal Range</div>' +
+            '<div>Status</div>' +
+            '<div>Actions</div>' +
+            '</div>'
+          );
+          
+          // Add test results - ALL TESTS IN GROUP SHOW THE SAME REPORT STATUS
+          groupData.tests.forEach(function(result) {
+            // Determine report status for individual tests - BASED ON GROUP STATUS
+            let reportStatusHtml = '';
+            if (groupData.hasReport) {
+              // If group has a report, show "Report Available" for all tests
+              reportStatusHtml = '<span class="badge bg-success"><i class="fas fa-check me-1"></i>Report</span>';
+            } else {
+              // If no report in group, show "No Report" for all tests
+              reportStatusHtml = '<span class="badge bg-secondary"><i class="fas fa-times me-1"></i>No Report</span>';
+            }
+            
+            testsContainer.append(
+              '<div class="result-test-row">' +
+              '<div class="result-test-name">' + (result.test || 'Unknown Test') + '</div>' +
+              '<div class="result-test-value">' + (result.result_value || '') + '</div>' +
+              '<div class="result-test-range">' + (result.normal_value || '') + '</div>' +
+              '<div class="result-report-section">' +
+              reportStatusHtml +
+              '</div>' +
+              '<div class="result-test-actions">' +
+              '<button class="btn btn-sm btn-danger delete-lab-result" ' +
+              'data-id="' + result.id + '" ' +
+              'title="Delete this test">' +
+              '<i class="fas fa-trash"></i>' +
+              '</button>' +
+              '</div>' +
+              '</div>'
+            );
+          });
+          
+          container.append(dateGroup);
+        });
+        
+      } else {
+        console.log("No existing lab results found");
+        container.append(
+          '<div class="no-results-message">' +
+          '<i class="fas fa-inbox"></i>' +
+          '<p>No lab results available</p>' +
+          '</div>'
+        );
+        $('#resultsCount').hide();
+      }
+    },
+    error: function(xhr, status, error) {
+      console.error("Error loading lab results:", error);
+      $("#previousResultsContainer").html(
+        '<div class="text-center text-danger py-4">' +
+        '<i class="fas fa-exclamation-triangle fa-2x mb-2"></i>' +
+        '<p>Error loading lab results</p>' +
+        '</div>'
+      );
+      $('#resultsCount').hide();
+    }
+  });
+}
+</script>
+{% endblock %}

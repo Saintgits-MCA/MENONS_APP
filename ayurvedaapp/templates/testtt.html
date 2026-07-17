@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hospital IP Billing Form</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+        }
+        .form-section {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f8f8f8;
+        }
+        .total {
+            text-align: right;
+            font-weight: bold;
+        }
+        .submit-btn {
+            width: 100%;
+            padding: 10px;
+            background-color: #16a085;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .submit-btn:hover {
+            background-color: #13876d;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Inpatient Billing Form</h1>
+
+    <form action="/submit-bill" method="post">
+        
+        <!-- Patient Information -->
+        <div class="form-section">
+            <h2>Patient Information</h2>
+            <label for="patient-name">Patient Name:</label>
+            <input type="text" id="patient-name" name="patient_name" required>
+
+            <label for="patient-id">Patient ID:</label>
+            <input type="text" id="patient-id" name="patient_id" required>
+
+            <label for="admission-date">Admission Date:</label>
+            <input type="date" id="admission-date" name="admission_date" required>
+
+            <label for="discharge-date">Discharge Date:</label>
+            <input type="date" id="discharge-date" name="discharge_date" required>
+
+            <label for="room-type">Room Type:</label>
+            <select id="room-type" name="room_type" required>
+                <option value="general">General Ward</option>
+                <option value="semi-private">Semi-Private Room</option>
+                <option value="private">Private Room</option>
+                <option value="icu">ICU</option>
+            </select>
+        </div>
+
+        <!-- Daily Room Charges -->
+        <div class="form-section">
+            <h2>Daily Room Charges</h2>
+            <label for="room-rate">Room Rate (per day):</label>
+            <input type="number" id="room-rate" name="room_rate" step="0.01" required>
+
+            <label for="days-stayed">Number of Days Stayed:</label>
+            <input type="number" id="days-stayed" name="days_stayed" min="1" required>
+
+            <label for="room-total">Total Room Charges:</label>
+            <input type="number" id="room-total" name="room_total" step="0.01" readonly>
+        </div>
+
+        <!-- Daily Treatments -->
+        <div class="form-section">
+            <h2>Daily Treatments</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Treatment Description</th>
+                        <th>Quantity</th>
+                        <th>Unit Price</th>
+                        <th>Total Price</th>
+                    </tr>
+                </thead>
+                <tbody id="treatment-items">
+                    <tr>
+                        <td><input type="text" name="treatment_description[]" required></td>
+                        <td><input type="number" name="treatment_quantity[]" min="1" required></td>
+                        <td><input type="number" name="treatment_unit_price[]" step="0.01" required></td>
+                        <td><input type="number" name="treatment_total_price[]" step="0.01" readonly></td>
+                    </tr>
+                </tbody>
+            </table>
+            <button type="button" onclick="addTreatmentRow()">Add Treatment</button>
+        </div>
+
+        <!-- Daily Vital Checkups -->
+        <div class="form-section">
+            <h2>Daily Vital Checkups</h2>
+            <label for="vital-checkup-rate">Vital Checkup Rate (per day):</label>
+            <input type="number" id="vital-checkup-rate" name="vital_checkup_rate" step="0.01" required>
+
+            <label for="days-vital-checked">Number of Days Checked:</label>
+            <input type="number" id="days-vital-checked" name="days_vital_checked" min="1" required>
+
+            <label for="vital-checkup-total">Total Vital Checkup Charges:</label>
+            <input type="number" id="vital-checkup-total" name="vital_checkup_total" step="0.01" readonly>
+        </div>
+
+        <!-- Daily Medications -->
+        <div class="form-section">
+            <h2>Daily Medications</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Medicine Description</th>
+                        <th>Quantity</th>
+                        <th>Unit Price</th>
+                        <th>Total Price</th>
+                    </tr>
+                </thead>
+                <tbody id="medication-items">
+                    <tr>
+                        <td><input type="text" name="medicine_description[]" required></td>
+                        <td><input type="number" name="medicine_quantity[]" min="1" required></td>
+                        <td><input type="number" name="medicine_unit_price[]" step="0.01" required></td>
+                        <td><input type="number" name="medicine_total_price[]" step="0.01" readonly></td>
+                    </tr>
+                </tbody>
+            </table>
+            <button type="button" onclick="addMedicationRow()">Add Medication</button>
+        </div>
+
+        <!-- Summary and Payment -->
+        <div class="form-section">
+            <h2>Summary and Payment</h2>
+
+            <label for="sub-total">Subtotal:</label>
+            <input type="number" id="sub-total" name="sub_total" step="0.01" readonly>
+
+            <label for="tax">Tax (%):</label>
+            <input type="number" id="tax" name="tax" step="0.01">
+
+            <label for="total-amount">Total Amount:</label>
+            <input type="number" id="total-amount" name="total_amount" step="0.01" readonly>
+
+            <label for="amount-paid">Amount Paid:</label>
+            <input type="number" id="amount-paid" name="amount_paid" step="0.01">
+
+            <label for="balance-due">Balance Due:</label>
+            <input type="number" id="balance-due" name="balance_due" step="0.01" readonly>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="form-section">
+            <button type="submit" class="submit-btn">Submit Bill</button>
+        </div>
+
+    </form>
+
+    <script>
+        function addTreatmentRow() {
+            const table = document.getElementById('treatment-items');
+            const row = table.insertRow();
+            row.innerHTML = `
+                <td><input type="text" name="treatment_description[]" required></td>
+                <td><input type="number" name="treatment_quantity[]" min="1" required></td>
+                <td><input type="number" name="treatment_unit_price[]" step="0.01" required></td>
+                <td><input type="number" name="treatment_total_price[]" step="0.01" readonly></td>
+            `;
+        }
+
+        function addMedicationRow() {
+            const table = document.getElementById('medication-items');
+            const row = table.insertRow();
+            row.innerHTML = `
+                <td><input type="text" name="medicine_description[]" required></td>
+                <td><input type="number" name="medicine_quantity[]" min="1" required></td>
+                <td><input type="number" name="medicine_unit_price[]" step="0.01" required></td>
+                <td><input type="number" name="medicine_total_price[]" step="0.01" readonly></td>
+            `;
+        }
+
+        document.querySelector('form').addEventListener('input', function() {
+            // Calculate Room Charges
+            const roomRate = parseFloat(document.getElementById('room-rate').value) || 0;
+            const daysStayed = parseFloat(document.getElementById('days-stayed').value) || 0;
+            const roomTotal = roomRate * daysStayed;
+            document.getElementById('room-total').value = roomTotal.toFixed(2);
+
+            // Calculate Vital Checkup Charges
+            const vitalCheckupRate = parseFloat(document.getElementById('vital-checkup-rate').value) || 0;
+            const daysVitalChecked = parseFloat(document.getElementById('days-vital-checked').value) || 0;
+            const vitalCheckupTotal = vitalCheckupRate * daysVitalChecked;
+            document.getElementById('vital-checkup-total').value = vitalCheckupTotal.toFixed(2);
+
+            // Calculate Treatments
+            let subtotal = roomTotal + vitalCheckupTotal;
+            const treatmentRows = document.querySelectorAll('#treatment-items tr');
+            treatmentRows.forEach(row => {
+                const quantity = row.querySelector('input[name="treatment_quantity[]"]').value;
+                const unitPrice = row.querySelector('input[name="treatment_unit_price[]"]').value;
+                const totalPriceField = row.querySelector('input[name="treatment_total_price[]"]');
+                const totalPrice = quantity * unitPrice;
+                totalPriceField.value = totalPrice.toFixed(2);
+                subtotal += totalPrice;
+            });
+
+            // Calculate Medications
+            const medicationRows = document.querySelectorAll('#medication-items tr');
+            medicationRows.forEach(row => {
+                const quantity = row.querySelector('input[name="medicine_quantity[]"]').value;
+                const unitPrice = row.querySelector('input[name="medicine_unit_price[]"]').value;
+                const totalPriceField = row.querySelector('input[name="medicine_total_price[]"]');
+                const totalPrice = quantity * unitPrice;
+                totalPriceField.value = totalPrice.toFixed(2);
+                subtotal += totalPrice;
+            });
+
+            // Calculate Subtotal
+            document.getElementById('sub-total').value = subtotal.toFixed(2);
+
+            // Calculate Total Amount with Tax
+            const tax = parseFloat(document.getElementById('tax').value) || 0;
+            const totalAmount = subtotal + (subtotal * (tax / 100));
+            document.getElementById('total-amount').value = totalAmount.toFixed(2);
+
+            // Calculate Balance Due
+            const amountPaid = parseFloat(document.getElementById('amount-paid').value) || 0;
+            const balanceDue = totalAmount - amountPaid;
+            document.getElementById('balance-due').value = balanceDue.toFixed(2);
+        });
+    </script>
+
+</body>
+</html>

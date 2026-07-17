@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Preliminary Data</h1>
+          </div>
+         
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-12">
+            
+            <!-- /.card -->
+
+            <div class="card">
+           <div class="scroll">
+              <!-- /.card-header -->
+              <div class="card-body">
+                <table id="example1" class="table table-bordered table-striped">
+                  <thead>
+                   
+                <tr>
+                    <th>Date</th>
+                    <th>MR Number</th>
+                    <th>Gender</th>
+                    <th>Age</th>
+                    <th>Address</th>
+                    <th>Occupation</th>
+                    <th>Phone Number</th>
+                    <th>Place</th>
+                    <th>Marital Status</th>
+                    
+                    
+                    
+                    
+                  </tr>
+                  </thead>
+                  <tbody>
+  {% for i in objprelimdatatable %}
+                  <tr>
+                    <td>{{i.Current_Date}}</td>
+                    <td>{{i.MR_Number_id}}</td>
+                    <td>{{i.Gender}}</td>
+                    <td>{{i.Age}}</td>
+                    <td>{{i.Address}}</td>
+                    <td>{{i.Occupation}}</td>
+                    <td>{{i.Phone_number}}</td>
+                    <td>{{i.Place}}</td>
+                    <td>{{i.Marital_status}}</td>
+
+
+                
+                  </tr>
+                  
+
+  {% endfor %}
+                  </tbody>
+                 
+                </table>
+              </div>
+            </div>
+              <!-- /.card-body -->
+            </div>
+            <!-- /.card -->
+          </div>
+          <!-- /.col -->
+        </div>
+        <!-- /.row -->
+      </div>
+      <!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+  </div>
+  {% endblock %}

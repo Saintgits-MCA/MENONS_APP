@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper">
+  <!-- Content Header (Page header) -->
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Menu Management Details</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item">
+          </ol>
+        </div>
+      </div>
+    </div><!-- /.container-fluid -->
+  </section>
+  <!-- Main content -->
+  <section class="content">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card card-primary">
+          <div class="card-header">
+            <h3 class="card-title">Menu Management Details</h3>
+
+            <div class="card-tools">
+              <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+               
+              </button>
+            </div>
+          </div>
+          <form method="POST" enctype="multipart/form-data" action="{% url 'menumanagements' %}?menumanagement_id={{ idmngmnt }}">
+            {% csrf_token %}
+            <div class="card">
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-2"></div>
+                  <div class="col-sm-2">
+                    <div class="form-group">
+                      <label for="exampleInputRegisterNo">Role</label>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="form-group">
+                      <select class="form-control" id="role_selector" name="rolename" required>
+                        <option selected disabled value="">Select</option>
+                        {% for role in roles %}
+                        <option value="{{ role.id }}">{{ role.rolename }}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {% for heading in menu_headings %}
+                <div class="row">
+                  <div class="col-md-12">
+                    <div class="col-12 d-flex no-block align-items-center">
+                      <h5 class="page-title">
+                        <input type="checkbox" name="head[]" id="heading_{{ heading.id }}" value="{{ heading.id }}" class="heading-checkbox"/>&nbsp;{{ heading.menuheadingname }}
+                      </h5>
+                    </div>
+                    <div class="card-body">
+                      {% for item in menu_items %}
+                      {% if item.menuheadingname.id == heading.id %}
+                      <div class="form-group row">
+                        <div class="col-sm-3">
+                          <input type="checkbox" name="link[]" id="menu_{{ item.id }}" value="{{ item.id }}" class="menu-checkbox" data-heading-id="{{ heading.id }}"/>&nbsp;{{ item.menuname }}
+                        </div>
+                        <div class="col-sm-9 menu-permissions" data-menu-id="{{ item.id }}">
+                          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                          <input type="checkbox" name="view[]" value="{{ item.id }}" class="permission-checkbox" data-menu-id="{{ item.id }}"/>&nbsp;View&nbsp;&nbsp;&nbsp;
+                          <input type="checkbox" name="add[]" value="{{ item.id }}" class="permission-checkbox" data-menu-id="{{ item.id }}"/>&nbsp;Add&nbsp;&nbsp;&nbsp;
+                          <input type="checkbox" name="edit[]" value="{{ item.id }}" class="permission-checkbox" data-menu-id="{{ item.id }}"/>&nbsp;Edit&nbsp;&nbsp;&nbsp;
+                          <input type="checkbox" name="delete[]" value="{{ item.id }}" class="permission-checkbox" data-menu-id="{{ item.id }}"/>&nbsp;Delete
+                        </div>
+                      </div>
+                      {% endif %}
+                      {% endfor %}
+                    </div>
+                  </div>
+                </div>
+                {% endfor %}
+
+              </div>
+            </div>
+
+            <div class="card-footer">
+              <button type="submit" class="btn btn-primary">Submit</button>
+            </div>
+          </form>
+          <!-- /.card-body -->
+        </div>
+        <!-- /.card -->
+      </div>
+    </div>
+  </section>
+  <!-- /.content -->
+</div>
+<!-- /.content-wrapper -->
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    // Handle menu heading checkboxes
+    const headingCheckboxes = document.querySelectorAll(".heading-checkbox");
+    headingCheckboxes.forEach(headingCheckbox => {
+      headingCheckbox.addEventListener("change", function() {
+        const headingId = this.value;
+        const menuCheckboxes = document.querySelectorAll(`.menu-checkbox[data-heading-id='${headingId}']`);
+        menuCheckboxes.forEach(menuCheckbox => {                                                            
+          menuCheckbox.checked = this.checked;
+          const menuId = menuCheckbox.value;
+          const permissionCheckboxes = document.querySelectorAll(`.permission-checkbox[data-menu-id='${menuId}']`);
+          permissionCheckboxes.forEach(permissionCheckbox => {
+            permissionCheckbox.checked = this.checked;
+          });
+        });
+      });
+    });
+ 
+  });
+  </script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const roleSelector = document.getElementById("role_selector");
+  
+      roleSelector.addEventListener("change", function() {
+        const roleId = this.value;
+        if (roleId) {
+          fetch(`/fetch_permissions/?role_id=${roleId}`)
+            .then(response => response.json())
+            .then(data => {
+              if (data.error) {
+                console.error(data.error);
+                return;
+              }
+              // Clear previous selections
+              document.querySelectorAll(".heading-checkbox").forEach(checkbox => checkbox.checked = false);
+              document.querySelectorAll(".menu-checkbox").forEach(checkbox => checkbox.checked = false);
+              document.querySelectorAll(".permission-checkbox").forEach(checkbox => checkbox.checked = false);
+  
+              // Set new selections based on fetched data
+              data.menu_items.forEach(item => {
+                const menuCheckbox = document.querySelector(`#menu_${item.menu_id}`);
+                if (menuCheckbox) {
+                  menuCheckbox.checked = true;
+                  const menuId = menuCheckbox.value;
+                  document.querySelectorAll(`.permission-checkbox[data-menu-id='${menuId}']`).forEach(permissionCheckbox => {
+                    if (item.view && permissionCheckbox.name === 'view[]') permissionCheckbox.checked = true;
+                    if (item.add && permissionCheckbox.name === 'add[]') permissionCheckbox.checked = true;
+                    if (item.edit && permissionCheckbox.name === 'edit[]') permissionCheckbox.checked = true;
+                    if (item.delete && permissionCheckbox.name === 'delete[]') permissionCheckbox.checked = true;
+                  });
+                  // Check heading checkbox if at least one menu item is selected
+                  const headingId = menuCheckbox.getAttribute('data-heading-id');
+                  const headingCheckbox = document.querySelector(`#heading_${headingId}`);
+                  if (headingCheckbox) {
+                    headingCheckbox.checked = true;
+                  }
+                }
+              });
+            })
+            .catch(error => console.error('Error fetching permissions:', error));
+        }
+      });
+    });
+  </script>
+{% endblock %}

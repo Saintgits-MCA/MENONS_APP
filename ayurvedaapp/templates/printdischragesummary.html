@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+  <style>
+    .discharge-container {
+      background: #fff;
+      padding: 15px;
+      max-width: 700px;
+      margin: 20px auto;
+      box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+      border-radius: 5px;
+    }
+    h2 {
+      text-align: center;
+      margin: 10px 0;
+    }
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .box {
+      width: 48%;
+      border: 1px solid #000;
+      padding: 10px;
+      font-size: 14px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    table, th, td {
+      border: 1px solid black;
+    }
+    th, td {
+      padding: 8px;
+      text-align: left;
+    }
+    .total {
+      text-align: right;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .amount-words {
+      font-weight: bold;
+    }
+    .top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-bottom: 20px;
+    }
+    .logo img {
+      width: 100px;
+    }
+    .header-center {
+      flex: 1;
+      text-align: center;
+      font-size: 14px;
+    }
+    .header-center h6 {
+      margin: 0;
+      font-size: 16px;
+      color: green;
+    }
+    .emergency-box {
+      background-color: red;
+      color: white;
+      font-weight: bold;
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+    @media print {
+      body {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .header-center h6 {
+        margin: 0;
+        font-size: 16px;
+        color: green;
+      }
+      .print-btn {
+        display: none !important;
+      }
+      @page {
+        size: A4 portrait;
+        margin: 15mm;
+      }
+      .discharge-container {
+        box-shadow: none !important;
+        margin: 0 auto !important;
+        width: 100% !important;
+        padding: 0 !important;
+      }
+      .top-row, .info-row, .total, .footer {
+        page-break-inside: avoid;
+      }
+    }
+  </style>
+
+<div id="discharge" class="discharge-container">
+  <div class="top-row">
+    {% for i in objhospt %}
+      <div class="logo">
+        <img src="{{ i.Logo.url }}" alt="{{ i.Name }} Logo">
+      </div>
+      <div class="header-center">
+        <h6>{{ i.Name }}</h6>
+        <div>{{ i.Address }}</div>
+        <div>Phone: {{ i.Contact_no }} | Email: {{ i.Email }} || GST NO: {{ i.GST }}</div>
+        <div><strong>Branch:</strong> TVM</div>
+      </div>
+    {% endfor %}
+    <div class="emergency-box">
+    EMERGENCY ☎ 9710056005
+    </div>
+  </div>
+
+  <h2>DISCHARGE SUMMARY</h2>
+
+  <div class="info-row">
+    <div class="box">
+      <strong>Patient Details:</strong><br>
+      {{ discharge.ipptno.MR_Number.Patient_Name }}<br>
+      Contact Number: {{ discharge.ipptno.contactnumber }}<br>
+      MR No: {{ discharge.ipptno.MR_Number.Medical_Record_Number }}
+    </div>
+    <div class="box">
+      <strong>Discharge Details:</strong><br>
+      IP No: {{ discharge.ipptno.id }}<br>
+      Discharge Date: {{ discharge.discharged_date }}<br>
+     
+    </div>
+  </div>
+
+  <!-- Add the Discharge Details Table -->
+  <table>
+    <thead>
+      <tr>
+        <th>MR Number</th>
+        <th>Treatment Summary</th>
+        <th>Discharged Date</th>
+        <th>Approved By</th>
+        <th>Next Checkup Date</th>
+        <th>Additional Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>{{ discharge.ipptno.MR_Number.Medical_Record_Number }}</td>
+        <td>{{ discharge.treatment_summary }}</td>
+        <td>{{ discharge.discharged_date }}</td>
+        <td>{{ discharge.sfirst_name }}</td>
+        <td>{{ discharge.next_checkup_date }}</td>
+        <td>{{ discharge.additional_notes }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+ 
+
+  <div class="print-btn">
+    <button onclick="printDischarge()" class="btn btn-primary">Print Discharge Summary</button>
+  </div>
+</div>
+
+<script>
+  function printDischarge() {
+    // Get the HTML content of the discharge div
+    var dischargeContent = document.getElementById('discharge').outerHTML;
+  
+    // Get the internal CSS styles from the parent document
+    var styles = Array.from(document.querySelectorAll('style'))
+        .map(style => style.innerHTML)
+        .join('\n');
+  
+    // Open a new window
+    var printWindow = window.open('', '_blank');
+    
+    // Set the HTML content of the new window along with the internal CSS styles
+    printWindow.document.write('<html><head><title>Discharge Summary</title><style>' + styles + '</style></head><body>' + dischargeContent + '</body></html>');
+    printWindow.document.close();
+  
+    // Print the new window
+    printWindow.print();
+  }
+</script>
+
+{% endblock %}

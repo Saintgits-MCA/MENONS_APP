@@ -1,0 +1,253 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Daily Reports Details</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item">
+                {% if  vitalmngview == '1'%}<a href="{% url 'opvitalstable' %}?menumanagement_id={{ idmngmnt }}">View All</a>
+              {% endif %}</li>
+              <li class="breadcrumb-item active">Daily Reports</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+      <!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="row">
+        <div class="col-md-12">
+          <div class="card card-primary">
+            <div class="card-header">
+              <h3 class="card-title">Daily Reports Details</h3>
+              <div class="card-tools">
+                <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse"></button>
+              </div>
+            </div>
+            <form method="POST" action="{% url 'opvitals' %}?menumanagement_id={{ idmngmnt }}" id="reportForm">
+              {% csrf_token %}
+
+              <div class="card">
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label for="exampleInputRegisterNo">Current Date</label>
+                        <input type="text" class="form-control" name="currentdate" id="exampleInputdate" value="{{ currentdate|date:'d-m-Y' }}" readonly>
+                      </div>
+                      <div class="form-group">
+                        <label for="mrSearch">MR Number</label>
+                        <input type="text" id="mrSearch" class="form-control" placeholder="Type MR Number">
+                        <select class="form-control" name="mrnum" id="mrDropdown" required>
+                          <option selected disabled value="">Select</option>
+                        </select>
+                      </div>
+                      <div class="form-group">
+                        <label for="exampleInputEmail1">Patient Details</label>
+                        <input type="text" id="exampleInputAddress" class="form-control">
+                      </div>
+                      <!-- <div class="form-group">
+                        <label for="exampleInputPincode">MR Number</label>
+                        <select class="form-control" name="mrnum" id="mrDropdown">
+                          <option selected>Select</option>
+                          {% for i in mrnoobj %}
+                            <option value="{{ i.id }}">{{ i.Medical_Record_Number }}</option>
+                          {% endfor %}
+                        </select>
+                      </div> 
+                      <div class="form-group">
+                        <label for="exampleInputEmail1">Name</label>
+                        <input type="hidden" id="record_count" name="record_count" value="1">
+                        <input type="text" class="form-control" name="ptname" id="ptname">
+                      </div>
+                      <div class="form-group">
+                        <label for="exampleInputEmail1">Phno</label>
+                        <input type="text" name="ptphno" class="form-control" id="ptphno">
+                      </div>-->
+                    </div>
+                  </div>
+
+                  <div class="row">
+                    <div class="col-md-12">
+                      <table id="example1" class="table table-bordered table-striped">
+                        <thead>
+                          <tr>
+                            <th>SL No</th>
+                            <th>Test/Particulars</th>
+                            <th>Value</th>
+                            <th>Normal Value</th>
+                            <th>
+                              <button type="button" style="width:60px;height: 40px;" class="btn btn-primary" id="addBtn">Add</button>
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody id="tbody">
+                          <tr class="recordsheet"></tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card-footer">
+                  {% if messages %}
+                    {% for message in messages %}
+                      <p style="color:green;">{{ message }}</p>
+                    {% endfor %}
+                  {% endif %}
+                  <button type="submit" class="btn btn-primary">Submit</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- /.content -->
+  </div>
+  <!-- /.content-wrapper -->
+  <!-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> -->
+ 
+  <script>
+    $(document).ready(function () {
+      // Function to update patient name and address based on selected MR Number
+      function updatePatientDetails() {
+        var selectedMrNumber = $("#mrDropdown").val();
+        var csrfToken = '{{ csrf_token }}';
+
+        // Make an AJAX request to fetch patient details
+        $.ajax({
+          type: "GET",
+          url: "{% url 'getmrdetails' %}",
+          data: { mrNumber: selectedMrNumber },
+          headers: { "X-CSRFToken": csrfToken },
+          success: function (data) {
+            // Update patient name and address in the text input boxes
+            $("#ptname").val(data.Patient_Name);
+            $("#ptphno").val(data.phno);
+            // Add similar lines to update other fields if needed
+          },
+          error: function (xhr, status, error) {
+            console.error("Error fetching patient details:", error);
+            alert("Failed to fetch patient details. Please try again.");
+          },
+        });
+      }
+
+      $("#mrDropdown").on("change", updatePatientDetails);
+    });
+
+    let treatmentCounter = 0;
+
+    document.getElementById('addBtn').addEventListener('click', function() {
+      addRecordSheetRow();
+    });
+
+    function addRecordSheetRow() {
+      var tbody = document.getElementById('tbody');
+      treatmentCounter++;
+      var newRow = document.createElement('tr');
+      newRow.classList.add('recordsheet');
+  
+      newRow.innerHTML = `
+        <td><input type="text" class="form-control sl" name="sl${treatmentCounter}" value="${treatmentCounter}" readonly></td>
+        <td><input type="text" class="form-control particular" name="particular${treatmentCounter}" required></td>
+        <td><input type="text" class="form-control un" name="value${treatmentCounter}" required></td>
+        <td><input type="text" class="form-control normalvlaue" name="normalvalue${treatmentCounter}"></td>
+        <td><button type="button" class="btn btn-danger remove-item">Remove</button></td>
+         <input type="hidden" name="form-control treatmentCounter" value="${treatmentCounter}">
+               
+      `;
+      tbody.appendChild(newRow);
+      document.getElementById('record_count').value = treatmentCounter;
+  
+      $("table").on("click", ".remove-item", function () {
+        var row = $(this).closest("tr");
+        var row = $(this).closest("tr");
+        
+        
+        row.find('.particular').val('');
+        row.find('.normalvlaue').val('');
+    row.find('.form-control').val('');
+    row.remove();
+      });
+    }
+
+  </script>
+  <script>
+    $(document).ready(function () {
+    
+      // Function to update patient details based on selected MR Number
+      function updatePatientDetails(selectedMrNumber) {
+        $.ajax({
+          type: "GET",
+          url: "{% url 'getmrdetails' %}",  // Update this URL based on your project structure
+          data: { mrNumber: selectedMrNumber },
+          success: function (data) {
+            var combinedDetails = `${data.Patient_Name}, ${data.phno}, ${data.place}`;
+            $("#exampleInputAddress").val(combinedDetails);  // Update the input field with the combined details
+          },
+          error: function (xhr, status, error) {
+            console.error("Error fetching patient details:", error);
+            $("#exampleInputAddress").val("Error fetching details. Please try again.");
+          }
+        });
+      }
+    
+      // Trigger patient details update when MR Number dropdown changes
+      $("#mrDropdown").on("change", function() {
+        var selectedMrNumber = $(this).val();
+        if (selectedMrNumber) {
+          updatePatientDetails(selectedMrNumber);
+        }
+      });
+    
+      // Search MR Numbers and update the dropdown dynamically based on input
+      $('#mrSearch').on('keyup', function() {
+        var query = $(this).val();
+        if (query.length >= 2) {  // Start searching after 2 characters
+          $.ajax({
+            type: 'GET',
+            url: "{% url 'search_mrno' %}",  // Update with the correct URL
+            data: { query: query },
+            success: function(data) {
+              var dropdown = $('#mrDropdown');
+              dropdown.empty().append('<option selected disabled value="">Select</option>');  // Reset dropdown
+    
+              if (data.length > 0) {
+                data.forEach(function(item) {
+                  dropdown.append(`<option value="${item.id}">${item.Patient_Name} -> ${item.Medical_Record_Number}</option>`);
+                });
+                // Automatically select the first matching MR number and display details
+                var firstMrNumber = data[0].id;
+                dropdown.val(firstMrNumber);  // Select the first matching MR number
+                updatePatientDetails(firstMrNumber);  // Update patient details for the selected MR number
+              } else {
+                dropdown.append('<option selected disabled value="">No matching MR numbers found</option>');
+                $("#exampleInputAddress").val("");  // Clear patient details if no matches
+              }
+            },
+            error: function (xhr, status, error) {
+              console.error("Error fetching MR numbers:", error);
+              $('#mrDropdown').empty().append('<option selected disabled value="">Error fetching data. Please try again.</option>');
+              $("#exampleInputAddress").val("");  // Clear patient details on error
+            }
+          });
+        } else {
+          $("#mrDropdown").empty().append('<option selected disabled value="">Select</option>');  // Clear dropdown if query is too short
+          $("#exampleInputAddress").val("");  // Clear patient details
+        }
+      });
+    });
+    </script>
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Package Bill Details</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'discharge' %}?menumanagement_id={{idmngmnt}}">Add</a>
+                        </li>
+                        <li class="breadcrumb-item active">Package Bill</li>
+                    </ol>
+                </div>
+            </div>
+        </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                    <!-- /.card -->
+                    <div class="card">
+                        <div class="scroll">
+                            <!-- /.card-header -->
+                            <div class="card-body">
+                                <table id="example1" class="table table-bordered table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>SL.No</th>
+                                            <th>MR Number</th>
+                                           
+                                            <th>Package Name</th>
+                                            <th>Total Package Rate</th>
+                                            <th>Total Paid</th>
+                                            <th>Due Amount</th>
+                                            <th>Discount</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead> 
+                                    <tbody>
+                                        {% for i in pckdt %}
+                                        <tr id="patient-{{i.id}}">
+                                            <td>{{ forloop.counter }}</td>
+                                            <td>{{i.MR_Number.Medical_Record_Number}}</td>
+                                            <td>{{ i.package.packagename }}</td>
+                                            <td>{{ i.total_package_rate }}</td>
+                                            <td>{{i.totalpaidamount}}</td> 
+                                            <td>{{i.due_amount}}</td>
+                                            <td>{{i.discount}}</td>
+                                            <td>
+                                                
+                                 
+                                              <a href="{% url 'indivigualpatientpackagepayemnthistory'%}?ids={{i.id}}">Print</a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <!-- /.card-body -->
+                    </div>
+                    <!-- /.card -->
+                </div>
+                <!-- /.col -->
+            </div>
+            <!-- /.row -->
+        </div>
+        <!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+</div>
+<!-- /.content-wrapper -->
+
+
+{% endblock %}

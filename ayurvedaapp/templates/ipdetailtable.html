@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1> Ip Daily Details </h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="{% url 'ipdaily' %}">Add</a></li>
+              <li class="breadcrumb-item active"> Ip Daily Details  </li>
+            </ol>
+          </div>
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-12">
+            
+            <!-- /.card -->
+           <div class="card">
+           <div class="scroll">
+              <!-- /.card-header -->
+              <div class="card-body">
+                <div class="card-tools mb-3">
+                  <form method="GET" action="" id="filterForm" class="form-inline">
+                    <div class="input-group input-group-sm mr-2">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text">From</span>
+                      </div>
+                      <input type="date" name="from_date" id="fromDate" class="form-control" value="{{ from_date|default:'' }}" placeholder="From">
+                      <span class="input-group-text ml-2">To</span>
+                      <input type="date" name="to_date" id="toDate" class="form-control" value="{{ to_date|default:'' }}" placeholder="To">
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-primary mr-2">
+                      <i class="fas fa-filter"></i> Filter
+                    </button>
+                    <a href="{% url 'ipdttable' %}" class="btn btn-sm btn-secondary">
+                      <i class="fas fa-undo"></i> Reset
+                    </a>
+                  </form>
+                </div>
+
+                <table id="example1" class="table table-bordered table-striped">
+                  <thead>
+                    
+        <tr>
+            <th>SL No.</th>
+            <th>Date</th>
+            <th>MR Number</th>
+            <th>Patient Name</th>
+            <th>Age</th>
+            <th>Blood Group</th>
+            <th>Contact</th>
+        
+            <th>Reason for Admission</th>
+            <th>Room Number</th>
+            <th>Admitted Doctor</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for patient in patients %}
+        <tr>
+          <td>{{forloop.counter}}</td>
+          <td><span class="text-sm small">{{patient.Current_Date|date:"d/m/Y"}}</span></td>
+            <td>{{ patient.MR_Number.Medical_Record_Number }}</td>
+            <td>{{ patient.MR_Number.Patient_Name }}</td>
+            <td>{{ patient.age }}</td>
+            <td>{{ patient.bloodgroup }}</td>
+            <td>{{ patient.contactnumber }}</td>
+      
+            <td>{{ patient.reasonforadmission }}</td>
+            <td>{{ patient.ippatientroombooking_set.first.room_number.Roomno }}</td>
+            <td>{{ patient.ippatientroombooking_set.first.admitteddoctor.Staff.Staff_firstname }}</td>
+            <td>
+                <a href="{% url 'ip_full_details' %}?ids={{patient.MR_Number_id}}" class="btn btn-info">View Details</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="9" class="text-center">No admitted patients found.</td>
+        </tr>
+        {% endfor %}
+  
+    </table>
+</div>
+</div>
+<!-- /.card-body -->
+</div>
+<!-- /.card -->
+</div>
+<!-- /.col -->
+</div>
+<!-- /.row -->
+</div>
+<!-- /.container-fluid -->
+</section>
+<!-- /.content -->
+</div>
+<!-- /.content-wrapper -->
+ <script>
+    $(document).ready(function() {
+      // Auto-submit form when date changes
+      $('#filterDate').on('change', function() {
+        $('#filterForm').submit();
+      });
+    });
+  </script>
+{% endblock %}

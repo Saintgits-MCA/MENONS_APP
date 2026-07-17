@@ -1,0 +1,458 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="content-wrapper">
+    <section class="content">        
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header" style="padding: 10px 20px;">
+                            <h3 class="card-title" style="font-size: 16px;">
+                                <i class="fas fa-shopping-cart"></i> Purchase Statement
+                            </h3>
+                            <div class="card-tools">
+                                <button type="button" class="btn btn-primary btn-sm" onclick="printFullReport()">
+                                    <i class="fas fa-print"></i> Print Full Report
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body" style="padding: 15px;">
+                            <!-- Filter Section -->
+                            <form method="GET" class="mb-3" id="filterForm">
+                                <div class="row">
+                                    <div class="col-md-2">
+                                        <div class="form-group" style="margin-bottom: 5px;">
+                                            <label style="font-size: 13px;">From Date</label>
+                                            <input type="date" class="form-control form-control-sm" name="from_date" value="{{ from_date }}" id="fromDate">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group" style="margin-bottom: 5px;">
+                                            <label style="font-size: 13px;">To Date</label>
+                                            <input type="date" class="form-control form-control-sm" name="to_date" value="{{ to_date }}" id="toDate">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group" style="margin-bottom: 5px;">
+                                            <label style="font-size: 13px;">Supplier</label>
+                                            <select class="form-control form-control-sm" name="supplier" id="supplierFilter">
+                                                <option value="">All Suppliers</option>
+                                                {% for supplier in suppliers %}
+                                                <option value="{{ supplier.id }}" {% if supplier_filter == supplier.id|stringformat:"s" %}selected{% endif %}>
+                                                    {{ supplier.shopname }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group" style="margin-bottom: 5px;">
+                                            <label style="font-size: 13px;">Bill Type</label>
+                                            <select class="form-control form-control-sm" name="bill_type" id="billType">
+                                                <option value="">All</option>
+                                                <option value="Cash" {% if bill_type == 'Cash' %}selected{% endif %}>Cash</option>
+                                                <option value="Credit" {% if bill_type == 'Credit' %}selected{% endif %}>Credit</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group" style="margin-bottom: 5px;">
+                                            <label style="font-size: 13px;">&nbsp;</label>
+                                            <button type="submit" class="btn btn-primary btn-sm btn-block">
+                                                <i class="fas fa-search"></i> Filter
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group" style="margin-bottom: 5px;">
+                                            <label style="font-size: 13px;">&nbsp;</label>
+                                            <button type="button" class="btn btn-secondary btn-sm btn-block" onclick="resetFilters()">
+                                                <i class="fas fa-undo"></i> Reset
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+
+                            <!-- Report Table -->
+                            <div class="table-responsive" id="reportTable">
+                                <table class="table table-bordered table-striped" id="purchaseTable" style="font-size: 12px; width: 100%;">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 50px;">Sl.No</th>
+                                            <th style="width: 85px;">Date</th>
+                                            <th style="width: 90px;">Invoice No</th>
+                                            <th style="width: 120px;">Party</th>
+                                            <th>Product</th>
+                                            <th style="width: 80px;">Batch</th>
+                                            <th style="width: 80px;">Bill No</th>
+                                            <th style="width: 55px;" class="text-right">Qty</th>
+                                            <th style="width: 55px;" class="text-right">Free</th>
+                                            <th style="width: 65px;" class="text-right">Rate</th>
+                                            <th style="width: 85px;" class="text-right">Amount (₹)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% if purchase_data %}
+                                            {% regroup purchase_data by invoice_no as invoice_list %}
+                                            {% for invoice_group in invoice_list %}
+                                                <!-- Invoice Header Row -->
+                                                <tr style="font-weight: bold;">
+                                                    <td colspan="11" style="font-size: 13px; text-align: left;">
+                                                        <i class="fas fa-file-invoice"></i> 
+                                                        <strong>Invoice: {{ invoice_group.grouper }}</strong>
+                                                        <span style="margin-left: 15px;">
+                                                            Date: {{ invoice_group.list.0.date|date:"d/m/Y" }}
+                                                        </span>
+                                                        <span style="margin-left: 15px;">
+                                                            Party: {{ invoice_group.list.0.party }}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                                <!-- Items for this Invoice -->
+                                                {% for item in invoice_group.list %}
+                                                <tr>
+                                                    <td>{{ forloop.parentloop.counter }}.{{ forloop.counter }}</td>
+                                                    <td>{{ item.date|date:"d/m/Y" }}</td>
+                                                    <td>{{ item.invoice_no }}</td>
+                                                    <td>{{ item.party }}</td>
+                                                    <td>{{ item.product }}</td>
+                                                    <td>{{ item.batch }}</td>
+                                                    <td>{{ item.bill_no }}</td>
+                                                    <td class="text-right">{{ item.qty|floatformat:0 }}</td>
+                                                    <td class="text-right">{{ item.free_qty|floatformat:0 }}</td>
+                                                    <td class="text-right">{{ item.rate|floatformat:2 }}</td>
+                                                    <td class="text-right">{{ item.amount|floatformat:2 }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                                <!-- Invoice Total Row -->
+                                                <tr style="font-weight: bold;">
+                                                    <td colspan="10" class="text-right">
+                                                        <i class="fas fa-calculator"></i> Invoice Total:
+                                                    </td>
+                                                    <td class="text-right">
+                                                        {% for inv_no, totals in invoice_totals.items %}
+                                                            {% if inv_no == invoice_group.grouper %}
+                                                                ₹ {{ totals.total|floatformat:2 }}
+                                                            {% endif %}
+                                                        {% endfor %}
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        {% else %}
+                                            <tr>
+                                                <td colspan="11" class="text-center text-muted py-2">
+                                                    No purchase records found for this period
+                                                </td>
+                                            </tr>
+                                        {% endif %}
+                                    </tbody>
+                                    <tfoot>
+                                        <!-- Grand Total -->
+                                        <tr style="font-weight: bold; font-size: 14px;">
+                                            <th colspan="10" class="text-right">Grand Total:</th>
+                                            <th class="text-right">₹ {{ total_amount|floatformat:2 }}</th>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+
+                            <!-- Pagination -->
+                            <div class="row mt-3">
+                                <div class="col-sm-12 col-md-5">
+                                    <div class="dataTables_info" role="status" aria-live="polite">
+                                        Showing {{ purchase_data.start_index }} to {{ purchase_data.end_index }} of {{ purchase_data.paginator.count }} entries
+                                    </div>
+                                </div>
+                                <div class="col-sm-12 col-md-7">
+                                    <div class="dataTables_paginate paging_simple_numbers">
+                                        <ul class="pagination">
+                                            {% if purchase_data.has_previous %}
+                                                <li class="paginate_button page-item previous">
+                                                    <a href="?page=1{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}{% if supplier_filter %}&supplier={{ supplier_filter }}{% endif %}{% if bill_type %}&bill_type={{ bill_type }}{% endif %}" class="page-link">First</a>
+                                                </li>
+                                                <li class="paginate_button page-item previous">
+                                                    <a href="?page={{ purchase_data.previous_page_number }}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}{% if supplier_filter %}&supplier={{ supplier_filter }}{% endif %}{% if bill_type %}&bill_type={{ bill_type }}{% endif %}" class="page-link">Previous</a>
+                                                </li>
+                                            {% else %}
+                                                <li class="paginate_button page-item previous disabled">
+                                                    <span class="page-link">First</span>
+                                                </li>
+                                                <li class="paginate_button page-item previous disabled">
+                                                    <span class="page-link">Previous</span>
+                                                </li>
+                                            {% endif %}
+
+                                            {% for num in purchase_data.paginator.page_range %}
+                                                {% if purchase_data.number == num %}
+                                                    <li class="paginate_button page-item active">
+                                                        <span class="page-link">{{ num }}</span>
+                                                    </li>
+                                                {% elif num > purchase_data.number|add:'-3' and num < purchase_data.number|add:'3' %}
+                                                    <li class="paginate_button page-item">
+                                                        <a href="?page={{ num }}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}{% if supplier_filter %}&supplier={{ supplier_filter }}{% endif %}{% if bill_type %}&bill_type={{ bill_type }}{% endif %}" class="page-link">{{ num }}</a>
+                                                    </li>
+                                                {% endif %}
+                                            {% endfor %}
+
+                                            {% if purchase_data.has_next %}
+                                                <li class="paginate_button page-item next">
+                                                    <a href="?page={{ purchase_data.next_page_number }}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}{% if supplier_filter %}&supplier={{ supplier_filter }}{% endif %}{% if bill_type %}&bill_type={{ bill_type }}{% endif %}" class="page-link">Next</a>
+                                                </li>
+                                                <li class="paginate_button page-item next">
+                                                    <a href="?page={{ purchase_data.paginator.num_pages }}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}{% if supplier_filter %}&supplier={{ supplier_filter }}{% endif %}{% if bill_type %}&bill_type={{ bill_type }}{% endif %}" class="page-link">Last</a>
+                                                </li>
+                                            {% else %}
+                                                <li class="paginate_button page-item next disabled">
+                                                    <span class="page-link">Next</span>
+                                                </li>
+                                                <li class="paginate_button page-item next disabled">
+                                                    <span class="page-link">Last</span>
+                                                </li>
+                                            {% endif %}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Footer -->
+                            <div class="row mt-3 d-none">
+                                <div class="col-12 text-center">
+                                    <hr style="margin: 5px 0;">
+                                    <p style="margin: 0; font-size: 11px; color: #6c757d;">
+                                        <strong>*** This is a computer generated report ***</strong> | 
+                                        Generated on: {% now "d/m/Y H:i:s" %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Hidden Print Area -->
+<div id="printArea" style="display: none; padding: 20px; min-height: 100vh; position: relative;">
+    <!-- Hospital Header -->
+    {% if hospital %}
+    <div style="text-align: center; margin-bottom: 20px;">
+        <h2 style="margin: 0; font-weight: bold; font-size: 20px;">{{ hospital.Name }}</h2>
+        <p style="margin: 0; font-size: 14px;">{{ hospital.Address }}</p>
+        {% if hospital.GST and hospital.GST|lower != "none" %}
+        <p style="margin: 0; font-size: 14px;"><strong>TIN:</strong> {{ hospital.GST }}</p>
+        {% endif %}
+        <h4 style="margin: 10px 0; font-size: 18px;">Purchase Statement</h4>
+        <p style="margin: 0; font-size: 14px;">
+            <strong>Period:</strong> 
+            {% if from_date and to_date %}
+                {{ from_date }} To {{ to_date }}
+            {% else %}
+                All Dates
+            {% endif %}
+            {% if bill_type %} | <strong>Bill Type:</strong> {{ bill_type }}{% endif %}
+            {% if supplier_filter %} | <strong>Supplier:</strong> {{ supplier_filter }}{% endif %}
+        </p>
+        <hr style="border: 1px solid #000; margin: 10px 0;">
+    </div>
+    {% endif %}
+
+    <!-- Full Table for Print -->
+    <div style="min-height: 70vh;">
+        <table class="table table-bordered" style="width: 100%; border-collapse: collapse; font-size: 11px;">
+            <thead>
+                <tr style="">
+                    <th style="border: 1px solid #000; padding: 4px; text-align: left;">Sl.No</th>
+                    <th style="border: 1px solid #000; padding: 4px; text-align: left;">Date</th>
+                    <th style="border: 1px solid #000; padding: 4px; text-align: left;">Invoice No</th>
+                    <th style="border: 1px solid #000; padding: 4px; text-align: left;">Party</th>
+                    <th style="border: 1px solid #000; padding: 4px; text-align: left;">Product</th>
+                    <th style="border: 1px solid #000; padding: 4px; text-align: left;">Batch</th>
+                    <th style="border: 1px solid #000; padding: 4px; text-align: left;">Bill No</th>
+                    <th style="border: 1px solid #000; padding: 4px; text-align: right;">Qty</th>
+                    <th style="border: 1px solid #000; padding: 4px; text-align: right;">Free</th>
+                    <th style="border: 1px solid #000; padding: 4px; text-align: right;">Rate</th>
+                    <th style="border: 1px solid #000; padding: 4px; text-align: right;">Amount (₹)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if all_purchase_data %}
+                    {% regroup all_purchase_data by invoice_no as invoice_list %}
+                    {% for invoice_group in invoice_list %}
+                        <!-- Invoice Header Row -->
+                        <tr style="font-weight: bold;">
+                            <td colspan="11" style="border: 1px solid #000; padding: 4px; text-align: left; font-size: 13px;">
+                                <i class="fas fa-file-invoice"></i> 
+                                <strong>Invoice: {{ invoice_group.grouper }}</strong>
+                                <span style="margin-left: 15px;">
+                                    Date: {{ invoice_group.list.0.date|date:"d/m/Y" }}
+                                </span>
+                                <span style="margin-left: 15px;">
+                                    Party: {{ invoice_group.list.0.party }}
+                                </span>
+                            </td>
+                        </tr>
+                        <!-- Items for this Invoice -->
+                        {% for item in invoice_group.list %}
+                        <tr>
+                            <td style="border: 1px solid #000; padding: 3px; text-align: left;">{{ forloop.parentloop.counter }}.{{ forloop.counter }}</td>
+                            <td style="border: 1px solid #000; padding: 3px; text-align: left;">{{ item.date|date:"d/m/Y" }}</td>
+                            <td style="border: 1px solid #000; padding: 3px; text-align: left;">{{ item.invoice_no }}</td>
+                            <td style="border: 1px solid #000; padding: 3px; text-align: left;">{{ item.party }}</td>
+                            <td style="border: 1px solid #000; padding: 3px; text-align: left;">{{ item.product }}</td>
+                            <td style="border: 1px solid #000; padding: 3px; text-align: left;">{{ item.batch }}</td>
+                            <td style="border: 1px solid #000; padding: 3px; text-align: left;">{{ item.bill_no }}</td>
+                            <td style="border: 1px solid #000; padding: 3px; text-align: right;">{{ item.qty|floatformat:0 }}</td>
+                            <td style="border: 1px solid #000; padding: 3px; text-align: right;">{{ item.free_qty|floatformat:0 }}</td>
+                            <td style="border: 1px solid #000; padding: 3px; text-align: right;">{{ item.rate|floatformat:2 }}</td>
+                            <td style="border: 1px solid #000; padding: 3px; text-align: right;">{{ item.amount|floatformat:2 }}</td>
+                        </tr>
+                        {% endfor %}
+                        <!-- Invoice Total Row -->
+                        <tr style="font-weight: bold;">
+                            <td colspan="10" style="border: 1px solid #000; padding: 4px; text-align: right;">
+                                <i class="fas fa-calculator"></i> Invoice Total:
+                            </td>
+                            <td style="border: 1px solid #000; padding: 4px; text-align: right;">
+                                {% for inv_no, totals in invoice_totals.items %}
+                                    {% if inv_no == invoice_group.grouper %}
+                                        ₹ {{ totals.total|floatformat:2 }}
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="11" style="border: 1px solid #000; padding: 4px; text-align: center;">
+                            No purchase records found for this period
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+            <tfoot>
+                <!-- Grand Total -->
+                <tr style=" font-weight: bold; font-size: 14px;">
+                    <th colspan="10" style="border: 1px solid #000; padding: 4px; text-align: right;">Grand Total:</th>
+                    <th style="border: 1px solid #000; padding: 4px; text-align: right;">₹ {{ total_amount|floatformat:2 }}</th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <!-- Footer - Positioned at bottom of page -->
+    <div  style="position: absolute; bottom: 0; left: 0; right: 0; text-align: center;display:none; font-size: 11px; color: #6c757d; padding: 10px 0;">
+        <hr style="border: 1px solid #ddd; margin: 10px 0;">
+        <p style="margin: 0;"><strong>*** This is a computer generated report ***</strong></p>
+        <p style="margin: 0;">Generated on: {% now "d/m/Y H:i:s" %}</p>
+    </div>
+</div>
+
+<style>
+@media print {
+    .card-tools, .form-group, .btn, #filterForm, .pagination, .dataTables_info, .dataTables_paginate {
+        display: none !important;
+    }
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+    .card-header {
+        background: white !important;
+        border-bottom: 2px solid #000 !important;
+    }
+    .table {
+        font-size: 11px !important;
+    }
+    .table-bordered {
+        border: 1px solid #000 !important;
+    }
+    .table-bordered th,
+    .table-bordered td {
+        border: 1px solid #000 !important;
+        padding: 3px !important;
+    }
+}
+
+.pagination {
+    margin: 0;
+    float: right;
+}
+
+.pagination .page-link {
+    padding: 6px 12px;
+    margin: 0 2px;
+    border-radius: 4px;
+}
+
+.pagination .active .page-link {
+    background-color: #007bff;
+    border-color: #007bff;
+    color: white;
+}
+
+.pagination .disabled .page-link {
+    color: #6c757d;
+    pointer-events: none;
+    background-color: #fff;
+    border-color: #dee2e6;
+}
+
+.dataTables_info {
+    padding-top: 8px;
+    color: #6c757d;
+}
+
+@media (max-width: 768px) {
+    .table-responsive {
+        overflow-x: auto;
+    }
+    .table {
+        font-size: 11px !important;
+    }
+    .table th, .table td {
+        padding: 3px !important;
+        white-space: nowrap;
+    }
+}
+</style>
+
+<script>
+function resetFilters() {
+    document.getElementById('fromDate').value = '';
+    document.getElementById('toDate').value = '';
+    document.getElementById('supplierFilter').value = '';
+    document.getElementById('billType').value = '';
+    document.getElementById('filterForm').submit();
+}
+
+function printFullReport() {
+    var printContent = document.getElementById('printArea').innerHTML;
+    
+    var printWindow = window.open('', '_blank', 'width=1000,height=800');
+    printWindow.document.write('<html><head><title>Purchase Statement Report</title>');
+    printWindow.document.write('<style>');
+    printWindow.document.write('body { padding: 20px; font-family: Arial, sans-serif; margin: 0; padding: 0; }');
+    printWindow.document.write('.print-container { padding: 20px; min-height: 100vh; position: relative; }');
+    printWindow.document.write('.table { width: 100%; border-collapse: collapse; font-size: 11px; }');
+    printWindow.document.write('.table th, .table td { border: 1px solid #000; padding: 4px; }');
+    printWindow.document.write('@page { size: A4; margin: 12mm; }');
+    printWindow.document.write('@media print { body { margin: 0; padding: 0; } }');
+    printWindow.document.write('.footer-print { position: absolute; bottom: 0; left: 0; right: 0; text-align: center; font-size: 10px; color: #6c757d; padding: 10px 0; }');
+    printWindow.document.write('</style>');
+    printWindow.document.write('</head><body>');
+    printWindow.document.write('<div class="print-container">');
+    printWindow.document.write(printContent);
+    printWindow.document.write('</div>');
+    printWindow.document.write('</body></html>');
+    printWindow.document.close();
+    
+    setTimeout(function() {
+        printWindow.print();
+        printWindow.close();
+    }, 500);
+}
+</script>
+{% endblock %}

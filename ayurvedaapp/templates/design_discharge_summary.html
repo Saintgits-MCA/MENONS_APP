@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    /* Screen View Styles - Exact A4 Representation */
+    .a4-page {
+        width: 210mm;
+        min-height: 297mm;
+        background: #fff;
+        margin: 20px auto;
+        padding: 20mm;
+        box-shadow: 0 0 10px rgba(0,0,0,0.15);
+        position: relative;
+    }
+
+    /* Print Specific Styles */
+    @media print {
+        /* 1. Hide UI Elements */
+        .no-print, 
+        .main-sidebar, 
+        .main-header, 
+        .main-footer, 
+        .content-header,
+        .btn {
+            display: none !important;
+        }
+
+        /* 2. Reset Page Wrappers completely */
+        html, body, .wrapper, .content-wrapper, .content, .container-fluid {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            height: auto !important;
+            min-height: 0 !important;
+            background: #fff !important;
+            box-shadow: none !important;
+            border: none !important;
+            overflow: visible !important;
+        }
+
+        /* 3. The A4 Container - Match Screen Proportions */
+        .a4-page {
+            width: 100% !important;       /* Fills the printable area defined by @page */
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 20mm !important;     /* Keep same padding as screen for exact look */
+            box-shadow: none !important;  /* Shadows don't print well, remove for clean output */
+            border: none !important;
+            min-height: auto !important;  /* CRITICAL: Prevents extra blank page */
+            height: auto !important;
+            page-break-after: avoid !important;
+        }
+
+        /* 4. Patient Details Layout Enforcement */
+        .patient-details-row {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: baseline !important;
+            width: 100% !important;
+            margin-bottom: 8px !important;
+            page-break-inside: avoid !important;
+        }
+        
+        .patient-details-col {
+            flex: 1;
+        }
+
+        /* 5. Typography & Spacing Consistency */
+        * {
+            color: #000 !important;
+            background: transparent !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        h4 {
+            font-size: 18pt !important;
+            margin-bottom: 15px !important;
+        }
+
+        p, ol, ul, li {
+            font-size: 11pt !important;
+            line-height: 1.4 !important;
+            margin-bottom: 6px !important;
+            page-break-inside: avoid !important;
+            orphans: 3;
+            widows: 3;
+        }
+
+        strong {
+            font-weight: 700 !important;
+        }
+
+        /* 6. Page Size Definition */
+        @page {
+            size: A4 portrait;
+            margin: 0; /* Let .a4-page padding handle the margins */
+        }
+    }
+</style>
+
+<div class="content-wrapper">
+    <section class="content">
+        <section class="content-header no-print float-right">
+        <div class="container-fluid text-center">
+            <button onclick="window.print()" class="btn btn-primary">
+                <i class="fas fa-print"></i> Print
+            </button>
+        </div>
+    </section>
+        <div class="container-fluid">
+            <div class="card mx-auto a4-page">
+                <div class="card-body p-0 border-0">
+
+                    <h4 class="text-center font-weight-bold mb-4">
+                        DISCHARGE SUMMARY
+                    </h4>
+
+                    <!-- Patient Details -->
+                    <div class="mb-4" style="font-size: 14px;">
+                        <div class="d-flex justify-content-between patient-details-row">
+                            <div class="patient-details-col">
+                                <strong>Patient Name:</strong> SAJULA &nbsp;&nbsp;
+                                <strong>Age:</strong> 25/F
+                            </div>
+                            <div class="patient-details-col text-right">
+                                <strong>OP No:</strong> 2023/005836
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between patient-details-row">
+                            <div class="patient-details-col">
+                                <strong>Address:</strong> W/o Sajula, Shameer, Vallikode, Palakkad
+                            </div>
+                            <div class="patient-details-col text-right">
+                                <strong>IP No:</strong> 2025/000034
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between patient-details-row">
+                            <div class="patient-details-col">
+                                <strong>D.O.A:</strong> 17/03/2025
+                            </div>
+                            <div class="patient-details-col text-right">
+                                <strong>D.O.D:</strong> 19/03/2025
+                            </div>
+                        </div>
+                    </div>
+
+                    <br>
+
+                    <p><strong>DIAGNOSIS:</strong> G2P1L1 with 40 Weeks GA with cephalic presentation.</p>
+
+                    <p><strong>CLINICAL PRESENTATION:</strong> G2P1L1 with 40 weeks GA with cephalic presentation admitted for induction of labour.</p>
+
+                    <p>
+                        <strong>LMP:</strong> 10-06-2024 &nbsp;&nbsp;<strong>&</strong>
+                        <strong >EDD:</strong> 26-03-2025
+                    </p>
+
+                    <p><strong>O/E:</strong> Patient conscious, oriented.</p>
+                    <p>PR – 94/mt, BP – 120/80 mm Hg.</p>
+                    <p>CVS/RS – NAD.</p>
+                    <p>P/A – Uterus relaxed, head lower pole, FHS +150/mt.</p>
+                    <p>P/V – Cervix uneffaced, 1 cm dilated, vertex at -1 station.</p>
+
+                    <p>
+                        <strong>INVESTIGATIONS:</strong>
+                        <strong>Date : 17-03-2025:</strong>
+                        Haemoglobin -10.7 Grams %, Total W.B.C Count –11900/cmm,
+                        DC : Polymorphs 76%, Lymphocytes 18%, Eosinophils 04%,
+                        Monocytes 02%, Total R.B.C Count –3.7,
+                        Platelet Count –3.1 Lakhs, Packed Cell Volume –32%,
+                        RBS -100 mg/dl, VDRL – Non Reactive, HBS Ag – Negative,
+                        HIV I & II – Negative, HCV – Negative,
+                        Bleeding Time -1 Minute 45 Seconds, Coagulation Time -5 Minutes 30 Seconds,
+                        Blood Group – B Positive, Urine : Reaction – Acidic, Albumin – Trace,
+                        Sugar – Nil, Bile Salt & Pigments – Negative,ME Puscells–4-6,RBCS–3-5,EPITHELIAL CELLS–10-12,cAST–Nil,Crystals–Nil,Bacteria–Nil
+                    </p>
+
+                    <p>
+                        <strong>Date : 19-03-2025:</strong>
+                        Haemoglobin -10.0 Grams %, Total W.B.C Count –12500/cmm,
+                        DC : Polymorphs 73%, Lymphocytes 19%, Eosinophils 06%, Monocytes 02%,Total R.B.C.Count–4.0,Platelet Count–3.0lakhs,Packed Cell Volume–30%
+                    </p>
+
+                    <p><strong>DELIVERY NOTES:Induced delivery – Full term Normal Vaginal Delivery with RMLE on 16-03-2025. Patient withstood the procedure well.</strong></p>
+
+                    <p><strong>BABY DETAILS:</strong> SEX – FEMALE, WEIGHT – 3.6 kg, TIME – 02:18 AM.</p>
+
+                    <p><strong>POST OP PERIOD:</strong> Uneventful.</p>
+                    <p><strong>BLOOD TRANSFUSION:</strong> Nil.</p>
+
+                    <p><strong>CONDITION AT DISCHARGE:</strong></p>
+                    <p>Patient conscious, oriented.</p>
+                    <p>PR – 86/mt, BP – 120/80 mm Hg, CVS/RS – NAD.</p>
+                    <p>P/A – Abdomen soft, Uterus contracted & retracted.</p>
+                    <p>L/E – Lochia healthy.</p>
+                    <p>B/L – Breasts soft, secretions positive.</p>
+
+                    <p><strong>ADVICE AT DISCHARGE:</strong></p>
+                    <ol>
+                        <li>T. AUGMENTIN 625 - 1-0-1 X 5 DAYS</li>
+                        <li>T. LYSER D - 1-0-1 X 5 DAYS</li>
+                        <li>T. RABBY 20 - 1-0-1 X 5 DAYS</li>
+                        <li>T-BACT OINTMENT FOR L/A</li>
+                        <li>T. REVITAL CAL 500 - 1 OD X 3 MONTHS</li>
+                        <li>T. FERAZON XT - 1 OD X 3 MONTHS</li>
+                        <li>MAPROTEIN POWDER 2 TSP OD IN MILK X 1 MONTH</li>
+                        <li>NIPCARE OINTMENT FOR L/A</li>
+                        <li>REVIEW AFTER 40 DAYS</li>
+                    </ol>
+
+                    <p class="mt-4">
+                        <strong>EMERGENCY CARE: In case of any emergency like pain, fever, bleeding, please contact hospital phone number: 8590871766</strong>
+                    </p>
+
+                </div>
+            </div>
+        </div>
+    </section>
+
+    
+</div>
+{% endblock %}

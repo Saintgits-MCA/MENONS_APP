@@ -1,0 +1,228 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Patient Room Booking Details</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item">
+                {%if ptadmsview == '1'%}<a href="{% url 'patientadmissiontable'%}?menumanagement_id={{ idmngmnt}}"">
+                  View All</a></li>
+                {%endif%}
+              <li class="breadcrumb-item active">Patient Room Booking</li>
+            </ol>
+          </div>
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+
+      <div class="row">
+        <div class="col-md-12">
+          <div class="card card-primary">
+            <div class="card-header">
+              <h3 class="card-title">Patient Room Booking</h3>
+
+              <div class="card-tools">
+                <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                  <!-- <i class="fas fa-minus"></i> -->
+                </button>
+              </div>
+            </div>
+             <form method="POST", 
+             action="{% url 'editpatientadmission' %}?menumanagement_id={{ idmngmnt}}"">
+             
+                {% csrf_token %}
+      <div class="row">
+          <div class="col-md-6">
+              <div class="card">
+             
+             
+                <div class="card-body">
+
+                   <div class="form-group">
+                    <label for="exampleInputEmail1">MR Number</label>
+                    <input type="text" id="mrSearch" class="form-control" placeholder="Type MR Number">            
+                    <input type="hidden" name="padid" value="{{objedpatadm.id}}">
+                    <select class="form-control" name="mrnum" id="mrDropdown" required>
+                        <option selected>Select</option>
+                          {% for i in mrnoobj %}
+                            <option value="{{i.id}}" {% if i.id == objedpatadm.MR_No_id %}selected{% endif %}>
+                              {{i.Medical_Record_Number}}</option>
+                          {% endfor %}
+                      </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="exampleInputEmail1">Patient Details</label>
+                    <input type="text" id="exampleInputAddress" class="form-control">
+                  </div>
+                  <div class="form-group">
+                      <label for="exampleInputHouse">Allocate Room</label>
+                      <select class="form-control" name="allocateroom">
+                        <option selected>Select</option>
+                          {% for i in roomobj %}
+                              <option value="{{i.id}}"{% if i.id == objedpatadm.Roomno_id %}selected{% endif %}>{{i.Roomno}}</option>
+                          {% endfor %}
+                      </select>
+                  
+                  </div>
+                     <div class="form-group">
+                        <label for="exampleInputRegisterNo">Department Name</label>
+                        <select class="form-control" name="departmentname">
+                          <option selected>Select</option>
+                              {% for i in depobj %}
+                                <option value="{{i.id}}"{% if i.id == objedpatadm.Department_Name_id %}selected{% endif %}>{{i.Department_Name}}
+                                </option>
+                              {% endfor %}
+                        </select>
+                  </div>
+                  
+                  
+                 
+                </div>
+              </div>
+            </div>
+                <!-- /.card-body -->
+             
+              <div class="col-md-6">
+              <div class="card">
+             
+             
+                <div class="card-body">
+                    <div class="form-group">
+                      <label for="exampleInputEmail1">Branch Name</label>
+                      <select class="form-control" name="branchname">
+                        <option selected>Select</option>
+                                        {% for i in branchobj %}
+
+                      <option value="{{i.id}}" {% if i.id == objedpatadm.Branch_Name_id %}selected{% endif %}>{{i.Branch_Name}}</option>
+                                        {% endfor %}
+                      </select>
+                    </div>
+
+                    <div class="form-group">
+                      <label for="exampleInputPincode">Bystander Name</label>
+                     <input type="type" class="form-control"   
+                      name="bystandername"  placeholder="Enter Bystander Name" id="exampleInputbystname" value="{{objedpatadm.Bystandername}}" >
+                     
+                    </div>
+
+                  <div class="form-group">
+                     <label for="exampleInputPhno">Bystander Phno</label>
+                     <input type="type" class="form-control"  name="bystandrphone" placeholder="Enter Bystander Contact no" id="exampleInputbPhnoy" value="{{objedpatadm.BystanderPhno}}">
+                  </div>
+                  <div class="form-group">
+                   
+                    <input type="hidden" name="st" value="{{objedpatadm.status}}" >
+             </div>
+                  
+                    
+                  
+                   
+                </div>
+              </div>
+            </div>
+          </div>
+                <div class="card-footer">
+                   {% if messages %}
+        {% for message in messages %}
+        <p style="color:green;">{{message}}</p> 
+        {% endfor %}
+        {% endif %}
+        {%if ptadmsedit == '1'%}
+                  <button type="submit" class="btn btn-primary">Submit</button>
+        {%endif%}
+                </div>
+              </form>
+            <!-- /.card-body -->
+          </div>
+          <!-- /.card -->
+        </div>
+     
+      </div>
+
+      
+    </section>
+    <!-- /.content -->
+  </div>
+  <!-- /.content-wrapper -->
+  <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+  <script>
+  $(document).ready(function () {
+  
+    // Function to update patient details based on selected MR Number
+    function updatePatientDetails(selectedMrNumber) {
+      $.ajax({
+        type: "GET",
+        url: "{% url 'getmrdetails' %}",  // Update this URL based on your project structure
+        data: { mrNumber: selectedMrNumber },
+        success: function (data) {
+          var combinedDetails = `${data.Patient_Name}, ${data.phno}, ${data.place}`;
+          $("#exampleInputAddress").val(combinedDetails);  // Update the input field with the combined details
+        },
+        error: function (xhr, status, error) {
+          console.error("Error fetching patient details:", error);
+          $("#exampleInputAddress").val("Error fetching details. Please try again.");
+        }
+      });
+    }
+  
+    // Trigger patient details update when MR Number dropdown changes
+    $("#mrDropdown").on("change", function() {
+      var selectedMrNumber = $(this).val();
+      if (selectedMrNumber) {
+        updatePatientDetails(selectedMrNumber);
+      }
+    });
+  
+    // Search MR Numbers and update the dropdown dynamically based on input
+    $('#mrSearch').on('keyup', function() {
+      var query = $(this).val();
+      if (query.length >= 2) {  // Start searching after 2 characters
+        $.ajax({
+          type: 'GET',
+          url: "{% url 'search_mrno' %}",  // Update with the correct URL
+          data: { query: query },
+          success: function(data) {
+            var dropdown = $('#mrDropdown');
+            dropdown.empty().append('<option selected disabled value="">Select</option>');  // Reset dropdown
+  
+            if (data.length > 0) {
+              data.forEach(function(item) {
+                dropdown.append(`<option value="${item.id}">${item.Patient_Name} -> ${item.Medical_Record_Number}</option>`);
+              });
+              // Automatically select the first matching MR number and display details
+              var firstMrNumber = data[0].id;
+              dropdown.val(firstMrNumber);  // Select the first matching MR number
+              updatePatientDetails(firstMrNumber);  // Update patient details for the selected MR number
+            } else {
+              dropdown.append('<option selected disabled value="">No matching MR numbers found</option>');
+              $("#exampleInputAddress").val("");  // Clear patient details if no matches
+            }
+          },
+          error: function (xhr, status, error) {
+            console.error("Error fetching MR numbers:", error);
+            $('#mrDropdown').empty().append('<option selected disabled value="">Error fetching data. Please try again.</option>');
+            $("#exampleInputAddress").val("");  // Clear patient details on error
+          }
+        });
+      } else {
+        $("#mrDropdown").empty().append('<option selected disabled value="">Select</option>');  // Clear dropdown if query is too short
+        $("#exampleInputAddress").val("");  // Clear patient details
+      }
+    });
+  });
+  </script>
+ {% endblock %}

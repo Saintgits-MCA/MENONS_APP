@@ -1,0 +1,531 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Create Stock Transfer from Purchase Order</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'purchaseorderlistforownbranch' %}">Purchase Orders</a>
+                        </li>
+                        <li class="breadcrumb-item active">Stock Transfer</li>
+                    </ol>
+                </div>
+            </div>
+        </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h3 class="card-title">
+                                <i class="fas fa-exchange-alt"></i> Stock Transfer Details
+                            </h3>
+                            <div class="card-tools">
+                                <span class="badge badge-light">PO: {{ purchase_order.po_number }}</span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <!-- Replace your existing form opening tag with this -->
+<form method="POST" id="stockTransferForm" action="{% url 'process_stock_transfer' %}">
+    {% csrf_token %}
+    <input type="hidden" name="po_id" value="{{ purchase_order.id }}">
+    
+                                <!-- Purchase Order Details -->
+                                <div class="row mb-4">
+                                    <div class="col-md-12">
+                                        <div class="card card-outline card-info">
+                                            <div class="card-header">
+                                                <h4 class="card-title">Purchase Order Information</h4>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-md-3">
+                                                        <div class="info-box bg-light">
+                                                            <div class="info-box-content">
+                                                                <span class="info-box-text text-muted">PO Number</span>
+                                                                <span class="info-box-number">{{ purchase_order.po_number }}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <div class="info-box bg-light">
+                                                            <div class="info-box-content">
+                                                                <span class="info-box-text text-muted">PO Date</span>
+                                                                <span class="info-box-number">{{ purchase_order.po_date|date:"d-m-Y" }}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <div class="info-box bg-light">
+                                                            <div class="info-box-content">
+                                                                <span class="info-box-text text-muted">Supplier</span>
+                                                                <span class="info-box-number">{{ purchase_order.supplier_name|truncatechars:20 }}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <div class="info-box bg-light">
+                                                            <div class="info-box-content">
+                                                                <span class="info-box-text text-muted">Grand Total</span>
+                                                                <span class="info-box-number">₹ {{ purchase_order.grand_total|floatformat:2 }}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Branch Details -->
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="from_branch">From Branch (Source):</label>
+                                            <input type="text" class="form-control" id="from_branch" 
+                                                   value="{{ purchase_order.branch.Branch_Name }} - {{ purchase_order.branch.Branch_Address }}" 
+                                                   readonly>
+                                            <small class="text-muted">Stock will be taken from this branch</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="to_branch">To Branch (Destination): <span class="text-danger">*</span></label>
+                                             <input type="text" class="form-control" name="to_branch" id="to_branch"
+                                                   value="{{ branches.id }} " 
+                                                   readonly>
+                                            <input type="text" class="form-control" name="to_branchname" id="to_branchname"
+                                                   value="{{ branches.Branch_Name }} " 
+                                                   readonly>
+                                         
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="expected_delivery_date">Expected Delivery Date:</label>
+                                            <input type="date" name="expected_delivery_date" id="expected_delivery_date" 
+                                                   class="form-control">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="remarks">Remarks:</label>
+                                            <textarea name="remarks" id="remarks" class="form-control" rows="3" 
+                                                      placeholder="Enter any remarks or special instructions..."></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Items to Transfer -->
+                                <h4 class="mt-4 mb-3">
+                                    <i class="fas fa-boxes"></i> Items to Transfer
+                                </h4>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-hover" id="itemsTable">
+                                        <thead class="thead-light">
+                                            <tr>
+                                                <th width="5%">Sl No</th>
+                                                <th width="20%">Item Name</th>
+                                                <th width="15%">Batch No *</th>
+                                                <th width="12%">Expiry Date</th>
+                                                <th width="10%">PO Qty</th>
+                                                <th width="12%">Available Qty</th>
+                                                <th width="12%">Transfer Qty *</th>
+                                                <th width="7%">Rate</th>
+                                                <th width="7%">Unit</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for item in items_for_transfer %}
+                                            <tr id="row_{{ item.po_item.id }}">
+                                                <td class="text-center">{{ forloop.counter }}</td>
+                                                <td>
+                                                    {{ item.po_item.item_name }}
+                                                    <input type="hidden" name="item_id_{{ item.po_item.id }}" value="{{ item.po_item.id }}">
+                                                    <input type="hidden" name="item_name_{{ item.po_item.id }}" value="{{ item.po_item.item_name }}">
+                                                    <input type="hidden" name="po_qty_{{ item.po_item.id }}" value="{{ item.po_item.quantity }}">
+                                                    <input type="hidden" name="unit_{{ item.po_item.id }}" value="{{ item.po_item.unit }}">
+                                                </td>
+                                                <td>
+                                                    {% if item.available_batches %}
+                                                        <select name="batch_{{ item.po_item.id }}" 
+                                                                class="form-control form-control-sm batch-select" 
+                                                                data-item-id="{{ item.po_item.id }}"
+                                                                data-item-name="{{ item.po_item.item_name }}"
+                                                                required>
+                                                            <option value="">Select Batch</option>
+                                                            {% for batch in item.available_batches %}
+                                                            <option value="{{ batch.Batch_no }}" 
+                                                                    data-expiry="{{ batch.Expiry_date|date:'Y-m-d' }}"
+                                                                    data-rate="{{ batch.Rate }}"
+                                                                    data-qty="{{ batch.qty }}"
+                                                                    data-stock-id="{{ batch.id }}">
+                                                                {{ batch.Batch_no }} (Available: {{ batch.qty }})
+                                                            </option>
+                                                            {% endfor %}
+                                                        </select>
+                                                    {% else %}
+                                                        <span class="text-danger">No batches available</span>
+                                                        <input type="hidden" name="batch_{{ item.po_item.id }}" value="">
+                                                    {% endif %}
+                                                </td>
+                                                <td class="expiry-cell_{{ item.po_item.id }}">
+                                                    <span class="expiry-text">-</span>
+                                                    <input type="hidden" name="expiry_{{ item.po_item.id }}" class="expiry-input" value="">
+                                                    <input type="hidden" name="stock_id_{{ item.po_item.id }}" class="stock-id-input" value="">
+                                                </td>
+                                                <td class="text-right">{{ item.po_item.quantity }}</td>
+                                                <td class="text-right">
+                                                    <strong class="available-qty_{{ item.po_item.id }} available-qty-text">0</strong>
+                                                    <input type="hidden" name="available_qty_{{ item.po_item.id }}" class="available-qty-input" value="0">
+                                                </td>
+                                                <td>
+                                                    <input type="number" 
+                                                           name="transfer_qty_{{ item.po_item.id }}" 
+                                                           class="form-control form-control-sm transfer-qty"
+                                                           data-item-id="{{ item.po_item.id }}"
+                                                           value="0"
+                                                           min="0"
+                                                           step="1"
+                                                           disabled>
+                                                </td>
+                                                <td class="text-right">
+                                                    <span class="rate-text_{{ item.po_item.id }}">0.00</span>
+                                                    <input type="hidden" name="rate_{{ item.po_item.id }}" class="rate-input" value="0">
+                                                </td>
+                                                <td class="text-center">
+                                                    {% if item.unit %}
+                                                        {{ item.unit.unitname }}
+                                                    {% else %}
+                                                        {{ item.po_item.unit }}
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                            {% empty %}
+                                            <tr>
+                                                <td colspan="9" class="text-center">
+                                                    <div class="alert alert-warning mb-0">
+                                                        <i class="fas fa-exclamation-triangle"></i> No items found for this purchase order
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                        <tfoot>
+                                            <tr class="table-info">
+                                                <td colspan="5" class="text-right"><strong>Total Quantity to Transfer:</strong></td>
+                                                <td colspan="4" id="totalSelectedQty"><strong>0</strong></td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                                 {% if messages %}
+                {% for message in messages %}
+                  <div class="alert alert-success">{{ message }}</div>
+                {% endfor %}
+              {% endif %}
+                                <div class="form-group mt-4 text-center">
+                                    <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                                        <i class="fas fa-exchange-alt"></i> Create Stock Transfer
+                                    </button>
+                                    <a href="{% url 'purchaseorderlistforownbranch' %}" class="btn btn-secondary btn-lg">
+                                        <i class="fas fa-times"></i> Cancel
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+<!-- Success Modal -->
+<div class="modal fade" id="successModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-check-circle"></i> Success!
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="fas fa-truck text-success" style="font-size: 60px;"></i>
+                <h4 class="mt-3">Stock Transfer Created!</h4>
+                <p>Transfer Number: <strong id="transferNumber"></strong></p>
+                <p class="text-muted">The transfer has been created and is pending verification.</p>
+                <input type="hidden" id="transferId">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    Close
+                </button>
+                <button type="button" class="btn btn-primary" onclick="redirectToDetail()">
+                    View Details
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="{% static 'assets/js/jquery-3.6.0.min.js' %}"></script>
+<script>
+$(document).ready(function() {
+    // Initialize select2 if available
+    if ($.fn.select2) {
+        $('.select2').select2({
+            theme: 'bootstrap4',
+            placeholder: 'Select Destination Branch',
+            allowClear: true
+        });
+    }
+    
+    // Handle batch selection change
+    $('.batch-select').on('change', function() {
+        const itemId = $(this).data('item-id');
+        const selectedOption = $(this).find(':selected');
+        
+        if ($(this).val()) {
+            // Get data from selected option
+            const expiryDate = selectedOption.data('expiry');
+            const rate = selectedOption.data('rate');
+            const availableQty = selectedOption.data('qty');
+            const stockId = selectedOption.data('stock-id');
+            const poQty = parseFloat($(`input[name="po_qty_${itemId}"]`).val());
+            
+            // Update expiry date
+            const expiryCell = $(`.expiry-cell_${itemId}`);
+            const expiryText = expiryCell.find('.expiry-text');
+            const expiryInput = expiryCell.find('.expiry-input');
+            
+            if (expiryDate) {
+                const today = new Date().toISOString().split('T')[0];
+                let expiryHtml = expiryDate;
+                if (expiryDate < today) {
+                    expiryHtml += ' <span class="badge badge-warning">Expired</span>';
+                }
+                expiryText.html(expiryHtml);
+                expiryInput.val(expiryDate);
+            } else {
+                expiryText.html('-');
+                expiryInput.val('');
+            }
+            
+            // Update rate
+            $(`.rate-text_${itemId}`).html(parseFloat(rate).toFixed(2));
+            $(`input[name="rate_${itemId}"]`).val(rate);
+            
+            // Update available quantity
+            const maxQty = Math.min(parseFloat(availableQty), poQty);
+            const availableQtyElement = $(`.available-qty_${itemId}`);
+            availableQtyElement.html(availableQty);
+            availableQtyElement.removeClass('text-danger text-warning text-success');
+            if (parseFloat(availableQty) == 0) {
+                availableQtyElement.addClass('text-danger');
+            } else if (parseFloat(availableQty) < poQty) {
+                availableQtyElement.addClass('text-warning');
+            } else {
+                availableQtyElement.addClass('text-success');
+            }
+            $(`input[name="available_qty_${itemId}"]`).val(availableQty);
+            
+            // Update stock ID
+            $(`input[name="stock_id_${itemId}"]`).val(stockId);
+            
+            // Enable and update transfer quantity input
+            const transferQtyInput = $(`input[name="transfer_qty_${itemId}"]`);
+            transferQtyInput.prop('disabled', false);
+            transferQtyInput.attr('max', maxQty);
+            transferQtyInput.attr('placeholder', `Max: ${maxQty}`);
+            
+            // Set default transfer quantity (min of PO qty and available qty)
+            const defaultQty = maxQty;
+            transferQtyInput.val(defaultQty);
+            
+            // Trigger change event to update total
+            transferQtyInput.trigger('change');
+            
+        } else {
+            // Clear all fields when no batch selected
+            clearItemFields(itemId);
+        }
+    });
+    
+    // Clear item fields function
+    function clearItemFields(itemId) {
+        $(`.expiry-cell_${itemId} .expiry-text`).html('-');
+        $(`.expiry-cell_${itemId} .expiry-input`).val('');
+        $(`.rate-text_${itemId}`).html('0.00');
+        $(`input[name="rate_${itemId}"]`).val('0');
+        $(`.available-qty_${itemId}`).html('0');
+        $(`input[name="available_qty_${itemId}"]`).val('0');
+        $(`input[name="stock_id_${itemId}"]`).val('');
+        const transferQtyInput = $(`input[name="transfer_qty_${itemId}"]`);
+        transferQtyInput.prop('disabled', true);
+        transferQtyInput.val(0);
+        calculateTotalQuantity();
+    }
+    
+    // Calculate total selected quantity
+    function calculateTotalQuantity() {
+        let total = 0;
+        $('.transfer-qty:not(:disabled)').each(function() {
+            let qty = parseFloat($(this).val()) || 0;
+            total += qty;
+        });
+        $('#totalSelectedQty').html('<strong>' + total + '</strong>');
+        return total;
+    }
+    
+    // Update total when quantity changes
+    $(document).on('change keyup', '.transfer-qty', function() {
+        calculateTotalQuantity();
+        
+        // Validate against max
+        let qty = parseFloat($(this).val()) || 0;
+        let maxQty = parseFloat($(this).attr('max'));
+        let itemId = $(this).data('item-id');
+        
+        if (qty > maxQty) {
+            $(this).val(maxQty);
+            alert(`Warning: Transfer quantity cannot exceed available quantity (${maxQty})`);
+            calculateTotalQuantity();
+        }
+        
+        if (qty < 0) {
+            $(this).val(0);
+            calculateTotalQuantity();
+        }
+    });
+    
+    // Form validation before submission
+    $('#stockTransferForm').on('submit', function(e) {
+        let valid = true;
+        let totalQty = 0;
+        let selectedItems = 0;
+        let errorMessages = [];
+        
+        // Check if destination branch is selected
+        const toBranch = $('#to_branch').val();
+        if (!toBranch) {
+            errorMessages.push('Please select a destination branch');
+            valid = false;
+        }
+        
+        // Validate each item
+        $('.batch-select').each(function() {
+            const itemId = $(this).data('item-id');
+            const batchSelected = $(this).val();
+            const transferQty = parseFloat($(`input[name="transfer_qty_${itemId}"]`).val()) || 0;
+            const itemName = $(this).data('item-name');
+            
+            if (transferQty > 0 && !batchSelected) {
+                errorMessages.push(`Please select a batch for item: ${itemName}`);
+                valid = false;
+            }
+            
+            if (transferQty > 0) {
+                totalQty += transferQty;
+                selectedItems++;
+            }
+        });
+        
+        if (valid && totalQty === 0) {
+            errorMessages.push('Please select at least one item to transfer');
+            valid = false;
+        }
+        
+        if (!valid) {
+            e.preventDefault();
+            alert(errorMessages.join('\n'));
+        } else {
+            // Confirm before submitting
+            if (!confirm(`Are you sure you want to create stock transfer with ${selectedItems} item(s) (Total Quantity: ${totalQty})?`)) {
+                e.preventDefault();
+            }
+        }
+    });
+    
+    // Calculate total on page load
+    calculateTotalQuantity();
+    
+    // Highlight rows with low stock
+    $('.batch-select').each(function() {
+        if ($(this).val()) {
+            $(this).trigger('change');
+        }
+    });
+});
+
+// Optional: Function to check stock availability via AJAX
+function checkStockAvailability(poId) {
+    $.ajax({
+        url: `/api/check-po-stock-availability/${poId}/`,
+        method: 'GET',
+        success: function(response) {
+            if (!response.has_stock) {
+                $('#stockWarning').show();
+                $('#submitBtn').prop('disabled', true);
+            }
+        }
+    });
+}
+</script>
+
+<style>
+.info-box {
+    margin-bottom: 0;
+    box-shadow: none;
+    border: 1px solid #dee2e6;
+}
+.info-box-number {
+    font-size: 18px;
+    font-weight: bold;
+}
+.batch-select {
+    min-width: 140px;
+}
+.available-qty-text {
+    font-weight: bold;
+    font-size: 14px;
+}
+.transfer-qty {
+    width: 100px;
+}
+.text-warning {
+    color: #ffc107 !important;
+}
+.text-danger {
+    color: #dc3545 !important;
+}
+.text-success {
+    color: #28a745 !important;
+}
+.table td {
+    vertical-align: middle;
+}
+.card-header .badge {
+    font-size: 14px;
+    padding: 5px 10px;
+}
+</style>
+
+{% endblock %}

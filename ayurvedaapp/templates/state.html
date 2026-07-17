@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="content-wrapper">
+  <!-- Content Header -->
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Staatsdetails</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item">
+              {% if stateview == '1' %}
+                <a href="{% url 'statetable' %}?menumanagement_id={{ idmngmnt }}">View All</a>
+              {% endif %}
+            </li>
+            <li class="breadcrumb-item active">State</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content -->
+  <section class="content">
+    <div class="row">
+      <div class="col-md-8">
+        <div class="card card-primary">
+          <div class="card-header">
+            <h3 class="card-title">State</h3>
+          </div>
+
+          <form method="POST" action="{% url 'state' %}?menumanagement_id={{ idmngmnt }}">
+            {% csrf_token %}
+            <div class="card-body">
+              <div class="form-group">
+                <label for="exampleInputBranchName">State Name</label>
+                <input type="text" class="form-control" id="exampleInputAddress" name="statename" placeholder="Enter State Name" required>
+              </div>
+            </div>
+
+            <div class="card-footer">
+              {% if messages %}
+                {% for message in messages %}
+                  <div class="alert alert-success">{{ message }}</div>
+                {% endfor %}
+              {% endif %}
+
+              {% if stateadd == '1' %}
+                <button type="submit" class="btn btn-primary">Submit</button>
+              {% endif %}
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+{% endblock %}

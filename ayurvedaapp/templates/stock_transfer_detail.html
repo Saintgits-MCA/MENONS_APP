@@ -1,0 +1,900 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="content-wrapper">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Stock Transfer Detail: {{ transfer.transfer_number }}</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{% url 'stock_transfer_list' %}">Stock Transfers</a></li>
+                        <li class="breadcrumb-item active">{{ transfer.transfer_number }}</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="container-fluid">
+            <!-- Transfer Info Card -->
+            <div class="card card-primary card-outline">
+                <div class="card-header">
+                    <h3 class="card-title">Transfer Information</h3>
+                    <div class="card-tools">
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                            {% endfor %}
+                        {% endif %}
+                        {% if transfer.status == 'pending' %}
+                            <span class="badge badge-warning">Pending Approval</span>
+                        {% elif transfer.status == 'approved' %}
+                            <span class="badge badge-primary">Approved</span>
+                        {% elif transfer.status == 'in_transit' %}
+                            <span class="badge badge-secondary">In Transit</span>
+                        {% elif transfer.status == 'completed' %}
+                            <span class="badge badge-success">Completed</span>
+                        {% elif transfer.status == 'rejected' %}
+                            <span class="badge badge-danger">Rejected</span>
+                        {% elif transfer.status == 'cancelled' %}
+                            <span class="badge badge-dark">Cancelled</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-sm table-borderless">
+                                <tr>
+                                    <th width="40%">Transfer Number</th>
+                                    <td><strong>{{ transfer.transfer_number }}</strong></td>
+                                </tr>
+                                <tr>
+                                    <th>Created Date</th>
+                                    <td>{{ transfer.created_at|date:"d-m-Y H:i" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>From Branch</th>
+                                    <td>{{ transfer.from_branch.Branch_Name }}</td>
+                                </tr>
+                                <tr>
+                                    <th>To Branch</th>
+                                    <td>{{ transfer.to_branch.Branch_Name }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-sm table-borderless">
+                                <tr>
+                                    <th width="40%">Total Items</th>
+                                    <td>{{ transfer.total_items }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Total Quantity</th>
+                                    <td><strong class="text-primary">{{ transfer.total_quantity }}</strong></td>
+                                </tr>
+                                {% if transfer.purchase_order %}
+                                <tr>
+                                    <th>Purchase Order</th>
+                                    <td>{{ transfer.purchase_order.po_number }}</td>
+                                </tr>
+                                {% endif %}
+                                {% if transfer.expected_delivery_date %}
+                                <tr>
+                                    <th>Expected Delivery</th>
+                                    <td>{{ transfer.expected_delivery_date|date:"d-m-Y" }}</td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Quantity Summary Card -->
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <div class="callout callout-info">
+                                <h5><i class="fas fa-chart-line"></i> Quantity Summary</h5>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <small>Requested Quantity</small>
+                                        <br><strong class="text-info">{{ total_requested|default:0 }}</strong>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <small>Approved Quantity</small>
+                                        <br><strong class="text-primary">{{ total_approved|default:0 }}</strong>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <small>Received Quantity</small>
+                                        <br><strong class="text-success">{{ total_received|default:0 }}</strong>
+                                    </div>
+                                </div>
+                                {% if pending_items_count > 0 %}
+                                <div class="row mt-2">
+                                    <div class="col-12">
+                                        <div class="alert alert-warning mb-0">
+                                            <i class="fas fa-clock"></i> 
+                                            <strong>{{ pending_items_count }} item(s) pending approval.</strong>
+                                            Please approve the remaining items.
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                {% if approved_items_count > 0 and pending_items_count == 0 and transfer.status == 'pending' %}
+                                <div class="row mt-2">
+                                    <div class="col-12">
+                                        <div class="alert alert-success mb-0">
+                                            <i class="fas fa-check-circle"></i> 
+                                            <strong>All items approved!</strong> Transfer will be marked as approved.
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if transfer.remarks %}
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="alert alert-info mb-0">
+                                <i class="fas fa-info-circle"></i> <strong>Remarks:</strong> {{ transfer.remarks }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Items Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Transfer Items</h3>
+                    <div class="card-tools">
+                        {% if pending_items_count > 0 %}
+                            <button type="button" class="btn btn-sm btn-default" id="selectAllApproveBtn">
+                                <i class="fas fa-check-double"></i> Select All Pending
+                            </button>
+                            <button type="button" class="btn btn-sm btn-default" id="deselectAllApproveBtn">
+                                <i class="fas fa-times"></i> Deselect All
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        {% if pending_items_count > 0 %}
+                        <form method="POST" action="{% url 'stock_transfer_approve'  %}?transferid={{transfer.id}}">
+                        {% else %}
+                        <form>
+                        {% endif %}
+                            {% csrf_token %}
+                            <table class="table table-bordered table-hover mb-0">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th width="5%">
+                                            {% if pending_items_count > 0 %}
+                                                <input type="checkbox" id="masterCheckbox">
+                                            {% else %}
+                                                #
+                                            {% endif %}
+                                        </th>
+                                        <th width="5%">Sl No</th>
+                                        <th width="20%">Item Name</th>
+                                        <th width="10%">Batch No</th>
+                                        <th width="10%">Expiry Date</th>
+                                        <th width="8%">Unit</th>
+                                        <th width="8%">Rate</th>
+                                        <th width="10%">Requested Qty</th>
+                                        {% if pending_items_count > 0 %}
+                                            <th width="12%">Approved Qty *</th>
+                                            <th width="12%">Status</th>
+                                        {% else %}
+                                            <th width="10%">Approved Qty</th>
+                                            <th width="10%">Received Qty</th>
+                                            <th width="10%">Status</th>
+                                        {% endif %}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in items %}
+                                    <tr class="item-row" data-item-id="{{ item.id }}">
+                                        <td class="text-center">
+                                            {% if pending_items_count > 0 and item.status == 'pending' %}
+                                                <input type="checkbox" 
+                                                       name="selected_items" 
+                                                       value="{{ item.id }}" 
+                                                       class="item-checkbox"
+                                                       data-item-id="{{ item.id }}">
+                                            {% elif item.status == 'approved' %}
+                                                <i class="fas fa-check-circle text-success" title="Already Approved"></i>
+                                            {% else %}
+                                                {{ forloop.counter }}
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">{{ forloop.counter }}</td>
+                                        <td>
+                                            <strong>{{ item.item.itemnm }}</strong>
+                                            {% if item.item.Generic_name %}
+                                                <br><small class="text-muted">{{ item.item.Generic_name }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ item.batch_no }}</td>
+                                        <td>{{ item.expiry_date|date:"d-m-Y"|default:"-" }}</td>
+                                        <td>{{ item.unit.unitname|default:"-" }}</td>
+                                        <td>₹{{ item.rate|floatformat:2 }}</td>
+                                        <td class="text-center">
+                                            <strong class="text-info">{{ item.requested_quantity }}</strong>
+                                        </td>
+                                        
+                                        {% if pending_items_count > 0 %}
+                                            {% if item.status == 'pending' %}
+                                            <td>
+                                                <input type="number" 
+                                                       name="approved_qty_{{ item.id }}" 
+                                                       class="form-control form-control-sm approved-qty"
+                                                       value="{{ item.quantity }}"
+                                                       min="0"
+                                                       max="{{ item.quantity }}"
+                                                       step="1"
+                                                       data-item-id="{{ item.id }}"
+                                                       data-max-qty="{{ item.quantity }}"
+                                                       disabled>
+                                                <small class="text-muted">Max: {{item.quantity }}</small>
+                                                <br>
+                                                <small class="text-info" id="remaining_info_{{ item.id }}"></small>
+                                            </td>
+                                            <td class="text-center" id="approve_status_{{ item.id }}">
+                                                <span class="badge badge-warning">Pending Approval</span>
+                                            </td>
+                                            {% else %}
+                                            <td class="text-center">
+                                                <strong class="text-success">{{ item.transferred_quantity }}</strong>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge badge-success">Approved</span>
+                                            </td>
+                                            {% endif %}
+                                        {% else %}
+                                            <td class="text-center">
+                                                <strong class="text-primary">{{ item.transferred_quantity|default:"-" }}</strong>
+                                            </td>
+                                            <td class="text-center">
+                                                <strong class="text-success">{{ item.received_quantity|default:"-" }}</strong>
+                                            </td>
+                                            <td class="text-center">
+                                                {% if item.status == 'approved' %}
+                                                    <span class="badge badge-success">Approved</span>
+                                                {% elif item.status == 'pending' %}
+                                                    <span class="badge badge-warning">Pending</span>
+                                                {% elif item.status == 'transferred' %}
+                                                    <span class="badge badge-info">Transferred</span>
+                                                {% elif item.status == 'short_received' %}
+                                                    <span class="badge badge-warning">Short Received</span>
+                                                {% elif item.status == 'cancelled' %}
+                                                    <span class="badge badge-dark">Cancelled</span>
+                                                {% else %}
+                                                    <span class="badge badge-secondary">{{ item.status }}</span>
+                                                {% endif %}
+                                            </td>
+                                        {% endif %}
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="12" class="text-center text-muted">
+                                            No items found.
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                                {% if pending_items_count > 0 %}
+                                <tfoot class="thead-light">
+                                    <tr class="font-weight-bold">
+                                        <td colspan="7" class="text-right">TOTALS:</td>
+                                        <td id="total-requested">0</td>
+                                        <td id="total-approved">0</td>
+                                        <td></td>
+                                    </tr>
+                                    <tr class="table-info">
+                                        <td colspan="8" class="text-right">
+                                            <strong>Remaining/Shortage:</strong>
+                                        </td>
+                                        <td colspan="2" id="total-remaining">
+                                            <strong class="text-danger">0</strong>
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                                {% endif %}
+                            </table>
+                            
+                            {% if pending_items_count > 0 %}
+                            <div class="row mt-3 mb-3">
+                                <div class="col-12">
+                                    <div class="form-group">
+                                        <label for="action_remarks">Remarks (optional)</label>
+                                        <textarea name="remarks" id="action_remarks" class="form-control" rows="2" 
+                                                  placeholder="Enter remarks for this action..."></textarea>
+                                    </div>
+                                    <div class="text-center">
+                                        <button type="submit" class="btn btn-primary btn-lg" id="approveSubmitBtn">
+                                            <i class="fas fa-thumbs-up"></i> Approve Selected Items
+                                        </button>
+                                        <button type="button" class="btn btn-success btn-lg" id="approveAllBtn">
+                                            <i class="fas fa-check-all"></i> Approve All (Full Quantity)
+                                        </button>
+                                        <a href="{% url 'stock_transfer_list' %}" class="btn btn-secondary btn-lg">
+                                            <i class="fas fa-arrow-left"></i> Back to List
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="row mt-3 mb-3">
+                                <div class="col-12 text-center">
+                                    <a href="{% url 'stock_transfer_list' %}" class="btn btn-secondary btn-lg">
+                                        <i class="fas fa-arrow-left"></i> Back to List
+                                    </a>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dispatch Section -->
+            {% if transfer.status == 'approved' and can_dispatch %}
+            <div class="card mt-3">
+                <div class="card-header bg-info">
+                    <h3 class="card-title">Dispatch Transfer</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{% url 'stock_transfer_dispatch' transfer.id %}">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="dispatch_remarks">Dispatch Remarks</label>
+                            <textarea name="remarks" id="dispatch_remarks" class="form-control" rows="2"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-info" onclick="return confirm('Mark this transfer as In Transit?')">
+                            <i class="fas fa-truck"></i> Mark as Dispatched / In Transit
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Receive Section -->
+            {% if transfer.status == 'in_transit' and can_receive %}
+            <div class="card mt-3">
+                <div class="card-header bg-success">
+                    <h3 class="card-title">Receive Transfer</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{% url 'stock_transfer_receive' transfer.id %}">
+                        {% csrf_token %}
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th width="5%"><input type="checkbox" id="receiveMasterCheckbox"></th>
+                                        <th>Item Name</th>
+                                        <th>Batch No</th>
+                                        <th>Approved Qty</th>
+                                        <th>Received Qty</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in items %}
+                                    {% if item.approved_quantity > 0 %}
+                                    <tr>
+                                        <td class="text-center">
+                                            <input type="checkbox" 
+                                                   name="selected_items" 
+                                                   value="{{ item.id }}"
+                                                   class="receive-item-checkbox"
+                                                   data-approved-qty="{{ item.approved_quantity }}">
+                                        </td>
+                                        <td>{{ item.item.itemnm }}</td>
+                                        <td>{{ item.batch_no }}</td>
+                                        <td class="text-center"><strong class="text-primary">{{ item.approved_quantity }}</strong></td>
+                                        <td>
+                                            <input type="number" 
+                                                   name="received_qty_{{ item.id }}"
+                                                   class="form-control form-control-sm receive-qty"
+                                                   value="{{ item.approved_quantity }}"
+                                                   min="0"
+                                                   max="{{ item.approved_quantity }}"
+                                                   data-approved-qty="{{ item.approved_quantity }}"
+                                                   disabled>
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot>
+                                    <tr class="table-info">
+                                        <td colspan="3" class="text-right"><strong>Total:</strong></td>
+                                        <td id="receiveTotalApproved">0</td>
+                                        <td id="receiveTotalReceived">0</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                        <div class="form-group mt-3">
+                            <label for="receive_remarks">Remarks</label>
+                            <textarea name="remarks" id="receive_remarks" class="form-control" rows="2"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success" onclick="return confirm('Confirm receipt of selected items?')">
+                            <i class="fas fa-check-circle"></i> Confirm Receipt
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Reject Section -->
+            {% if can_reject %}
+            <div class="card mt-3">
+                <div class="card-header bg-danger">
+                    <h3 class="card-title">Reject Transfer</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{% url 'stock_transfer_reject' transfer.id %}">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="rejection_reason">Rejection Reason <span class="text-danger">*</span></label>
+                            <textarea name="rejection_reason" id="rejection_reason" class="form-control" rows="3" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to reject this transfer?')">
+                            <i class="fas fa-ban"></i> Reject Transfer
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Cancel Section -->
+            {% if can_cancel %}
+            <div class="card mt-3">
+                <div class="card-header bg-dark">
+                    <h3 class="card-title">Cancel Transfer</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{% url 'stock_transfer_cancel' transfer.id %}">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="cancel_reason">Cancellation Reason <span class="text-danger">*</span></label>
+                            <textarea name="cancel_reason" id="cancel_reason" class="form-control" rows="3" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-dark" onclick="return confirm('Are you sure you want to cancel this transfer?')">
+                            <i class="fas fa-times-circle"></i> Cancel Transfer
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Activity Log -->
+            {% if logs %}
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h3 class="card-title">Activity Log</h3>
+                    <div class="card-tools">
+                        <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="timeline">
+                        {% for log in logs %}
+                        <div class="time-label">
+                            <span class="bg-{% if log.action == 'CREATE' %}success{% elif log.action == 'APPROVED' %}primary{% elif log.action == 'DISPATCHED' %}secondary{% elif log.action == 'RECEIVED' %}success{% elif log.action == 'REJECTED' %}danger{% elif log.action == 'CANCELLED' %}dark{% else %}secondary{% endif %}">
+                                {{ log.created_at|date:"d-m-Y H:i" }}
+                            </span>
+                        </div>
+                        <div>
+                            <i class="fas fa-{% if log.action == 'CREATE' %}plus-circle bg-success{% elif log.action == 'APPROVED' %}thumbs-up bg-primary{% elif log.action == 'DISPATCHED' %}truck bg-secondary{% elif log.action == 'RECEIVED' %}check-circle bg-success{% elif log.action == 'REJECTED' %}ban bg-danger{% elif log.action == 'CANCELLED' %}times-circle bg-dark{% else %}info-circle bg-secondary{% endif %}"></i>
+                            <div class="timeline-item">
+                                <span class="time"><i class="fas fa-clock"></i> {{ log.created_at|date:"H:i:s" }}</span>
+                                <h3 class="timeline-header">
+                                    <strong>{{ log.action }}</strong> - Status: {{ log.old_status|default:"-" }} → {{ log.new_status|default:"-" }}
+                                </h3>
+                                <div class="timeline-body">
+                                    {% if log.remarks %}
+                                        <p>{{ log.remarks }}</p>
+                                    {% endif %}
+                                    <small class="text-muted">By: {{ log.staff.username|default:log.staff_id }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+    </section>
+</div>
+
+<script src="{% static 'assets/js/jquery-3.6.0.min.js' %}"></script>
+<script>
+$(document).ready(function() {
+    
+    {% if pending_items_count > 0 %}
+        // ========================================
+        // APPROVAL STAGE (Partial Approval Allowed)
+        // ========================================
+        
+        // Master checkbox
+        $('#masterCheckbox').change(function() {
+            var isChecked = $(this).prop('checked');
+            $('.item-checkbox').prop('checked', isChecked);
+            updateApproveCheckboxState();
+        });
+        
+        $('#selectAllApproveBtn').click(function() {
+            $('#masterCheckbox').prop('checked', true);
+            $('.item-checkbox').prop('checked', true);
+            updateApproveCheckboxState();
+        });
+        
+        $('#deselectAllApproveBtn').click(function() {
+            $('#masterCheckbox').prop('checked', false);
+            $('.item-checkbox').prop('checked', false);
+            updateApproveCheckboxState();
+        });
+        
+        $('#approveAllBtn').click(function() {
+            // Select all pending checkboxes
+            $('.item-checkbox').prop('checked', true);
+            
+            // Set all pending items to their max quantity
+            $('.item-row').each(function() {
+                var statusCell = $(this).find('td:last');
+                var isPending = statusCell.find('.badge-warning').length > 0;
+                
+                if (isPending) {
+                    var approvedInput = $(this).find('.approved-qty');
+                    var maxQty = approvedInput.data('max-qty');
+                    approvedInput.val(maxQty);
+                    approvedInput.trigger('change');
+                }
+            });
+            
+            updateApproveCheckboxState();
+        });
+        
+        $('.item-checkbox').change(function() {
+            updateApproveMasterCheckbox();
+            updateApproveCheckboxState();
+        });
+        
+        function updateApproveMasterCheckbox() {
+            var total = $('.item-checkbox').length;
+            var checked = $('.item-checkbox:checked').length;
+            
+            if (checked === 0) {
+                $('#masterCheckbox').prop('checked', false);
+                $('#masterCheckbox').prop('indeterminate', false);
+            } else if (checked === total) {
+                $('#masterCheckbox').prop('checked', true);
+                $('#masterCheckbox').prop('indeterminate', false);
+            } else {
+                $('#masterCheckbox').prop('indeterminate', true);
+            }
+        }
+        
+        function updateApproveCheckboxState() {
+            $('.item-checkbox').each(function() {
+                var isChecked = $(this).prop('checked');
+                var row = $(this).closest('tr');
+                var approvedInput = row.find('.approved-qty');
+                var statusSpan = row.find('[id^="approve_status_"]');
+                var itemId = $(this).data('item-id');
+                var maxQty = parseInt(approvedInput.data('max-qty'));
+                var currentVal = parseInt(approvedInput.val()) || 0;
+                var remaining = maxQty - currentVal;
+                
+                if (isChecked) {
+                    approvedInput.prop('disabled', false);
+                    $('#remaining_info_' + itemId).text('Remaining: ' + remaining);
+                    if (currentVal > 0) {
+                        statusSpan.html('<span class="badge badge-primary">To Approve</span>');
+                    } else {
+                        statusSpan.html('<span class="badge badge-danger">Zero Qty</span>');
+                    }
+                } else {
+                    approvedInput.prop('disabled', true);
+                    $('#remaining_info_' + itemId).text('');
+                    statusSpan.html('<span class="badge badge-secondary">Pending</span>');
+                }
+            });
+            updateApproveTotals();
+        }
+        
+        $('.approved-qty').on('change keyup', function() {
+            var itemId = $(this).data('item-id');
+            var maxQty = parseInt($(this).data('max-qty'));
+            var approvedQty = parseInt($(this).val()) || 0;
+            var row = $(this).closest('tr');
+            var statusSpan = $('#approve_status_' + itemId);
+            var isChecked = row.find('.item-checkbox').prop('checked');
+            var remaining = maxQty - approvedQty;
+            
+            if (approvedQty > maxQty) {
+                $(this).val(maxQty);
+                approvedQty = maxQty;
+                remaining = 0;
+                alert('Approved quantity cannot exceed requested quantity (' + maxQty + ')');
+            }
+            if (approvedQty < 0) {
+                $(this).val(0);
+                approvedQty = 0;
+                remaining = maxQty;
+            }
+            
+            $('#remaining_info_' + itemId).text('Remaining: ' + remaining);
+            
+            if (isChecked) {
+                if (approvedQty > 0) {
+                    statusSpan.html('<span class="badge badge-primary">To Approve</span>');
+                } else {
+                    statusSpan.html('<span class="badge badge-danger">Zero Qty</span>');
+                }
+            }
+            
+            updateApproveTotals();
+        });
+        
+        function updateApproveTotals() {
+            var totalRequested = 0;
+            var totalApproved = 0;
+            var totalRemaining = 0;
+            
+            $('.item-row').each(function() {
+                var requestedQty = parseInt($(this).find('td:eq(7) strong').text()) || 0;
+                var approvedQty = parseInt($(this).find('.approved-qty').val()) || 0;
+                var isChecked = $(this).find('.item-checkbox').prop('checked');
+                
+                totalRequested += requestedQty;
+                if (isChecked) {
+                    totalApproved += approvedQty;
+                    totalRemaining += (requestedQty - approvedQty);
+                }
+            });
+            
+            $('#total-requested').html('<strong>' + totalRequested + '</strong>');
+            $('#total-approved').html('<strong class="text-primary">' + totalApproved + '</strong>');
+            $('#total-remaining').html('<strong class="text-danger">' + totalRemaining + '</strong>');
+        }
+        
+        // Form validation before approve submit
+        $('#approveSubmitBtn').click(function(e) {
+            var hasSelected = false;
+            var hasValidQty = false;
+            var errorMsg = [];
+            
+            $('.item-checkbox:checked').each(function() {
+                hasSelected = true;
+                var row = $(this).closest('tr');
+                var approvedQty = parseInt(row.find('.approved-qty').val()) || 0;
+                var itemName = row.find('td:eq(2) strong').text();
+                
+                if (approvedQty === 0) {
+                    errorMsg.push(itemName + ' - Approved quantity cannot be zero');
+                } else {
+                    hasValidQty = true;
+                }
+            });
+            
+            if (!hasSelected) {
+                e.preventDefault();
+                alert('Please select at least one item to approve');
+                return false;
+            }
+            
+            if (errorMsg.length > 0) {
+                e.preventDefault();
+                alert('Please fix the following issues:\n' + errorMsg.join('\n'));
+                return false;
+            }
+            
+            if (!hasValidQty) {
+                e.preventDefault();
+                alert('Please enter valid approved quantity for selected items');
+                return false;
+            }
+            
+            var totalApproved = parseInt($('#total-approved').text()) || 0;
+            var totalRemaining = parseInt($('#total-remaining').text()) || 0;
+            if (!confirm('Are you sure you want to approve selected items?\n\nTotal Approved Quantity: ' + totalApproved + '\nRemaining Quantity (not approved): ' + totalRemaining + '\n\nThis will:\n1. Deduct stock from source branch\n2. Add stock to destination branch')) {
+                e.preventDefault();
+                return false;
+            }
+        });
+        
+        // Initialize totals
+        updateApproveTotals();
+        
+    {% elif transfer.status == 'in_transit' %}
+        // ========================================
+        // RECEIVE STAGE
+        // ========================================
+        
+        $('#receiveMasterCheckbox').change(function() {
+            var isChecked = $(this).prop('checked');
+            $('.receive-item-checkbox').prop('checked', isChecked);
+            updateReceiveCheckboxState();
+        });
+        
+        $('.receive-item-checkbox').change(function() {
+            updateReceiveMasterCheckbox();
+            updateReceiveCheckboxState();
+        });
+        
+        function updateReceiveMasterCheckbox() {
+            var total = $('.receive-item-checkbox').length;
+            var checked = $('.receive-item-checkbox:checked').length;
+            
+            if (checked === 0) {
+                $('#receiveMasterCheckbox').prop('checked', false);
+                $('#receiveMasterCheckbox').prop('indeterminate', false);
+            } else if (checked === total) {
+                $('#receiveMasterCheckbox').prop('checked', true);
+                $('#receiveMasterCheckbox').prop('indeterminate', false);
+            } else {
+                $('#receiveMasterCheckbox').prop('indeterminate', true);
+            }
+        }
+        
+        function updateReceiveCheckboxState() {
+            $('.receive-item-checkbox').each(function() {
+                var isChecked = $(this).prop('checked');
+                var row = $(this).closest('tr');
+                var receiveInput = row.find('.receive-qty');
+                
+                if (isChecked) {
+                    receiveInput.prop('disabled', false);
+                } else {
+                    receiveInput.prop('disabled', true);
+                    var approvedQty = $(this).data('approved-qty');
+                    receiveInput.val(approvedQty);
+                }
+            });
+            updateReceiveTotals();
+        }
+        
+        $('.receive-qty').on('change keyup', function() {
+            var approvedQty = parseInt($(this).data('approved-qty'));
+            var receivedQty = parseInt($(this).val()) || 0;
+            
+            if (receivedQty > approvedQty) {
+                $(this).val(approvedQty);
+                alert('Received quantity cannot exceed approved quantity');
+            }
+            if (receivedQty < 0) {
+                $(this).val(0);
+            }
+            updateReceiveTotals();
+        });
+        
+        function updateReceiveTotals() {
+            var totalApproved = 0;
+            var totalReceived = 0;
+            
+            $('.receive-item-checkbox:checked').each(function() {
+                var row = $(this).closest('tr');
+                var approvedQty = parseInt($(this).data('approved-qty')) || 0;
+                var receivedQty = parseInt(row.find('.receive-qty').val()) || 0;
+                
+                totalApproved += approvedQty;
+                totalReceived += receivedQty;
+            });
+            
+            $('#receiveTotalApproved').html('<strong>' + totalApproved + '</strong>');
+            $('#receiveTotalReceived').html('<strong class="text-success">' + totalReceived + '</strong>');
+        }
+        
+        $('#receiveMasterCheckbox').prop('checked', true);
+        $('.receive-item-checkbox').prop('checked', true);
+        updateReceiveCheckboxState();
+        
+    {% endif %}
+    
+});
+</script>
+
+<style>
+.timeline {
+    position: relative;
+    margin: 0 0 30px 0;
+    padding: 0;
+    list-style: none;
+}
+.timeline:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: #ddd;
+    left: 31px;
+    margin: 0;
+    border-radius: 2px;
+}
+.timeline > div {
+    position: relative;
+    margin-bottom: 15px;
+}
+.timeline > div .timeline-item {
+    position: relative;
+    background: #fff;
+    border-radius: 3px;
+    border: 1px solid #dee2e6;
+    margin-left: 60px;
+    min-height: 0;
+}
+.timeline > div .timeline-item .timeline-header {
+    border-bottom: 1px solid #dee2e6;
+    padding: 8px 10px;
+    margin: 0;
+    font-size: 16px;
+}
+.timeline > div .timeline-item .timeline-body {
+    padding: 10px;
+}
+.timeline > div .time-label {
+    position: relative;
+    margin-bottom: 15px;
+}
+.timeline > div .time-label span {
+    background-color: #fff;
+    padding: 5px 10px;
+    border-radius: 4px;
+    display: inline-block;
+    font-weight: bold;
+}
+.timeline > div i {
+    position: absolute;
+    background-color: #fff;
+    border-radius: 50%;
+    height: 30px;
+    left: 18px;
+    top: 0;
+    width: 30px;
+    text-align: center;
+    line-height: 30px;
+    font-size: 16px;
+    z-index: 1;
+}
+.approved-qty, .receive-qty {
+    width: 100px;
+}
+.item-checkbox, #masterCheckbox, .receive-item-checkbox, #receiveMasterCheckbox {
+    transform: scale(1.2);
+    cursor: pointer;
+}
+.btn-sm {
+    margin: 2px;
+}
+.table td {
+    vertical-align: middle;
+}
+.callout {
+    border-radius: 0.25rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+.callout-info {
+    border-left-color: #17a2b8;
+    background-color: #f8f9fc;
+}
+</style>
+
+{% endblock %}

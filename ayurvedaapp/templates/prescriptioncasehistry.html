@@ -1,0 +1,780 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<head>
+  <style type="text/css">
+    /*Acco*/
+.ac-container {
+    /*max-width: 400px;*/
+    max-width: 1600px;
+}
+
+.ac-container label {
+    height: 30px !important;
+    line-height: 21px !important;
+    font-size: 12px !important;
+    font-family: 'Open Sans','Arial Narrow',Arial,sans-serif !important;
+    padding: 5px 20px;
+    position: relative;
+    z-index: 20;
+    display: block;
+    height: 30px;
+    cursor: pointer;
+    color: #777;
+    text-shadow: 1px 1px 1px rgba(255,255,255,0.8);
+    line-height: 33px;
+    font-size: 19px;
+    background: #fff;
+    background: -moz-linear-gradient(top,#fff 1%,#eaeaea 100%);
+    background: -webkit-gradient(linear,left top,left bottom,color-stop(1%,#fff),color-stop(100%,#eaeaea));
+    background: -webkit-linear-gradient(top,#fff 1%,#eaeaea 100%);
+    background: -o-linear-gradient(top,#fff 1%,#eaeaea 100%);
+    background: -ms-linear-gradient(top,#fff 1%,#eaeaea 100%);
+    background: linear-gradient(top,#fff 1%,#eaeaea 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fff',endColorstr='#eaeaea',GradientType=0 );
+    box-shadow: 0 0 0 1px rgba(155,155,155,0.3),1px 0 0 rgba(255,255,255,0.9) inset,0 2px 2px rgba(0,0,0,0.1);
+    font-size: 12px;
+    height: 30px;
+    line-height: 20px;
+}
+
+.ac-container {
+    width: 100%;
+    margin: 10px auto 30px auto;
+    text-align: left;
+}
+
+.ac-container label:hover {
+    background: #fff;
+}
+
+.ac-container input:checked + label,.ac-container input:checked + label:hover {
+    background: #f1f2f3;
+    color: #666;
+    text-shadow: 0 1px 1px rgba(255,255,255,0.6);
+    box-shadow: 0 0 0 1px rgba(155,155,155,0.3),0 2px 2px rgba(0,0,0,0.1);
+    height: 30px;
+    line-height: 21px;
+    font-size: 13px;
+}
+
+.ac-container label:hover:after,.ac-container input:checked + label:hover:after {
+    content: '';
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    right: 13px;
+    top: 7px;
+    background: transparent url(../images/arrow_down.png) no-repeat center center;
+}
+
+.ac-container input:checked + label:hover:after {
+    background-image: url(../images/arrow_up.png);
+}
+
+/*.ac-container input {
+    display: none;
+}
+*/
+#ac-1,#ac-2,#ac-3,#ac-4,#ac-5,#ac-6,#ac-7,#ac-8,#ac-9,#ac-10{
+  display: none;
+}
+.ac-container article {
+    background: rgba(255,255,255,0.5);
+    margin-top: -1px;
+    overflow: hidden;
+    height: 0;
+    position: relative;
+    z-index: 10;
+    -webkit-transition: height 0.3s ease-in-out,box-shadow 0.6s linear;
+    -moz-transition: height 0.3s ease-in-out,box-shadow 0.6s linear;
+    -o-transition: height 0.3s ease-in-out,box-shadow 0.6s linear;
+    -ms-transition: height 0.3s ease-in-out,box-shadow 0.6s linear;
+    transition: height 0.3s ease-in-out,box-shadow 0.6s linear;
+}
+
+.ac-container article p {
+    font-style: normal;
+    color: #777;
+    line-height: 23px;
+    font-size: 10px;
+    padding: 20px;
+    text-shadow: 1px 1px 1px rgba(255,255,255,0.8);
+    font: normal normal 12px 'Open Sans';
+}
+
+.ac-container input:checked ~ article {
+    -webkit-transition: height 0.5s ease-in-out,box-shadow 0.1s linear;
+    -moz-transition: height 0.5s ease-in-out,box-shadow 0.1s linear;
+    -o-transition: height 0.5s ease-in-out,box-shadow 0.1s linear;
+    -ms-transition: height 0.5s ease-in-out,box-shadow 0.1s linear;
+    transition: height 0.5s ease-in-out,box-shadow 0.1s linear;
+    box-shadow: 0 0 0 1px rgba(155,155,155,0.3);
+}
+
+.ac-container input:checked ~ article.ac-small {
+    height: 150px;
+}
+
+.ac-container input:checked ~ article.ac-medium {
+    height: 310px;
+}
+
+.ac-container input:checked ~ article.ac-large {
+    height: 550px;
+}
+
+.ac-container input:checked ~ article.ac-large1 {
+    height: 780px;
+}
+
+.card-body{
+  overflow: scroll;
+  height: 600px;
+  </style>
+</head>
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Case History  Details </h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="#">View All</a></li>
+              <li class="breadcrumb-item active">Case History</li>
+            </ol>
+          </div>
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+
+      <div class="row">
+      <div class="col-md-12">
+<section class="ac-container">
+   <form method="POST", action="{% url 'savepatient' %}">
+                {% csrf_token %}
+                <div class="row">
+                  <div class="col-md-12">
+
+          <input id="ac-1" name="accordion-1" type="radio"  >
+          <label for="ac-1">Preliminary Data</label>
+
+          <article class="ac-large">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="form-group">
+                                <label for="exampleInputFirstName">MR Number</label>
+                                <select class="form-control" name="mrnumber">
+                        <option selected>Select</option>
+                                        {% for i in mrnumobj %}
+
+                      <option value="{{i.id}}">{{i.Medical_Record_Number}}</option>
+                                        {% endfor %}
+                      </select>
+                              </div>
+                               <div class="form-group">
+                                <label for="exampleInputEmail1">Address</label>
+                                <textarea class="form-control" rows="4" cols="5" name="address"></textarea>
+                              </div>
+                              <div class="form-group">
+                                <label for="exampleInputHouse">Age</label>
+                                <input type="textArea" class="form-control" id="exampleInputAddress" name="age" placeholder="Enter Age">
+                              
+                              </div>
+                              
+                              <div class="form-group">
+                    <label for="exampleInputManagerName">Gender</label>
+                  <div class="row">
+                    <div class="col-sm-3"><input type="radio"value="Male" name="gender" id="exampleInputStatus" >
+                    <label>Male</label></div></div>
+                    
+                    <input type="radio"value="Female"id="exampleInputStatus" name="gender" >
+                    <label>Female</label>
+                    <input type="radio"value="Others"id="exampleInputStatus" name="gender" >
+                    <label >Others</label>
+
+                  </div>
+                              
+                            
+                             
+                             
+                            </div>
+                        </div>
+                      </div>
+                          <!-- /.card-body -->
+                       
+                        <div class="col-md-6">
+                          <div class="card">
+                         
+                         
+                            <div class="card-body">
+                               <div class="form-group">
+                                <label for="exampleInputemail">Maritial Status</label>
+                                <input type="text" class="form-control" id="exampleInputExperience" name="marritalstatus" placeholder="Enter Maritial Status">
+                              </div>
+                                <div class="form-group">
+                                <label for="exampleInputManagerName">Place</label>
+                                <input type="text" class="form-control" id="exampleInputEmail" name="place" placeholder="Enter Place">
+                              </div>
+                               <div class="form-group">
+                                <label for="exampleInputFile">Phone Number</label>
+                                <div class="input-group">
+                                  <input type="text" class="form-control" id="exampleInputContactNo" name="phonenum" placeholder="Enter Phone Number">
+                                </div>
+                              </div>
+                              <div class="form-group">
+                                <label for="exampleInputContactNo">Occupation</label>
+                                                <input type="text" class="form-control" id="exampleInputContactNo" name="occupation" placeholder="Enter Occupation">
+                                
+                              </div>
+                              
+                         
+                            </div>
+                          </div>
+                      </div>
+                    </div>
+          </article>
+       
+                  </div>
+                </div><!-- <button type="submit" class="btn btn-primary">Submit</button> -->
+     <!--  </form> -->
+       
+        <div>
+          <input id="ac-2" name="accordion-1" type="radio">
+          <label for="ac-2">complaints</label>
+          <article class="ac-small">
+            <div class="row">
+                  <div class="col-md-12">
+                    <div class="card">
+                  
+                      <div class="card-body">
+                         <div class="form-group">
+                          <label for="exampleInputFirstName"> Chief Compliants</label>
+                         <textarea class="form-control" rows="4" cols="5" name="chiefcomplaints"></textarea>
+                        </div>
+                        
+                      </div>
+                    </div>
+                  </div>
+                      <!-- /.card-body -->
+                </div>
+          </article>
+        </div>
+        <div>
+          <input id="ac-3" name="accordion-1" type="radio">
+          <label for="ac-3">History</label>
+          <article class="ac-small">
+                          <div class="row">
+                <div class="col-md-12">
+                  <div class="card">
+                
+                    <div class="card-body">
+                       <div class="form-group">
+                        <label for="examplehistorymed"> Medical & Past History</label>
+                       <textarea class="form-control" rows="4" cols="5" name="medicalandpasthistory"></textarea>
+                      </div>
+                      
+                    </div>
+                  </div>
+                </div>
+                    <!-- /.card-body -->
+                
+              </div>
+          </article>
+        </div>
+
+        <div>
+          <input id="ac-4" name="accordion-1" type="radio">
+          <label for="ac-4">Medication</label>
+          <article class="ac-small">
+            <div class="row">
+                  <div class="col-md-12">
+                      <div class="card">
+                    
+                        <div class="card-body">
+                           <div class="form-group">
+                            <label for="exampleInputmedictn"> Medication</label>
+                           <textarea class="form-control" rows="4" cols="5" name="medication"></textarea>
+                          </div>
+                          
+                        </div>
+                      </div>
+                    </div>
+                    
+                </div>
+          </article>
+        </div>
+           
+        <div>
+          <input id="ac-5" name="accordion-1" type="radio">
+          <label for="ac-5">Personal History</label>
+          <article class="ac-medium">
+                  <div class="row">
+          <div class="col-md-6">
+              <div class="card">
+            
+                <div class="card-body">
+                     <div class="form-group">
+                    <label for="exampleInputemail">Sleep</label>
+                    <input type="text" class="form-control" id="exampleInputExperience" name="sleep" >
+                  </div>
+                    <div class="form-group">
+                    <label for="exampleInputManagerName">Bowels</label>
+                    <input type="text" class="form-control" id="exampleInputEmail" name="bowels" >
+                  </div>
+                   <div class="form-group">
+                    <label for="exampleInputFile">Appetite</label>
+                    <div class="input-group">
+                      <input type="text" class="form-control" id="exampleInputContactNo" name="appetite" >
+                    </div>
+                  </div>
+               
+                  
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="card">
+            
+                <div class="card-body">
+                  
+                  <div class="form-group">
+                    <label for="exampleInputContactNo">Thirst & Micturition</label>
+                    <input type="text" class="form-control" id="exampleInputContactNo" name="thirst">
+                    
+                  </div>
+                   <div class="form-group">
+                    <label for="exampleInputContactNo">Habits/Addiction</label>
+                    <textarea class="form-control" rows="4" cols="5" name="habits"></textarea>
+                    
+                  </div>
+                  
+                </div>
+              </div>
+            </div>
+                <!-- /.card-body -->
+             
+              
+          </div>
+          </article>
+        </div>
+
+        <div>
+          <input id="ac-6" name="accordion-1" type="radio">
+          <label for="ac-6">OBG History</label>
+          <article class="ac-small">
+            <div class="row">
+                  <div class="col-md-12">
+                      <div class="card">
+                    
+                      <div class="card-body">
+                          <div class="card-body">
+                           <div class="form-group">
+                            <label for="exampleInputm"> Menstrual Cycle Days/Menapause History</label>
+                           <textarea class="form-control" rows="4" cols="5" name="cycle"></textarea>
+                          </div>
+                          
+                        </div>
+                            <div class="form-group">
+                              <label for="exampleInputlmp">LMP</label>
+                              <input type="text" class="form-control" id="exampleInputlm" name="lmp" placeholder="Enter lmp">
+                            </div>
+
+                          <div class="form-group">
+                            <label for="exampleInputpms">Pain/Clots/Flows/PMS</label>
+                            <input type="text" class="form-control" id="exampleInputEmail" name="pms">
+                              </div>
+                      </div>
+                    </div>                  
+                </div>
+          </article>
+        </div>
+
+
+
+      <div>
+          <input id="ac-7" name="accordion-1" type="radio">
+          <label for="ac-7">Vitals</label>
+          <article class="ac-large">
+            <div class="row">
+          <div class="col-md-6">
+              <div class="card">
+            
+                <div class="card-body">
+                     <div class="form-group">
+                    <label for="exampleInputemail">Blood Pressure</label>
+                    <input type="text" class="form-control" id="exampleInputExperience" name="bloodprsr" >
+                  </div>
+                    <div class="form-group">
+                    <label for="exampleInputManagerName">Pulserate</label>
+                    <input type="text" class="form-control" id="exampleInputEmail" name="pulsrate" >
+                  </div>
+                   <div class="form-group">
+                    <label for="exampleInputFile">Respiratoryrate</label>
+                    <div class="input-group">
+                      <input type="text" class="form-control" id="exampleInputContactNo" name="respiratoryrate" >
+                    </div>
+                  </div>
+                <div class="form-group">
+                    <label for="exampleInputFile">SPO2</label>
+                    <div class="input-group">
+                      <input type="text" class="form-control" id="exampleInputContactNo" name="spo" >
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="exampleInputContactNo">Temperature</label>
+                    <input type="text" class="form-control" id="exampleInputContactNo" name="temp">
+                    
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="card">
+            
+                <div class="card-body">
+                  
+                  <div class="form-group">
+                    <label for="exampleInputContactNo">Height</label>
+                    <input type="text" class="form-control" id="exampleInputContactNo" name="height">
+                    
+                  </div>
+                   <div class="form-group">
+                    <label for="exampleInputContactNo">Weight</label>
+                   <input type="text" class="form-control" id="exampleInputContactNo" name="weight">
+                    
+                  </div>
+                  <div class="form-group">
+                    <label for="exampleInputContactNo">BMI</label>
+                    <input type="text" class="form-control" id="exampleInputContactNo" name="bmi">
+                    
+                  </div>
+                   <div class="form-group">
+                    <label for="exampleInputContactNo">IBW</label>
+                   <input type="text" class="form-control" id="exampleInputContactNo" name="ibw">
+                    
+                  </div>
+                    <div class="form-group">
+                          <label for="exampleInputFirstName">Blood parameters record</label>
+                         <textarea class="form-control" rows="2" cols="5" name="bld"></textarea>
+                        </div>
+                </div>
+              </div>
+            </div>
+                <!-- /.card-body -->
+             
+              
+          </div>
+          <div class="row ">
+            <div class="col-md-12">
+              <table class="table table-striped" style="width: 800px;margin-left: 30px;">
+  <thead>
+    <tr>
+      <th scope="col">PARAMETERS</th>
+      <th scope="col">ONADMISSION</th>
+      <th scope="col">DISCHARGE</th>
+      
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th scope="row">Weight</th>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <th scope="row">AmCircumference</th>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <th scope="row">Abdomen Circum</th>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <th scope="row">Thigh Circum</th>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+  </tbody>
+</table>
+            </div>
+          </div>
+          </article>
+        </div>
+
+            <div>
+          <input id="ac-8" name="accordion-1" type="radio">
+          <label for="ac-8">Dietary History</label>
+          <article class="ac-large">
+            <div class="row">
+                <div class="col-md-12">
+                  <div class="card">
+                
+                    <div class="card-body">
+                       <div class="form-group">
+                        <label for="exampleInputFirstName">Veg/Non-Veg/Vegan</label>
+                         <input type="text" class="form-control" id="exampleInputContactNo" name="fd">
+                      </div>
+                      <div class="form-group">
+                        <label for="exampleInputFirstName">Food Allergy</label>
+                         <input type="text" class="form-control" id="exampleInputContactNo" name="alg">
+                      </div>
+                      <div class="form-group">
+                        <label for="exampleInputFirstName">Likes/Dislikes</label>
+                         <input type="text" class="form-control" id="exampleInputContactNo" name="likesdisn">
+                      </div>
+                      <div class="form-group">
+                        <label for="exampleInputFirstName">Home Recall</label>
+                         <input type="text" class="form-control" id="exampleInputContactNo" name="hmerecl">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                    <!-- /.card-body -->
+                
+              </div>
+      </article>
+    </div>
+
+   <div>
+          <input id="ac-9" name="accordion-1" type="radio">
+          <label for="ac-9">Physical & Systamatic Examination</label>
+          <article class="ac-large">
+            <div class="row">
+              <div class="col-md-12">
+            <div class="card card-primary">
+            <div class="card-header">
+              <h3 class="card-title">GENERAL PHYSICAL EXAMINATION </h3>
+
+              <div class="card-tools">
+                <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                  <!-- <i class="fas fa-minus"></i> -->
+                </button>
+              </div>
+            </div>
+            <!-- <form role="form"> -->
+      <div class="row">
+          <div class="col-md-6">
+              <div class="card">
+            
+                <div class="card-body">
+                     <div class="form-group">
+                    <label for="exampleInputb">Built</label>
+                    <input type="text" class="form-control" id="exampleInputb" name="built" >
+                  </div>
+                    <div class="form-group">
+                    <label for="exampleInputpallor">Pallor</label>
+                    <input type="text" class="form-control" id="exampleInputpallor" name="pallor" >
+                  </div>
+                   <div class="form-group">
+                    <label for="exampleInputict">Icterus</label>
+                    <div class="input-group">
+                      <input type="text" class="form-control" id="exampleInputict" name="icterus" >
+                    </div>
+                  </div>
+              
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="card">
+            
+                <div class="card-body">
+                  
+                   <div class="form-group">
+                    <label for="exampleInputede">EDEMA/ASCITIS</label>
+                    <div class="input-group">
+                      <input type="text" class="form-control" id="exampleInputede" name="edema" >
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="exampleInputcy">Cyanosis</label>
+                    <input type="text" class="form-control" id="exampleInputCy name="cyanosis">
+                    
+                  </div>
+                  <div class="form-group">
+                    <label for="exampleInputclb">Clubbing</label>
+                    <input type="text" class="form-control" id="exampleInputClb" name="clubb">
+                    
+                  </div>
+                </div>
+              </div>
+            </div>
+                <!-- /.card-body -->
+             
+              
+          </div>
+          <div class="row ">
+            <div class="col-md-12">
+             
+            </div>
+          </div>
+         <!--  </form> -->
+            
+            <!-- /.card-body -->
+          </div>
+
+          <div class="card card-primary">
+            <div class="card-header">
+              <h3 class="card-title">SYSTEMIC EXAMINATION</h3>
+
+              <div class="card-tools">
+                <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                  <!-- <i class="fas fa-minus"></i> -->
+                </button>
+              </div>
+            </div>
+           <!--  <form role="form"> -->
+      <div class="row">
+          <div class="col-md-6">
+              <div class="card">
+            
+                <div class="card-body">
+                     <div class="form-group">
+                    <label for="examplecvcs">CVS</label>
+                    <input type="text" class="form-control" id="exampleInputcvs" name="cvs" >
+                  </div>
+                    <div class="form-group">
+                    <label for="exampleInputrse">RS</label>
+                    <input type="text" class="form-control" id="exampleInputrs" name="rs" >
+                  </div>
+                 
+              
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="card">
+            
+                <div class="card-body">
+                  
+                   <div class="form-group">
+                    <label for="examplecns">CNS</label>
+                    <div class="input-group">
+                      <input type="text" class="form-control" id="exampleInputcns" name="cns" >
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="exampleInputjnts">Joints</label>
+                    <input type="text" class="form-control" id="exampleInputjnts" name="joints">
+                    
+                  </div>
+                 
+                </div>
+              </div>
+            </div>
+                <!-- /.card-body -->
+             
+              
+          </div>
+          <div class="row ">
+            <div class="col-md-12">
+             
+            </div>
+          </div>
+         <!--  </form> -->
+            
+            <!-- /.card-body -->
+          </div>
+        </div>
+      </div>
+    </article>
+  </div>
+
+   <div>
+          <input id="ac-10" name="accordion-1" type="radio">
+          <label for="ac-10">Diagnosis</label>
+          <article class="ac-medium">
+            <div class="row">
+              <div class="col-md-12">
+            <div class="card card-primary">
+              <div class="card-header">
+              <h3 class="card-title">NATURAL DIAGNOSIS/PULSE DIAGNOSIS </h3>
+
+              <div class="card-tools">
+                <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                  <!-- <i class="fas fa-minus"></i> -->
+                </button>
+              </div>
+            </div>
+           <!--  <form role="form"> -->
+      <div class="row">
+          <div class="col-md-12">
+              <div class="card">
+            
+                <div class="card-body">
+                     <div class="form-group">
+                    <label for="exampleInputemail">Natural diagnosis/pulse diagnosis</label>
+                    <textarea class="form-control" rows="4" cols="5" name="natrldg"></textarea>
+                  </div>
+                   
+              
+                </div>
+              </div>
+            </div>
+          </div>
+          
+         <!--  </form> -->
+            
+            <!-- /.card-body -->
+          </div>
+          <!-- /.card -->
+<div class="card card-primary">
+            <div class="card-header">
+              <h3 class="card-title">PROVISIONAL DIAGNOSIS</h3>
+
+              <div class="card-tools">
+                <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                  <!-- <i class="fas fa-minus"></i> -->
+                </button>
+              </div>
+            </div>
+            <!-- <form role="form"> -->
+      <div class="row">
+          <div class="col-md-12">
+              <div class="card">
+            
+                <div class="card-body">
+                     <div class="form-group">
+                    <label for="exampleInputemail">Provisional Diagnosis</label>
+                      <textarea class="form-control" rows="4" cols="5" name="provdig"></textarea>
+                  </div>
+                   
+                 
+              
+                </div>
+              </div>
+            </div>
+          </div>
+        <!-- </form> -->
+        </article>
+      </div>
+    
+
+
+        <button type="submit" class="btn btn-primary">Submit</button>
+      </form>
+      </section>
+
+
+
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

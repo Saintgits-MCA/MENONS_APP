@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Change Room / Ward</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item">
+            <a href="{% url 'changeroom' %}">Add</a>
+           </li>
+              <li class="breadcrumb-item active">Change Room / Ward</li>
+            </ol>
+          </div>
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-12">
+            
+            <!-- /.card -->
+
+          <div class="card">
+           <div class="scroll">
+              <!-- /.card-header -->
+              <div class="card-body">
+                <table id="example1" class="table table-bordered table-striped">
+                  <thead>
+                    <tr>
+                      <th>SL No</th>
+                      <th>MR Number</th>
+                    <th>Patient Name</th>
+                    <th>Room Change Date</th>
+                    <th>NO:of Days Stayed</th>
+                    <th>From</th>
+                    <th>TO</th>
+                    <th>Remark</th>
+              
+        
+                    </tr>
+                  </thead>
+                  <tbody>
+ {% for i in obchangetable %}
+                  <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{i.ipno.MR_Number.Medical_Record_Number}}</td>
+                    <td>{{i.ipno.MR_Number.Patient_Name}}</td>
+                    <td>{{i.change_date}}</td>
+                    <td>{{i.no_of_days_stayed}}</td>
+                    <td>{{i.from_room_or_ward_id}}</td>
+                    <td>{{i.to_room_or_ward_id}}</td>
+                    <td>{{i.remarks}}</td>
+                  </tr>
+                  
+
+  {% endfor %}
+                  </tbody>
+                 
+                </table>
+              </div>
+            </div>
+              <!-- /.card-body -->
+            </div>
+            <!-- /.card -->
+          </div>
+          <!-- /.col -->
+        </div>
+        <!-- /.row -->
+      </div>
+      <!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+  </div>
+ {% endblock %}

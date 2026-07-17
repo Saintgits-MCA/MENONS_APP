@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Treatment  Details </h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item">
+                {%if mntreatmnview == '1'%}
+                <a href="{% url 'treatmenttable'%}?menumanagement_id={{ idmngmnt }}">View All</a>
+              {%endif%}</li>
+              <li class="breadcrumb-item active">Treatment </li>
+            </ol>
+          </div>
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+
+      <div class="row">
+        <div class="col-md-8">
+          <div class="card card-primary">
+            <div class="card-header">
+              <h3 class="card-title">Treatment Master</h3>
+
+              <div class="card-tools">
+                <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                  <!-- <i class="fas fa-minus"></i> -->
+                </button>
+              </div>
+            </div>
+                 <form method="POST", action="{% url 'edittreatmentmaster' %}?menumanagement_id={{ idmngmnt }}">
+             
+                {% csrf_token %}
+    
+                <div class="card-body">
+                    <div class="form-group">
+                    <label for="exampleInputtreatmentName">Treatment Name</label><input type="hidden" name="trtmntmid" value="{{objedtrtmntmastr.id}}">
+                  <input type="text" class="form-control" id="exampleInputtreatmentName" name="treatmentname" placeholder="Enter Treatment Name" value="{{objedtrtmntmastr.Treatment_name}}">
+                  </div>
+                   <div class="form-group">
+                    <label for="exampleInputtreatmentrate">Rate</label>
+                   <input type="text" class="form-control" id="exampleInputtreatmentrate" name="rate" placeholder="Enter Rate" value="{{objedtrtmntmastr.Rate}}">
+                  </div>
+                  <div class="form-group">
+                    <label for="exampleInputdescripion">Description</label>
+                   <textarea class="form-control" name="description">
+                     {{objedtrtmntmastr.Description}}
+                   </textarea>
+                  </div>
+                  
+                 <div class="form-group">
+    <label for="exampleInputstatus">Status</label>
+    <br>
+    <input type="radio" value="active" name="status" id="activeRadio" {% if objedtrtmntmastr.Status == 'active' %}checked{% endif %}>
+    <label for="activeRadio">Active</label>
+    <input type="radio" value="inactive" name="status" id="inactiveRadio" {% if objedtrtmntmastr.Status == 'inactive' %}checked{% endif %}>
+    <label for="inactiveRadio">Inactive</label>
+</div>
+
+                
+                </div>
+             
+           
+                <div class="card-footer">
+                   {% if messages %}
+        {% for message in messages %}
+        <p style="color:green;">{{message}}</p> 
+        {% endfor %}
+        {% endif %}
+                  <button type="submit" class="btn btn-primary">Submit</button>
+                </div>
+              </form>         <!-- /.card-body -->
+          </div>
+          <!-- /.card -->
+        </div>
+     
+      </div>
+
+      
+    </section>
+    <!-- /.content -->
+  </div>
+{% endblock %}

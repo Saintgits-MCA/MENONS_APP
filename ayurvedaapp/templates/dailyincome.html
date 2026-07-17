@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<style>
+    table {
+        margin-top: 20px;
+    }
+    .graph {
+        margin-top: 30px;
+        text-align: center;
+    }
+    .card {
+        margin-bottom: 20px;
+        text-align: center;
+    }
+</style>
+
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+                    <h1>Daily Income Report Details</h1>
+                </div>
+                <div class="col-sm-6">
+                  <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item">
+                   <a href="{% url 'monthreport'%}">View All</a></li>
+                 <li class="breadcrumb-item active">Monthly </li>
+                </ol>
+            </div>
+        </div><!-- /.container-fluid -->
+      </section>
+  
+    <section class="content">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title">Daily Income Report</h3>
+                    </div>
+                    <!-- Form to select a date -->
+                    <form method="get" action="{% url 'dailyinc' %}">
+                        <div class="row">
+                           <div class="col-md-6"><div class="form-group ">
+                            <label for="report_date">Select Date</label>
+                            <input type="date" id="report_date" name="report_date" class="form-control" value="{{ selected_date }}">
+                       
+                        </div></div>
+                                
+                           
+                        </div>
+                        <div class="row">
+                            <div class="col-md-2 mt-3">
+                                <div class="form-group ">
+                                    <button type="submit" class="btn btn-primary">Generate Report</button>
+                                </div>
+                            </div>
+                        </div>
+                       
+                    </form>
+                    <!-- Report Summary in Cards -->
+                    <div class="container mt-4">
+                        <h5 style="color: blue;">Report for {{ selected_date }}</h5>
+                        <div class="row">
+                            <!-- Card for Walk-ins -->
+                            <div class="col-lg-3 col-6">
+                                <div class="card" style=" background-color: #ff80ff; ">
+                                    <div class="card-body" >
+                                        <h5 class="card-title">Walk-ins</h5>
+                                        <p class="card-text">{{ walkins_count }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Card for New Patients Consulted -->
+                            <div  class="col-lg-3 col-6">
+                                <div class="card" style=" background-color: #80ccff; ">
+                                    <div class="card-body" >
+                                        <h5 class="card-title">New Patients</h5>
+                                        <p class="card-text">{{ new_patient_count }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Card for Follow-ups -->
+                            <div  class="col-lg-3 col-6">
+                                <div class="card"style=" background-color:#ff80aa; ">
+                                    <div class="card-body" >
+                                        <h5 class="card-title">Follow-ups</h5>
+                                        <p class="card-text">{{ follow_up_count }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Card for Treatment Income -->
+                            <div  class="col-lg-3 col-6">
+                                <div class="card" style=" background-color: #af62fd; ">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Treatment Income</h5>
+                                        <p class="card-text">{{ treatment_income_total }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <!-- Card for Consultation Income -->
+                            <div  class="col-lg-3 col-6">
+                                <div class="card" style="background-color: #ff8080;">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Consultation Income</h5>
+                                        <p class="card-text">0</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Card for Med Income -->
+                            <div  class="col-lg-3 col-6">
+                                <div class="card" style="background-color: #b3d560;">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Medicine Income</h5>
+                                        <p class="card-text">{{ med_income_total }}</p>
+                                    </div>
+                                </div>
+                            </div> 
+                            <!-- Card for Tax Income -->
+                            <div  class="col-lg-3 col-6">
+                                <div class="card" style="background-color: #ce9ed3;">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Tax Collected</h5>
+                                        <p class="card-text">{{ total_tax_collected }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Card for Daily Closing -->
+                            <div  class="col-lg-3 col-6">
+                                <div class="card" style="background-color: #e7da3e;">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Daily Closing</h5>
+                                        <p class="card-text">{{ daily_closing_total }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-5">
+                        <h3 class="text-center">Income Breakdown</h3>
+                        <div class="text-center">
+                            <div id="container" style="width:70%;">
+                                <canvas id="income-chart" data-url="{% url 'generate_income_graph' selected_date %}"></canvas>
+                            </div>
+                              </div>
+                    </div>
+                    <!-- Displaying the Graph -->
+                    <!-- <div class="graph mt-5">
+                        <h3>Income Breakdown</h3>
+                        <img src="data:image/png;base64,{{ graph }}" alt="Income Graph" class="img-fluid" />
+                    </div> -->
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+<script>
+    $(document).ready(function () {
+        var $incomeChart = $("#income-chart");
+        var chartUrl = $incomeChart.data("url");
+        $.ajax({
+            url: chartUrl,
+            success: function (data) {
+                // Prepare Chart.js Data
+                var ctx = $incomeChart[0].getContext("2d");
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(data), // Data keys as labels
+                        datasets: [{
+                            label: 'Income',
+                            data: Object.values(data), // Data values for the chart
+                            backgroundColor: ['#007bff', '#28a745', '#ffc107', '#dc3545'], // Custom colors
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                    responsive: true,
+                    scales: {
+                        xAxes: [{
+                            barPercentage: 0.5, // Adjust bar width (lower is thinner)
+                            categoryPercentage: 0.6 // Space between bars (lower is wider spacing)
+                        }],
+                        yAxes: [{
+                            ticks: {
+                                beginAtZero: true
+                            }
+                        }]
+                    },
+                    title: {
+                        display: true,
+                        text: 'Income Breakdown'
+                    },
+                    legend: {
+                        display: false
+                    }
+                }
+                });
+            },
+            error: function (xhr, status, error) {
+                console.error("Error loading chart data:", error);
+                alert("Failed to load chart data. Please try again later.");
+            }
+        });
+    });
+</script>
+{% endblock %}

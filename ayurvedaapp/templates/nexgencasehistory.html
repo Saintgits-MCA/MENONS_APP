@@ -1,0 +1,525 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<!-- Styling for Form and Collapsible Sections -->
+<style>
+    h2 {
+        text-align: center;
+    }
+
+    label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+
+    input[type="text"], input[type="date"], input[type="number"], select, textarea {
+        width: 100%;
+        padding: 8px;
+        box-sizing: border-box;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+
+    textarea {
+        resize: vertical;
+    }
+
+    .button-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px; /* Space between buttons and content */
+    }
+
+    .collapsible {
+        background-color: #007BFF;
+        color: white;
+        cursor: pointer;
+        padding: 10px;
+        border: none;
+        text-align: center;
+        outline: none;
+        font-size: 16px;
+        margin-right: 10px; /* Space between buttons */
+        border-radius: 5px;
+        flex: 1; /* Allow buttons to take equal space */
+    }
+    .collapsible.active, .collapsible:hover {
+        background-color: #0056b3;
+    }
+    .content {
+        padding: 0 18px;
+        display: none; /* Initially hidden */
+        overflow: hidden;
+        border-radius: 5px;
+        margin-bottom: 20px;
+        border: 1px solid #ccc;
+    }                                                           
+</style>
+<!--  Content Wrapper. Contains page content -->
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Case History Details</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item">
+                            <!-- {% if ptdtmngview == '1' %} 
+                                <a href="{% url 'patientdetailtable' %}?menumanagement_id={{ idmngmnt }}">View All</a>
+                            {% endif %}                         -->
+                        </li>
+                        <li class="breadcrumb-item active">Patient Details</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Main content -->
+    <section>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title">Case History Details</h3>
+                    </div>
+                    <form id="patientDetailsForm" method="POST">
+                        {% csrf_token %}
+                        <div class="card-body">
+                            <h2>Patient Case History</h2>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                      <label for="mrSearch">MR Number/PhoneNo/Name</label>
+                                      <input type="text" id="mrSearch" class="form-control" placeholder="Type MR Number">
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mt-4"> 
+                                    <button type="button" id="searchBtn" class="btn btn-primary">Search</button>
+
+                                </div>
+                               </div>
+                         
+                <!-- Modal for displaying search results with DataTable -->
+                <div class="modal fade" id="searchModal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title" id="searchModalLabel">Search Results</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                        </div>
+                        <div class="modal-body">
+                        <!-- DataTable for displaying search results -->
+                            <table id="searchResultsTable" class="display table table-bordered">
+                                <thead>
+                                <tr>
+                                    <th>MR Number</th>
+                                    <th>Patient Name</th>
+                                    <th>Address</th>
+                                    <th>Contact No</th>
+                                    <th>Action</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <!-- Results will be appended here -->
+                                </tbody>
+                            </table>
+                        </div>                                                                         
+                        <div class="modal-footer">                                                                          
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+                            <div class="form-container">
+                                <!-- Collapsible Sections in Row -->
+                                <div class="button-row">
+                                    <button type="button" class="collapsible">Patient Information</button>
+                                    <!-- <button type="button" class="collapsible">Medical Information</button> -->
+                                    <button type="button" class="collapsible">Personal Information</button>
+                                    <button type="button" class="collapsible">Reports and Medical History</button>
+                                    <button type="button" class="collapsible">Follow-up History</button>               
+                                </div>
+                                <div class="content">
+                                    <div class="form-group">
+                                        <label for="mrDropdown">Selected MR Number/Patient</label>
+                                        <select id="mrDropdown" class="form-control">
+                                            <option selected disabled>Select</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="mrNumberField">MR Number</label>
+                                        <input type="hidden" id="pt_id" class="form-control" readonly>
+                                        <input type="text" id="mrNumberField" class="form-control" readonly>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="patientNameField">Patient Name</label>
+                                        <input type="text" id="patientNameField" class="form-control" readonly>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="contactNumberField">Contact Number</label>
+                                        <input type="text" id="contactNumberField" class="form-control" readonly>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="addressField">Address</label>
+                                        <input type="text" id="addressField" class="form-control" readonly>
+                                    </div>
+                                    
+                                    <div>
+                                        <label for="status">Status:</label>
+                                     
+                                        <select class="form-control"name="status">
+                                            <option value="Consulation">Consulation</option>
+                                            <option value="follow-up">Follow-up</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="followUpDate">Date:</label>
+                                        <input type="date" id="followUpDate" name="currentdate">
+                                    </div>
+                                </div>
+                                <!-- <div class="content">
+                                   
+                                    <div>
+                                        <label for="chiefComplaint">Chief Complaint:</label>
+                                        <textarea id="chiefComplaint" name="chiefComplaint"></textarea>
+                                    </div>
+                                    <div>
+                                        <label for="prescriptionDate">Prescription Date:</label>
+                                        <input type="date" id="prescriptionDate" name="prescriptionDate" readonly>
+                                    </div>
+                                    <div>
+                                        <label for="medsName">Meds Name:</label>
+                                        <input type="text" id="medsName" name="medsName">
+                                    </div>
+                                    <div>
+                                        <label for="count">Count:</label>
+                                        <input type="number" id="count" name="count">
+                                    </div> 
+                                    <div>
+                                        <label for="dosage">Dosage:</label>
+                                        <select id="dosage" name="dosage">
+                                            <option value="OD">OD (Once a Day)</option>
+                                            <option value="BD">BD (Twice a Day)</option>
+                                            <option value="TD">TD (Three Times a Day)</option>
+                                            <option value="other">Other</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="note">Notes:</label>
+                                        <textarea id="note" name="note"></textarea>
+                                    </div>
+                                    <div>
+                                        <label for="diet">Diet:</label>
+                                        <input type="text" id="diet" name="diet">
+                                    </div>
+                                </div> -->
+
+                                <div class="content">
+                                    {% if savecshstradd == '1'%}
+                                    <a id="savePatientLink" class="btn btn-secondary disabled">Add Patient Information</a>
+                                {%endif%}    <div>
+                                        <label for="age">Age:</label>
+                                        <input type="number" id="age" name="age">
+                                    </div>
+                                    <div>
+                                        <label for="height">Height (cm):</label>
+                                        <input type="number" id="height" name="height">
+                                    </div>
+                                    <div>
+                                        <label for="weight">Weight (kg):</label>
+                                        <input type="number" id="weight" name="weight">
+                                    </div>
+                                </div>
+                                <!-- -->
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="content">
+                                            <a id="savemedicalreportLink" class="btn btn-secondary disabled">Save Medical Information</a>
+                                           
+                                           <h6>Medical Report History</h6>
+                                            <table id="previousmedicalreportTable" class="table table-striped">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Date</th>
+                                                        <th>Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <!-- This tbody will be dynamically populated with prescription data -->
+                                                </tbody>
+                                            </table>
+                                            <!-- Your table inside the .content div -->
+                                            
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="content">
+                                    <div>
+                                        {% if savecshstradd == '1'%}
+                                        <a id="saveprescrptreportLink" class="btn btn-secondary disabled">Add Medical Information</a>
+                                    {%endif%}
+                                        <table >
+                                            <thead>
+                                                <tr>
+                                                    <th>Prescription Date</th>
+                                                    <th>Action{{previous_prescriptions}}</th>
+                                                </tr>
+                                            </thead>
+                                            <table id="previousPrescriptionsTable" class="table table-striped">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Date</th>
+                                                        <th>Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <!-- This tbody will be dynamically populated with prescription data -->
+                                                </tbody>
+                                            </table>
+                                </div>
+                                
+                            </div>
+                        </div>
+                        <!-- <div class="card-footer">
+                            {% if messages %}
+                                {% for message in messages %}
+                                    <p style="color:rgb(5, 66, 5);">{{ message }}</p>
+                                {% endfor %}
+                            {% endif %}
+                            <button type="submit" class="btn btn-primary">Submit</button>
+                        </div> -->
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+</div><!-- JavaScript for collapsibles -->
+<script>
+    // Auto select today's date for follow-up date and prescription date
+    document.getElementById('followUpDate').valueAsDate = new Date();
+     // document.getElementById('prescriptionDate').valueAsDate = new Date();
+    // Collapsible sections
+    var collapsibles = document.getElementsByClassName("collapsible");
+    var contents = document.getElementsByClassName("content");
+    for (var i = 0; i < collapsibles.length; i++) {
+        collapsibles[i].addEventListener("click", function() {
+            this.classList.toggle("active");
+            // Get the content corresponding to the clicked button
+            var index = Array.prototype.indexOf.call(collapsibles, this);
+            var content = contents[index];
+            if (content.style.display === "block") {
+                content.style.display = "none";
+            }
+            else {
+                // Hide all other contents
+                for (var j = 0; j < contents.length; j++) {
+                    contents[j].style.display = "none";
+                }
+                content.style.display = "block";
+            }
+        });
+    }
+</script>
+<script>
+    $(document).ready(function() {
+       // Initialize DataTable (without data initially)
+       let table = $('#searchResultsTable').DataTable({
+           paging: true,
+           searching: true,
+           info: true,
+           lengthChange: true,
+           pageLength: 10,
+       });
+   
+       // Search button click event
+       $('#searchBtn').on('click', function(event) {
+           event.preventDefault();
+           let query = $('#mrSearch').val();
+   
+           if (query.trim() === '') {
+               alert('Please enter a search term.');
+               return;
+           }
+   
+           // Clear previous table data
+           table.clear().draw();
+   
+           // Send AJAX request to search for the MR number
+           fetch(`/search_mrno?query=${query}`)
+               .then(response => response.json())
+               .then(data => {
+                   if (data.length > 0) {
+                       // Loop through search results and add them to the DataTable
+                       data.forEach(item => {
+                           let actionBtn = `<button type="button" class="btn btn-primary select-btn" data-id="${item.id}" 
+                                               data-name="${item.Patient_Name}" 
+                                               data-mrno="${item.Medical_Record_Number}" 
+                                               data-contact="${item.contactno}"
+                                               data-address="${item.Housename}">
+                                           Select
+                                         </button>`;
+                           table.row.add([
+                               item.Medical_Record_Number,
+                               item.Patient_Name,
+                               item.Housename || 'N/A',
+                               item.contactno,
+                               actionBtn
+                           ]).draw(false);
+                       });
+   
+                       // Show the modal after the data is populated
+                       $('#searchModal').modal('show');
+                   } else {
+                       alert('No results found for the query.');
+                   }
+               })
+               .catch(error => {
+                   console.error('Error fetching data:', error);
+               });
+       });
+   
+       // When selecting a patient from the search results
+       $('#searchResultsTable tbody').on('click', '.select-btn', function() {
+           let ptid = $(this).data('id');
+           let mrNo = $(this).data('mrno');
+           let patientName = $(this).data('name');
+           let contactNo = $(this).data('contact');
+           let address = $(this).data('address');
+           // Fill the selected patient data in the respective fields
+           $('#pt_id').val(ptid);
+           $('#mrNumberField').val(mrNo);
+           $('#patientNameField').val(patientName);
+           $('#contactNumberField').val(contactNo);
+           $('#addressField').val(address);
+           // Update the "Save Patient Information" link to redirect to the savepersonalinfo view
+           $('#savePatientLink')
+               .removeClass('disabled')  // Enable the button
+               .attr('href', `/savepersonalinfo?mrno=${mrNo}`);
+           // Fetch personal information for the selected patient
+           fetch(`/get_personal_info/${mrNo}`)
+               .then(response => response.json())
+               .then(data => {
+                   if (!data.error) {
+                       // Populate the personal info section
+                       $('#age').val(data.age);
+                       $('#height').val(data.height);
+                       $('#weight').val(data.weight);
+                   } else {
+                       alert('Personal information not found for this patient.');
+                   }
+               })
+               .catch(error => console.error('Error fetching personal info:', error));
+               $('#saveprescrptreportLink').removeClass('disabled');  // Enable the button
+               
+
+               fetch(`/viewcasehstrymedreport/${ptid}`)
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => {
+                            throw new Error(`Request failed with status ${response.status}: ${text}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Clear the current table body
+                    $('#previousmedicalreportTable tbody').empty();
+                    // Check if there are previous prescriptions
+                    if (!data.error && data.previous_prescriptions.length > 0) {
+                        data.previous_prescriptions.forEach(date => {
+                          
+
+                            // Append each prescription date as a new row in the table
+                            $('#previousmedicalreportTable tbody').append(`
+                                <tr>
+                                    <td class="prescription-date" data-mrnumber="${ptid}" data-date="${date}">${date}</td>
+                                    <td>
+                                        <a class="btn btn-primary" href="/medicalreport_details/${ptid}/${date}/">View</a>
+         </td>
+                                </tr>
+                            `);
+                        });
+                    } else {
+                        $('#previousmedicalreportTable tbody').append(`
+                            <tr>
+                                <td colspan="2">No previous prescriptions found.</td>
+                            </tr>
+                        `);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching Prescription info:', error);
+                    alert('An error occurred while fetching prescription information.');
+                });
+  // Fetch previous prescriptions for the selected patient
+
+  fetch(`/newview_previous_prescriptions/${ptid}`)
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => {
+                            throw new Error(`Request failed with status ${response.status}: ${text}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Clear the current table body
+                    $('#previousPrescriptionsTable tbody').empty();
+                    // Check if there are previous prescriptions
+                    if (!data.error && data.previous_prescriptions.length > 0) {
+                        data.previous_prescriptions.forEach(date => {
+                          
+
+                            // Append each prescription date as a new row in the table
+                            $('#previousPrescriptionsTable tbody').append(`
+                                <tr>
+                                    <td class="prescription-date" data-mrnumber="${ptid}" data-date="${date}">${date}</td>
+                                    <td>
+                                        <a class="btn btn-primary" href="/prescription_details/${ptid}/${date}/">View</a>
+         </td>
+                                </tr>
+                            `);
+                        });
+                    } else {
+                        $('#previousPrescriptionsTable tbody').append(`
+                            <tr>
+                                <td colspan="2">No previous prescriptions found.</td>
+                            </tr>
+                        `);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching Prescription info:', error);
+                    alert('An error occurred while fetching prescription information.');
+                });
+
+           // Set the href for the medical report saving link
+           $('#savemedicalreportLink')
+               .removeClass('disabled')  // Enable the button
+               .attr('href', `/savemedicalreport?mrno=${ptid}`);
+   
+           // Hide the modal after selecting a patient
+           $('#searchModal').modal('hide');
+       });
+   
+       // Handle the Save Patient Information link click
+       $('#savePatientLink').on('click', function(event) {
+           if ($(this).hasClass('disabled')) {
+               event.preventDefault();  // Prevent redirect if the link is disabled
+               alert('Please select a patient first.');
+           } else {
+               // Proceed with the redirect to the dynamically set href
+               window.location.href = $(this).attr('href');
+           }
+       });
+   });
+   </script>
+   
+{% endblock %}
+

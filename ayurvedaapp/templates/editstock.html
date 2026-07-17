@@ -1,0 +1,261 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Physical Stock Entry Details</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="{% url 'physicaltable'%}?menumanagement_id={{ idmngmnt }}">View All</a></li>
+              <li class="breadcrumb-item active">Store Stock</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+      <!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+
+      <div class="row">
+        <div class="col-md-12">
+          <div class="card card-primary">
+            <div class="card-header">
+              <h3 class="card-title">Physical Stock</h3>
+
+              <div class="card-tools">
+                <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                  <!-- <i class="fas fa-minus"></i> -->
+                </button>
+              </div>
+            </div>
+             <form method="POST", action="{% url 'editstock' %}">
+                {% csrf_token %}
+      <div class="row">
+          <div class="col-md-6">
+              <div class="card">
+             
+                <div class="card-body">
+                   <div class="form-group">
+                    <label for="exampleInputEmail1">Store</label>
+                    <select class="form-control" id="store" name="store" required>
+                        <option  selected disabled value="">Select</option>
+                           {% for i in stornm %}
+                                <option value="{{i.id}}" {% if i.id == objstock.storenm_id %}selected{% endif %}>{{i.storename}}</option>
+                            {% endfor %}
+                      </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="exampleInputEmail1">Supplier Name</label>
+                    <select class="form-control" id="spname" name="spname" readonly>
+                        <option  selected disabled value="">Select</option>
+                           {% for i in supplerdt %}
+                                <option value="{{i.id}}" {% if i.id == objstock.suppliernm_id %}selected{% endif %}>{{i.shopname}}</option>
+                            {% endfor %}
+                      </select>
+                  </div>
+                  
+                <div class="form-group">
+                  <label for="exampleInputEmail1"> Company</label>
+                  <select class="form-control" id="mdcompany" name="mdcompany" required>
+                      <option  selected disabled value="">Select</option>
+                         {% for i in companym %}
+                              <option value="{{i.id}}"  {% if i.id == objstock.Comapany_name_id %}selected{% endif %}>{{i.Comapany_name}}</option>
+                          {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                  <label for="exampleInputEmail1">Item</label>
+                  <select class="form-control" id="item" name="item" readonly>
+                      <option  selected disabled value="">Select</option>
+                         {% for i in     mdnm %}
+                              <option value="{{i.id}}"  {% if i.id == objstock.itemnm_id %}selected{% endif %}>{{i.itemnm}}</option>
+                          {% endfor %}
+                    </select>
+                    </div>
+                    <div class="form-group">
+                      <label for="exampleInputRegisterNo">Base Unit</label>
+                      <select class="form-control" id="bsunty" name="bsunty" required>
+                        <option selected disabled value="">--Select Base Unit--</option>
+                        {% for i in     unit %}
+                        <option value="{{i.id}}" {% if i.id == objstock.unt_id %}selected{% endif %}>{{i.unitname}}</option>
+                    {% endfor %}
+                    </select>
+                    </div>
+                 
+                </div>
+              </div>
+            </div>
+                
+              <div class="col-md-6">
+              <div class="card">
+           
+                <div class="card-body">
+                
+                      <div class="form-group">
+                    
+                    <label for="exampleInputHouse">Batch Number</label>
+                    <input type="hidden" class="form-control" name="stid" value="{{objstock.id}}" placeholder="Enter Batch Number" id="exampleInputbystname"required >
+                
+                    <input type="type" class="form-control" name="btchno" value="{{objstock.Batch_no}}" placeholder="Enter Batch Number" id="exampleInputbystname"required >
+                </div>
+                <!-- <div class="form-group">
+                    <label for="exampleInputPincode">Manufacture Date</label>
+                    <input type="text" class="form-control" name="mdate" value="{{ objstock.Manufacturer_date }}" placeholder="Enter Manufacture Date" required>
+                </div>
+                <div class="form-group">
+                    <label for="exampleInputPincode">Expiry Date</label>
+                    <input type="text" class="form-control" name="edate" value="{{ objstock.Expiry_date }}" placeholder="Enter Expiry Date" required>
+                </div>
+                 -->
+                 <input type="hidden" name="mdate" id="mdate_hidden">
+<input type="hidden" name="edate" id="edate_hidden">
+
+<!-- Month/Year inputs for user selection -->
+<div class="form-group">
+    <label for="exampleInputPincode">Manufacture Month/Year</label>
+    <input type="month" class="form-control" id="manufacture_date" name="manufacture_date_display" value="{{ objstock.Manufacturer_date|date:'Y-m' }}" required>
+</div>
+<div class="form-group">
+    <label for="exampleInputPincode">Expiry Month/Year</label>
+    <input type="month" class="form-control" id="expiry_date" name="expiry_date_display" value="{{ objstock.Expiry_date|date:'Y-m' }}" required>
+</div>
+
+
+
+                
+            <div class="form-group">
+              <label for="exampleInputPincode">Rate</label>
+              <input type="text" class="form-control" name="rate" value="{{objstock.Rate}}"  placeholder="Enter Price" id="exampleInputbystname" required>
+            
+          </div>
+          <div class="form-group">
+            <label for="exampleInputPincode">Quantity</label>
+            <input type="text" class="form-control" name="qnty" value="{{objstock.qty}}"  placeholder="Enter Quantity" id="exampleInputbystname" required>
+          
+        </div>
+
+                </div>
+              </div>
+            </div>
+          </div>
+          {% if message %}
+             <p style="color:red;">{{message}}</p> 
+          {% endif %}
+                <div class="card-footer">
+                    {% if messages %}
+                            {% for message in messages %}
+                            <p style="color:green;">{{message}}</p> 
+                            {% endfor %}
+                    {% endif %}
+                  <button type="submit" class="btn btn-primary">Submit</button>
+                
+                </div>
+              </form>
+            <!-- /.card-body -->
+          </div>
+          <!-- /.card -->
+        </div>
+     
+      </div>
+
+      
+    </section>
+    <!-- /.content -->
+  </div>
+  <!-- /.content-wrapper -->
+
+  <script>
+      $(document).ready(function() {
+          $('#item').change(function() {
+              var itemId = $(this).val();
+              $.ajax({
+                  url: '/get_base_units/',
+                  type: 'GET',
+                  data: { item_id: itemId },
+                  success: function(response) {
+
+                      $('#bsunty').html('<option value="' + response.itmbsid + '">' + response.base_unit + ' (' + response.base_quantity + ')' + '</option>');
+                  },
+                  error: function(xhr, status, error) {
+                      console.error(xhr.responseText);
+                  }
+              });
+          });
+          
+      });
+  </script>
+  
+    <script>
+        $(document).ready(function() {
+            $('#spname').change(function() {
+                var spnameid = $(this).val();
+                $.ajax({
+                    url: '/get_supplierdetails/',
+                    type: 'GET',
+                    data: { spnameid: spnameid },
+                    success: function(response) {
+   $('#cno').val(response.cno);
+
+   
+                    },
+                    error: function(xhr, status, error) {
+                        console.error(xhr.responseText);
+                    }
+                });
+            });
+            $('form').on('submit', function(e) {
+        let mdateVal = $('#manufacture_date').val();
+        let edateVal = $('#expiry_date').val();
+        
+        // Validate month/year format
+        if (!mdateVal || !/^\d{4}-\d{2}$/.test(mdateVal)) {
+            alert('Please select a valid Manufacture Month/Year');
+            e.preventDefault();
+            $('#manufacture_date').focus();
+            return false;
+        }
+        if (!edateVal || !/^\d{4}-\d{2}$/.test(edateVal)) {
+            alert('Please select a valid Expiry Month/Year');
+            e.preventDefault();
+            $('#expiry_date').focus();
+            return false;
+        }
+        
+        // Set hidden fields with full date (YYYY-MM-DD)
+        $('#mdate_hidden').val(mdateVal + '-01');
+        $('#edate_hidden').val(edateVal + '-01');
+          // Set the formatted dates in the input fields
+  document.getElementById('mdate').value = formatDate('{{ objstock.Manufacturer_date }}');
+  document.getElementById('edate').value = formatDate('{{ objstock.Expiry_date }}');
+    });
+        });
+    </script>
+   
+<script>
+  // Function to format date as MM/DD/YYYY
+  function formatDate(date) {
+      var d = new Date(date);
+      var month = '' + (d.getMonth() + 1);
+      var day = '' + d.getDate();
+      var year = d.getFullYear();
+
+      if (month.length < 2) month = '0' + month;
+      if (day.length < 2) day = '0' + day;
+
+      return [year, month, day].join('-'); // Format as YYYY-MM-DD
+  }
+
+</script>
+
+ {% endblock %}

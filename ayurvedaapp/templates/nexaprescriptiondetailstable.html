@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<body>
+    <div class="content-wrapper">
+        <!-- Content Header (Page header) -->
+        <section class="content-header">
+            <div class="container-fluid">
+                <div class="row mb-2">
+                    <div class="col-sm-6">
+                        <h1>Prescription</h1>
+                    </div>
+                    <div class="col-sm-6">
+                        <ol class="breadcrumb float-sm-right">
+                            <li class="breadcrumb-item"><a href="#">Home</a></li>
+                            <li class="breadcrumb-item active">Prescription</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <section class="content">
+            <div class="row">
+              <div class="col-md-12">
+                <div class="card card-primary">
+                  <div class="card-header">
+                    <h3 class="card-title">Prescription Details for MR No: {{ mrno }} on {{ date }}</h3>
+                 
+                    <div class="card-tools">
+                      <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                        <!-- <i class="fas fa-minus"></i> -->
+                      </button>
+                    </div>
+                  </div>
+                
+                <div class="row">
+                   <div class="col-md-12" >
+                    <div class="card">
+                      <div class="card-body" >
+    {% if prescriptions %}
+        <table id="example1" class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>Complaint</th>
+                    <th>Diet</th>
+                    <th>Count</th>
+                    <th>Medicine Name</th>
+                    <th>Dosage</th>
+                    <th>Direction</th>
+                    <th>Note</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for prescription in prescriptions %}
+                <tr>
+                    <td>{{ prescription.complaint }}</td>
+                    <td>{{ prescription.diet }}</td>
+                    <td>{{ prescription.count }}</td>
+                    <td>{{ prescription.medicinename.itemnm }}</td>
+                    <td>{{ prescription.dosage }}</td>
+                    <td>{{ prescription.direction }}</td>
+                    <td>{{ prescription.note }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No prescriptions found for this date.</p>
+    {% endif %}
+    <!-- Adjust link to go back to previous page -->
+    {%if idmngmnt %}
+    <a href="{% url 'savecasehistory'%}?menumanagement_id={{ idmngmnt }}">Back</a></li>
+  {%endif%}                                       
+    <!-- <a href="{% url 'newview_previous_prescriptions' mrno=mrno  %}">Back</a> -->                                
+     </div>
+     </div>
+     </div>
+     </div>
+     </form>
+     </div>
+     </div>
+     </div>
+     </section></div>
+     
+
+{% endblock %}

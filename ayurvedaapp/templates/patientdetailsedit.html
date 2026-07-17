@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Patient Details</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{% url 'patientdetailtable' %}?menumanagement_id={{ idmngmnt}}">View All</a></li>
+                        <li class="breadcrumb-item active">Patient Details</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title">Patient Details</h3>
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                                <!-- <i class="fas fa-minus"></i> -->
+                            </button>
+                        </div>
+                    </div>
+                    <form method="POST" action="{% url 'editpatientdetails' %}">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card-body">
+                                    <div class="form-group">
+                                        <label for="exampleInputFirstName">Patient Name</label>
+                                        <input type="hidden" name="patientid" value="{{ objedpatint.id }}">
+                                        <input type="text" class="form-control" id="exampleInputpatientname" name="patientname" placeholder="Enter Patient Name" value="{{ objedpatint.Patient_Name }}">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="exampleInputEmail1">Age</label>
+                                        <input type="text" class="form-control" id="exampleInputage" name="age" placeholder="Enter Age" value="{{ objedpatint.Age }}">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="exampleInputManagerName">Gender</label><br>
+                                        <input type="radio" value="Male" name="gender" id="genderMale" {% if objedpatint.Gender == 'Male' %}checked{% endif %}>
+                                        <label for="genderMale">Male</label>
+                                        <input type="radio" value="Female" id="genderFemale" name="gender" {% if objedpatint.Gender == 'Female' %}checked{% endif %}>
+                                        <label for="genderFemale">Female</label>
+                                        <input type="radio" value="Others" id="genderOthers" name="gender" {% if objedpatint.Gender == 'Others' %}checked{% endif %}>
+                                        <label for="genderOthers">Others</label>
+                                    </div>
+                                   <div class="form-group">
+                    <label for="exampleInputHouse">Address</label>
+                  <textarea id="address" class="form-control" name="address">{{ objedpatint.address }}</textarea>
+                  </div>
+                                    <!-- <div class="form-group">
+                                        <label for="exampleInputPincode">House Name</label>
+                                        <input type="text" class="form-control" id="exampleInputhousename" name="housename" placeholder="Enter House Name" value="{{ objedpatint.Housename }}">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="exampleInputPincode">Pincode</label>
+                                        <input type="text" class="form-control" id="exampleInputPincode" name="pincode" placeholder="Enter Pincode" value="{{ objedpatint.Pincode }}">
+                                    </div> -->
+                                    <div class="form-group">
+                                        <label for="exampleInputemail">Email</label>
+                                        <input type="text" class="form-control" id="exampleInputemail" name="email" placeholder="Enter Email" value="{{ objedpatint.Email }}">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="exampleInputContactNo">Contact no</label>
+                                        <input type="text" class="form-control" id="exampleInputcontactnumber" name="contactnumber" placeholder="Enter Contact no" value="{{ objedpatint.contactno }}">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card-body">
+                                    <div class="form-group">
+                                        <label for="exampleInputRegisterNo">Country</label>
+                                        <select class="form-control" name="country">
+                                            <option value="">Select</option>
+                                            {% for i in countryobj %}
+                                                <option value="{{ i.id }}" {% if i.id == objedpatint.country_id %}selected{% endif %}>{{ i.Country_Name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="exampleInputRegisterNo">State</label>
+                                        <select class="form-control" name="state">
+                                            <option value="">Select</option>
+                                            {% for i in stateobj %}
+                                                <option value="{{ i.id }}" {% if i.id == objedpatint.state_id %}selected{% endif %}>{{ i.State_Name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="exampleInputRegisterNo">District</label>
+                                        <input type="text" class="form-control" id="exampleInputCity" name="district" value="{{ objedpatint.district }}"placeholder="Enter district">
+                                    </div>
+                                    <!-- <div class="form-group">
+                                        <label for="exampleInputRegisterNo">City</label>
+                                        <input type="text" class="form-control" id="exampleInputcity" name="city" value="{{ objedpatint.city }}">
+                                    </div> -->
+                                    <div class="form-group">
+                                        <label for="exampleInputContactNo">Date</label>
+                                        <input type="date" class="form-control" id="exampleInputdate" name="date" value="{{ objedpatint.Date|date:'Y-m-d' }}">
+                                    </div>
+                                   <div class="form-group">
+                                        <label>Branch</label>
+                                        {% if stdesign == 9 %}
+                                            <select class="form-control" name="branch">
+                                                <option value="">Select Branch</option>
+                                                {% for branch in branchobj %}
+                                                    <option value="{{ branch.id }}" {% if branch.id == objedpatint.Branch_Name_id %}selected{% endif %}>
+                                                        {{ branch.Branch_Name }}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                        {% else %}
+                                            <input type="text" class="form-control" value="{{ objedpatint.Branch_Name.Branch_Name }}" readonly>
+                                            <input type="hidden" name="branch" value="{{ objedpatint.Branch_Name_id }}">
+                                        {% endif %}
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Consultation Type</label><br>
+
+                                        <input type="radio" value="offline" name="consultation_type"
+                                            {% if objedpatint.consultation_type == 'offline' %}checked{% endif %}>
+                                        <label>Offline</label>
+
+                                        <input type="radio" value="online" name="consultation_type"
+                                            {% if objedpatint.consultation_type == 'online' %}checked{% endif %}>
+                                        <label>Online</label>
+                                    </div>
+                                    <!-- <div class="form-group">
+                                        <label for="exampleInputManagerName">Status</label><br>
+                                        <input type="radio" value="active" name="status" id="statusActive" {% if objedpatint.Status == 'active' %}checked{% endif %}>
+                                        <label for="statusActive">Op</label>
+                                        <input type="radio" value="inactive" id="statusInactive" name="status" {% if objedpatint.Status == 'inactive' %}checked{% endif %}>
+                                        <label for="statusInactive">Ip</label>
+                                    </div> -->
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            {% if messages %}
+                                {% for message in messages %}
+                                    <p style="color:green;">{{ message }}</p>
+                                {% endfor %}
+                            {% endif %}
+                            <button type="submit" class="btn btn-primary">Submit</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

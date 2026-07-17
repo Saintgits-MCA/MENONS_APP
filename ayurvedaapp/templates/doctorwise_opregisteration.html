@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="content-wrapper">
+
+    <!-- Header -->
+    <section class="content-header">
+        <div class="container-fluid">
+
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Doctor Wise OP Registration</h1>
+                </div>
+            </div>
+
+            <!-- Filter -->
+            <div class="card">
+                <div class="card-body">
+                    <form method="GET" action="" id="filterForm">
+                        <div class="row">
+                            <div class="col-lg-2 col-md-4">
+                                <div class="form-group">
+                                    <label>From Date</label>
+                                    <input type="date" class="form-control" name="from_date" value="{{ from_date }}" id="fromDate">
+                                </div>
+                            </div>
+
+                            <div class="col-lg-2 col-md-4">
+                                <div class="form-group">
+                                    <label>To Date</label>
+                                    <input type="date" class="form-control" name="to_date" value="{{ to_date }}" id="toDate">
+                                </div>
+                            </div>
+
+                            <div class="col-lg-2 col-md-4">
+                                <div class="form-group">
+                                    <label>Doctor Name</label>
+                                    <select class="form-control" name="doctor" id="doctorFilter">
+                                        <option value="">All Doctors</option>
+                                        {% for doctor in doctors %}
+                                        <option value="{{ doctor.id }}" {% if doctor_id == doctor.id|stringformat:"s" %}selected{% endif %}>
+                                            {{ doctor.name }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-2 col-md-4">
+                                <div class="form-group">
+                                    <label>Type</label>
+                                    <select class="form-control" name="visit_type" id="visitTypeFilter">
+                                        <option value="">All</option>
+                                        <option value="New" {% if visit_type == 'New' %}selected{% endif %}>New</option>
+                                        <option value="Renew" {% if visit_type == 'Renew' %}selected{% endif %}>Renew</option>
+                                        <option value="Visit" {% if visit_type == 'Visit' %}selected{% endif %}>Visit</option>
+                                        <option value="Cc" {% if visit_type == 'Cc' %}selected{% endif %}>Cc</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-2 col-md-6">
+                                <div class="form-group">
+                                    <label>&nbsp;</label>
+                                    <button type="submit" class="btn btn-primary btn-block">
+                                        <i class="fas fa-search"></i> Search
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-2 col-md-6">
+                                <div class="form-group">
+                                    <label>&nbsp;</label>
+                                    <button type="button" class="btn btn-secondary btn-block" onclick="resetFilters()">
+                                        <i class="fas fa-undo"></i> Reset
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Report -->
+    <section class="content">
+        <div class="container-fluid">
+
+            <div class="card">
+                <div class="card-body">
+                    <!-- Report Header -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h5 class="mb-0 font-weight-bold">Doctor Wise OP Registration</h5>
+                            <small class="text-muted">
+                                Period: {% if from_date and to_date %}
+                                    {{ from_date|date:"d-M-Y" }} to {{ to_date|date:"d-M-Y" }}
+                                {% elif from_date %}
+                                    From {{ from_date|date:"d-M-Y" }}
+                                {% elif to_date %}
+                                    To {{ to_date|date:"d-M-Y" }}
+                                {% else %}
+                                    {{ today|date:"d-M-Y" }}
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="scroll">
+                        <table class="table table-bordered table-striped" id="example1">
+                            <thead>
+                                <tr>
+                                    <th>Sl.No</th>
+                                    <th>Doctor Name</th>
+                                    <th>MR No</th>
+                                    <th>Time</th>
+                                    <th>Token</th>
+                                    <th>Patient Details</th>
+                                    <th class="text-right">Reg.Fees</th>
+                                    <th class="text-right">Cons.Fees</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                {% if reg_data %}
+                                    {% for item in reg_data %}
+                                    <tr>
+                                        <td>{{ forloop.counter }}</td>
+                                        <td>{{ item.doctor_name }}</td>
+                                        <td>{{ item.op_number }}</td>
+                                        <td>{{ item.time }}</td>
+                                        <td>{{ item.token }}</td>
+                                        <td>{{ item.patient_details }}</td>
+                                        <td class="text-right">{{ item.reg_fees|floatformat:2 }}</td>
+                                        <td class="text-right">{{ item.cons_fees|floatformat:2 }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="8" class="text-center text-muted py-3">
+                                            No registration records found for the selected period
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+
+                            <tfoot>
+                                <tr class="font-weight-bold">
+                                    <td colspan="5">
+                                        Sub Total
+                                    </td>
+                                    <td class="text-center">
+                                        {{ total_count }}
+                                    </td>
+                                    <td class="text-right">
+                                        {{ total_reg_fees|floatformat:2 }}
+                                    </td>
+                                    <td class="text-right">
+                                        {{ total_cons_fees|floatformat:2 }}
+                                    </td>
+                                </tr>
+                            </tfoot>
+
+                        </table>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+</div>
+
+
+<script>
+function resetFilters() {
+    document.getElementById('fromDate').value = '';
+    document.getElementById('toDate').value = '';
+    document.getElementById('doctorFilter').value = '';
+    document.getElementById('visitTypeFilter').value = '';
+    document.getElementById('filterForm').submit();
+}
+</script>
+{% endblock %}

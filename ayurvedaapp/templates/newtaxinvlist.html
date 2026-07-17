@@ -1,0 +1,283 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Invoice Details</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <!-- <li class="breadcrumb-item"><a href="{% url 'displayenquiry'%}">View All</a></li> -->
+              <li class="breadcrumb-item active">Invoice </li>
+            </ol>
+          </div>
+        </div>
+      </div>
+      <!-- /.container-fluid -->
+    </section>
+    <!-- Main content -->
+    <section class="content">
+      <div class="row">
+        <div class="col-md-12">
+          <div class="card card-primary">
+            <div class="card-header">
+              <h3 class="card-title">Invoice Details</h3>
+              <div class="card-tools">
+                <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                  
+                </button>
+              </div>
+            </div>
+            <form method="POST", action="{% url 'newtaxinvlist' %}">
+            
+                {% csrf_token %}
+      <div class="row">
+          <div class="col-md-12">
+              <div class="card">
+             
+                <div class="card-body">
+                    <div class="row">
+                    <div class="col-md-6">
+                  <div class="form-group ">
+                    <label for="exampleInputRegisterNo">Start Date</label>
+                   <input type="date" class="form-control" name="sdate" id="exampleInputdate" required>
+              </div>
+        </div>
+              <div class="col-md-6">
+                      <div class="form-group">
+                          <label for="exampleInputRegisterNo">End Date</label>
+                          <input type="date" class="form-control" name="edate" id="exampleInputdate" required>
+
+                      </div>
+                  </div>
+                </div>
+                 
+               
+              </div>
+            </div>
+                <!-- /.card-body -->
+             
+          </div>
+          </div>
+        
+                <div class="card-footer">
+                  
+                  <button type="submit" class="btn btn-primary">Submit</button>
+                
+                </div>
+              </form>
+            <!-- /.card-body -->
+          </div>
+          <!-- /.card -->
+        </div>
+     
+      </div>
+
+      
+    </section>
+    
+    <!-- Main content -->
+    <section class="content">
+     
+        <div class="container-fluid">
+          <div class="row">
+            <div class="col-12">
+              
+              <!-- /.card -->
+  
+              <div class="card">
+             <div class="scroll">
+                <!-- /.card-header -->
+               
+                <div class="card-body">
+                  <!-- SUMMARY -->
+<div class="row text-center mb-4">
+
+  <div class="col-md-3">
+    <div class="alert alert-info">
+      <h6>Total Invoices</h6>
+      <h4>{{ total_invoice_count }}</h4>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="alert alert-success">
+      <h6>Active Invoices</h6>
+      <h4>{{ active_invoice_count }}</h4>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="alert alert-danger">
+      <h6>Cancelled Invoices</h6>
+      <h4>{{ inactive_invoice_count }}</h4>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="alert alert-secondary">
+      <h6>Total Amount</h6>
+      <h4>₹ {{ active_total_amount|add:inactive_total_amount|floatformat:2 }}</h4>
+    </div>
+  </div>
+
+</div>
+
+<div class="row text-center mb-4">
+
+  <div class="col-md-6">
+    <div class="alert alert-success">
+      <h6>Active Invoice Amount</h6>
+      <h4>₹ {{ active_total_amount|floatformat:2 }}</h4>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="alert alert-danger">
+      <h6>Cancelled Invoice Amount</h6>
+      <h4>₹ {{ inactive_total_amount|floatformat:2 }}</h4>
+    </div>
+  </div>
+
+</div>
+
+                 <!-- Replace the table column for payment mode display -->
+<table id="example1" class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <center>
+                {% if total_amount %}
+                <h5>
+                    {% if sdate and edate %}
+                    Total Invoice Amount ({{ sdate }} to {{ edate }}):
+                    {% else %}
+                    Total Invoice Amount:
+                    {% endif %}
+                    {{ total_amount|floatformat:2 }}
+                </h5>
+                {% endif %}
+            </center>
+            <th>SL No</th>
+            <th>Invoice No</th>
+            <th>Patient Name</th>
+            <th>Total Amount</th>
+            <th>Date</th>
+            <th>Payment Mode</th>  <!-- New Column -->
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for i in inv %}
+        <tr>
+            <td>{{ forloop.counter}}</td>
+            <td>{{ i.Invoicenumber }}</td>
+            <td>{{ i.patientname }}</td>
+            <td>₹{{ i.total }}</td>
+            <td>{{ i.currentdate }}</td>
+            
+            <!-- Payment Mode Badge Column -->
+            <td>
+                {% if i.payementmode == 'Cash' %}
+                <span class="badge bg-success">Cash</span>
+                {% elif i.payementmode == 'Card' %}
+                <span class="badge bg-primary">Card</span>
+                {% elif i.payementmode == 'GPay' %}
+                <span class="badge bg-info">GPay</span>
+                {% elif i.payementmode == 'Mixed' %}
+                <span class="badge bg-warning">Mixed</span>
+                    {% if i.cash_amount and i.cash_amount != '0' %}
+                    <small class="text-success d-block">Cash: ₹{{ i.cash_amount }}</small>
+                    {% endif %}
+                    {% if i.gpay_amount and i.gpay_amount != '0' %}
+                    <small class="text-info d-block">GPay: ₹{{ i.gpay_amount }}</small>
+                    {% endif %}
+                    {% if i.card_amount and i.card_amount != '0' %}
+                    <small class="text-primary d-block">Card: ₹{{ i.card_amount }}</small>
+                    {% endif %}
+                {% elif i.payementmode == 'Online Transfer' %}
+                <span class="badge bg-secondary">Online</span>
+                {% elif i.payementmode == 'Cheque' %}
+                <span class="badge bg-dark">Cheque</span>
+                {% else %}
+                <span class="badge bg-secondary">{{ i.payementmode|default:"N/A" }}</span>
+                {% endif %}
+                
+            </td>
+            
+            <td>
+                <a href="{% url 'newtaxinvview' %}?ids={{ i.id }}">
+                    <button class="btn btn-primary btn-sm">View</button>
+                </a>
+                
+                <!-- EDIT (only if active) -->
+               {% if stdesign == 9 %}  
+        {% if i.restockstatus %}
+        <a href="{% url 'newtaxinvedit' %}?ids={{ i.id }}">
+            <button class="btn btn-info btn-sm">Edit</button>
+        </a>
+        {% endif %}
+    {% endif %}
+                {% if stdesign == 2 or stdesign == 9  %}
+                {% if i.restockstatus %}
+                <!-- Active invoice: show Cancel button -->
+                <button class="btn btn-warning btn-sm" onclick="confirmCancellationAndRestock('{{ i.Invoicenumber }}')">
+                    Cancel
+                </button>
+                {% else %}
+                <!-- Already cancelled -->
+                <button class="btn btn-danger btn-sm" disabled>Cancelled</button>
+                {% endif %}
+                {% else %}
+                {% if not i.restockstatus %}
+                <!-- Non-admins see a Cancelled label if it's cancelled -->
+                <button class="btn btn-danger btn-sm" disabled>Cancelled</button>
+                {% endif %}
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+                </div>
+              </div>
+                <!-- /.card-body -->
+              </div>
+              <!-- /.card -->
+            </div>
+            <!-- /.col -->
+          </div>
+          <!-- /.row -->
+        </div>
+        <!-- /.container-fluid -->
+      </section>
+    <!-- /.content -->
+  </div>
+  
+ <script>
+ 
+    function confirmCancellationAndRestock(invoiceNumber) {
+        if (confirm('Are you sure you want to cancel invoice ' + invoiceNumber + '?')) {
+            if (confirm('Do you want to restock?')) {
+                // Proceed with restocking action
+                window.location.href = '{% url 'cancel_newtaxinvoice' %}?ids=' + invoiceNumber;
+            } else {
+                // Proceed with cancellation action
+                 }
+        } else {
+            // Do nothing
+        }
+    }
+
+</script>
+
+  <!-- /.content-wrapper -->
+  
+ {% endblock %}

@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Asset Management</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item">
+                            {% if assetview == '1' %}
+                                <a href="{% url 'asset_transfer_list' %}?menumanagement_id={{ idmngmnt }}">Transfer List</a>
+                            {% endif %}
+                        </li>
+                        <li class="breadcrumb-item active">Edit Transfer - {{ transfer.transfer_number }}</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title">Edit Transfer: {{ transfer.transfer_number }}</h3>
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                <!-- <i class="fas fa-minus"></i> -->
+                            </button>
+                        </div>
+                    </div>
+                   
+                    <form method="POST" action="{% url 'asset_transfer_edit' %}?id={{ transfer.id }}&menumanagement_id={{ idmngmnt }}">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <!-- Asset Information -->
+                                        <div class="form-group">
+                                            <label>Transfer Number</label>
+                                            <input type="text" class="form-control" value="{{ transfer.transfer_number }}" disabled>
+                                            <small class="text-muted">Transfer number cannot be changed</small>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Asset</label>
+                                            <input type="text" class="form-control" value="{{ transfer.asset.asset_id }} - {{ transfer.asset.asset_name }}" disabled>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label>Branch <span class="text-danger">*</span></label>
+                                            <select name="branch" class="form-control" readonly>
+                                                <option value="">Select Branch</option>
+                                                {% for branch in branches %}
+                                                <option value="{{ branch.id }}" {% if transfer.branch.id == branch.id %}selected{% endif %}>
+                                                    {{ branch.Branch_Name }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <!-- Department Details -->
+                                        <div class="form-group">
+                                            <label>From Department <span class="text-danger">*</span></label>
+                                            <select name="from_department" class="form-control" required>
+                                                <option value="">Select From Department </option>
+                                                {% for dept in departments %}
+                                                <option value="{{ dept.id }}" {% if transfer.from_department.id == dept.id %}selected{% endif %}>
+                                                    {{ dept.Department_Name }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>To Department <span class="text-danger">*</span></label>
+                                            <select name="to_department" class="form-control" required>
+                                                <option value="">Select To Department</option>
+                                                {% for dept in departments %}
+                                                <option value="{{ dept.id }}" {% if transfer.to_department.id == dept.id %}selected{% endif %}>
+                                                    {{ dept.Department_Name }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <!-- Transfer Details -->
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <label>Received By</label>
+                                                    <input type="text" class="form-control" name="received_by" value="{{ transfer.received_by|default:'' }}" placeholder="Name of the receiver">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <label>Transfer Date <span class="text-danger">*</span></label>
+                                                    <input type="date" class="form-control" name="transfer_date" value="{{ transfer.transfer_date|date:'Y-m-d' }}" required>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <label>Remarks</label>
+                                                    <input type="text" class="form-control" name="remarks" value="{{ transfer.remarks|default:'' }}" placeholder="Enter remarks (optional)">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card-footer">
+                            {% if messages %}
+                                {% for message in messages %}
+                                    <p style="color:green;">{{ message }}</p>
+                                {% endfor %}
+                            {% endif %}
+                            {% if assetedit == '1' %}
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Update Transfer
+                                </button>
+                                <a href="{% url 'asset_transfer_list' %}?menumanagement_id={{ idmngmnt }}" class="btn btn-secondary">
+                                    <i class="fas fa-times"></i> Cancel
+                                </a>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+{% endblock %}

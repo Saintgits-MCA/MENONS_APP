@@ -1,0 +1,1356 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<style>
+  :root {
+    --hospital-green: #1f8f5f;
+    --hospital-green-soft: #e8f7ef;
+    --hospital-border: #d7ded8;
+    --hospital-bg: #f3f6f4;
+    --field-border: #9cccad;
+    --label-color: #244438;
+  }
+
+  textarea{
+    resize:none;
+  }
+  .patient-registration-page {
+    background: var(--hospital-bg);
+    color: #1f2d28;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 14px;
+  }
+
+  .registration-tabs-card {
+    border: 1px solid var(--hospital-border);
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 6px 20px rgba(31, 54, 43, .06);
+    overflow: hidden;
+  }
+
+  .registration-tabs-card .nav-tabs {
+    background: #f8faf9;
+    border-bottom: 1px solid var(--hospital-border);
+    padding-left: 12px;
+  }
+
+  .registration-tabs-card .nav-tabs .nav-link {
+    border: 0;
+    border-radius: 0;
+    color: #415b50;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 12px 20px;
+  }
+
+  .registration-tabs-card .nav-tabs .nav-link.active {
+    color: #126442;
+    background: #fff;
+    border-top: 3px solid var(--hospital-green);
+    border-left: 1px solid var(--hospital-border);
+    border-right: 1px solid var(--hospital-border);
+  }
+
+  .death-tab-panel,
+  .birth-tab-panel {
+    padding: 18px;
+  }
+
+  .death-column,
+  .birth-column {
+    border: 1px solid #dfe7e2;
+    border-radius: 7px;
+    background: #fff;
+    padding: 14px;
+    min-height: 100%;
+  }
+
+  .death-column-title,
+  .birth-column-title {
+    margin: 0 0 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e4ebe6;
+    color: #176044;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .death-tab-panel .form-group,
+  .birth-tab-panel .form-group {
+    margin-bottom: 10px;
+  }
+
+  .death-tab-panel label,
+  .death-tab-panel .field-label,
+  .birth-tab-panel label,
+  .birth-tab-panel .field-label {
+    margin-bottom: 4px;
+    color: var(--label-color);
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .death-tab-panel .form-control,
+  .birth-tab-panel .form-control {
+    min-height: 34px;
+    border-color: #b7c7bd;
+    border-radius: 5px;
+    background: #fff;
+    font-size: 13px;
+  }
+
+  .death-tab-panel textarea.form-control,
+  .birth-tab-panel textarea.form-control {
+    min-height: auto;
+  }
+
+  .death-tab-panel .form-control:focus,
+  .birth-tab-panel .form-control:focus {
+    border-color: var(--hospital-green);
+    box-shadow: 0 0 0 .16rem rgba(31, 143, 95, .14);
+  }
+
+  .death-tab-panel .input-group-text,
+  .death-tab-panel .btn,
+  .birth-tab-panel .input-group-text,
+  .birth-tab-panel .btn {
+    min-height: 34px;
+    border-radius: 5px;
+  }
+
+  .small-square-btn {
+    width: 36px;
+    padding-left: 0;
+    padding-right: 0;
+    font-weight: 700;
+  }
+
+  .compact-checks {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px 12px;
+    margin-bottom: 12px;
+  }
+
+  .death-tab-panel .custom-control-label,
+  .birth-tab-panel .custom-control-label {
+    color: #263c33;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .age-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .section-caption {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 14px;
+    color: #176044;
+    font-weight: 700;
+    font-size: 15px;
+  }
+
+  .photo-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding-top: 4px;
+  }
+
+  .photo-preview {
+    width: 150px;
+    height: 180px;
+    border: 1px solid #9cb9aa;
+    border-radius: 7px;
+    background: #f6faf8;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+  }
+
+  .photo-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: none;
+  }
+
+  .photo-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    color: #668276;
+    font-size: 12px;
+    text-align: center;
+  }
+
+  .photo-empty i {
+    font-size: 32px;
+    color: #579776;
+  }
+
+  .common-photo-card {
+    border: 1px solid var(--hospital-border);
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 6px 20px rgba(31, 54, 43, .06);
+    padding: 18px;
+    text-align: center;
+  }
+
+  .save-bar {
+    display: flex;
+    justify-content: center;
+    padding: 18px 0;
+  }
+
+  .btn-hospital {
+    background-color: var(--hospital-green);
+    border-color: var(--hospital-green);
+    color: #fff;
+  }
+
+  .btn-hospital:hover,
+  .btn-hospital:focus {
+    background-color: #176d49;
+    border-color: #176d49;
+    color: #fff;
+  }
+
+  .patient-registration-page .form-group {
+    margin-bottom: 14px;
+  }
+
+  .patient-registration-page label {
+    margin-bottom: 5px;
+    color: var(--label-color);
+    font-weight: 600;
+    font-size: 13px;
+  }
+
+  .required::after {
+    content: " *";
+    color: #c62828;
+    font-weight: 700;
+  }
+
+  .patient-registration-page .form-control {
+    min-height: 38px;
+    border: 1px solid var(--field-border);
+    border-radius: 7px;
+    background-color: var(--hospital-green-soft);
+    color: #183529;
+    font-size: 14px;
+  }
+
+  .patient-registration-page .form-control:focus {
+    border-color: var(--hospital-green);
+    box-shadow: 0 0 0 .18rem rgba(31, 143, 95, .16);
+    background-color: #fafffc;
+  }
+
+  .patient-registration-page .form-control::placeholder {
+    color: #6d8379;
+  }
+
+  #formAlert {
+    display: none;
+    border-radius: 7px;
+    margin-bottom: 16px;
+  }
+
+  #generalFormAlert {
+    display: none;
+    border-radius: 7px;
+    margin-bottom: 14px;
+  }
+
+  .invalid-feedback {
+    font-size: 12px;
+  }
+
+  .top-layout {
+    display: flex;
+    gap: 18px;
+    align-items: flex-start;
+  }
+
+  .top-layout .tabs-col {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .top-layout .photo-col {
+    flex: 0 0 220px;
+  }
+
+  @media (max-width: 991.98px) {
+    .top-layout {
+      flex-direction: column;
+    }
+
+    .top-layout .photo-col {
+      flex: none;
+      width: 100%;
+    }
+  }
+
+  @media (max-width: 767.98px) {
+    .photo-panel {
+      align-items: flex-start;
+    }
+
+    .death-tab-panel,
+    .birth-tab-panel {
+      padding: 14px;
+    }
+
+    .compact-checks,
+    .age-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<div class="content-wrapper patient-registration-page">
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Birth / Death Registration</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="{% url 'birth_death_list' %}">Birth And Death List</a></li>
+            <li class="breadcrumb-item active">Birth or Death Registration</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="content">
+    <div class="container-fluid">
+
+      <div id="formAlert" class="alert" role="alert"></div>
+
+      <!-- 🔴 FIX: Added hidden fields for tracking -->
+      <input type="hidden" id="selectedPatientId" value="">
+      <input type="hidden" id="selectedMotherId" value="">
+      <input type="hidden" id="activeTab" value="death">
+      <input type="hidden" id="registrationTypeHidden" value="registered">
+
+      <form id="patientRegistrationForm" class="needs-validation" novalidate>
+
+        <div class="top-layout">
+          
+          <div class="tabs-col">
+            <div class="registration-tabs-card">
+              <ul class="nav nav-tabs" id="patientDetailsTabs" role="tablist">
+                <!-- 🔴 FIX: Added onclick to set active tab -->
+                <li class="nav-item">
+                  <a class="nav-link active" id="death-reg-tab" data-toggle="tab" href="#deathRegTabPane" role="tab" aria-controls="deathRegTabPane" aria-selected="true" onclick="document.getElementById('activeTab').value='death'">Death Reg</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" id="birth-reg-tab" data-toggle="tab" href="#birthRegTabPane" role="tab" aria-controls="birthRegTabPane" aria-selected="false" onclick="document.getElementById('activeTab').value='birth'">Birth Reg</a>
+                </li>
+              </ul>
+
+              <div class="tab-content">
+                 
+                <!-- ==================== DEATH REG TAB ==================== -->
+                <div class="tab-pane fade show active" id="deathRegTabPane" role="tabpanel" aria-labelledby="death-reg-tab">
+                  <div class="death-tab-panel">
+                    <!-- Registration Type Radio Buttons -->
+                    <!-- 🔴 FIX: Added onclick to set registration type -->
+                    <div class="death-column mb-3">
+                      <h4 class="death-column-title">Registration Type <span class="required"></span></h4>
+                      <div class="d-flex align-items-center" style="gap: 30px;">
+                        <div class="custom-control custom-radio custom-control-inline">
+                          <input type="radio" id="regTypeRegistered" name="registrationType" class="custom-control-input" value="registered" checked onclick="toggleRegistrationType(); document.getElementById('registrationTypeHidden').value='registered'">
+                          <label class="custom-control-label" for="regTypeRegistered">Registered</label>
+                        </div>
+                        <div class="custom-control custom-radio custom-control-inline">
+                          <input type="radio" id="regTypeUnregistered" name="registrationType" class="custom-control-input" value="unregistered" onclick="toggleRegistrationType(); document.getElementById('registrationTypeHidden').value='unregistered'">
+                          <label class="custom-control-label" for="regTypeUnregistered">Unregistered</label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- ===== REGISTERED SECTION ===== -->
+                    <div id="registeredSection">
+                      <div class="row mt-3">
+                        <div class="col-12">
+                          <div class="border rounded p-2" style="background: #f8faf9; border-color: var(--hospital-border) !important;">
+                            <div class="d-flex align-items-center flex-wrap" style="gap: 10px;">
+                              <div style="min-width: 120px;">
+                                <label class="mb-0" style="font-size: 12px; font-weight: 700; color: var(--label-color);">
+                                  <i class="fas fa-camera mr-1"></i> Photo
+                                </label>
+                              </div>
+                              <div class="photo-preview-small" style="width: 60px; height: 75px; border: 1px solid #9cb9aa; border-radius: 4px; background: #f6faf8; display: grid; place-items: center; overflow: hidden; flex-shrink: 0;">
+                                <img id="deathRegPhotoPreview" style="width: 100%; height: 100%; object-fit: cover; display: none;" alt="Photo preview">
+                                <div id="deathRegPhotoEmpty" class="text-muted" style="font-size: 10px; text-align: center;">
+                                  <i class="fas fa-user" style="font-size: 20px;"></i>
+                                  <span style="display: block;">No photo</span>
+                                </div>
+                              </div>
+                              <div>
+                                <input type="file" id="deathRegPhotoInput" name="deathRegPhoto" class="d-none" accept=".jpg,.jpeg,.png,image/jpeg,image/png">
+                                <button type="button" class="btn btn-outline-success btn-sm" id="deathRegChoosePhotoBtn" style="border-radius: 20px; font-size: 12px;">
+                                  <i class="fas fa-image mr-1"></i>Choose
+                                </button>
+                                <button type="button" class="btn btn-outline-danger btn-sm" id="deathRegClearPhotoBtn" style="border-radius: 20px; font-size: 12px;">
+                                  <i class="fas fa-times"></i>
+                                </button>
+                                <div class="small text-muted mt-1" style="font-size: 10px;">JPG, JPEG, PNG</div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="death-column">
+                        <h4 class="death-column-title">Death Registration</h4>
+                        <div class="row">
+                          <div class="col-md-6 mb-3 position-relative">
+                            <label for="deathRegSearch">Patient Search</label>
+                            <div class="input-group">
+                              <input type="text" class="form-control" id="deathRegSearch" placeholder="Search by MR No or Patient Name" autocomplete="off">
+                              <div class="input-group-append">
+                                <button class="btn btn-hospital" type="button" id="deathRegSearchBtn">Search</button>
+                              </div>
+                            </div>
+                            <div id="deathRegSearchResults" class="list-group position-absolute w-100 d-none" style="z-index: 1000; max-height: 200px; overflow-y: auto; top: 100%; left: 15px; right: 15px; width: calc(100% - 30px);"></div>
+                          </div>
+                          <div class="col-md-6 mb-3">
+                            <label for="deathRegName">Name</label>
+                            <input type="text" class="form-control" id="deathRegName" readonly>
+                          </div>
+                          <div class="col-md-6 mb-3">
+                            <label>Gender</label>
+                            <div class="mt-2">
+                              <div class="custom-control custom-radio custom-control-inline">
+                                <input type="radio" id="genderMale" name="deathRegGender" class="custom-control-input" value="Male">
+                                <label class="custom-control-label" for="genderMale">Male</label>
+                              </div>
+                              <div class="custom-control custom-radio custom-control-inline">
+                                <input type="radio" id="genderFemale" name="deathRegGender" class="custom-control-input" value="Female">
+                                <label class="custom-control-label" for="genderFemale">Female</label>
+                              </div>
+                              <div class="custom-control custom-radio custom-control-inline">
+                                <input type="radio" id="genderTransgender" name="deathRegGender" class="custom-control-input" value="Transgender">
+                                <label class="custom-control-label" for="genderTransgender">Transgender</label>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="col-md-6 mb-3">
+                            <label for="deathRegRoom">Room</label>
+                            <input type="text" class="form-control" id="deathRegRoom">
+                          </div>
+                          <div class="col-md-6 mb-3">
+                            <label for="deathRegAdmission">Date & Time of Admission</label>
+                            <input type="datetime-local" class="form-control" id="deathRegAdmission">
+                          </div>
+                          <div class="col-md-6 mb-3">
+                            <label for="deathRegDeath">Date & Time of Death</label>
+                            <input type="datetime-local" class="form-control" id="deathRegDeath">
+                          </div>
+                          <div class="col-md-6 mb-3">
+                            <label for="deathRegDoctor">Consulting Doctor</label>
+                            <select class="form-control" id="deathRegDoctor">
+                              <option value="">Select Doctor</option>
+                               {%for d in doctors%}
+                               <option value="{{d.id}}">{{d.name}}</option>
+                               {%endfor%}
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- ===== UNREGISTERED SECTION ===== -->
+                    <div id="unregisteredSection" style="display: none;">
+                      <!-- 🔴 FIX: Same photo upload for unregistered -->
+                      <div class="row mt-3">
+                        <div class="col-12">
+                          <div class="border rounded p-2" style="background: #f8faf9; border-color: var(--hospital-border) !important;">
+                            <div class="d-flex align-items-center flex-wrap" style="gap: 10px;">
+                              <div style="min-width: 120px;">
+                                <label class="mb-0" style="font-size: 12px; font-weight: 700; color: var(--label-color);">
+                                  <i class="fas fa-camera mr-1"></i> Photo
+                                </label>
+                              </div>
+                              <div class="photo-preview-small" style="width: 60px; height: 75px; border: 1px solid #9cb9aa; border-radius: 4px; background: #f6faf8; display: grid; place-items: center; overflow: hidden; flex-shrink: 0;">
+                                <img id="deathRegPhotoPreviewUnreg" style="width: 100%; height: 100%; object-fit: cover; display: none;" alt="Photo preview">
+                                <div id="deathRegPhotoEmptyUnreg" class="text-muted" style="font-size: 10px; text-align: center;">
+                                  <i class="fas fa-user" style="font-size: 20px;"></i>
+                                  <span style="display: block;">No photo</span>
+                                </div>
+                              </div>
+                              <div>
+                                <input type="file" id="deathRegPhotoInputUnreg" name="deathRegPhotoUnreg" class="d-none" accept=".jpg,.jpeg,.png,image/jpeg,image/png">
+                                <button type="button" class="btn btn-outline-success btn-sm" id="deathRegChoosePhotoBtnUnreg" style="border-radius: 20px; font-size: 12px;">
+                                  <i class="fas fa-image mr-1"></i>Choose
+                                </button>
+                                <button type="button" class="btn btn-outline-danger btn-sm" id="deathRegClearPhotoBtnUnreg" style="border-radius: 20px; font-size: 12px;">
+                                  <i class="fas fa-times"></i>
+                                </button>
+                                <div class="small text-muted mt-1" style="font-size: 10px;">JPG, JPEG, PNG</div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="death-column mb-3">
+                        <h4 class="death-column-title">Patient Registration</h4>
+                        <!-- 🔴 FIX: Added IDs and names properly -->
+                        <div class="form-row">
+                          <div class="form-group col-md-6 col-xl-3">
+                            <label for="regDateUnreg" class="required">Registration Date</label>
+                            <input type="date" class="form-control" id="regDateUnreg" name="regDateUnreg">
+                          </div>
+                          <div class="form-group col-md-6 col-xl-3">
+                            <label for="visitDateUnreg" class="required">Visit Date</label>
+                            <input type="date" class="form-control" id="visitDateUnreg" name="visitDateUnreg">
+                          </div>
+                          <div class="form-group col-md-6 col-xl-3">
+                            <label for="bookingNumberUnreg">Booking Number</label>
+                            <input type="text" class="form-control" id="bookingNumberUnreg" name="bookingNumberUnreg">
+                          </div>
+                          <div class="form-group col-md-6 col-xl-3">
+                            <label for="citizenIdUnreg">Citizen ID</label>
+                            <input type="text" class="form-control" id="citizenIdUnreg" name="citizenIdUnreg">
+                          </div>
+                        </div>
+                        <div class="form-row">
+                          <div class="form-group col-md-6 col-xl-3">
+                            <label for="uhidNoUnreg" class="required">UHID No</label>
+                            <input type="text" class="form-control" id="uhidNoUnreg" name="uhidNoUnreg">
+                          </div>
+                          <div class="form-group col-md-6 col-xl-3">
+                            <label for="customerTypeUnreg" class="required">Customer Type</label>
+                            <select class="form-control" id="customerTypeUnreg" name="customerTypeUnreg">
+                              <option value="">Select</option>
+                              <option value="GENERAL">GENERAL</option>
+                              <option value="INSURANCE">INSURANCE</option>
+                              <option value="CORPORATE">CORPORATE</option>
+                              <option value="STAFF">STAFF</option>
+                              <option value="PRIVILEGED">PRIVILEGED</option>
+                            </select>
+                          </div>
+                          <div class="form-group col-md-6 col-xl-3">
+                            <label for="insuranceRefUnreg">Insurance Ref</label>
+                            <input type="text" class="form-control" id="insuranceRefUnreg" name="insuranceRefUnreg">
+                          </div>
+                          <div class="form-group col-md-6 col-xl-3">
+                            <label for="corporateCompanyUnreg">Corporate Company</label>
+                            <input type="text" class="form-control" id="corporateCompanyUnreg" name="corporateCompanyUnreg">
+                          </div>
+                          <div class="form-group col-md-6 col-xl-3 d-none">
+                            <label for="staffIdUnreg">Staff ID</label>
+                            <input type="text" class="form-control" id="staffIdUnreg" name="staffIdUnreg">
+                          </div>
+                          <div class="form-group col-md-6 col-xl-3">
+                            <label for="privilegedCustomerIdUnreg">Privileged Customer ID</label>
+                            <input type="text" class="form-control" id="privilegedCustomerIdUnreg" name="privilegedCustomerIdUnreg">
+                          </div>
+                          <div class="form-group col-md-6 col-xl-3">
+                            <label for="aadhaarNumberUnreg">Aadhaar Number</label>
+                            <input type="text" class="form-control" id="aadhaarNumberUnreg" name="aadhaarNumberUnreg" inputmode="numeric" maxlength="12">
+                          </div>
+                        </div>
+                        <div class="form-group">
+                          <label class="required">Name</label>
+                          <div class="form-row">
+                            <div class="col-md-4 mb-2 mb-md-0">
+                              <input type="text" class="form-control" id="firstNameUnreg" name="firstNameUnreg" placeholder="First Name">
+                            </div>
+                            <div class="col-md-4 mb-2 mb-md-0 d-none">
+                              <input type="text" class="form-control" id="middleNameUnreg" name="middleNameUnreg" placeholder="Middle Name">
+                            </div>
+                            <div class="col-md-4">
+                              <input type="text" class="form-control" id="lastNameUnreg" name="lastNameUnreg" placeholder="Last Name">
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="death-column">
+                        <h4 class="death-column-title">Death Registration</h4>
+                        <div class="row">
+                          <div class="col-md-6 mb-3">
+                            <label>Gender</label>
+                            <div class="mt-2">
+                              <div class="custom-control custom-radio custom-control-inline">
+                                <input type="radio" id="genderMaleUnreg" name="deathRegGenderUnreg" class="custom-control-input" value="Male">
+                                <label class="custom-control-label" for="genderMaleUnreg">Male</label>
+                              </div>
+                              <div class="custom-control custom-radio custom-control-inline">
+                                <input type="radio" id="genderFemaleUnreg" name="deathRegGenderUnreg" class="custom-control-input" value="Female">
+                                <label class="custom-control-label" for="genderFemaleUnreg">Female</label>
+                              </div>
+                              <div class="custom-control custom-radio custom-control-inline">
+                                <input type="radio" id="genderTransgenderUnreg" name="deathRegGenderUnreg" class="custom-control-input" value="Transgender">
+                                <label class="custom-control-label" for="genderTransgenderUnreg">Transgender</label>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="col-md-6 mb-3 d-none">
+                            <label for="deathRegRoomUnreg">Room</label>
+                            <input type="text" class="form-control" id="deathRegRoomUnreg">
+                          </div>
+                          <div class="col-md-6 mb-3">
+                            <label for="deathRegAdmissionUnreg">Date & Time of Admission</label>
+                            <input type="datetime-local" class="form-control" id="deathRegAdmissionUnreg">
+                          </div>
+                          <div class="col-md-6 mb-3">
+                            <label for="deathRegDeathUnreg">Date & Time of Death</label>
+                            <input type="datetime-local" class="form-control" id="deathRegDeathUnreg">
+                          </div>
+                          <div class="col-md-6 mb-3">
+                            <label for="deathRegDoctorUnreg">Consulting Doctor</label>
+                            <select class="form-control" id="deathRegDoctorUnreg">
+                              <option value="">Select Doctor</option>
+                               {%for d in doctors%}
+                               <option value="{{d.id}}">{{d.name}}</option>
+                               {%endfor%}
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="save-bar">
+                      <button type="submit" class="btn btn-hospital btn-lg" id="saveBtn" style="min-width: 180px; border-radius: 25px; font-weight: 700; padding: 10px 30px;">
+                        <span id="saveSpinner" class="spinner-border spinner-border-sm mr-2 d-none" aria-hidden="true"></span>
+                        <i id="saveIcon" class="fas fa-save mr-1"></i>Save
+                      </button>
+                      <button type="button" class="btn btn-danger btn-lg ml-3" id="resetBtn" style="min-width: 180px; border-radius: 25px; font-weight: 700; padding: 10px 30px;" onclick="resetForm()">
+                        <span class="spinner-border spinner-border-sm mr-2 d-none" aria-hidden="true"></span>
+                        <i class="fas fa-undo mr-1"></i>Reset
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- ==================== BIRTH REG TAB ==================== -->
+                <div class="tab-pane fade" id="birthRegTabPane" role="tabpanel" aria-labelledby="birth-reg-tab">
+                  <div class="birth-tab-panel">
+                    <div class="row">
+                      <div class="col-md-6 mb-3 mb-md-0">
+                        <div class="birth-column">
+                          <h4 class="birth-column-title">Advanced Details</h4>
+
+                          <!-- 🔴 FIX: Added mother search here -->
+                          <div class="form-group">
+            <label for="motherSearchInput" class="required">Search Mother (MR No / Name)</label>
+            <div class="input-group">
+              <input type="text" class="form-control" id="motherSearchInput" placeholder="Search by MR No or Name" autocomplete="off">
+              <div class="input-group-append">
+                <button class="btn btn-hospital" type="button" id="motherSearchBtn">
+                  <i class="fas fa-search"></i> Search
+                </button>
+              </div>
+            </div>
+            <div id="motherSearchResults" class="list-group position-absolute w-100" style="z-index: 1000; max-height: 150px; overflow-y: auto; display: none;"></div>
+            <input type="hidden" id="selectedMotherId" value="">
+            <input type="text" class="form-control mt-2" id="selectedMotherDisplay" placeholder="Selected Mother" readonly style="background:#f5f5f5;">
+            <small class="text-muted">Select a mother from search results above</small>
+          </div>
+          <div class="form-group">
+  <label for="advancedMothersNumber">Mother's MR Number</label>
+  <input type="text" class="form-control" id="advancedMothersNumber" readonly style="background:#f5f5f5;">
+  <small class="text-muted">Auto-filled when mother is selected</small>
+</div>
+
+                          <div class="form-group">
+                            <label for="advancedBloodGroup">Blood Group</label>
+                            <select class="form-control" id="advancedBloodGroup">
+                              <option value="">Select</option>
+                              <option value="A+">A+</option>
+                              <option value="A-">A-</option>
+                              <option value="B+">B+</option>
+                              <option value="B-">B-</option>
+                              <option value="AB+">AB+</option>
+                              <option value="AB-">AB-</option>
+                              <option value="O+">O+</option>
+                              <option value="O-">O-</option>
+                            </select>
+                          </div>
+
+                          <div class="form-group">
+                            <label for="advancedGuardianAddress">Guardian's Address</label>
+                            <textarea class="form-control" id="advancedGuardianAddress" rows="2"></textarea>
+                          </div>
+
+                          <div class="form-group">
+                            <label for="advancedGuardianPhone">Guardian's Phone</label>
+                            <input type="text" class="form-control" id="advancedGuardianPhone" inputmode="tel">
+                          </div>
+
+                          <div class="form-group">
+                            <label for="advancedSpecialInstructions">Special Instructions</label>
+                            <textarea class="form-control" id="advancedSpecialInstructions" rows="2"></textarea>
+                          </div>
+
+                          <div class="form-group mb-0">
+                            <label for="advancedFileLocation">File Location</label>
+                            <textarea class="form-control" id="advancedFileLocation" rows="2"></textarea>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="col-md-6">
+                        <div class="birth-column">
+                          <h4 class="birth-column-title">Birth Details</h4>
+
+                          <!-- 🔴 FIX: Photo upload for birth -->
+                          <div class="form-group">
+            <label class="field-label">Photo</label>
+            <div>
+              <div class="photo-preview" style="width: 120px; height: 140px; border: 1px solid #9cb9aa; border-radius: 4px; background: #f6faf8; display: grid; place-items: center; overflow: hidden; margin-bottom: 6px;">
+                <img id="birthPhotoPreview" style="width: 100%; height: 100%; object-fit: cover; display: none;" alt="Birth photo preview">
+                <div id="birthPhotoEmpty" class="text-muted" style="font-size: 11px; text-align: center;">
+                  <i class="fas fa-user" style="font-size: 28px;"></i>
+                  <span style="display: block;">No photo</span>
+                </div>
+              </div>
+              <div class="d-inline-flex" style="gap: 6px;">
+                <input type="file" id="birthPhotoInput" name="birthPhoto" class="d-none" accept=".jpg,.jpeg,.png,image/jpeg,image/png">
+                <button type="button" class="btn btn-outline-success btn-sm" id="birthChoosePhotoBtn" style="border-radius: 20px; font-size: 12px; padding: 4px 14px;">
+                  <i class="fas fa-image mr-1"></i>Choose
+                </button>
+                <button type="button" class="btn btn-outline-danger btn-sm" id="birthClearPhotoBtn" style="border-radius: 20px; font-size: 12px; padding: 4px 14px;">
+                  <i class="fas fa-times"></i>
+                </button>
+                <span class="small text-muted" style="font-size: 10px; line-height: 28px; margin-left: 4px;">JPG, PNG</span>
+              </div>
+            </div>
+          </div>
+
+                          <div class="form-group">
+                            <div class="field-label">Gender</div>
+                            <div class="d-flex flex-wrap">
+                              <div class="custom-control custom-radio mr-4">
+                                <input class="custom-control-input" type="radio" id="advancedGenderMale" name="advancedGender" value="Male">
+                                <label for="advancedGenderMale" class="custom-control-label">Male</label>
+                              </div>
+                              <div class="custom-control custom-radio">
+                                <input class="custom-control-input" type="radio" id="advancedGenderFemale" name="advancedGender" value="Female">
+                                <label for="advancedGenderFemale" class="custom-control-label">Female</label>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div class="form-group">
+                            <label for="advancedDateTimeOfBirth" class="required">Date & Time of Birth</label>
+                            <input type="datetime-local" class="form-control" id="advancedDateTimeOfBirth" name="advancedDateTimeOfBirth" required>
+                            <div class="invalid-feedback">Date & Time of Birth is required.</div>
+                          </div>
+
+                          <div class="form-group">
+                            <label for="advancedWeight">Weight</label>
+                            <input type="text" class="form-control" id="advancedWeight" inputmode="decimal">
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="save-bar">
+                    <button type="submit" class="btn btn-hospital btn-lg" id="birthSaveBtn" style="min-width: 180px; border-radius: 25px; font-weight: 700; padding: 10px 30px;">
+                      <span id="birthSaveSpinner" class="spinner-border spinner-border-sm mr-2 d-none" aria-hidden="true"></span>
+                      <i class="fas fa-save mr-1"></i>Save
+                    </button>
+                    <button type="button" class="btn btn-danger btn-lg ml-3" onclick="resetForm()" style="min-width: 180px; border-radius: 25px; font-weight: 700; padding: 10px 30px;">
+                      <span class="spinner-border spinner-border-sm mr-2 d-none" aria-hidden="true"></span>
+                      <i class="fas fa-undo mr-1"></i>Reset
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </form>
+
+    </div>
+  </section>
+</div>
+
+<script>
+// ============================================================
+// GLOBAL FUNCTIONS
+// ============================================================
+
+function showAlert(type, message) {
+  var alertBox = document.getElementById('formAlert');
+  alertBox.className = 'alert alert-' + type;
+  alertBox.innerHTML = message;
+  alertBox.style.display = 'block';
+  window.scrollTo(0, 0);
+  clearTimeout(window.alertTimeout); // Clear any existing timeout
+  window.alertTimeout = setTimeout(function() {
+    hideAlert();
+  }, 5000);
+}
+
+function hideAlert() {
+  var alertBox = document.getElementById('formAlert');
+  alertBox.style.display = 'none';
+  alertBox.innerHTML = '';
+}
+
+function toggleRegistrationType() {
+  var registered = document.getElementById('regTypeRegistered').checked;
+  document.getElementById('registeredSection').style.display = registered ? '' : 'none';
+  document.getElementById('unregisteredSection').style.display = registered ? 'none' : '';
+}
+
+function resetForm() {
+  // Reset Death Registered Section
+  document.getElementById('deathRegSearch').value = '';
+  document.getElementById('deathRegName').value = '';
+  document.getElementById('deathRegRoom').value = '';
+  document.getElementById('deathRegAdmission').value = '';
+  document.getElementById('deathRegDeath').value = '';
+  document.getElementById('deathRegDoctor').value = '';
+  document.querySelectorAll('input[name="deathRegGender"]').forEach(function(r) { r.checked = false; });
+  document.getElementById('selectedPatientId').value = '';
+  document.getElementById('deathRegSearchResults').classList.add('d-none');
+
+  // Reset Death Unregistered Section
+  document.querySelectorAll('#unregisteredSection input, #unregisteredSection select, #unregisteredSection textarea').forEach(function(el) {
+    if (el.type !== 'radio' && el.type !== 'checkbox') el.value = '';
+  });
+  document.querySelectorAll('#unregisteredSection input[type="radio"]').forEach(function(r) { r.checked = false; });
+
+  // Reset Death Photos
+  clearDeathRegPhoto();
+  clearDeathRegPhotoUnreg();
+
+  // Reset Birth Section
+  document.querySelectorAll('#birthRegTabPane input, #birthRegTabPane select, #birthRegTabPane textarea').forEach(function(el) {
+    if (el.type !== 'radio' && el.type !== 'checkbox') el.value = '';
+  });
+  document.querySelectorAll('#birthRegTabPane input[type="radio"]').forEach(function(r) { r.checked = false; });
+  document.getElementById('selectedMotherId').value = '';
+  document.getElementById('selectedMotherDisplay').value = '';
+  document.getElementById('motherSearchResults').classList.add('d-none');
+  clearBirthPhoto();
+
+  // Reset to registered by default
+  document.getElementById('regTypeRegistered').checked = true;
+  document.getElementById('registrationTypeHidden').value = 'registered';
+  toggleRegistrationType();
+
+  // Reset active tab to Death
+  document.getElementById('activeTab').value = 'death';
+  document.querySelector('#death-reg-tab').click();
+
+  // Reset form validation
+  document.getElementById('patientRegistrationForm').classList.remove('was-validated');
+
+  // Set today's dates
+  setTodayDates();
+
+  hideAlert();
+}
+
+function setTodayDates() {
+  var today = new Date().toISOString().split('T')[0];
+  var regDate = document.getElementById('regDateUnreg');
+  var visitDate = document.getElementById('visitDateUnreg');
+  if (regDate) regDate.value = today;
+  if (visitDate) visitDate.value = today;
+}
+
+function clearDeathRegPhoto() {
+  var input = document.getElementById('deathRegPhotoInput');
+  var preview = document.getElementById('deathRegPhotoPreview');
+  var empty = document.getElementById('deathRegPhotoEmpty');
+  if (input) input.value = '';
+  if (preview) { preview.style.display = 'none'; preview.removeAttribute('src'); }
+  if (empty) empty.style.display = 'grid';
+}
+
+function clearDeathRegPhotoUnreg() {
+  var input = document.getElementById('deathRegPhotoInputUnreg');
+  var preview = document.getElementById('deathRegPhotoPreviewUnreg');
+  var empty = document.getElementById('deathRegPhotoEmptyUnreg');
+  if (input) input.value = '';
+  if (preview) { preview.style.display = 'none'; preview.removeAttribute('src'); }
+  if (empty) empty.style.display = 'grid';
+}
+
+function clearBirthPhoto() {
+  var input = document.getElementById('birthPhotoInput');
+  var preview = document.getElementById('birthPhotoPreview');
+  var empty = document.getElementById('birthPhotoEmpty');
+  if (input) input.value = '';
+  if (preview) { preview.style.display = 'none'; preview.removeAttribute('src'); }
+  if (empty) empty.style.display = 'block';
+}
+
+// ============================================================
+// DEATH REG - SEARCH PATIENT (Registered)
+// ============================================================
+document.getElementById('deathRegSearchBtn').addEventListener('click', function() {
+  var query = document.getElementById('deathRegSearch').value.trim();
+  if (!query) return;
+
+  var resultsDiv = document.getElementById('deathRegSearchResults');
+  resultsDiv.innerHTML = '<div class="list-group-item text-muted">Searching...</div>';
+  resultsDiv.classList.remove('d-none');
+
+  fetch('/api/search-patient/?query=' + encodeURIComponent(query))
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      resultsDiv.innerHTML = '';
+      if (data.length === 0) {
+        resultsDiv.innerHTML = '<div class="list-group-item text-muted">No patient found.</div>';
+        return;
+      }
+      data.forEach(function(p) {
+        var item = document.createElement('button');
+        item.type = 'button';
+        item.className = 'list-group-item list-group-item-action';
+        item.textContent = p.mr_no + ' - ' + p.name + ' (' + p.gender + ')';
+        item.onclick = function() {
+          document.getElementById('deathRegSearch').value = p.mr_no + ' - ' + p.name;
+          document.getElementById('deathRegName').value = p.name;
+          document.getElementById('deathRegRoom').value = p.room || '';
+          document.getElementById('selectedPatientId').value = p.id;
+          var genderRadio = document.querySelector('input[name="deathRegGender"][value="' + p.gender + '"]');
+          if (genderRadio) genderRadio.checked = true;
+          resultsDiv.classList.add('d-none');
+        };
+        resultsDiv.appendChild(item);
+      });
+    })
+    .catch(function() {
+      resultsDiv.innerHTML = '<div class="list-group-item text-danger">Error searching.</div>';
+    });
+});
+
+// ============================================================
+// BIRTH REG - SEARCH MOTHER
+// ============================================================
+(function() {
+  var searchInput = document.getElementById('motherSearchInput');
+  var searchBtn = document.getElementById('motherSearchBtn');
+  var resultsDiv = document.getElementById('motherSearchResults');
+  var selectedIdField = document.getElementById('selectedMotherId');
+  var displayField = document.getElementById('selectedMotherDisplay');
+  
+  // Function to perform search
+  function performSearch() {
+    var query = searchInput.value.trim();
+    if (!query) {
+      resultsDiv.style.display = 'none';
+      resultsDiv.innerHTML = '';
+      return;
+    }
+
+    resultsDiv.innerHTML = '<div class="list-group-item text-muted">Searching...</div>';
+    resultsDiv.style.display = 'block';
+
+    fetch('/api/search-mother/?query=' + encodeURIComponent(query))
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        resultsDiv.innerHTML = '';
+        if (data.length === 0) {
+          resultsDiv.innerHTML = '<div class="list-group-item text-muted">No mother found. Please try a different search term.</div>';
+          return;
+        }
+        data.forEach(function(m) {
+          var item = document.createElement('button');
+          item.type = 'button';
+          item.className = 'list-group-item list-group-item-action';
+          item.textContent = m.mr_no + ' - ' + m.name + ' (' + m.gender + ', ' + m.age + 'Y)';
+          item.onclick = function() {
+            // Select mother
+            selectedIdField.value = m.id;
+            displayField.value = m.name + ' (MR: ' + m.mr_no + ')';
+            document.getElementById('advancedMothersNumber').value = m.mr_no;
+            document.getElementById('advancedGuardianPhone').value = m.phone || '';
+            document.getElementById('advancedGuardianAddress').value = m.address || '';
+            // Hide results
+            resultsDiv.style.display = 'none';
+            resultsDiv.innerHTML = '';
+            // Update search input to show selected
+            searchInput.value = m.mr_no + ' - ' + m.name;
+            // Clear any error messages
+            hideAlert();
+          };
+          resultsDiv.appendChild(item);
+        });
+      })
+      .catch(function() {
+        resultsDiv.innerHTML = '<div class="list-group-item text-danger">Error searching. Please try again.</div>';
+      });
+  }
+
+  // Search button click
+  searchBtn.addEventListener('click', performSearch);
+
+  // Enter key support
+  searchInput.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      performSearch();
+    }
+  });
+
+  // Click outside to close results
+  document.addEventListener('click', function(e) {
+    var isClickInside = searchInput.contains(e.target) || 
+                        resultsDiv.contains(e.target) || 
+                        e.target === searchBtn;
+    if (!isClickInside) {
+      resultsDiv.style.display = 'none';
+      resultsDiv.innerHTML = '';
+    }
+  });
+
+  // Clear selection when user types new search
+  searchInput.addEventListener('input', function() {
+    if (selectedIdField.value) {
+      selectedIdField.value = '';
+      displayField.value = '';
+      document.getElementById('advancedMothersNumber').value = '';
+    }
+  });
+})();
+
+// ============================================================
+// PHOTO UPLOAD HANDLERS
+// ============================================================
+
+// Death Reg - Registered Photo
+document.getElementById('deathRegChoosePhotoBtn').addEventListener('click', function() {
+  document.getElementById('deathRegPhotoInput').click();
+});
+document.getElementById('deathRegClearPhotoBtn').addEventListener('click', clearDeathRegPhoto);
+document.getElementById('deathRegPhotoInput').addEventListener('change', function() {
+  handlePhotoUpload(this, 'deathRegPhotoPreview', 'deathRegPhotoEmpty');
+});
+
+// Death Reg - Unregistered Photo
+document.getElementById('deathRegChoosePhotoBtnUnreg').addEventListener('click', function() {
+  document.getElementById('deathRegPhotoInputUnreg').click();
+});
+document.getElementById('deathRegClearPhotoBtnUnreg').addEventListener('click', clearDeathRegPhotoUnreg);
+document.getElementById('deathRegPhotoInputUnreg').addEventListener('change', function() {
+  handlePhotoUpload(this, 'deathRegPhotoPreviewUnreg', 'deathRegPhotoEmptyUnreg');
+});
+
+// Birth Photo
+document.getElementById('birthChoosePhotoBtn').addEventListener('click', function() {
+  document.getElementById('birthPhotoInput').click();
+});
+document.getElementById('birthClearPhotoBtn').addEventListener('click', clearBirthPhoto);
+document.getElementById('birthPhotoInput').addEventListener('change', function() {
+  handlePhotoUpload(this, 'birthPhotoPreview', 'birthPhotoEmpty');
+});
+
+function handlePhotoUpload(input, previewId, emptyId) {
+  var file = input.files[0];
+  var preview = document.getElementById(previewId);
+  var empty = document.getElementById(emptyId);
+  
+  if (!file) {
+    if (preview) { preview.style.display = 'none'; preview.removeAttribute('src'); }
+    if (empty) empty.style.display = 'flex';
+    return;
+  }
+  
+  // 1. Check file type (JPG, JPEG, PNG)
+  var allowedTypes = ['image/jpeg', 'image/png'];
+  if (!allowedTypes.includes(file.type)) {
+    showAlert('danger', '❌ Please choose a valid image file (JPG, JPEG, or PNG format only).');
+    input.value = '';
+    return;
+  }
+  
+  var maxSize = 1 * 1024 * 800; // 800KB in bytes
+  if (file.size > maxSize) {
+    showAlert('danger', '❌ Image size exceeds 800KB limit. Please choose a smaller image.');
+    input.value = '';
+    return;
+  }
+  
+  // If validation passes, display the image
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    preview.src = e.target.result;
+    preview.style.display = 'block';
+    empty.style.display = 'none';
+    showAlert('success', '✅ Image uploaded successfully (Size: ' + (file.size / 1024).toFixed(1) + ' KB)');
+  };
+  reader.readAsDataURL(file);
+    hideAlert();
+}
+// ============================================================
+// FORM SUBMISSION
+// ============================================================
+document.getElementById('patientRegistrationForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  hideAlert();
+
+  var activeTab = document.getElementById('activeTab').value;
+
+  if (activeTab === 'death') {
+    submitDeathRegistration();
+  } else if (activeTab === 'birth') {
+    submitBirthRegistration();
+  }
+});
+
+function submitDeathRegistration() {
+  var regType = document.getElementById('registrationTypeHidden').value;
+  var data = {
+    registrationType: regType,
+    activeTab: 'death'
+  };
+
+  if (regType === 'registered') {
+    var patientId = document.getElementById('selectedPatientId').value;
+    if (!patientId) {
+      showAlert('danger', 'Please search and select a patient.');
+      return;
+    }
+    
+    // Optional: Check if patient name is filled (it should be auto-filled)
+    var patientName = document.getElementById('deathRegName').value;
+    if (!patientName) {
+      showAlert('danger', 'Please search and select a valid patient.');
+      return;
+    }
+    
+    data.patientId = patientId;
+    data.room = document.getElementById('deathRegRoom').value;
+    data.admissionDateTime = document.getElementById('deathRegAdmission').value;
+    data.deathDateTime = document.getElementById('deathRegDeath').value;
+    data.doctor = document.getElementById('deathRegDoctor').value;
+    data.gender = document.querySelector('input[name="deathRegGender"]:checked')?.value || '';
+
+    // Get photo
+    var photoInput = document.getElementById('deathRegPhotoInput');
+    if (photoInput.files.length > 0) {
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        data.photoData = e.target.result;
+        sendDeathData(data);
+      };
+      reader.readAsDataURL(photoInput.files[0]);
+      return;
+    }
+    
+    // No photo, send data without it
+    sendDeathData(data);
+    
+  } else {
+    // Unregistered - check required fields
+    var firstName = document.getElementById('firstNameUnreg').value.trim();
+    var lastName = document.getElementById('lastNameUnreg').value.trim();
+    var fullName = firstName + ' ' + lastName;
+    
+    if (!fullName.trim() || fullName.trim() === ' ') {
+      showAlert('danger', 'Please enter patient name.');
+      return;
+    }
+    
+    if (!document.getElementById('regDateUnreg').value) {
+      showAlert('danger', 'Registration Date is required.');
+      return;
+    }
+    
+    if (!document.getElementById('visitDateUnreg').value) {
+      showAlert('danger', 'Visit Date is required.');
+      return;
+    }
+    
+    if (!document.getElementById('uhidNoUnreg').value.trim()) {
+      showAlert('danger', 'UHID No is required.');
+      return;
+    }
+    
+    if (!document.getElementById('customerTypeUnreg').value) {
+      showAlert('danger', 'Customer Type is required.');
+      return;
+    }
+    
+    // Unregistered
+    data.firstName = firstName;
+    data.middleName = document.getElementById('middleNameUnreg').value;
+    data.lastName = lastName;
+    data.regDate = document.getElementById('regDateUnreg').value;
+    data.visitDate = document.getElementById('visitDateUnreg').value;
+    data.bookingNumber = document.getElementById('bookingNumberUnreg').value;
+    data.citizenId = document.getElementById('citizenIdUnreg').value;
+    data.uhidNo = document.getElementById('uhidNoUnreg').value;
+    data.customerType = document.getElementById('customerTypeUnreg').value;
+    data.insuranceRef = document.getElementById('insuranceRefUnreg').value;
+    data.corporateCompany = document.getElementById('corporateCompanyUnreg').value;
+    data.staffId = document.getElementById('staffIdUnreg').value;
+    data.privilegedCustomerId = document.getElementById('privilegedCustomerIdUnreg').value;
+    data.aadhaarNumber = document.getElementById('aadhaarNumberUnreg').value;
+    data.room = document.getElementById('deathRegRoomUnreg').value;
+    data.admissionDateTime = document.getElementById('deathRegAdmissionUnreg').value;
+    data.deathDateTime = document.getElementById('deathRegDeathUnreg').value;
+    data.doctor = document.getElementById('deathRegDoctorUnreg').value;
+    data.gender = document.querySelector('input[name="deathRegGenderUnreg"]:checked')?.value || '';
+
+    var photoInput = document.getElementById('deathRegPhotoInputUnreg');
+    if (photoInput.files.length > 0) {
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        data.photoData = e.target.result;
+        sendDeathData(data);
+      };
+      reader.readAsDataURL(photoInput.files[0]);
+      return;
+    }
+    
+    // No photo, send data without it
+    sendDeathData(data);
+  }
+}
+
+function sendDeathData(data) {
+  var btn = document.getElementById('saveBtn');
+  var spinner = document.getElementById('saveSpinner');
+  var icon = document.getElementById('saveIcon');
+  btn.disabled = true;
+  spinner.classList.remove('d-none');
+  icon.classList.add('d-none');
+
+  fetch('/api/save-death-registration/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+    body: JSON.stringify(data)
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(result) {
+    btn.disabled = false;
+    spinner.classList.add('d-none');
+    icon.classList.remove('d-none');
+    if (result.success) {
+      showAlert('success', result.message);
+      setTimeout(resetForm, 2000);
+    } else {
+      showAlert('danger', result.error || 'Error saving.');
+    }
+  })
+  .catch(function() {
+    btn.disabled = false;
+    spinner.classList.add('d-none');
+    icon.classList.remove('d-none');
+    showAlert('danger', 'Server error. Please try again.');
+  });
+}
+
+function submitBirthRegistration() {
+  var form = document.getElementById('patientRegistrationForm');
+  var motherId = document.getElementById('selectedMotherId').value;
+  if (!motherId) {
+    showAlert('danger', 'Please search and select a mother.');
+    return;
+  }
+  if (!document.getElementById('advancedDateTimeOfBirth').value) {
+    showAlert('danger', 'Date & Time of Birth is required.');
+    return;
+  }
+
+  var data = {
+    activeTab: 'birth',
+    motherId: motherId,
+    motherMrNumber: document.getElementById('advancedMothersNumber').value,
+    motherPhone: document.getElementById('advancedGuardianPhone').value,
+    gender: document.querySelector('input[name="advancedGender"]:checked')?.value || '',
+    dateTimeOfBirth: document.getElementById('advancedDateTimeOfBirth').value,
+    weight: document.getElementById('advancedWeight').value,
+    bloodGroup: document.getElementById('advancedBloodGroup').value,
+    guardianAddress: document.getElementById('advancedGuardianAddress').value,
+    guardianPhone: document.getElementById('advancedGuardianPhone').value,
+    specialInstructions: document.getElementById('advancedSpecialInstructions').value,
+    fileLocation: document.getElementById('advancedFileLocation').value
+  };
+
+  var photoInput = document.getElementById('birthPhotoInput');
+  if (photoInput.files.length > 0) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      data.photoData = e.target.result;
+      sendBirthData(data);
+    };
+    reader.readAsDataURL(photoInput.files[0]);
+    return;
+  }
+
+  sendBirthData(data);
+}
+
+function sendBirthData(data) {
+  var btn = document.getElementById('birthSaveBtn');
+  var spinner = document.getElementById('birthSaveSpinner');
+  btn.disabled = true;
+  spinner.classList.remove('d-none');
+
+  fetch('/api/save-birth-registration/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+    body: JSON.stringify(data)
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(result) {
+    btn.disabled = false;
+    spinner.classList.add('d-none');
+    if (result.success) {
+      showAlert('success', result.message);
+      setTimeout(resetForm, 2000);
+    } else {
+      showAlert('danger', result.error || 'Error saving.');
+    }
+  })
+  .catch(function() {
+    btn.disabled = false;
+    spinner.classList.add('d-none');
+    showAlert('danger', 'Server error. Please try again.');
+  });
+}
+
+// ============================================================
+// HELPER: Get CSRF Token
+// ============================================================
+function getCookie(name) {
+  var value = '; ' + document.cookie;
+  var parts = value.split('; ' + name + '=');
+  if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
+// ============================================================
+// INITIALIZE
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
+  setTodayDates();
+  toggleRegistrationType();
+  document.getElementById('activeTab').value = 'death';
+});
+</script>
+
+{% endblock %}

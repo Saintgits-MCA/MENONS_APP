@@ -1,0 +1,725 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Treatment Details</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="#">Home</a></li>
+                        <li class="breadcrumb-item active">Treatment Details</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="content">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title">Patient Details</h3>
+                    </div>
+                    <div class="card-body">
+                        <form id="treatmentForm" method="POST" action="{% url 'save_treatment_details' %}">
+                            {% csrf_token %}
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="form-group">
+                                        <label for="mrSearch">MR Number/Phone No/Name</label>
+                                        <input type="text" id="mrSearch" class="form-control" placeholder="Type MR Number">
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mt-4">
+                                    <button id="searchBtn" class="btn btn-primary" type="button">Search</button>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="mrDropdown">Selected MR Number/Patient</label>
+                                        <select class="form-control" name="mr_number" id="mrDropdown" required>
+                                            <option selected disabled value="">Select</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="exampleInputAddress">Patient Details</label>
+                                        <input type="text" id="exampleInputAddress" class="form-control" readonly>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="roomNo" class="form-label">Room No:</label>
+                                        <input type="text" class="form-control" id="roomNo" name="room_no" placeholder="Enter room number...">
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Treatment Details Container -->
+                            <div id="treatmentContainer"></div>
+                            <input type="text" id="record_count" name="record_count" value="0">
+                            <button type="button" id="addTreatmentBtn" class="btn btn-success">Add Treatment</button>
+                            <button id="save_btn" name="save_btn" class="btn btn-primary">Save Treatments</button>
+                        </form> <!-- Correctly close form here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+<!-- Modal for displaying search results with DataTable -->
+<div class="modal fade" id="searchModal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title" id="searchModalLabel">Search Results</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <!-- DataTable for displaying search results -->
+          <table id="searchResultsTable" class="display table table-bordered">
+            <thead>
+              <tr>
+                <th>MR Number</th>
+                <th>Patient Name</th>
+                <th>Address</th>
+                <th>Contact No</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Results will be appended here -->
+            </tbody>
+          </table>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    $(document).ready(function() {
+        // Initialize DataTable (without data initially)
+        let table = $('#searchResultsTable').DataTable({
+            paging: true,
+            searching: true,
+            info: true,
+            lengthChange: true,
+            pageLength: 10,
+        });
+
+        // Event listener for the search button click
+        $('#searchBtn').on('click', function() {
+            let query = $('#mrSearch').val();
+            // Ensure the search query is not empty
+            if (query.trim() === '') {
+                alert('Please enter a search term.');
+                return;
+            }
+            // Clear previous table data  
+            table.clear().draw();
+            // Send an AJAX request to search for the query
+            fetch(`/search_mrno?query=${query}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Check if data exists
+                    if (data.length > 0) {
+                        // Loop through the results and add to the table  
+                        data.forEach(item => {
+                            let actionBtn = `<button class="btn btn-primary select-btn" data-id="${item.id}" 
+                                              data-name="${item.Patient_Name}" 
+                                              data-mrno="${item.Medical_Record_Number}" 
+                                              data-contact="${item.contactno}"
+                                              data-address="${item.Housename}">
+                                            Select
+                                        </button>`;
+                            table.row.add([
+                                item.Medical_Record_Number,
+                                item.Patient_Name,
+                                item.Housename || 'N/A',
+                                item.contactno,
+                                actionBtn,
+                            ]).draw(false);
+                        });
+                        $('#searchModal').modal('show');
+                    } else {
+                        alert('No matching records found.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('There was an error retrieving the data. Please try again.');
+                });
+        });
+
+        // Event delegation to handle clicks on dynamically generated "Select" buttons
+        $('#searchResultsTable tbody').on('click', '.select-btn', function() {
+            let id = $(this).data('id');
+            let mrno = $(this).data('mrno');
+            let name = $(this).data('name');
+            let contact = $(this).data('contact');
+            let address = $(this).data('address');
+            $('#mrDropdown').html(`<option value="${id}" selected>${mrno} - ${name}</option>`);
+            $('#exampleInputAddress').val(`${mrno} - ${name} (${contact})`);
+            $('#searchModal').modal('hide');
+        });
+
+        // Initialize a unique counter for treatment rows
+        let uniqueIdCounter = 0; 
+
+        // Function to update treatment count
+        // function updateTreatmentCount() {
+        //     const treatmentRowCount = $('#treatmentContainer .treatment-row').length;
+        //     $('#treatment_count').val(treatmentRowCount);
+        // }
+
+        // Function to add a new treatment row
+        function addNewTreatmentRow() {
+            const treatmentRowHtml = `
+                <div class="row g-3 treatment-row" data-row-id="${uniqueIdCounter}">
+                    <div class="col-md-4">
+                        <label for="searchInput${uniqueIdCounter}" class="form-label">Treatment Name:</label>
+                        <input type="text" class="form-control searchInput" id="searchInput${uniqueIdCounter}" placeholder="Search for Treatment...">
+                        <input type="hidden" name="treatments[${uniqueIdCounter}][tratmntid]" id="tratmntid${uniqueIdCounter}">
+
+                        <select class="form-control particulars" name="treatments[${uniqueIdCounter}][tratmntid_select]" id="searchResults${uniqueIdCounter}">
+                            <option selected disabled value="">Select</option>
+                            <!-- Options will be populated via AJAX -->
+                        </select>
+                        <div class="form-group">
+                            <label for="treatmentdt${uniqueIdCounter}">Treatment Details</label>
+                            <input type="text" id="treatmentdt${uniqueIdCounter}" name="treatments[${uniqueIdCounter}][treatment_details]" class="form-control" readonly>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="handledBySearch${uniqueIdCounter}" class="form-label">Handled By (Doctor/Nurse):</label>
+                        <select name="treatments[${uniqueIdCounter}][handledby]" multiple class="form-control">
+                            {% for doctor in doctor_staff %}
+                                <option value="{{ doctor.id }}">{{ doctor.Staff.Staff_firstname }} {{ doctor.Staff.Staff_lastname }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="givenByastSearch${uniqueIdCounter}" class="form-label">Given By (Assistant):</label>
+                        <select name="treatments[${uniqueIdCounter}][givenby]" multiple class="form-control">
+                            {% for assistant in Assistant %}
+                                <option value="{{ assistant.id }}">{{ assistant.Staff.Staff_firstname }} {{ assistant.Staff.Staff_lastname }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-12">
+                        <button type="button" class="btn btn-danger remove-treatment-btn">Remove Treatment</button>
+                    </div>
+                </div>`;
+            $('#treatmentContainer').append(treatmentRowHtml);
+            uniqueIdCounter++;
+          
+            document.getElementById('record_count').value = uniqueIdCounter;
+        }
+
+        // Event listener for adding new treatment row
+        $('#addTreatmentBtn').click(addNewTreatmentRow);
+
+        // Event delegation for removing treatment rows
+        $('#treatmentContainer').on('click', '.remove-treatment-btn', function() {
+            $(this).closest('.treatment-row').remove();
+            // updateTreatmentCount(); // Update the treatment count after removal
+        });
+
+        // Event delegation for dynamic search treatment inputs
+        $(document).on('keyup', '.searchInput', function() {
+            const query = $(this).val();
+            const currentRowId = $(this).closest('.treatment-row').data('row-id');
+            const searchResultsId = `#searchResults${currentRowId}`;
+            if (query.length >= 1) {
+                $.ajax({
+                    url: "{% url 'search_treatment' %}",
+                    data: { 'term': query },
+                    dataType: 'json',
+                    success: function(data) {
+                        console.log("Received data:", data); // Debugging line
+                        $(searchResultsId).empty();
+                        $.each(data, function(index, item) {
+                            $(searchResultsId).append(`<option value="${item.trid}">${item.tr_name}</option>`);
+                        });
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("AJAX Error:", status, error);
+                    }
+                });
+            } else {
+                $(searchResultsId).empty(); // Clear results if less than 1 character
+            }
+        });
+
+        // Update treatment details when treatment is selected
+        $(document).on('change', '.particulars', function() {
+            const selectedOption = $(this).find(':selected'); // Get the selected option from the dropdown
+            const treatmentRow = $(this).closest('.treatment-row'); // Get the closest treatment row
+
+            // Get the treatment ID from the selected option
+            const treatmentId = selectedOption.val(); // Get the value of the selected option (the treatment ID)
+
+            // Ensure there is a hidden input for the treatment ID
+            treatmentRow.find('input[name^="treatments["][name$="[tratmntid]"]').val(treatmentId); // Update treatment ID in the hidden field
+
+            // Update treatment details if needed
+            const treatmentName = selectedOption.text(); // Get the text of the selected option (the treatment name)
+            treatmentRow.find('input[name^="treatments["][name$="[treatment_details]"]').val(treatmentName); // Update treatment details
+
+            console.log("Selected Treatment ID:", treatmentId); // Debugging line to check the treatment ID
+        });
+
+// Update the AJAX submission
+// $.ajax({
+//     url: "{% url 'save_treatment_details' %}",
+//     type: 'POST',
+//     data: {
+//         mr_number: mrNumber,
+//         room_no: roomNo,
+//         treatments: JSON.stringify(treatmentsData),  // Send as JSON string
+//         csrfmiddlewaretoken: '{{ csrf_token }}'
+//     },
+//     success: function(response) {
+//         alert('Treatment details saved successfully!');
+//         location.reload(); // Optionally reload the page
+//     },
+//     error: function(xhr, status, error) {
+//         alert('Error saving treatment details: ' + error);
+//     }
+// });
+
+    });
+   
+
+</script>
+
+    
+{% endblock %}
+
+
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Treatment Details</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="#">Home</a></li>
+                        <li class="breadcrumb-item active">Treatment Details</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="content">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title">Patient Details</h3>
+                    </div>
+                    <div class="card-body">
+                        <form id="treatmentForm" method="POST" action="{% url 'save_treatment_details' %}">
+                            {% csrf_token %}
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="form-group">
+                                        <label for="mrSearch">MR Number/Phone No/Name</label>
+                                        <input type="text" id="mrSearch" class="form-control" placeholder="Type MR Number">
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mt-4">
+                                    <button id="searchBtn" class="btn btn-primary" type="button">Search</button>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="mrDropdown">Selected MR Number/Patient</label>
+                                        <select class="form-control" name="mr_number" id="mrDropdown" required>
+                                            <option selected disabled value="">Select</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="exampleInputAddress">Patient Details</label>
+                                        <input type="text" id="exampleInputAddress" class="form-control" readonly>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="roomNo" class="form-label">Room No:</label>
+                                        <input type="text" class="form-control" id="roomNo" name="room_no" placeholder="Enter room number...">
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Treatment Details Container -->
+                            <div id="treatmentContainer"></div>
+                            <input type="text" id="record_count" name="record_count" value="0">
+                            <button type="button" id="addTreatmentBtn" class="btn btn-success">Add Treatment</button>
+                            <button id="save_btn" name="save_btn" class="btn btn-primary">Save Treatments</button>
+                        </form> <!-- Correctly close form here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+<!-- Modal for displaying search results with DataTable -->
+<div class="modal fade" id="searchModal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title" id="searchModalLabel">Search Results</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <!-- DataTable for displaying search results -->
+          <table id="searchResultsTable" class="display table table-bordered">
+            <thead>
+              <tr>
+                <th>MR Number</th>
+                <th>Patient Name</th>
+                <th>Address</th>
+                <th>Contact No</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Results will be appended here -->
+            </tbody>
+          </table>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    $(document).ready(function() {
+        // Initialize DataTable (without data initially)
+        let table = $('#searchResultsTable').DataTable({
+            paging: true,
+            searching: true,
+            info: true,
+            lengthChange: true,
+            pageLength: 10,
+        });
+
+        // Event listener for the search button click
+        $('#searchBtn').on('click', function() {
+            let query = $('#mrSearch').val();
+            // Ensure the search query is not empty
+            if (query.trim() === '') {
+                alert('Please enter a search term.');
+                return;
+            }
+            // Clear previous table data  
+            table.clear().draw();
+            // Send an AJAX request to search for the query
+            fetch(`/search_mrno?query=${query}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Check if data exists
+                    if (data.length > 0) {
+                        // Loop through the results and add to the table  
+                        data.forEach(item => {
+                            let actionBtn = `<button class="btn btn-primary select-btn" data-id="${item.id}" 
+                                              data-name="${item.Patient_Name}" 
+                                              data-mrno="${item.Medical_Record_Number}" 
+                                              data-contact="${item.contactno}"
+                                              data-address="${item.Housename}">
+                                            Select
+                                        </button>`;
+                            table.row.add([
+                                item.Medical_Record_Number,
+                                item.Patient_Name,
+                                item.Housename || 'N/A',
+                                item.contactno,
+                                actionBtn,
+                            ]).draw(false);
+                        });
+                        $('#searchModal').modal('show');
+                    } else {
+                        alert('No matching records found.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('There was an error retrieving the data. Please try again.');
+                });
+        });
+
+        // Event delegation to handle clicks on dynamically generated "Select" buttons
+        $('#searchResultsTable tbody').on('click', '.select-btn', function() {
+            let id = $(this).data('id');
+            let mrno = $(this).data('mrno');
+            let name = $(this).data('name');
+            let contact = $(this).data('contact');
+            let address = $(this).data('address');
+            $('#mrDropdown').html(`<option value="${id}" selected>${mrno} - ${name}</option>`);
+            $('#exampleInputAddress').val(`${mrno} - ${name} (${contact})`);
+            $('#searchModal').modal('hide');
+        });
+
+        // Initialize a unique counter for treatment rows
+        let uniqueIdCounter = 0; 
+
+        // Function to update treatment count
+        // function updateTreatmentCount() {
+        //     const treatmentRowCount = $('#treatmentContainer .treatment-row').length;
+        //     $('#treatment_count').val(treatmentRowCount);
+        // }
+
+        // Function to add a new treatment row
+        function addNewTreatmentRow() {
+            const treatmentRowHtml = `
+                <div class="row g-3 treatment-row" data-row-id="${uniqueIdCounter}">
+                    <div class="col-md-4">
+                        <label for="searchInput${uniqueIdCounter}" class="form-label">Treatment Name:</label>
+                        <input type="text" class="form-control searchInput" id="searchInput${uniqueIdCounter}" placeholder="Search for Treatment...">
+                        <input type="hidden" name="treatments[${uniqueIdCounter}][tratmntid]" id="tratmntid${uniqueIdCounter}">
+
+                        <select class="form-control particulars" name="treatments[${uniqueIdCounter}][tratmntid_select]" id="searchResults${uniqueIdCounter}">
+                            <option selected disabled value="">Select</option>
+                            <!-- Options will be populated via AJAX -->
+                        </select>
+                        <div class="form-group">
+                            <label for="treatmentdt${uniqueIdCounter}">Treatment Details</label>
+                            <input type="text" id="treatmentdt${uniqueIdCounter}" name="treatments[${uniqueIdCounter}][treatment_details]" class="form-control" readonly>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="handledBySearch${uniqueIdCounter}" class="form-label">Handled By (Doctor/Nurse):</label>
+                        <select name="treatments[${uniqueIdCounter}][handledby]" multiple class="form-control">
+                            {% for doctor in doctor_staff %}
+                                <option value="{{ doctor.id }}">{{ doctor.Staff.Staff_firstname }} {{ doctor.Staff.Staff_lastname }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="givenByastSearch${uniqueIdCounter}" class="form-label">Given By (Assistant):</label>
+                        <select name="treatments[${uniqueIdCounter}][givenby]" multiple class="form-control">
+                            {% for assistant in Assistant %}
+                                <option value="{{ assistant.id }}">{{ assistant.Staff.Staff_firstname }} {{ assistant.Staff.Staff_lastname }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-12">
+                        <button type="button" class="btn btn-danger remove-treatment-btn">Remove Treatment</button>
+                    </div>
+                </div>`;
+            $('#treatmentContainer').append(treatmentRowHtml);
+            uniqueIdCounter++;
+          
+            document.getElementById('record_count').value = uniqueIdCounter;
+        }
+
+        // Event listener for adding new treatment row
+        $('#addTreatmentBtn').click(addNewTreatmentRow);
+
+        // Event delegation for removing treatment rows
+        $('#treatmentContainer').on('click', '.remove-treatment-btn', function() {
+            $(this).closest('.treatment-row').remove();
+            // updateTreatmentCount(); // Update the treatment count after removal
+        });
+
+        // Event delegation for dynamic search treatment inputs
+        $(document).on('keyup', '.searchInput', function() {
+            const query = $(this).val();
+            const currentRowId = $(this).closest('.treatment-row').data('row-id');
+            const searchResultsId = `#searchResults${currentRowId}`;
+            if (query.length >= 1) {
+                $.ajax({
+                    url: "{% url 'search_treatment' %}",
+                    data: { 'term': query },
+                    dataType: 'json',
+                    success: function(data) {
+                        console.log("Received data:", data); // Debugging line
+                        $(searchResultsId).empty();
+                        $.each(data, function(index, item) {
+                            $(searchResultsId).append(`<option value="${item.trid}">${item.tr_name}</option>`);
+                        });
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("AJAX Error:", status, error);
+                    }
+                });
+            } else {
+                $(searchResultsId).empty(); // Clear results if less than 1 character
+            }
+        });
+
+        // Update treatment details when treatment is selected
+        $(document).on('change', '.particulars', function() {
+            const selectedOption = $(this).find(':selected'); // Get the selected option from the dropdown
+            const treatmentRow = $(this).closest('.treatment-row'); // Get the closest treatment row
+
+            // Get the treatment ID from the selected option
+            const treatmentId = selectedOption.val(); // Get the value of the selected option (the treatment ID)
+
+            // Ensure there is a hidden input for the treatment ID
+            treatmentRow.find('input[name^="treatments["][name$="[tratmntid]"]').val(treatmentId); // Update treatment ID in the hidden field
+
+            // Update treatment details if needed
+            const treatmentName = selectedOption.text(); // Get the text of the selected option (the treatment name)
+            treatmentRow.find('input[name^="treatments["][name$="[treatment_details]"]').val(treatmentName); // Update treatment details
+
+            console.log("Selected Treatment ID:", treatmentId); // Debugging line to check the treatment ID
+        });
+
+// Update the AJAX submission
+// $.ajax({
+//     url: "{% url 'save_treatment_details' %}",
+//     type: 'POST',
+//     data: {
+//         mr_number: mrNumber,
+//         room_no: roomNo,
+//         treatments: JSON.stringify(treatmentsData),  // Send as JSON string
+//         csrfmiddlewaretoken: '{{ csrf_token }}'
+//     },
+//     success: function(response) {
+//         alert('Treatment details saved successfully!');
+//         location.reload(); // Optionally reload the page
+//     },
+//     error: function(xhr, status, error) {
+//         alert('Error saving treatment details: ' + error);
+//     }
+// });
+
+    });
+   
+
+</script>
+
+    
+{% endblock %}
+def nextreatment(request):
+    try:
+            stdesign = request.session.get('loginstaffdesign')
+            staff_design = request.session.get('loginstaffdesign')
+            if not staff_design:
+                return redirect('staff_login')
+
+            menu_management_id = request.GET.get('menumanagement_id')
+            if not menu_management_id:
+                messages.error(request, "Invalid Menu Management ID provided. Please contact the admin to allow the menu permission to you.")
+                return redirect('error_page')
+
+            trmntmgmntobj = get_object_or_404(menumanagement, id=menu_management_id)
+            request.session['trmntmgmntobjobjid'] = menu_management_id
+            request.session['trmntmgmntobjadd'] =  trmntmgmntobj .add
+            request.session['trmntmgmntobjview'] =  trmntmgmntobj .view
+            request.session['trmntmgmntobjedit'] =  trmntmgmntobj .edit
+            request.session['trmntmgmntobjdelete'] =  trmntmgmntobj .delete
+            doctor_staff = Staffallocation.objects.filter(Designation_Name_id='2')
+            asststff=Staffallocation.objects.filter(~Q(Designation_Name_id='2') & ~Q(Designation_Name_id='1'))
+            
+            context = {
+                 'stdesign':stdesign,
+                'idmngmnt': menu_management_id,
+                'staff_design': staff_design,
+                'trmntadd': request.session.get('trmntmgmntobjadd'),
+                'trmntview': request.session.get('trmntmgmntobjview'),
+                'trmntedit': request.session.get('trmntmgmntobjedit'),
+                'trmntdelete': request.session.get('trmntmgmntobjdelete'),
+                 'doctor_staff':doctor_staff,
+                'Assistant':asststff
+            }
+            return render(request, "nexatreatment.html", context)
+            
+    except ObjectDoesNotExist:
+            messages.error(request, "Menu Management details not found. Please contact the admin.")
+            return redirect('error_page')
+    except Exception as e:
+            messages.error(request, f"Unable to retrieve Menu Management details: {str(e)}. Please contact the admin for assistance.")
+            return redirect('error_page')
+        
+    
+
+            def save_treatment_details(request):
+            if request.method == 'POST' and 'save_btn' in request.POST:
+                # Retrieve the session management ID
+                idmngmnt = request.session.get('trmntmgmntobjobjid')
+                
+                # Extract basic data from the POST request
+                mr_number_id = request.POST.get('mr_number')  # The ID of the patient
+                room_no = request.POST.get('room_no')  # Room number
+                record_count = int(request.POST.get('record_count', 0))  # Get record count for the loop
+        
+                # Log extracted details for debugging
+                print("MR Number ID:", mr_number_id)
+                print("Room Number:", room_no)
+                print("Record Count:", record_count)
+        
+                # Create master record
+                treatment_master = nextreatmentdetailsmaster.objects.create(
+                    MR_Number_id=mr_number_id,
+                    room_no=room_no
+                )
+                idtr = treatment_master.id
+                
+                # List to hold treatment details
+                treatment_details = []
+        
+                # Iterate through the treatments data based on record count
+                for i in range(record_count):
+                    tratmntid_value = request.POST.get(f'treatments[{i}][tratmntid]')  # Fetch treatment ID
+                    
+                    if not tratmntid_value:
+                        continue  # Skip if no treatment ID is provided
+        
+                    # Fetch handled by staff IDs as a comma-separated string
+                    handled_by = request.POST.getlist(f'treatments[{i}][handledby]')  # Fetch as list
+                    handled_by_ids = ','.join(handled_by)  # Convert to comma-separated string
+        
+                    # Fetch given by staff IDs as a comma-separated string
+                    given_by = request.POST.getlist(f'treatments[{i}][givenby]')  # Fetch as list
+                    given_by_ids = ','.join(given_by)  # Convert to comma-separated string
+        
+                    # Log treatment detail for debugging
+                    print(f"Treatment {i + 1}:")
+                    print("  Treatment ID:", tratmntid_value)
+                    print("  Handled By:", handled_by_ids)
+                    print("  Given By:", given_by_ids)
+        
+                    # Save treatment details in child records
+                    treatment_child = nextreatmentdetailschild.objects.create(
+                        MR_Number_id=mr_number_id,
+                        nexmaster_id=idtr,
+                        tratmntid_id=tratmntid_value,
+                        handled_by=handled_by_ids,
+                        given_by=given_by_ids,
+                    )
+                    treatment_details.append({
+                        'treatment_id': tratmntid_value,
+                        'handled_by': handled_by_ids,
+                        'given_by': given_by_ids,
+                    })
+                return redirect(f"{reverse('nextreatment')}?menumanagement_id={idmngmnt}")
+                # Return a success response with details
+                # return JsonResponse({'success': True, 'message': 'Treatment details saved successfully!', 'treatment_details': treatment_details})
+            # If the method is not POST or save_btn not in request, return an error response
+            # return JsonResponse({'success': False, 'message': 'Invalid request method.'})
+            idmngmnt = request.session.get('trmntmgmntobjobjid')
+            return redirect(f"{reverse('nextreatment')}?menumanagement_id={idmngmnt}")

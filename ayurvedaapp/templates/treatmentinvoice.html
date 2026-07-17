@@ -1,0 +1,558 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+  <style>
+    /* Custom styles */
+    .invoice-header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .patient-details {
+      margin-bottom: 20px;
+    }
+  </style>
+
+<body>
+    <div class="content-wrapper">
+        <!-- Content Header (Page header) -->
+        <section class="content-header">
+          <div class="container-fluid">
+            <div class="row mb-2">
+              <div class="col-sm-6">
+                <h1>Treatment Invoice</h1>
+              </div>
+              <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                  <li class="breadcrumb-item"><a href="#">Home</a></li>
+                  <li class="breadcrumb-item active">Treatment Invoice</li>
+                </ol>
+              </div>
+            </div>
+          </div><!-- /.container-fluid -->
+        </section>
+    
+<!-- Modal for displaying search results with DataTable -->
+<div class="modal fade" id="searchModal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="searchModalLabel">Search Results</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <!-- DataTable for displaying search results -->
+        <table id="searchResultsTable" class="display table table-bordered">
+          <thead>
+            <tr>
+              <th>MR Number</th>
+              <th>Patient Name</th>
+              <th>Address</th>
+              <th>Contact No</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Results will be appended here -->
+          </tbody>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+        <section class="content">
+          <div class="container-fluid">
+            <form id="invoiceForm" method="POST", action="{% url 'savetreatmentinvoice' %}?menumanagement_id={{ idmngmnt }}"  >
+              {% csrf_token %}
+            <div class="row">
+              <div class="col-12">
+                <!-- Main content -->
+                <div class="invoice p-3 mb-3">
+  <div class="container">
+    <div class="row">
+      <div class="col">
+        <div class="invoice-header">
+         
+          {% for i in objhospt%}
+          <h4>{{i.Name}}</h4>
+          <p> <input type="hidden" class="form-control" value="{{i.id}}" name="hosptname">
+        
+        
+          {% endfor %}
+          <br>
+          {% for x in brname %}
+           Branch:{{x.Branch_Name}}
+              {{x.Branch_Address}}
+            {{x.Branch_contactno}}
+            {{x.gstno}}
+           <input type="hidden" class="form-control" value="{{x.id}}" name="branchname">
+         
+          {% endfor %}
+        </p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-sm-4 invoice-col">
+            To
+            <address>
+             
+<!-- Search patient -->
+
+ <div class="row">
+  <div class="col-md-8">
+      <div class="form-group">
+        <label for="mrSearch">MR Number/PhoneNo/Name</label>
+        <input type="text" id="mrSearch" class="form-control" placeholder="Type MR Number">
+      
+      </div>
+  </div>
+  
+  <div class="col-md-4 mt-4"> 
+     <button id="searchBtn" class="btn btn-primary">Search</button></div>
+  
+ </div>
+
+<!-- Dropdown for selected result -->
+<div class="form-group">
+  <label for="mrDropdown">Selected MR Number/Patient</label>
+  <select class="form-control" name="mrnum" id="mrDropdown" required>
+    <option selected disabled value="">Select</option>
+  </select>
+</div>
+<!-- Patient details -->
+<div class="form-group">
+  <label for="ptdt">Patient Details</label>
+  <input type="text" id="pt_name" name="ptname" class="form-control" readonly>
+</div>
+<div class="form-group">
+  <label for="exampleInputappdate">Contact Number</label>
+  <input type="text" class="form-control" id="phno" name="ptphno" required>
+</div>
+            </address>
+          </div>
+          <div class="col-sm-4">
+           
+          </div>
+          <div class="col-sm-4 invoice-col">
+            <b><p>Date:{{today}}</p></b>
+            <b><p >Invoice No: {{inv_id}}</p></b><br>
+            <input type="hidden" class="form-control" value="{{inv_id}}" name="invno">
+             
+
+</div> <!-- End of first row -->
+</div>
+<!-- Start of second row for invoice items -->
+<div class="row">
+    <div class="col-md-12">
+        <table class="table table-bordered" >
+            <thead>
+                <tr>
+                    <th>Sl. No</th>
+                    <th>Treatment
+                        <input type="text"  class="form-control"  id="searchInput" placeholder="Search for Treatment...">
+                        <input type="hidden" id="medid" name="medid" >
+                       
+                        <select class="form-control" name="particulars" id="searchResults" >
+                          <option selected>Select</option>
+                          
+                      </select>
+                      </th>
+                    
+                    
+                    <th>Qty/Count</th>
+                    <th>Rate</th>
+                    <th>Amount</th>
+                    
+                    <th> 
+                        <button type="button" style="width:60px;height: 40px;" class="btn btn-primary" id="addBtn">Add</button>
+                     </th>
+                   
+                </tr>
+                
+            </thead>
+            <tbody id="tbody">
+                  
+                <tr class="recordsheet">
+                  
+                 
+              </tr>
+             </tbody>
+        </table>
+    </div>
+</div>
+<!-- calculation table -->
+<div class="row">
+              
+    <!-- /.col -->
+    <div class="col-md-12">
+     
+      <div class="table-responsive">
+        <table class="table">
+          <tr>
+            <input type="hidden" name="treatment_count" class="treatment-count" value="{{ treatment_counter }}">
+           
+            <th style="width:50%">Total:</th>
+            <td><input type="text" class="form-control" id="totsubtoal" name="totsubtoal" ></td>
+          </tr>
+          <tr>
+            <th>Tax Percentage</th>
+            <td><input type="text" class="form-control" id="taxperc" name="taxperc" oninput="totaltaxinctx(this)"></td>
+            <td><input type="hidden" class="form-control" id="totdis"></td>
+         
+          </tr>
+         
+          <tr>
+            <th>Discount:</th>
+            <td>
+              <input type="text" class="form-control" id="discount" name="discount" oninput="totaltaxinctx(this)">
+            </td>
+            
+          </tr>
+          
+          <!-- <tr>
+            <th>Shipping:</th>
+            <td><input type="text" class="form-control" id="shipping"  name="shipping" oninput="totaltaxinctx(this)"></td>
+          </tr>
+           -->
+          <tr>
+            <th>Consultation Fee:</th>
+            <td><input type="text" class="form-control" id="cfee"  name="cfee" oninput="totaltaxinctx(this)"></td>
+          </tr>
+           
+          <tr>
+            <th>Consultation Cum Registration Fee:</th>
+            <td><input type="text" class="form-control" id="rgfee"  name="rgfee" oninput="totaltaxinctx(this)"></td>
+          </tr>
+          <tr>
+            <th>Total Including Tax:</th>
+            <td><input type="text" class="form-control" id="totalIncludingTax" name="totalIncludingTax" readonly></td>
+            <input type="hidden" id="record_count" name="record_count" value="1">
+          </tr>
+
+        </table>
+      </div>
+    </div>
+  
+  </div>
+  </div>
+  <div class="card-footer">
+    {% if trtmngadd == '1' %}
+    <button type="submit"  class="btn btn-primary">Submit</button>
+    {%endif%}
+</div>
+</form>
+  </div>
+  
+  </div>
+  </div>
+ 
+  </div>
+  </section>
+  </div>
+  
+  <!-- get the patientdetails -->
+<script>
+function validateAndSubmitForm() {
+  let errors = [];
+
+  // Check patient selection
+  const patientSelected = document.getElementById('mrDropdown').value;
+  if (!patientSelected) errors.push("Please select a patient.");
+
+  // Check patient contact number
+  const contactNo = document.getElementById('phno').value.trim();
+  if (!contactNo || contactNo.length < 7) errors.push("Please enter a valid contact number.");
+
+  // Check treatment rows
+  const rows = document.querySelectorAll('.recordsheet');
+  if (rows.length === 0) {
+    alert("Add at least one treatment.");
+    return false;
+  }
+
+  // Validate if at least one treatment row has valid treatment name and quantity > 0
+  let validTreatmentFound = false;
+  rows.forEach(row => {
+    const treatmentName = row.querySelector('.particular')?.value.trim();
+    const quantity = row.querySelector('.quantity')?.value.trim();
+
+    if (treatmentName && quantity && !isNaN(quantity) && Number(quantity) > 0) {
+      validTreatmentFound = true;
+    }
+  });
+
+  if (!validTreatmentFound) {
+    alert("Add at least one valid treatment with quantity.");
+    return false;
+  }
+
+  // Check subtotal
+  const subtotal = parseFloat(document.getElementById('totsubtoal').value.trim());
+  if (isNaN(subtotal) || subtotal <= 0) errors.push("Subtotal must be a valid number greater than 0.");
+
+  // Show errors if any
+  if (errors.length > 0) {
+    alert(errors.join("\n"));
+    return false;
+  }
+
+  // Submit form if all checks pass
+  document.getElementById('invoiceForm').submit();
+}
+
+// Attach validation to form submit
+document.getElementById('invoiceForm').addEventListener('submit', function(event) {
+  event.preventDefault();
+  validateAndSubmitForm();
+});
+
+
+  </script>
+  
+  <script>$(document).ready(function() {
+    // Initialize DataTable (without data initially)
+    let table = $('#searchResultsTable').DataTable({
+      paging: true,
+      searching: true, // Enable internal search for filtering
+      info: true,
+      lengthChange: true, // Allow changing number of entries shown
+      pageLength: 10,     // Limit results to 10 per page
+    });
+  
+    // Event listener for the search button click
+    $('#searchBtn').on('click', function() {
+      let query = $('#mrSearch').val();
+  
+      // Ensure the search query is not empty
+      if (query.trim() === '') {
+        alert('Please enter a search term.');
+        return;
+      }
+  
+      // Clear previous table data
+      table.clear().draw();
+  
+      // Send an AJAX request to search for the query
+      fetch(`/search_mrno?query=${query}`)
+        .then(response => response.json())
+        .then(data => {
+          // Check if data exists
+          if (data.length > 0) {
+            // Loop through the results and add to the table
+            data.forEach(item => {
+              let actionBtn = `<button class="btn btn-primary select-btn" data-id="${item.id}" 
+                                  data-name="${item.Patient_Name}" 
+                                  data-mrno="${item.Medical_Record_Number}" 
+                                  data-contact="${item.contactno}"
+                                  data-address="${item.Housename}">
+                                Select
+                              </button>`;
+  
+              // Make sure to add data in the correct order: MR Number -> Name -> Contact -> Address -> Action
+              table.row.add([
+                item.Medical_Record_Number,  // MR Number
+                item.Patient_Name,
+                item.Housename || 'N/A',            // Patient Name
+                item.contactno,              // Contact Number
+                    // Address (if null, show 'N/A')
+                actionBtn,                   // Action Button
+              ]).draw(false); // Re-draw the table after adding the row
+            });
+  
+            // Show the modal with the DataTable results
+            $('#searchModal').modal('show');
+          } else {
+            alert('No matching records found.');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('There was an error retrieving the data. Please try again.');
+        });
+    });
+    // Event delegation to handle clicks on dynamically generated "Select" buttons
+    $('#searchResultsTable tbody').on('click', '.select-btn', function() {
+      let id = $(this).data('id');
+      let mrno = $(this).data('mrno');
+      let name = $(this).data('name');
+      let contact = $(this).data('contact');
+      let address = $(this).data('address');
+      // Populate the dropdown with the selected value
+      $('#mrDropdown').html(`<option value="${id}" selected>${mrno} - ${name}</option>`);
+      // Populate the patient details input
+      $('#pt_name').val(`${mrno} - ${name}`);
+      $('#phno').val(`${contact}`);
+      
+      // Close the modal
+      $('#searchModal').modal('hide');
+    });
+  });
+  </script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+<script>
+  let treatmentCounter = 0;
+  
+  document.getElementById('addBtn').addEventListener('click', function() {
+      addRecordSheetRow();
+  });
+  function addRecordSheetRow() {
+    var inputField = document.getElementById('searchResults');
+    var selectedValue = inputField.value;
+    var medField = document.getElementById('medid');
+    var selectedId = medField.value;
+    
+    
+    var tbody = document.getElementById('tbody');
+    treatmentCounter++;
+    var newRow = document.createElement('tr');
+    newRow.classList.add('recordsheet');
+
+    $.ajax({
+        type: 'GET',
+        url: '/fetch_nametreatment_by_id/',
+        data: {
+            id: selectedId,
+            
+        }, 
+        success: function(response) {
+            if (response.hasOwnProperty('error')) {
+                // Display an alert with the error message
+                alert(response.error);
+                // Stop further execution
+                return;
+            }
+
+            newRow.innerHTML = `
+                <td><input type="text" class="form-control sl" name="sl${treatmentCounter}" value="${treatmentCounter}"></td>
+                <td><input type="text" class="form-control particular" name="particular${treatmentCounter}" value="${response.tr_name}"></td>
+                <td><input type="text" class="form-control quantity" name="quantity${treatmentCounter}" oninput="calculateSubtotal(this)"  required></td>
+                <td><input type="text" class="form-control amount" name="amount${treatmentCounter}" value="${response.Rate}" oninput="calculateSubtotal(this)"></td>
+                <td><input type="text" class="form-control subtotal" name="subtotal${treatmentCounter}" readonly></td>
+                <input type="hidden" name="form-control treatmentCounter" value="${treatmentCounter}">
+                <td><button type="button" class="btn btn-danger remove-item">Remove</button></td>
+            `;
+            tbody.appendChild(newRow);
+            document.getElementById('record_count').value = treatmentCounter;
+$("table").on("click", ".remove-item", function () {
+    var row = $(this).closest("tr");
+    var subtotal = parseFloat(row.find('.subtotal').val()) || 0;
+    var totalSubtotal = parseFloat($("#totsubtoal").val()) || 0;
+    totalSubtotal -= subtotal;
+    $("#totsubtoal").val(totalSubtotal.toFixed(2));
+    row.find('.quantity').val('');
+    row.find('.form-control').val('');
+    row.remove();
+    updateTotalSubtotal();
+    totaltaxinctx();
+    });
+      },
+        error: function(xhr, status, error) {
+          console.error("Error fetching name:", error);
+    }
+  });
+}
+function calculateSubtotal(inputElement) {
+ var row = inputElement.closest('tr');
+ var quantity = row.querySelector('.quantity').value;
+ var amount = row.querySelector('.amount').value;
+ var subtotal = row.querySelector('.subtotal');
+ subtotal.value = (quantity * amount).toFixed(2);
+ updateTotalSubtotal();
+ totaltaxinctx();
+}
+function updateTotalSubtotal() {
+var subtotalElements = document.querySelectorAll('.subtotal');
+var totalSubtotal = 0;
+subtotalElements.forEach(function (element) {
+ totalSubtotal += parseFloat(element.value) || 0;
+});
+document.getElementById('totsubtoal').value = totalSubtotal.toFixed(2);
+}
+function calculatetax() {
+var totalSubtotal = parseFloat(document.getElementById('totsubtoal').value) || 0;
+var taxPercentage = parseFloat(document.getElementById('taxperc').value) || 0;
+var taxAmount = (totalSubtotal * (taxPercentage / 100)).toFixed(2);
+var totamount = (totalSubtotal + parseFloat(taxAmount)).toFixed(2);
+document.getElementById('totdis').value = taxAmount;
+}
+
+function totaltaxinctx(){
+var subtotal = parseFloat(document.getElementById('totsubtoal').value) || 0;
+var taxPercentage = parseFloat(document.getElementById('taxperc').value) || 0;
+var confee = parseFloat(document.getElementById('cfee').value) || 0;
+var conrgfee = parseFloat(document.getElementById('rgfee').value) || 0;
+
+// Update the total amount including tax field
+
+var taxAmount =(subtotal * (taxPercentage / 100)).toFixed(2);
+var totamount = (subtotal + parseFloat(taxAmount)).toFixed(2);
+// var shippingAmount = parseFloat(document.getElementById('shipping').value) || 0;
+var disc=parseFloat(document.getElementById('discount').value) || 0;
+
+var tottax = ( parseFloat(totamount) +  parseFloat(confee)+ parseFloat(conrgfee) - parseFloat(disc)).toFixed(2);
+document.getElementById('totalIncludingTax').value = tottax;
+
+}
+</script>
+
+<script>
+  // Function to validate tax percentage input
+  function validateTaxPercentage(inputElement) {
+    var inputValue = inputElement.value.trim();
+    // Check if the input value ends with "%" symbol
+    if (inputValue.endsWith('%')) {
+      // Display an alert if "%" symbol is present
+      alert("Tax percentage should be a number. Do not include '%' symbol.");
+      // Remove the "%" symbol from input value
+      inputElement.value = inputValue.slice(0, -1);
+    }
+  }
+  // Add event listener for input event on tax percentage input field
+  document.getElementById('taxperc').addEventListener('input', function() {
+    validateTaxPercentage(this);
+  });
+</script>
+<script>
+  $(document).ready(function() {
+    $('#searchInput').keyup(function() {
+        var query = $(this).val();
+        if (query.length >= 3) {
+            $.ajax({
+                url: "{% url 'search_treatment' %}",
+                data: {
+                    'term': query
+                },
+                dataType: 'json',
+                success: function(data) {
+                    $('#searchResults').empty();
+                    $.each(data, function(index, item) {
+                        $('#searchResults').append('<option value="' + item.trid + '">' + item.tr_name  + '</option>');
+                        $('#searchResults option:last').data('med-id', item.trid);    
+                    });
+                    // Trigger the change event on searchResults dropdown to select the first option
+                    $('#searchResults').trigger('change');
+                }
+            });
+        } else {
+            $('#searchResults').empty();
+        }
+    });
+    $('#searchResults').change(function() {
+      var selectedOption = $(this).find(':selected');
+        var selectedMedId = selectedOption.data('med-id');
+        var selectedsupId = selectedOption.data('sup-id');
+        // Assign the selected medicine ID and supplier ID to the hidden input fields
+        $('#medid').val(selectedMedId);
+        $('#supid').val(selectedsupId);
+    });
+    // get unit
+});
+</script>
+ {% endblock %}

@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pharmacy Receipt</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Courier New", monospace;
+        }
+
+        body {
+            background: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 5px;
+        }
+
+        .receipt-container {
+            width: 72mm; /* Printable width for RTP-81 */
+            margin: 0 auto;
+        }
+
+        .receipt {
+            width: 100%;
+            padding: 3mm;
+            font-size: 12px;
+            line-height: 1.4;
+            color: #000;
+            background: #fff;
+        }
+
+        .store-name {
+            text-align: center;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+
+        .sub-head {
+            text-align: center;
+            font-size: 11px;
+            margin-bottom: 2px;
+            font-weight: bold;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px dashed #000;
+            margin: 4px 0;
+        }
+
+        .bill-info {
+            margin: 4px 0;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .bill-row {
+            margin-bottom: 2px;
+            text-align: left;
+        }
+
+        table.items {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 5px;
+            font-size: 11px;
+        }
+
+        table.items th,
+        table.items td {
+            border-bottom: 1px dashed #000;
+            padding: 2px 0;
+        }
+
+        table.items th {
+            text-align: left;
+            font-weight: bold;
+        }
+
+        table.items td {
+            vertical-align: top;
+            font-weight: bold;
+        }
+
+        table.items td:last-child {
+            text-align: right;
+        }
+
+        .totals-section {
+            margin-top: 6px;
+            text-align: right;
+            font-size: 11px;
+        }
+
+        .total {
+            margin: 3px 0;
+            font-weight: bold;
+        }
+
+        .grand-total {
+            border-top: 1px dashed #000;
+            font-weight: bold;
+            font-size: 13px;
+            padding-top: 3px;
+            margin-top: 4px;
+        }
+
+        .thank-you {
+            text-align: center;
+            margin-top: 8px;
+            font-size: 11px;
+            font-style: italic;
+            font-weight: bold;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 5px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .print-btn {
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .btn {
+            background: #2196f3;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .btn:hover {
+            background: #1976d2;
+        }
+
+        /* Print Setup for RTP-81 */
+        @media print {
+            @page {
+                size: 72mm auto;
+                margin: 0px;
+            }
+
+            body {
+                margin: 0;
+                padding: 0;
+                background: #fff;
+            }
+
+            .receipt-container {
+                width: 72mm;
+                margin: 0;
+                padding: 0;
+            }
+
+            .print-btn,
+            a.btn,
+            button {
+                display: none !important;
+            }
+
+            .receipt {
+                page-break-inside: avoid;
+                margin: 0;
+                padding: 2mm;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="invoice" class="receipt-container">
+        <div class="receipt">
+            <!-- Header -->
+            {% if objhospt %}
+            <h6 class="sub-head">{{ objhospt.Name }}</h6>
+            <p class="sub-head">{{ objhospt.Address }}</p>
+            {% endif %}
+
+            {% for chunk, subtotal in chinvoice_chunks %}
+            <!-- Bill info -->
+            <div class="bill-info">
+                <div class="bill-row">
+                    <strong>Patient Name:</strong> {{ lsinvoice.patientname }}
+                </div>
+                <div class="bill-row">
+                    <strong>Mobile No:</strong> {{ lsinvoice.patientphno }}
+                </div>
+                <div class="bill-row">
+                    <strong>Invoice:</strong> {{ lsinvoice.Invoicenumber }}
+                </div>
+                <div class="bill-row">
+                    <strong>Date:</strong> {{ lsinvoice.currentdate }}
+                </div>
+            </div>
+
+            <!-- Items Table -->
+            <table class="items">
+                <thead>
+                    <tr>
+                        <th>Particulars</th>
+                        <th>Rate</th>
+                        <th>Qty</th>
+                        {% if branch_has_gst and not branch_is_composition %}
+                        <th>Tax</th>
+                        <th>SGST</th>
+                        <th>CGST</th>
+                        <th>Total</th>
+                        {% else %}
+                        <th colspan="3" style="text-align:center;">Total Amount</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in chunk %}
+                    <tr>
+                        <td>
+                            {{ item.particulars }}<br />
+                            <small>Batch: {{ item.batchno }}</small>
+                        </td>
+                        <td>{{ item.amount }}</td>
+                        <td>{{ item.quantity }}</td>
+                        {% if branch_has_gst and not branch_is_composition %}
+                        <td>{{ item.tax }}%</td>
+                        <td>{{ item.sgstamount }}</td>
+                        <td>{{ item.cgstamount }}</td>
+                        <td>{{ item.sutotal }}</td>
+                        {% else %}
+                        <td colspan="3" style="text-align:right;">{{ item.sutotal }}</td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Totals -->
+            <div class="totals-section">
+                <p class="total"><strong>Subtotal:</strong> {{ subtotal }}</p>
+                {% if branch_has_gst and not branch_is_composition %}
+                <p class="total">
+                    <strong>Total Tax:</strong> {{ lsinvoice.totaltaxableamount }}
+                </p>
+                {% endif %}
+                {% if lsinvoice.discount and lsinvoice.discount|floatformat:2 != "0.00" %}
+                <p class="total">
+                    <strong>Discount:</strong> {{ lsinvoice.discount }}
+                </p>
+                {% endif %}
+                <p class="total grand-total">
+                    <strong>Grand Total:</strong> {{ lsinvoice.total }}
+                </p>
+            </div>
+            {% endfor %}
+
+            <br />
+            <p>Note: Return unused medicines with original packaging and receipts within 15 days.</p>
+            <p class="thank-you">Thank you for your visit!</p>
+            <p class="footer">NEXGENEHR</p>
+        </div>
+
+        <div class="print-btn">
+            <button onclick="printInvoice()" class="btn">Print Invoice</button>
+        </div>
+    </div>
+
+    <script>
+        function printInvoice() {
+            // Get the invoice content
+            var invoiceContent = document.getElementById('invoice').innerHTML;
+            
+            // Get all styles from the document
+            var styles = '';
+            var styleNodes = document.querySelectorAll('style');
+            styleNodes.forEach(function(styleNode) {
+                styles += styleNode.innerHTML;
+            });
+            
+            // Create print window
+            var printWindow = window.open('', '_blank');
+            printWindow.document.open();
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Pharmacy Receipt</title>
+                    <meta charset="UTF-8">
+                    <style>
+                        ${styles}
+                        /* Additional print-specific styles */
+                        @media print {
+                            body {
+                                margin: 0;
+                                padding: 0;
+                            }
+                            .print-btn {
+                                display: none !important;
+                            }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="receipt-container">
+                        ${invoiceContent}
+                    </div>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            
+            // Wait for content to load then print
+            printWindow.onload = function() {
+                printWindow.print();
+                printWindow.onafterprint = function() {
+                    printWindow.close();
+                };
+            };
+        }
+    </script>
+</body>
+</html>

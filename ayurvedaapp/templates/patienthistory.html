@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Patient History </h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item">
+                <a href="{% url 'patienthistorytable' %}">View All</a></li>
+              <li class="breadcrumb-item active">Patient Details</li>
+            </ol>
+          </div>
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+
+      <div class="row">
+        <div class="col-md-12">
+          <div class="card card-primary">
+            <div class="card-header">
+              <h3 class="card-title">Patient Details</h3>
+
+              <div class="card-tools">
+                <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                  <!-- <i class="fas fa-minus"></i> -->
+                </button>
+              </div>
+            </div>
+             <form role="form">
+      <div class="row">
+          <div class="col-md-6">
+              <div class="card">
+             
+             
+                <div class="card-body">
+                  
+                   <div class="form-group">
+                    <label for="exampleInputEmail1">Patient Id</label>
+                    <select class="form-control">
+                        <option>--select--</option>
+                        <option>Ptid1</option>
+                        <option>Ptid2</option>
+                        <option>Ptid3</option>
+                      </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="exampleInputHouse">Details</label>
+                    <textarea class="form-control"></textarea>
+                  
+                  </div>
+                     <div class="form-group">
+                    <label for="exampleInputRegisterNo">Allergy Type</label>
+                   <input type="type" class="form-control" name="exampleInputbystname" placeholder="Enter Allergy Type"  id="exampleInputbystname" >
+                  </div>
+                  
+                  
+                 
+                </div>
+              </div>
+            </div>
+                <!-- /.card-body -->
+             
+              <div class="col-md-6">
+              <div class="card">
+             
+             
+                <div class="card-body">
+                    <div class="form-group">
+                      <label for="exampleInputEmail1">Height</label>
+                      <input type="type" class="form-control" name="exampleInputheight" placeholder="Enter Patient Height" id="exampleInputheight" >
+                    </div>
+                    <div class="form-group">
+                      <label for="exampleInputPincode">Weight</label>
+                     <input type="type" class="form-control" name="exampleInputweight" placeholder="Enter Patient Weight" id="exampleInputweight" >
+                    </div>
+                  <div class="form-group">
+                     <label for="exampleInputPhno">Blood Group</label>
+                     <input type="type" class="form-control" name="exampleInputbloodgroup" placeholder="Enter Patient Blood Group" id="exampleInputbloodgroup" >
+                  </div>
+                   
+                  
+                   
+                </div>
+              </div>
+            </div>
+          </div>
+                <div class="card-footer">
+                  <button type="submit" class="btn btn-primary">Submit</button>
+                </div>
+              </form>
+            <!-- /.card-body -->
+          </div>
+          <!-- /.card -->
+        </div>
+     
+      </div>
+
+      
+    </section>
+    <!-- /.content -->
+  </div>
+  <!-- /.content-wrapper -->
+{% endblock %}

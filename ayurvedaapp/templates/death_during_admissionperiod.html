@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<style>
+    .badge-death {
+        background: #dc3545;
+        color: white;
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+    }
+    .badge-registered {
+        background: #28a745;
+        color: white;
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+    }
+    .badge-unregistered {
+        background: #ffc107;
+        color: #212529;
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+    }
+    .action-btns {
+        display: flex;
+        gap: 5px;
+        justify-content: center;
+    }
+    .action-btns a {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 4px;
+        transition: all 0.2s;
+    }
+    .action-btns a:hover {
+        background: #e8f7ef;
+    }
+    .action-btns img {
+        width: 18px;
+        height: 18px;
+    }
+</style>
+
+<div class="content-wrapper">
+
+<!-- Page Header -->
+<section class="content-header">
+    <div class="container-fluid">
+
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1>Deaths During The Period</h1>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="{% url 'index' %}">Home</a></li>
+                    <li class="breadcrumb-item active">Deaths During The Period</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Filter Card -->
+        <div class="card">
+            <div class="card-body">
+                <form method="GET" action="{% url 'deaths_during_admission' %}">
+                    <div class="row">
+                        <div class="col-lg-3 col-md-6">
+                            <div class="form-group">
+                                <label>From Date</label>
+                                <input type="date" class="form-control" name="from_date" value="{{ from_date }}">
+                            </div>
+                        </div>
+
+                        <div class="col-lg-3 col-md-6">
+                            <div class="form-group">
+                                <label>To Date</label>
+                                <input type="date" class="form-control" name="to_date" value="{{ to_date }}">
+                            </div>
+                        </div>
+
+                        <div class="col-lg-2 col-md-6">
+                            <div class="form-group">
+                                <label>Doctor Name</label>
+                                <select class="form-control" name="doctor">
+                                    <option value="">All Doctors</option>
+                                    {% for doctor in doctors %}
+                                    <option value="{{ doctor.id }}" {% if doctor_name == doctor %}selected{% endif %}>
+                                        {{ doctor.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-2 col-md-6">
+                            <div class="form-group">
+                                <label>&nbsp;</label>
+                                <button type="submit" class="btn btn-primary btn-block">
+                                    <i class="fas fa-search"></i> Search
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-2 col-md-6">
+                            <div class="form-group">
+                                <label>&nbsp;</label>
+                                <a href="{% url 'deaths_during_admission' %}" class="btn btn-secondary btn-block">
+                                    <i class="fas fa-undo"></i> Reset
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<!-- Main Content -->
+<section class="content">
+    <div class="container-fluid">
+
+        <div class="card">
+
+            <div class="card-header">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h5 class="font-weight-bold mb-0">
+                            <i class="fas fa-cross mr-2"></i>
+                            DEATHS DURING THE PERIOD
+                            {% if from_date and to_date %}
+                            {{ from_date|date:"d/m/Y" }} TO {{ to_date|date:"d/m/Y" }}
+                            {% endif %}
+                            <span class="badge badge-danger ml-2">{{ total_deaths }}</span>
+                        </h5>
+                    </div>
+                    <div class="col-md-4 text-right">
+                        <span class="badge badge-death">
+                            <i class="fas fa-skull mr-1"></i> Total Deaths: {{ total_deaths }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body">
+
+                <div class="table-responsive">
+                    <table
+                        id="example1"
+                        class="table table-bordered table-striped table-sm"
+                        style="width:100%;"
+                    >
+                        <thead>
+                            <tr>
+                                <th>Sl No</th>
+                                <th>IP Number</th>
+                                <th>Patient Name</th>
+                                <th>Gender / Age</th>
+                                <th>Room</th>
+                                <th>Date & Time of Admission</th>
+                                <th>Date & Time of Death</th>
+                                <th>Consulting Doctor</th>
+                                <th>Type</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for record in death_data %}
+                            <tr>
+                                <td>{{ record.sl_no }}</td>
+                                <td>
+                                    <span class="font-weight-bold">{{ record.ip_number }}</span>
+                                </td>
+                                <td>{{ record.patient_name }}</td>
+                                <td>{{ record.gender_age }}</td>
+                                <td>{{ record.room }}</td>
+                                <td>{{ record.admission_datetime }}</td>
+                                <td>
+                                    <span>{{ record.death_datetime }}</span>
+                                </td>
+                                <td>{{ record.consulting_doctor }}</td>
+                                <td>
+                                    {% if record.registration_type == 'registered' %}
+                                        <span class="badge-registered">Registered</span>
+                                    {% else %}
+                                        <span class="badge-unregistered">Unregistered</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="9" class="text-center">
+                                    <div class="py-4">
+                                        <i class="fas fa-info-circle fa-2x text-muted mb-2"></i>
+                                        <p class="text-muted">No death records found for the selected period.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+</section>
+
+</div>
+
+
+
+{% endblock %}

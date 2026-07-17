@@ -1,0 +1,1011 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    /* Fix sidebar overlay issues */
+    .content-wrapper {
+        margin-left: 250px;
+        min-height: 100vh;
+        transition: margin-left 0.3s ease;
+    }
+    
+    @media (max-width: 767.98px) {
+        .content-wrapper {
+            margin-left: 0;
+        }
+        .main-sidebar {
+            transform: translateX(-250px);
+            transition: transform 0.3s ease;
+        }
+        .sidebar-open .main-sidebar {
+            transform: translateX(0);
+        }
+        .sidebar-open .content-wrapper {
+            margin-left: 250px;
+        }
+    }
+    
+    /* Enhanced Header Style */
+    .form-header {
+        background-color: #00796b !important;
+        color: #fff !important;
+        border-bottom: 1px solid #00695c;
+        padding: 15px 20px;
+        margin: -20px -30px 25px -30px;
+        border-radius: 8px 8px 0 0;
+    }
+    
+    .form-header h4 {
+        margin: 0;
+        color: #fff;
+        font-weight: 600;
+    }
+    
+    /* View All Button */
+    .btn-view-all {
+        background-color: #00796b;
+        color: #fff;
+        border: none;
+        padding: 8px 20px;
+        margin-bottom: 15px;
+        border-radius: 4px;
+        transition: all 0.3s;
+        display: inline-block;
+        text-decoration: none;
+    }
+    
+    .btn-view-all:hover {
+        background-color: #00695c;
+        color: #fff;
+        text-decoration: none;
+    }
+    
+    .btn-view-all i {
+        margin-right: 5px;
+    }
+    
+    /* Fix form container positioning */
+    .form-container {
+        background: #fff;
+        padding: 20px 30px;
+        max-width: 1400px;
+        margin: 20px auto;
+        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .form-row {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+    }
+
+    .form-group {
+        flex: 1;
+        min-width: 200px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 600;
+        font-size: 13px;
+        color: #555;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 8px 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 14px;
+        box-sizing: border-box;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: #00796b;
+        box-shadow: 0 0 0 2px rgba(0, 121, 107, 0.15);
+    }
+
+    .items-section {
+        margin: 25px 0;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        padding: 15px;
+        background: #fafafa;
+        position: relative;
+    }
+
+    .items-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .search-bar {
+        margin-bottom: 15px;
+        position: relative;
+        z-index: 10000;
+    }
+
+    .search-bar input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+
+    .search-bar input:focus {
+        border-color: #00796b;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(0, 121, 107, 0.15);
+    }
+
+    .medicine-search-results {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #ddd;
+        max-height: 400px;
+        overflow-y: auto;
+        z-index: 99999;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        border-radius: 4px;
+        margin-top: 2px;
+    }
+
+    .medicine-search-result-item {
+        padding: 10px;
+        cursor: pointer;
+        border-bottom: 1px solid #eee;
+        transition: background 0.2s;
+    }
+
+    .medicine-search-result-item:hover {
+        background-color: #f0f0f0;
+    }
+
+    .medicine-name {
+        font-weight: bold;
+        color: #333;
+    }
+
+    .medicine-details {
+        font-size: 11px;
+        color: #666;
+        margin-top: 4px;
+    }
+
+    .batch-info {
+        font-size: 10px;
+        color: #00796b;
+        margin-left: 10px;
+    }
+
+    .items-table-container {
+        overflow-x: auto;
+        width: 100%;
+        position: relative;
+    }
+
+    .items-table {
+        width: 100%;
+        min-width: 700px;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+
+    .items-table th,
+    .items-table td {
+        border: 1px solid #ccc;
+        padding: 8px;
+        text-align: left;
+        vertical-align: middle;
+    }
+
+    .items-table th {
+        background: #f5f5f5;
+        font-weight: 600;
+        font-size: 12px;
+    }
+
+    .items-table input,
+    .items-table select {
+        width: 100%;
+        padding: 6px;
+        border: 1px solid #ddd;
+        border-radius: 3px;
+        font-size: 13px;
+        box-sizing: border-box;
+    }
+
+    .items-table input:focus,
+    .items-table select:focus {
+        border-color: #00796b;
+        outline: none;
+    }
+
+    .items-table .action-col {
+        width: 50px;
+        text-align: center;
+    }
+
+    .btn-remove {
+        background: #dc3545;
+        color: #fff;
+        border: none;
+        padding: 4px 10px;
+        border-radius: 3px;
+        cursor: pointer;
+        font-size: 12px;
+    }
+
+    .btn-remove:hover {
+        background: #c82333;
+    }
+
+    .totals-section {
+        margin-top: 20px;
+        text-align: right;
+        padding: 15px;
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .totals-section p {
+        margin: 8px 0;
+        font-size: 14px;
+    }
+
+    .totals-section strong {
+        color: #00796b;
+    }
+
+    .form-actions {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 15px;
+        margin-top: 25px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+        flex-wrap: wrap;
+    }
+
+    .btn-submit {
+        background: #00796b;
+        color: #fff;
+        border: none;
+        padding: 10px 25px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.3s;
+    }
+
+    .btn-submit:hover {
+        background: #00695c;
+    }
+
+    .btn-cancel {
+        background: #6c757d;
+        color: #fff;
+        border: none;
+        padding: 10px 25px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    .btn-cancel:hover {
+        background: #5a6268;
+    }
+
+    .error-msg {
+        color: #dc3545;
+        font-size: 12px;
+        margin-top: 4px;
+        display: none;
+    }
+
+    .form-group.error input,
+    .form-group.error select,
+    .form-group.error textarea {
+        border-color: #dc3545;
+    }
+
+    @media (max-width: 768px) {
+        .form-container {
+            padding: 15px;
+            margin: 10px;
+        }
+        
+        .form-header {
+            margin: -15px -15px 20px -15px;
+            padding: 12px 15px;
+        }
+        
+        .form-row {
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .items-table {
+            font-size: 11px;
+            min-width: 600px;
+        }
+        
+        .items-table th,
+        .items-table td {
+            padding: 6px 4px;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+        }
+        
+        .items-header {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .btn-view-all {
+            width: 100%;
+            text-align: center;
+        }
+    }
+</style>
+
+<div class="content-wrapper">
+    <div style="padding: 20px;">
+        <a href="{% url 'purchase_order_list' %}" class="btn-view-all">
+            <i class="fas fa-list"></i> View All Purchase Orders
+        </a>
+        <div class="form-container">
+            <div class="form-header">
+                <h4>Create Purchase Order</h4>
+            </div>
+
+            <form method="POST" id="purchaseOrderForm" action="{% url 'purchase_order_create' %}" novalidate>
+                {% csrf_token %}
+                
+                <!-- Header Section -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="po_number">PO Number *</label>
+                        <input type="text" id="po_number" name="po_number" readonly required style="background-color: #f5f5f5;">
+                        <div class="error-msg" id="po_number_error">This field is required</div>
+                        <small class="text-muted">Auto-generated based on branch selection</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="po_date">Date *</label>
+                        <input type="date" id="po_date" name="po_date" required>
+                        <div class="error-msg" id="po_date_error">This field is required</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="branch">Branch *</label>
+                        <select id="branch" name="branch" required>
+                            <option value="">Select Branch</option>
+                            {% for branch in branches %}
+                            <option value="{{ branch.id }}">{{ branch.Branch_Name }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="error-msg" id="branch_error">This field is required</div>
+                    </div>
+                </div>
+
+                <!-- Supplier Details -->
+                <div class="form-row">
+                    <div class="form-group" style="flex: 2;">
+                        <label for="supplier_name">Supplier Name *</label>
+                        <input type="text" id="supplier_name" name="supplier_name" placeholder="Supplier/Company Name" required>
+                        <div class="error-msg" id="supplier_name_error">This field is required</div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group" style="flex: 2;">
+                        <label for="supplier_address">Supplier Address *</label>
+                        <textarea id="supplier_address" name="supplier_address" rows="2" placeholder="Full address with pincode" required></textarea>
+                        <div class="error-msg" id="supplier_address_error">This field is required</div>
+                    </div>
+                </div>
+
+                <!-- Terms Section -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="delivery_date">Expected Delivery Date</label>
+                        <input type="date" id="delivery_date" name="delivery_date">
+                    </div>
+                    <div class="form-group">
+                        <label for="payment_terms">Payment Terms *</label>
+                        <select id="payment_terms" name="payment_terms" required>
+                            <option value="">Select Payment Terms</option>
+                            <option value="Advance">Advance</option>
+                            <option value="Credit 7 Days">Credit 7 Days</option>
+                            <option value="Credit 15 Days">Credit 15 Days</option>
+                            <option value="Credit 30 Days">Credit 30 Days</option>
+                            <option value="Cash">Cash</option>
+                            <option value="Bank Transfer">Bank Transfer</option>
+                        </select>
+                        <div class="error-msg" id="payment_terms_error">This field is required</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="transport">Mode of Transport</label>
+                        <input type="text" id="transport" name="transport" placeholder="e.g., JEYEM PARCEL SERVICE">
+                    </div>
+                    <div class="form-group">
+                        <label for="gst_applicable">GST Applicable</label>
+                        <select id="gst_applicable" name="gst_applicable">
+                            <option value="yes">Yes</option>
+                            <option value="no">No</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Approval Section -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="prepared_by">Prepared By</label>
+                        <input type="text" id="prepared_by" name="prepared_by" placeholder="Name">
+                    </div>
+                    <div class="form-group">
+                        <label for="checked_by">Checked By</label>
+                        <input type="text" id="checked_by" name="checked_by" placeholder="Name">
+                    </div>
+                    <div class="form-group">
+                        <label for="approved_by">Approved By</label>
+                        <input type="text" id="approved_by" name="approved_by" placeholder="Name">
+                    </div>
+                    <div class="form-group">
+                        <label for="approver_designation">Approver Designation</label>
+                        <input type="text" id="approver_designation" name="approver_designation" placeholder="e.g., Chief Consulting Physician">
+                    </div>
+                </div>
+
+                <!-- Items Section with Medicine Search -->
+                <div class="items-section">
+                    <div class="items-header">
+                        <strong>📦 Items</strong>
+                    </div>
+
+                    <!-- Medicine Search Bar -->
+                    <div class="search-bar">
+                        <input type="text" id="medicineSearch" placeholder="🔍 Search for medicines..." autocomplete="off">
+                        <div id="medicineSearchResults" class="medicine-search-results" style="display: none;"></div>
+                    </div>
+                    
+                    <div class="items-table-container">
+                        <table class="items-table">
+                            <thead>
+                                脂
+                                    <th width="3%">Sl</th>
+                                    <th width="35%">Item Name</th>
+                                    <th width="10%">Quantity</th>
+                                    <th width="10%">Unit</th>
+                                    <th width="15%">Unit Rate (₹)</th>
+                                    <th width="15%">Total Amount (₹)</th>
+                                    <th width="5%" class="action-col"></th>
+                                  </tr>
+                            </thead>
+                            <tbody id="itemsBody">
+                                <!-- Dynamic rows from search will be added here -->
+                            </tbody>
+                          </table>
+                    </div>
+                </div>
+
+                <!-- Totals Section -->
+                <div class="totals-section">
+                    <p>Subtotal: <strong id="subtotal">₹ 0.00</strong></p>
+                    <p style="font-size: 16px; border-top: 2px solid #000; padding-top: 10px;">
+                        Grand Total: <strong id="grand_total">₹ 0.00</strong>
+                    </p>
+                    <p style="font-size: 13px; color: #666; margin-top: 10px;">
+                        In Words: <span id="amount_in_words">Zero Only</span>
+                    </p>
+                    <input type="hidden" id="total_amount" name="total_amount" value="0">
+                    <input type="hidden" id="items_count" name="items_count" value="0">
+                </div>
+
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel" onclick="window.location.href='{% url 'purchase_order' %}'">Cancel</button>
+                    <button type="submit" class="btn-submit">💾 Create Purchase Order</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script src="{% static 'assets/js/jquery-3.6.0.min.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let itemCounter = 0;
+    const itemsBody = document.getElementById('itemsBody');
+    const medicineSearch = document.getElementById('medicineSearch');
+    const medicineResults = document.getElementById('medicineSearchResults');
+    let searchTimeout;
+
+    // Set today's date as default
+    document.getElementById('po_date').valueAsDate = new Date();
+
+    // Function to fetch PO number from server
+    function fetchPONumber(branchId) {
+        if (!branchId) return;
+        
+        fetch(`/api/generate-po-number/?branch_id=${branchId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.po_number) {
+                    document.getElementById('po_number').value = data.po_number;
+                } else {
+                    console.error('No PO number received');
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching PO number:', error);
+                // Fallback: Show that generation failed
+                document.getElementById('po_number').value = 'Error loading number';
+            });
+    }
+
+    // Branch change event - fetch PO number
+    document.getElementById('branch').addEventListener('change', function() {
+        if (this.value) {
+            fetchPONumber(this.value);
+        } else {
+            document.getElementById('po_number').value = '';
+        }
+    });
+
+    // Add item row from search with batch selection
+    function addSearchItemRow(medicine, selectedBatch = null) {
+        itemCounter++;
+        const row = document.createElement('tr');
+        
+        // Get available batches with stock
+        const availableBatches = (medicine.batches || []).filter(b => b.qty > 0);
+        const hasBatches = availableBatches.length > 0;
+        
+        // Determine initial rate and batch info
+        const initialRate = selectedBatch ? (selectedBatch.rate || medicine.rate) : medicine.rate;
+        const initialBatchNo = selectedBatch ? selectedBatch.batch_no : '';
+        const initialStockId = selectedBatch ? (selectedBatch.stock_id || selectedBatch.id) : '';
+        const initialExpiry = selectedBatch ? selectedBatch.expiry_date : '';
+        
+        // Create batch selector HTML
+        let batchSelectorHtml = '';
+        if (hasBatches) {
+            batchSelectorHtml = `
+                <select name="items[${itemCounter}][batch_no]" class="item-batch-selector" style="width: 100%; padding: 6px;" data-item-index="${itemCounter}" required>
+                    <option value="">Select Batch</option>
+                    ${availableBatches.map(batch => `
+                        <option value="${escapeHtml(batch.batch_no)}" 
+                            data-stock-id="${batch.stock_id || batch.id}"
+                            data-expiry="${batch.expiry_date}"
+                            data-stock-qty="${batch.qty}"
+                            data-rate="${batch.rate || medicine.rate}"
+                            ${selectedBatch && selectedBatch.batch_no === batch.batch_no ? 'selected' : ''}>
+                            ${escapeHtml(batch.batch_no)} | Stock: ${batch.qty} | Exp: ${batch.expiry_date || 'N/A'} | Rate: ₹${batch.rate || medicine.rate}
+                        </option>
+                    `).join('')}
+                </select>
+                <input type="hidden" name="items[${itemCounter}][stock_id]" class="item-stock-id" value="${initialStockId}">
+                <input type="hidden" name="items[${itemCounter}][expiry_date]" class="item-expiry-date" value="${initialExpiry}">
+            `;
+        } else {
+            batchSelectorHtml = `
+                <input type="text" name="items[${itemCounter}][batch_no]" class="item-batch" placeholder="Enter Batch No" value="${escapeHtml(initialBatchNo)}" style="width: 100%; padding: 6px;">
+                <input type="hidden" name="items[${itemCounter}][stock_id]" class="item-stock-id" value="${initialStockId}">
+                <input type="hidden" name="items[${itemCounter}][expiry_date]" class="item-expiry-date" value="${initialExpiry}">
+            `;
+        }
+        
+        row.innerHTML = `
+            <td style="text-align: center;">${itemCounter}</td>
+            <td>
+                <input type="text" name="items[${itemCounter}][description]" class="item-desc" value="${escapeHtml(medicine.item_name)}" readonly required style="width: 100%;">
+                <input type="hidden" name="items[${itemCounter}][medicine_id]" value="${medicine.id}">
+            </td>
+            <td><input type="number" name="items[${itemCounter}][qty]" class="item-qty" min="0.01" step="0.01" value="1" required style="width: 100%;"></td>
+            <td>
+                <select name="items[${itemCounter}][unit]" class="item-unit" required style="width: 100%;">
+                    <option value="${medicine.unit}">${medicine.unit}</option>
+                </select>
+            </td>
+            <td class="batch-cell">
+                <div class="batch-selector-container">
+                    ${batchSelectorHtml}
+                </div>
+            </td>
+            <td><input type="number" name="items[${itemCounter}][rate]" class="item-rate" min="0" step="0.01" value="${initialRate}" required style="width: 100%;"></td>
+            <td><input type="text" name="items[${itemCounter}][amount]" class="item-amount" readonly value="${(1 * initialRate).toFixed(2)}" style="width: 100%;"></td>
+            <td class="action-col"><button type="button" class="btn-remove" onclick="removeRow(this)">✕</button></td>
+        `;
+        
+        itemsBody.appendChild(row);
+        
+        // Attach batch selector change event if batches exist
+        if (hasBatches) {
+            attachBatchSelector(row, availableBatches);
+        }
+        
+        attachItemCalculations(row);
+        calculateTotals();
+        medicineSearch.value = '';
+        medicineResults.style.display = 'none';
+        updateItemsCount();
+        
+        return row;
+    }
+
+    // Attach batch selector change event
+    function attachBatchSelector(row, batches) {
+        const batchSelector = row.querySelector('.item-batch-selector');
+        const stockIdHidden = row.querySelector('.item-stock-id');
+        const expiryHidden = row.querySelector('.item-expiry-date');
+        const rateInput = row.querySelector('.item-rate');
+        const qtyInput = row.querySelector('.item-qty');
+        
+        if (batchSelector) {
+            batchSelector.addEventListener('change', function() {
+                const selectedOption = this.options[this.selectedIndex];
+                if (this.value) {
+                    const batchNo = this.value;
+                    const stockId = selectedOption.getAttribute('data-stock-id');
+                    const expiryDate = selectedOption.getAttribute('data-expiry');
+                    const batchRate = parseFloat(selectedOption.getAttribute('data-rate'));
+                    const maxStock = parseInt(selectedOption.getAttribute('data-stock-qty')) || 0;
+                    
+                    // Update hidden fields
+                    if (stockIdHidden) stockIdHidden.value = stockId;
+                    if (expiryHidden) expiryHidden.value = expiryDate;
+                    
+                    // Update rate from selected batch
+                    if (batchRate && rateInput) {
+                        rateInput.value = batchRate.toFixed(2);
+                    }
+                    
+                    // Update max stock limit on quantity input
+                    if (qtyInput) {
+                        qtyInput.setAttribute('max', maxStock);
+                        qtyInput.setAttribute('data-max-stock', maxStock);
+                        
+                        // Validate current quantity against new max
+                        let currentQty = parseFloat(qtyInput.value) || 0;
+                        if (currentQty > maxStock) {
+                            qtyInput.value = maxStock;
+                            alert(`Quantity adjusted to available stock: ${maxStock} units`);
+                            calculateRowAmount(row);
+                        }
+                    }
+                    
+                    // Show batch info
+                    const descCell = row.cells[1];
+                    const existingInfo = descCell.querySelector('.batch-info-display');
+                    if (existingInfo) existingInfo.remove();
+                    
+                    const batchInfoSpan = document.createElement('span');
+                    batchInfoSpan.className = 'batch-info-display';
+                    batchInfoSpan.style.fontSize = '10px';
+                    batchInfoSpan.style.color = '#00796b';
+                    batchInfoSpan.style.display = 'block';
+                    batchInfoSpan.style.marginTop = '4px';
+                    batchInfoSpan.innerHTML = `📦 Batch: ${batchNo} | Exp: ${expiryDate || 'N/A'}`;
+                    descCell.appendChild(batchInfoSpan);
+                    
+                    // Recalculate amount
+                    calculateRowAmount(row);
+                    calculateTotals();
+                } else {
+                    if (stockIdHidden) stockIdHidden.value = '';
+                    if (expiryHidden) expiryHidden.value = '';
+                    
+                    // Remove batch info display
+                    const descCell = row.cells[1];
+                    const existingInfo = descCell.querySelector('.batch-info-display');
+                    if (existingInfo) existingInfo.remove();
+                    
+                    // Reset rate to default
+                    if (rateInput && batches.length > 0) {
+                        const defaultRate = batches[0].rate || rateInput.value;
+                        rateInput.value = defaultRate;
+                        calculateRowAmount(row);
+                        calculateTotals();
+                    }
+                }
+            });
+            
+            // Trigger change if a batch was pre-selected
+            if (batchSelector.value) {
+                batchSelector.dispatchEvent(new Event('change'));
+            }
+        }
+    }
+    
+    // Calculate amount for a single row
+    function calculateRowAmount(row) {
+        const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+        const rate = parseFloat(row.querySelector('.item-rate').value) || 0;
+        const total = qty * rate;
+        const amountInput = row.querySelector('.item-amount');
+        if (amountInput) amountInput.value = total.toFixed(2);
+    }
+
+    // Remove row function
+    window.removeRow = function(btn) {
+        const row = btn.closest('tr');
+        row.remove();
+        renumberRows();
+        calculateTotals();
+        updateItemsCount();
+    };
+
+    // Renumber rows after removal
+    function renumberRows() {
+        document.querySelectorAll('#itemsBody tr').forEach((tr, idx) => {
+            tr.cells[0].textContent = idx + 1;
+            const inputs = tr.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                const name = input.getAttribute('name');
+                if (name) {
+                    input.setAttribute('name', name.replace(/items\[\d+\]/, `items[${idx + 1}]`));
+                }
+            });
+        });
+        itemCounter = document.querySelectorAll('#itemsBody tr').length;
+    }
+
+    // Attach calculation listeners to a row
+    function attachItemCalculations(row) {
+        const qtyInput = row.querySelector('.item-qty');
+        const rateInput = row.querySelector('.item-rate');
+        const amountInput = row.querySelector('.item-amount');
+
+        function calculateAmount() {
+            const qty = parseFloat(qtyInput.value) || 0;
+            const rate = parseFloat(rateInput.value) || 0;
+            const total = qty * rate;
+            amountInput.value = total.toFixed(2);
+            calculateTotals();
+        }
+
+        qtyInput.addEventListener('input', calculateAmount);
+        rateInput.addEventListener('input', calculateAmount);
+        
+        // Add stock validation if max stock is set
+        if (qtyInput.getAttribute('data-max-stock')) {
+            qtyInput.addEventListener('change', function() {
+                const maxStock = parseFloat(this.getAttribute('data-max-stock'));
+                const currentQty = parseFloat(this.value);
+                if (currentQty > maxStock) {
+                    this.value = maxStock;
+                    alert(`Quantity exceeds available stock. Maximum: ${maxStock}`);
+                    calculateAmount();
+                }
+            });
+        }
+    }
+
+    // Calculate grand totals
+    function calculateTotals() {
+        let subtotal = 0;
+        document.querySelectorAll('#itemsBody tr').forEach(row => {
+            const amount = parseFloat(row.querySelector('.item-amount').value) || 0;
+            subtotal += amount;
+        });
+        
+        document.getElementById('subtotal').textContent = '₹ ' + subtotal.toFixed(2);
+        document.getElementById('grand_total').textContent = '₹ ' + subtotal.toFixed(2);
+        document.getElementById('total_amount').value = subtotal.toFixed(2);
+        document.getElementById('amount_in_words').textContent = numberToWords(Math.round(subtotal)) + ' Only';
+    }
+
+    // Update items count for backend
+    function updateItemsCount() {
+        document.getElementById('items_count').value = document.querySelectorAll('#itemsBody tr').length;
+    }
+
+    // Number to words (Indian Rupees)
+    function numberToWords(num) {
+        if (num === 0) return 'Zero';
+        
+        const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
+        const teens = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+        const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+        
+        function convertHundreds(n) {
+            let str = '';
+            if (n >= 100) {
+                str += ones[Math.floor(n / 100)] + ' Hundred ';
+                n %= 100;
+            }
+            if (n >= 20) {
+                str += tens[Math.floor(n / 10)] + ' ';
+                n %= 10;
+            } else if (n >= 10) {
+                str += teens[n - 10] + ' ';
+                n = 0;
+            }
+            if (n > 0) str += ones[n] + ' ';
+            return str.trim();
+        }
+        
+        let words = '';
+        let crore = Math.floor(num / 10000000);
+        num %= 10000000;
+        let lakh = Math.floor(num / 100000);
+        num %= 100000;
+        let thousand = Math.floor(num / 1000);
+        num %= 1000;
+        
+        if (crore > 0) words += convertHundreds(crore) + ' Crore ';
+        if (lakh > 0) words += convertHundreds(lakh) + ' Lakh ';
+        if (thousand > 0) words += convertHundreds(thousand) + ' Thousand ';
+        if (num > 0) words += convertHundreds(num);
+        
+        return words.trim() + ' Rupees';
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.appendChild(document.createTextNode(text));
+        return div.innerHTML;
+    }
+
+    // Medicine Search Function with Batch Information
+    function searchMedicines() {
+        const query = medicineSearch.value.trim();
+        const branchId = document.getElementById('branch').value;
+        
+        clearTimeout(searchTimeout);
+        
+        if (!query) {
+            medicineResults.style.display = 'none';
+            return;
+        }
+        
+        if (!branchId) {
+            alert('Please select a branch first');
+            medicineResults.style.display = 'none';
+            return;
+        }
+        
+        searchTimeout = setTimeout(function() {
+            fetch(`/api/search-medicines/?term=${encodeURIComponent(query)}&branch_id=${branchId}`)
+                .then(res => res.json())
+                .then(data => {
+                    medicineResults.innerHTML = '';
+                    
+                    if (!Array.isArray(data) || data.length === 0) {
+                        const noResult = document.createElement('div');
+                        noResult.innerHTML = '<div style="padding: 10px; color: #999;">No medicines found</div>';
+                        medicineResults.appendChild(noResult);
+                        medicineResults.style.display = 'block';
+                        return;
+                    }
+                    
+                    data.forEach(medicine => {
+                        const div = document.createElement('div');
+                        div.className = 'medicine-search-result-item';
+                        
+                        // Display batches information
+                        const availableBatches = (medicine.batches || []).filter(b => b.qty > 0);
+                        let batchesHtml = '';
+                        
+                        if (availableBatches.length > 0) {
+                            batchesHtml = `
+                                <div class="batch-info" style="margin-top: 8px; padding: 5px; background-color: #e8f5e9; border-radius: 3px;">
+                                    <strong>📦 Available Batches:</strong>
+                                    <div style="margin-top: 4px;">
+                                        ${availableBatches.map(batch => `
+                                            <div style="font-size: 10px; margin-top: 2px;">
+                                                • ${escapeHtml(batch.batch_no || 'N/A')} | Stock: ${batch.qty} | Exp: ${batch.expiry_date || 'N/A'} | Rate: ₹${batch.rate || medicine.rate}
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            `;
+                        } else if (medicine.batches && medicine.batches.length > 0) {
+                            batchesHtml = `<div class="batch-info" style="color: #dc3545; margin-top: 5px;">⚠️ Out of Stock</div>`;
+                        } else {
+                            batchesHtml = `<div class="batch-info" style="color: #ff9800; margin-top: 5px;">ℹ️ No batch information available</div>`;
+                        }
+                        
+                        div.innerHTML = `
+                            <div class="medicine-name" style="font-weight: bold; color: #00796b;">${escapeHtml(medicine.item_name)}</div>
+                            <div class="medicine-details" style="margin-top: 4px;">
+                                HSN: ${medicine.hsncode || 'N/A'} | GST: ${medicine.tax}% | Unit: ${medicine.unit}
+                            </div>
+                            ${batchesHtml}
+                            <div class="medicine-details" style="margin-top: 5px; color: #666;">
+                                💰 Base Rate: ₹${medicine.rate || 'N/A'}
+                            </div>
+                        `;
+                        
+                        div.onclick = function() {
+                            addSearchItemRow(medicine);
+                        };
+                        medicineResults.appendChild(div);
+                    });
+                    
+                    medicineResults.style.display = 'block';
+                })
+                .catch(err => {
+                    console.error('Search error:', err);
+                    medicineResults.style.display = 'none';
+                });
+        }, 300);
+    }
+
+    // Medicine search input event
+    medicineSearch.addEventListener('input', searchMedicines);
+    
+    // Close search results when clicking outside
+    $(document).click(function(e) {
+        if (!$(e.target).closest('#medicineSearch, #medicineSearchResults').length) {
+            $('#medicineSearchResults').hide();
+        }
+    });
+
+    // Form validation
+    document.getElementById('purchaseOrderForm').addEventListener('submit', function(e) {
+        let valid = true;
+        
+        ['po_number', 'po_date', 'branch', 'supplier_name', 'supplier_address', 'payment_terms'].forEach(id => {
+            const field = document.getElementById(id);
+            const error = document.getElementById(id + '_error');
+            if (!field || !field.value.trim()) {
+                if (field) field.closest('.form-group').classList.add('error');
+                if (error) error.style.display = 'block';
+                valid = false;
+            } else {
+                if (field) field.closest('.form-group').classList.remove('error');
+                if (error) error.style.display = 'none';
+            }
+        });
+
+        if (itemsBody.children.length === 0) {
+            alert('Please add at least one item to the purchase order');
+            valid = false;
+        }
+        
+        // Check for items with batch selector but no batch selected
+        const rowsWithBatchSelector = document.querySelectorAll('#itemsBody tr .item-batch-selector');
+        for (let selector of rowsWithBatchSelector) {
+            if (selector.value === '') {
+                const row = selector.closest('tr');
+                const itemDesc = row.querySelector('.item-desc').value;
+                alert(`Please select a batch for "${itemDesc}" before saving.`);
+                valid = false;
+                break;
+            }
+        }
+
+        if (!valid) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+{% endblock %}

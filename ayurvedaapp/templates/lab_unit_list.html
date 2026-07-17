@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="content-wrapper">
+
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6"><h1>Lab Units</h1></div>
+        <div class="col-sm-6">
+          <a href="{% url 'lab_unit_create' %}" class="btn btn-primary float-sm-right">+ Add Unit</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="content">
+
+    <div class="card">
+      <div class="card-body">
+        <table id="example1" class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                <th>#</th>
+                <th>Unit</th>
+                <th>Status</th>
+                <th>Action</th>
+                </tr>
+          </thead>
+          <tbody>
+            {% for u in units %}
+            <tr>
+              <td>{{ forloop.counter }}</td>
+              <td>{{ u.unit }}</td>
+              <td>{% if u.status %}<span class="badge badge-success">Active</span>{% else %}<span class="badge badge-secondary">Inactive</span>{% endif %}</td>
+              <td>
+                <a href="{% url 'lab_unit_edit'%}?ids={{u.id}}" class="btn btn-sm btn-primary"><i class='fas fa-edit'></i></a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="text-center text-muted">No Units Found</td></tr>
+            {% endfor %}
+          </tbody>
+
+        </table>
+      </div>
+    </div>
+
+  </section>
+
+</div>
+
+{% endblock %}

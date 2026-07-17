@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Invoice</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="#">Home</a></li>
+              <li class="breadcrumb-item active">Invoice</li>
+            </ol>
+          </div>
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
+
+    <section class="content">
+      <div class="container-fluid">
+        <form method="POST">
+             
+        <div class="row">
+          <div class="col-12">
+            <div class="callout callout-info">
+              <h5><i class="fas fa-info"></i> Note:</h5>
+              This page has been enhanced for printing. Click the print button at the bottom of the invoice to test.
+            </div>
+            
+
+            <!-- Main content -->
+            <div class="invoice p-3 mb-3">
+              <!-- title row -->
+              
+              
+                <!-- /.col -->
+                
+            
+                    <div class="container mt-5">
+                      <div class="row justify-content-center">
+                          <div class="col-md-6">
+                              <h4>TO:</h4>
+                              <input type="text" class="form-control" name="to">
+                          </div>
+                      </div>
+                      <div class="row justify-content-center">
+                          <div class="col-md-6">
+                              <h4>GSTIN:</h4>
+                              <input type="text" class="form-control" name="GSTN">
+                          </div>
+                      </div>
+                  </div>
+                  
+                    <div class="container mt-5">
+                      <div class="row justify-content-center">
+                       
+                        <div class="col-md-8">
+                          <div class="table-responsive">
+                            <table class="table table-bordered">
+                              <thead>
+                                <tr>
+                                  <th>Sl.No.</th>
+                                  <th>Description</th>
+                                  <th>Qty.</th>
+                                  <th>Rate</th>
+                                  <th>Discount</th>
+                                  <th>Subtotal</th>
+                                  <th> 
+                                    <button type="button" style="width:60px;height: 40px;" class="btn btn-primary" id="addBtn">Add</button></td>
+                                 </th>
+                                </tr>
+                              </thead>
+                              <tbody id="tbody">
+                               
+                                <tr class="recordsheet"></tr>
+                                </tbody>
+                                <tr>
+                                  <td colspan="5" style="text-align: right;"><strong>Grand Total:</strong></td>
+                                  <td><input type="text" class="form-control" name="grand_total" ></td>
+                                
+                              </tr>
+
+                            </table>
+                   
+
+    
+    <script>
+   let treatmentCounter = 0;
+document.getElementById('addBtn').addEventListener('click', function() {
+ 
+ 
+  addRecordSheetRow();
+  
+ 
+});
+
+function addRecordSheetRow() {
+ 
+  var tbody = document.getElementById('tbody');
+  treatmentCounter++;
+  var newRow = document.createElement('tr');
+  newRow.classList.add('recordsheet');
+  newRow.innerHTML = `
+          <td>${treatmentCounter}</td>
+          <td>
+            <select class="form-control description" name="description${treatmentCounter}">
+              <option value="" selected disabled>Select a description</option>
+              <option value="description1">Description 1</option>
+              <option value="description2">Description 2</option>
+              <option value="description3">Description 3</option>
+            </select>
+          </td>
+          <td><input type="text" class="quantity" name="quantity${treatmentCounter}"></td>
+          <td><input type="text" class="rate" name="rate${treatmentCounter}"></td>
+          <td><input type="text" class="discount" name="discount${treatmentCounter}" "></td>
+          <td><input type="text" class="subtotal" name="subtotal${treatmentCounter}" readonly></td>
+          
+          <input type="hidden" name="treatmentCounter" value="${treatmentCounter}">
+          <td><button type="button" class="btn btn-danger" onclick="deleteRow(this)">Delete</button></td>
+          `;
+  tbody.appendChild(newRow);
+  document.getElementById('record_count').value = treatmentCounter;
+}
+function calculateSubtotal(inputElement) {
+    var row = inputElement.closest('tr');
+    var quantity = row.querySelector('.quantity').value;
+    var amount = row.querySelector('.amount').value;
+    var subtotal = row.querySelector('.subtotal');
+    // Calculate subtotal and update the subtotal field
+    subtotal.value = (quantity * amount).toFixed(2);
+    updateTotalSubtotal();
+  }
+  function updateTotalSubtotal() {
+  var subtotalElements = document.querySelectorAll('.subtotal');
+  var totalSubtotal = 0;
+  subtotalElements.forEach(function (element) {
+    totalSubtotal += parseFloat(element.value) || 0;
+  });
+  document.getElementById('totsubtoal').value = totalSubtotal.toFixed(2);
+  }
+ function calculatetax(){
+  var totalSubtotal=document.getElementById('totsubtoal').value 
+  var taxPercentage = parseFloat(document.getElementById('taxperc').value) || 0;
+  var taxAmount = (totalSubtotal * (taxPercentage / 100)).toFixed(2);
+  
+  // = totalSubtotal.toFixed(2);
+  document.getElementById('totdis').value =taxAmount;
+ //  (totalSubtotal + parseFloat(taxAmount)).toFixed(2);
+
+ }
+ function totaltaxinctx(){
+  var totalSubtotal = parseFloat(document.getElementById('totsubtoal').value) || 0;
+  var taxAmount = parseFloat(document.getElementById('totdis').value) || 0;
+  var shippingamount = parseFloat(document.getElementById('shipping').value) || 0;
+
+  var tottax = (totalSubtotal + taxAmount + shippingamount).toFixed(2);
+  document.getElementById('totalIncludingTax').value = tottax;
+ 
+ }
+ 
+function deleteRow(button) {
+  // Get the row to be deleted
+  var row = button.parentNode.parentNode;
+  
+  // Remove the row
+  row.parentNode.removeChild(row);
+}
+</script>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script>
+      $(document).ready(function () {
+        // Function to update patient name and address based on selected MR Number
+        function updatePatientDetails() {
+          var selectedMrNumber = $("#mrDropdown").val();
+    
+          // Make an AJAX request to fetch patient details
+          $.ajax({
+            type: "GET",
+            url: "",  // Update this URL based on your project structure
+            data: { mrNumber: selectedMrNumber },
+            success: function (data) {
+              // Update patient name and address in the text input boxes
+              $("#exampleInputAddress").val(data.address);
+              $("#ptname").val(data.patient_name);
+              $("#ptphno").val(data.pt_phno);
+              $("#ptemail").val(data.pt_email);
+              
+              // Add similar lines to update other fields if needed
+            },
+            error: function (xhr, status, error) {
+              console.error("Error fetching patient details:", error);
+            },
+          });
+        }
+    
+        // Bind the updatePatientDetails function to the onchange event of the MR Number dropdown
+        $("#mrDropdown").on("change", updatePatientDetails);
+      });
+    </script>
+  </div>
+  {%endblock%}
+
+ 

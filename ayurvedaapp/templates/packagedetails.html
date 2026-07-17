@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Package Details</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="{% url 'packagetable'%}">View All</a></li>
+              <li class="breadcrumb-item active">Package</li>
+            </ol>
+          </div>
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+
+      <div class="row">
+        <div class="col-md-8">
+          <div class="card card-primary">
+            <div class="card-header">
+              <h3 class="card-title">Package</h3>
+
+              <div class="card-tools">
+                <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                  <!-- <i class="fas fa-minus"></i> -->
+                </button>
+              </div>
+            </div>
+               <form method="POST", action="{% url 'packagedetails' %}">
+             
+                {% csrf_token %}
+    
+             
+             
+                <div class="card-body">
+                    <div class="form-group">
+                    <label for="exampleInputPackageName">Package Name</label>
+                  <input type="text" class="form-control" id="exampleInputPackageName" name="packagename" placeholder="Enter Package Name" required>
+                  </div>
+                
+           <div class="form-group">
+                    <label for="exampleInputstatus">Treatment Name</label>
+                     <select class="form-control" name="treatmentname" required>
+                        <option selected disabled value="">Select</option>
+                                        {% for i in treatmentobj %}
+
+                      <option value="{{i.id}}">{{i.Treatment_name}}</option>
+                                        {% endfor %}
+                      </select>
+                    
+                  </div>
+                  <div class="form-group">
+                    <label for="selectedTreatments">Selected Treatments</label>
+                    <input type="text" class="form-control" id="selectedTreatments" name="selectedTreatments" readonly>
+                </div>
+
+                  <div class="form-group">
+                    <label for="exampleInputFrequency">Frequency</label>
+                  <input type="text" class="form-control" id="exampleInputFrequency" name="frequency" placeholder="Enter Frequency ">
+                  </div>
+                  
+                 <div class="form-group">
+                    <label for="exampleInputstatus">Branch Name</label>
+                     <select class="form-control" name="branchname" required>
+                        <option selected disabled value="">Select</option>
+                                        {% for i in branchobj %}
+
+                      <option value="{{i.id}}">{{i.Branch_Name}}</option>
+                                        {% endfor %}
+                      </select>
+                    
+                  </div>
+                   <div class="form-group">
+                    <label for="exampleInputFrequency">Package Rate</label>
+                  <input type="text" class="form-control" id="exampleInputPackageRate" name="packagerate" placeholder="Enter Package Rate ">
+                  </div>
+                
+                  
+                  
+                </div>
+             
+           
+                <div class="card-footer">
+                   {% if messages %}
+        {% for message in messages %}
+        <p style="color:green;">{{message}}</p> 
+        {% endfor %}
+        {% endif %}
+                  <button type="submit" class="btn btn-primary">Submit</button>
+                </div>
+              </form>
+            <!-- /.card-body -->
+          </div>
+          <!-- /.card -->
+        </div>
+     
+      </div>
+
+      
+    </section>
+    <!-- /.content -->
+  </div>
+
+<!-- Add the following script at the end of your template, just before the closing </body> tag -->
+<script>
+  // Function to update the selected treatments text field
+  function updateSelectedTreatments() {
+      var selectedTreatments = [];
+  
+      var existingValue = document.getElementById('selectedTreatments').value;
+      
+      if (existingValue) {
+          selectedTreatments.push(existingValue);
+      }
+
+      var selectedOptions = document.querySelectorAll('[name="treatmentname"] option:checked');
+      
+     
+      selectedOptions.forEach(function (option) {
+          selectedTreatments.push(option.textContent);
+      });
+
+      document.getElementById('selectedTreatments').value = selectedTreatments.join(', ');
+  }
+
+  document.querySelector('[name="treatmentname"]').addEventListener('change', updateSelectedTreatments);
+</script>
+
+  <!-- /.content-wrapper -->
+{% endblock %}

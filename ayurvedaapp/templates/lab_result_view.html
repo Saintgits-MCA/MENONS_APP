@@ -1,0 +1,276 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="content-wrapper">
+
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h3>Lab Results</h3>
+        </div>
+        <div class="col-sm-6">
+          {% if is_detail_view %}
+            <a href="{% url 'view_lab_results' %}" class="btn btn-sm btn-secondary float-sm-right">
+              <i class="fas fa-arrow-left"></i> Back to List
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="content">
+
+    <!-- ==================== DETAIL VIEW ==================== -->
+    {% if is_detail_view %}
+    <div class="card">
+      <div class="card-header">
+        <h4 class="card-title">Result Details - {{ result_number }}</h4>
+      </div>
+      <div class="card-body">
+        <!-- Patient Information -->
+        <div class="row">
+          <div class="col-md-12">
+            <div class="row">
+              <div class="col-md-3">
+                <strong>Patient Name:</strong> {{ patient.Patient_Name }}
+              </div>
+              <div class="col-md-2">
+                <strong>MR No:</strong> {{ patient.Medical_Record_Number }}
+              </div>
+              <div class="col-md-2">
+                <strong>Gender:</strong> {{ patient.Gender }}
+              </div>
+              <div class="col-md-2">
+                <strong>Age:</strong> {{ patient.Age }}
+              </div>
+              <div class="col-md-3">
+                <strong>Phone:</strong> {{ patient.contactno }}
+              </div>
+            </div>
+            <div class="row mt-2">
+              <div class="col-md-3">
+                <strong>Invoice No:</strong> {{ invoice.invoiceno|default:"N/A" }}
+              </div>
+              <div class="col-md-3">
+                <strong>Completed:</strong> {{ completed_date|date:"d-m-Y H:i" }}
+              </div>
+              <div class="col-md-2">
+                <strong>Total Tests:</strong> {{ total_tests }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <hr>
+
+        <!-- Test Results Table -->
+        <div class="table-responsive">
+          <table id="detailTable" class="table table-bordered table-striped table-sm">
+            <thead>
+              <tr>
+                <th width="5%">#</th>
+                <th>Test Name</th>
+                <th>Result Value</th>
+                <th>Normal Value</th>
+                <th>Result</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% if grouped_items %}
+                {% for group_name, items in grouped_items.items %}
+                  <tr class="bg-info">
+                    <td colspan="6"><strong><i class="fas fa-folder mr-3"></i> {{ group_name }}</strong></td>
+                  </tr>
+                  {% for item in items %}
+                  <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ item.labtest.testname|default:"Unknown" }}</td>
+                    <td><strong>{{ item.result_value|default:"-" }}</strong></td>
+                    <td>{{ item.normal_value|default:"-" }}</td>
+                    <td>{{ item.result|default:"Normal" }}</td>
+                    <td>{{ item.labtestdate|date:"d-m-Y"|default:"-" }}</td>
+                  </tr>
+                  {% endfor %}
+                {% endfor %}
+              {% endif %}
+              
+              {% if ungrouped_items %}
+                {% for item in ungrouped_items %}
+                <tr>
+                  <td>{{ forloop.counter }}</td>
+                  <td>{{ item.labtest.testname|default:"Unknown" }}</td>
+                  <td><strong>{{ item.result_value|default:"-" }}</strong></td>
+                  <td>{{ item.normal_value|default:"-" }}</td>
+                  <td>
+                    <span class="badge 
+                      {% if item.result == 'Normal' %}badge-success
+                      {% elif item.result == 'High' %}badge-danger
+                      {% elif item.result == 'Low' %}badge-warning
+                      {% elif item.result == 'Positive' %}badge-info
+                      {% elif item.result == 'Negative' %}badge-secondary
+                      {% else %}badge-secondary{% endif %}">
+                      {{ item.result|default:"Normal" }}
+                    </span>
+                  </td>
+                  <td>{{ item.labtestdate|date:"d-m-Y"|default:"-" }}</td>
+                </tr>
+                {% endfor %}
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+
+        {% if result_master.notes %}
+        <div class="mt-3">
+          <strong>Notes:</strong>
+          <p class="text-muted">{{ result_master.notes }}</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- ==================== LIST VIEW ==================== -->
+    {% else %}
+    
+    <!-- Summary -->
+    {% if total_amount %}
+    <div class="row mb-2">
+      <div class="col-md-12">
+        <span class="text-dark ml-3 fw-dark">
+          Total: ₹ {{ total_amount|floatformat:2 }} | Results: {{ total_results }}
+        </span>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Results Table -->
+    <div class="card">
+      <div class="card-body">
+        <!-- Filter Form -->
+        <form method="GET" action="{% url 'view_lab_results' %}" class="form-inline" id="filterForm">
+          <div class="row w-100">
+            <div class="col-md-2">
+              <div class="form-group">
+                <label for="search" class="mr-2">Search:</label>
+                <input type="text" class="form-control form-control-sm" name="search" id="search" 
+                       placeholder="Name, MR, Result #" value="{{ search_query }}">
+              </div>
+            </div>
+            <div class="col-md-2">
+              <div class="form-group">
+                <label for="patient_id" class="mr-2">Patient:</label>
+                <select class="form-control form-control-sm" name="patient_id" id="patient_id">
+                  <option value="">All Patients</option>
+                  {% for p in all_patients %}
+                  <option value="{{ p.id }}" {% if patient_id == p.id|stringformat:"s" %}selected{% endif %}>
+                    {{ p.Patient_Name }}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div class="col-md-2">
+              <div class="form-group">
+                <label for="date_from" class="mr-2">From:</label>
+                <input type="date" class="form-control form-control-sm" name="date_from" id="date_from" value="{{ date_from }}">
+              </div>
+            </div>
+            <div class="col-md-2 mt-3">
+              <div class="form-group">
+                <label for="date_to" class="mr-2">To:</label>
+                <input type="date" class="form-control form-control-sm" name="date_to" id="date_to" value="{{ date_to }}">
+              </div>
+            </div>
+            <div class="col-md-2 mt-3">
+              <div class="form-group">
+                <label>&nbsp;</label>
+                <div>
+                  <button type="submit" class="btn btn-sm btn-primary" id="apply">
+                    <i class="fas fa-search"></i> Apply
+                  </button>
+                  <button type="button" class="btn btn-sm btn-secondary" onclick="clearFiltersJQuery()">
+                    <i class="fas fa-eraser"></i> Reset
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+
+        <!-- DataTable -->
+        <div class="table-responsive p-3">
+          <table id="example1" class="table table-bordered table-striped table-sm m-1">
+            <thead>
+              <tr>
+                <th width="3%">#</th>
+                <th width="15%">Result No</th>
+                <th width="15%">Patient Name</th>
+                <th width="10%">MR No</th>
+                <th width="10%">Invoice</th>
+                <th width="8%">Date</th>
+                <th width="8%">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for result in results %}
+              <tr>
+                <td class="text-center">{{ forloop.counter }}</td>
+                <td><small>{{ result.result_number }}</small></td>
+                <td><small>{{ result.patient.Patient_Name|default:"-" }}</small></td>
+                <td><small>{{ result.patient.Medical_Record_Number|default:"-" }}</small></td>
+                <td><small>{{ result.invoice_no }}</small></td>
+                <td><small>{{ result.completed_date|date:"d-m-Y H:i" }}</small></td>
+                <td class="text-center">
+                  <a href="?master_id={{ result.master.id }}" class="btn btn-sm btn-info" title="View Details">
+                    <i class="fas fa-eye"></i>
+                  </a>
+                   <a href="{%url 'edit_lab_result' %}?result_id={{ result.master.id }}" class="btn btn-sm btn-primary" title="Edit Result">
+                    <i class="fas fa-edit"></i> 
+                  </a>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="10" class="text-center text-muted">No lab results found</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+  </section>
+</div>
+
+<script>
+  // Alternative: Using jQuery if available
+  function clearFiltersJQuery() {
+    $('#search').val('');
+    $('#patient_id').val('');
+    $('#date_from').val('');
+    $('#date_to').val('');
+    $('#status').val('');
+    $('#apply').click();
+  }
+
+  // Auto-submit filter on enter key
+  document.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      const activeElement = document.activeElement;
+      if (activeElement && activeElement.tagName === 'INPUT' && 
+          (activeElement.id === 'search' || 
+           activeElement.id === 'date_from' || 
+           activeElement.id === 'date_to')) {
+        document.getElementById('filterForm').submit();
+      }
+    }
+  });
+</script>
+
+{% endblock %}

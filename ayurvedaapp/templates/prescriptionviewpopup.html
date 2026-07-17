@@ -1,0 +1,33 @@
+
+
+{% load static %}
+
+        <div class="table-responsive">
+            <table  id="example1" class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <!-- <th>MR Number</th> -->
+                        <th>Prescription Date</th>
+                       
+                        <th>Medicine Name</th>
+                       
+                        <th>Dosage</th>
+                        <th>Direction</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for prescription in prescription_details_list %}
+                    <tr>
+                      
+                        <td>{{ prescription.current_date }}</td>
+                       
+                        <td>{{ prescription.medicinename }}</td>
+                     
+                        <td>{{ prescription.dosage }}</td>
+                        <td>{{ prescription.direction}}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+  

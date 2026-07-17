@@ -1,0 +1,131 @@
+<!-- patient_visit_cycle_detail.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="content-wrapper">
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-12">
+            <h2>Cycle Details</h2>
+            <hr>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6>Patient</h6>
+                    <strong>{{ cycle.patient.Patient_Name }}</strong><br>
+                    <small class="text-muted">{{ cycle.patient.Medical_Record_Number }}</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6>Doctor</h6>
+                    <strong>Dr. {{ cycle.doctor.Staff_firstname }}</strong><br>
+                    <small class="text-muted">{{ cycle.branch.Branch_Name|default:"N/A" }}</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6>Consultation</h6>
+                    <strong>{{ cycle.consultation_date|date:"d-m-Y" }}</strong><br>
+                    <small class="text-muted">{{ cycle.days_from_consultation }} days ago</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6>Status</h6>
+                    <span class="badge badge-{{ cycle.is_cycle_active|yesno:"success,danger" }}">
+                        {{ cycle.current_status }}
+                    </span>
+                    <br>
+                    <small class="text-muted">{{ cycle.is_cycle_active|yesno:"Active,Closed" }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <h5>Total Visits: {{ cycle.total_visits_in_cycle }}</h5>
+                        </div>
+                        <div class="col-md-3">
+                            <h5>Revisits: {{ cycle.revisit_count }}/{{ cycle.max_revisit_count }}</h5>
+                        </div>
+                        <div class="col-md-3">
+                            <h5>Followups: {{ cycle.followup_count }}/{{ cycle.max_followup_count }}</h5>
+                        </div>
+                        <div class="col-md-3">
+                            <h5>Total Fee: ₹{{ cycle.total_fee_collected|floatformat:2 }}</h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Appointments Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5>Appointments in this Cycle</h5>
+        </div>
+        <div class="card-body table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Fee</th>
+                        <th>Days From Consultation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for app in appointments %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ app.appointment.Appointment_date|date:"d-m-Y" }}</td>
+                        <td>
+                            <span class="badge 
+                                {% if app.status == 'Consultation' %}badge-primary
+                                {% elif app.status == 'Revisit' %}badge-info
+                                {% elif app.status == 'Followup' %}badge-success
+                                {% endif %}">
+                                {{ app.status }}
+                            </span>
+                        </td>
+                        <td>₹{{ app.fee|floatformat:2 }}</td>
+                        <td>{{ app.days_from_consultation }} days</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center">No appointments in this cycle</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <a href="{% url 'patient_visit_cycle_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to List
+        </a>
+    </div>
+</div>
+</div>
+{% endblock %}

@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<style>
+/* ---------- INFO BOX ALIGNMENT ---------- */
+.info-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 110px;
+    text-align: center;
+}
+
+.info-box-content {
+    width: 100%;
+}
+
+.info-box-text {
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.info-box-number {
+    font-size: 26px;
+    font-weight: bold;
+    margin-top: 5px;
+}
+
+/* ---------- TABLE ---------- */
+.table td, .table th {
+    vertical-align: middle;
+    text-align: center;
+}
+
+/* ---------- BADGES ---------- */
+.badge {
+    font-size: 12px;
+    padding: 6px 10px;
+}
+
+/* ---------- HEADER ---------- */
+.content-header h1 {
+    font-weight: 600;
+}
+</style>
+
+<div class="content-wrapper">
+
+  <!-- PAGE HEADER -->
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1><i class="fas fa-warehouse mr-2"></i>Millet Sales Report</h1>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FILTER CARD -->
+  <section class="content">
+    <div class="card card-primary">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-filter mr-1"></i> Filter Inventory Sales
+        </h3>
+      </div>
+
+      <form method="POST">
+        {% csrf_token %}
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-5">
+              <label>Start Date</label>
+              <input type="date" name="sdate" class="form-control" required>
+            </div>
+            <div class="col-md-5">
+              <label>End Date</label>
+              <input type="date" name="edate" class="form-control" required>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+              <button class="btn btn-primary btn-block">
+                <i class="fas fa-search"></i> Submit
+              </button>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- SUMMARY BOXES -->
+  <section class="content">
+    <div class="container-fluid">
+      <div class="row mb-3">
+
+        <div class="col-md-3 col-sm-6">
+          <div class="info-box bg-info">
+            <div class="info-box-content">
+              <span class="info-box-text">
+                <i class="fas fa-file-invoice mr-1"></i>Total Invoices
+              </span>
+              <span class="info-box-number">{{ total_invoice_count }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-3 col-sm-6">
+          <div class="info-box bg-success">
+            <div class="info-box-content">
+              <span class="info-box-text">
+                <i class="fas fa-rupee-sign mr-1"></i>Active Amount
+              </span>
+              <span class="info-box-number">
+                {{ active_total_amount|floatformat:2 }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-3 col-sm-6">
+          <div class="info-box bg-danger">
+            <div class="info-box-content">
+              <span class="info-box-text">
+                <i class="fas fa-times-circle mr-1"></i>Cancelled Amount
+              </span>
+              <span class="info-box-number">
+                {{ inactive_total_amount|floatformat:2 }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-3 col-sm-6">
+          <div class="info-box bg-warning">
+            <div class="info-box-content">
+              <span class="info-box-text">
+                <i class="fas fa-ban mr-1"></i>Cancelled Bills
+              </span>
+              <span class="info-box-number">{{ inactive_invoice_count }}</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- REPORT TABLE -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">
+            <i class="fas fa-table mr-1"></i>Millet Sales Details
+          </h3>
+        </div>
+
+        <div class="card-body">
+          <table id="example1" class="table table-bordered table-striped">
+            <thead class="bg-light">
+              <tr>
+                <th>#</th>
+                <th>Invoice No</th>
+                <th>Patient</th>
+                <th>SGST</th>
+                <th>CGST</th>
+                <th>Total</th>
+                <th>Payment</th>
+                <th>Date</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {% for i in inv %}
+              <tr {% if not i.restockstatus %} class="table-danger" {% endif %}>
+                <td>{{ forloop.counter }}</td>
+                <td><strong>{{ i.Invoicenumber }}</strong></td>
+                <td>{{ i.patientname }}</td>
+
+                <td>
+                  {% if not i.restockstatus %}-{% endif %}
+                  {{ i.totalsgstamount }}
+                </td>
+
+                <td>
+                  {% if not i.restockstatus %}-{% endif %}
+                  {{ i.totalcgstamount }}
+                </td>
+
+                <td>
+                  <strong>
+                    {% if not i.restockstatus %}-{% endif %}
+                    {{ i.total }}
+                  </strong>
+                </td>
+
+                <td>{{ i.payementmode }}</td>
+                <td>{{ i.currentdate }}</td>
+
+                <td>
+                  <a href="{% url 'inventory_invview' %}?ids={{ i.id }}"
+                     class="btn btn-sm btn-primary mb-1">
+                     <i class="fas fa-eye"></i> View
+                  </a><br>
+
+                  {% if not i.restockstatus %}
+                    <span class="badge badge-danger">Cancelled</span>
+                  {% else %}
+                    <span class="badge badge-success">Active</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="9" class="text-center text-muted">
+                  No records found
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </section>
+</div>
+
+{% endblock %}

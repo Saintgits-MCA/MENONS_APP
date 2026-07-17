@@ -1,0 +1,843 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="content-wrapper">
+  <!-- Page Header -->
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Edit Payment Details</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item">
+              <a href="{% url 'newtaxinvlist' %}">Invoice List</a>
+            </li>
+            <li class="breadcrumb-item active">Edit Payment</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content -->
+  <section class="content">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-12">
+          <div class="card card-primary shadow">
+            <div class="card-header">
+              <h3 class="card-title">
+                <i class="fas fa-edit"></i> Edit Payment - Invoice No: <strong>{{ invoice.Invoicenumber }}</strong>
+              </h3>
+            </div>
+
+            <form method="POST" id="paymentForm">
+              {% csrf_token %}
+
+              <div class="card-body">
+                <!-- INVOICE SUMMARY -->
+                <div class="alert alert-info">
+                  <h5 class="mb-1"><i class="fas fa-file-invoice"></i>Invoice Summary</h5>
+                  <div class="row mt-2">
+                    <div class="col-md-6">
+                      <strong>Patient:</strong> {{ invoice.patientname }}<br>
+                      <strong>Phone:</strong> {{ invoice.patientphno|default:"N/A" }}
+                    </div>
+                    <div class="col-md-6">
+                      <strong>Date:</strong> {{ invoice.currentdate }}<br>
+                      <strong>Invoice Total:</strong> ₹<span id="invoiceTotal">{{ invoice.total|floatformat:2 }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- CURRENT PAYMENT STATUS -->
+                <div class="alert alert-secondary">
+                  <h5 class="mb-2"><i class="fas fa-info-circle"></i> Current Payment Status</h5>
+                  <div class="row">
+                    <div class="col-md-6">
+                      <strong>Payment Mode:</strong><br>
+                      <span class="badge badge-info p-2 mt-1">
+                        {{ invoice.payementmode|default:"Not Set" }}
+                      </span>
+                    </div>
+                    <div class="col-md-6">
+                      <strong>Payment Breakdown:</strong><br>
+                      {% if invoice.cash_amount and invoice.cash_amount != "0" %}
+                      <span class="badge badge-success mr-2 mt-1">Cash: ₹{{ invoice.cash_amount }}</span>
+                      {% endif %}
+                      {% if invoice.gpay_amount and invoice.gpay_amount != "0" %}
+                      <span class="badge badge-info mr-2 mt-1">GPay: ₹{{ invoice.gpay_amount }}</span>
+                      {% endif %}
+                      {% if invoice.card_amount and invoice.card_amount != "0" %}
+                      <span class="badge badge-primary mr-2 mt-1">Card: ₹{{ invoice.card_amount }}</span>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+
+                <hr>
+
+                <!-- PAYMENT EDIT FORM -->
+                <h5 class="text-primary mb-3"><i class="fas fa-money-check-alt"></i> Update Payment Details</h5>
+                
+                <!-- Payment Mode Selection -->
+                <div class="form-group">
+                  <label class="font-weight-bold">Select Payment Mode(s):</label>
+                  <small class="text-muted d-block mb-2">You can select one or multiple payment methods</small>
+                  <div class="row">
+                    <div class="col-md-4">
+                      <div class="form-check p-2 border rounded">
+                        <input class="form-check-input payment-mode" type="checkbox" id="cashCheck" data-target="cash_amount">
+                        <label class="form-check-label font-weight-bold" for="cashCheck">
+                          <i class="fas fa-money-bill-wave text-success"></i> Cash
+                        </label>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="form-check p-2 border rounded">
+                        <input class="form-check-input payment-mode" type="checkbox" id="gpayCheck" data-target="gpay_amount">
+                        <label class="form-check-label font-weight-bold" for="gpayCheck">
+                          <i class="fas fa-mobile-alt text-info"></i> GPay
+                        </label>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="form-check p-2 border rounded">
+                        <input class="form-check-input payment-mode" type="checkbox" id="cardCheck" data-target="card_amount">
+                        <label class="form-check-label font-weight-bold" for="cardCheck">
+                          <i class="fas fa-credit-card text-primary"></i> Card
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Payment Amount Inputs -->
+                <div class="row mt-3">
+                  <div class="col-md-4">
+                    <div class="form-group">
+                      <label for="cash_amount" class="font-weight-bold">Cash Amount (₹)</label>
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <span class="input-group-text bg-success text-white">₹</span>
+                        </div>
+                        <input type="number" 
+                               step="0.01" 
+                               min="0" 
+                               name="cash_amount" 
+                               id="cash_amount" 
+                               class="form-control payment-amount" 
+                               data-mode="cash"
+                               value="{% if invoice.cash_amount and invoice.cash_amount != '0' %}{{ invoice.cash_amount }}{% else %}0{% endif %}"
+                               {% if not invoice.cash_amount or invoice.cash_amount == "0" %}disabled{% endif %}>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col-md-4">
+                    <div class="form-group">
+                      <label for="gpay_amount" class="font-weight-bold">GPay Amount (₹)</label>
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <span class="input-group-text bg-info text-white">₹</span>
+                        </div>
+                        <input type="number" 
+                               step="0.01" 
+                               min="0" 
+                               name="gpay_amount" 
+                               id="gpay_amount" 
+                               class="form-control payment-amount" 
+                               data-mode="gpay"
+                               value="{% if invoice.gpay_amount and invoice.gpay_amount != '0' %}{{ invoice.gpay_amount }}{% else %}0{% endif %}"
+                               {% if not invoice.gpay_amount or invoice.gpay_amount == "0" %}disabled{% endif %}>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col-md-4">
+                    <div class="form-group">
+                      <label for="card_amount" class="font-weight-bold">Card Amount (₹)</label>
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <span class="input-group-text bg-primary text-white">₹</span>
+                        </div>
+                        <input type="number" 
+                               step="0.01" 
+                               min="0" 
+                               name="card_amount" 
+                               id="card_amount" 
+                               class="form-control payment-amount" 
+                               data-mode="card"
+                               value="{% if invoice.card_amount and invoice.card_amount != '0' %}{{ invoice.card_amount }}{% else %}0{% endif %}"
+                               {% if not invoice.card_amount or invoice.card_amount == "0" %}disabled{% endif %}>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Payment Mode Preview -->
+                <div class="alert alert-light border mt-3">
+                  <div class="row align-items-center">
+                    <div class="col-md-6">
+                      <strong>Payment Mode Preview:</strong>
+                      <div class="mt-2">
+                        <span id="paymentModePreview" class="badge badge-secondary p-2">Select payment method(s)</span>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <strong>Payment Breakdown:</strong>
+                      <div id="paymentBreakdownPreview" class="mt-2">
+                        <!-- Will be populated by JavaScript -->
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Change Detection Alert -->
+                <div class="alert alert-warning mt-3" id="changeAlert" style="display: none;">
+                  <div class="row align-items-center">
+                    <div class="col-md-10">
+                      <strong><i class="fas fa-exclamation-triangle"></i> Changes Detected</strong>
+                      <p class="mb-0 mt-1" id="changeDetails"></p>
+                    </div>
+                    <div class="col-md-2 text-right">
+                      <button type="button" class="btn btn-sm btn-outline-secondary" onclick="resetForm()">
+                        <i class="fas fa-undo"></i> Reset
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Total Calculation -->
+                <div class="alert alert-warning mt-3">
+                  <div class="row">
+                    <div class="col-md-6">
+                      <strong>Entered Total:</strong>
+                      <h4 id="enteredTotal" class="font-weight-bold">₹0.00</h4>
+                    </div>
+                    <div class="col-md-6">
+                      <strong>Invoice Total:</strong>
+                      <h4 class="font-weight-bold">₹{{ invoice.total|floatformat:2 }}</h4>
+                    </div>
+                  </div>
+                  <div class="mt-2" id="totalMessage">
+                    <small class="text-muted">Sum of payment amounts must equal invoice total (₹{{ invoice.total|floatformat:2 }})</small>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- FOOTER -->
+              <div class="card-footer text-center">
+                <button type="submit" class="btn btn-success px-4" id="submitBtn" disabled>
+                  <i class="fas fa-save"></i> Update Payment
+                </button>
+                <a href="{% url 'newtaxinvlist' %}" class="btn btn-secondary px-4">
+                  <i class="fas fa-times"></i> Cancel
+                </a>
+              </div>
+
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmationModal" tabindex="-1" role="dialog" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-warning">
+        <h5 class="modal-title" id="confirmationModalLabel">
+          <i class="fas fa-exclamation-triangle"></i> Confirm Payment Update
+        </h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-warning">
+          <h6><i class="fas fa-info-circle"></i> Important Notice</h6>
+          <p class="mb-0">This action will be logged for audit purposes. Please review the changes below before confirming.</p>
+        </div>
+        
+        <h6 class="font-weight-bold text-primary">Changes Detected:</h6>
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered">
+            <thead class="thead-light">
+              <tr>
+                <th>Payment Method</th>
+                <th>Old Value</th>
+                <th>New Value</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="modalChangesTable">
+              <!-- Will be populated by JavaScript -->
+            </tbody>
+          </table>
+        </div>
+        
+        <div class="alert alert-info mt-3">
+          <h6><i class="fas fa-check-circle"></i> Final Summary</h6>
+          <div class="row">
+            <div class="col-md-6">
+              <strong>Old Total:</strong>
+              <span id="modalOldTotal" class="font-weight-bold ml-2"></span>
+            </div>
+            <div class="col-md-6">
+              <strong>New Total:</strong>
+              <span id="modalNewTotal" class="font-weight-bold ml-2"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+          <i class="fas fa-times"></i> Cancel
+        </button>
+        <button type="button" class="btn btn-success" id="confirmUpdateBtn">
+          <i class="fas fa-check"></i> Confirm Update
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- JavaScript for real-time validation and change detection -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const invoiceTotal = parseFloat("{{ invoice.total }}");
+  const cashInput = document.getElementById('cash_amount');
+  const gpayInput = document.getElementById('gpay_amount');
+  const cardInput = document.getElementById('card_amount');
+  const cashCheck = document.getElementById('cashCheck');
+  const gpayCheck = document.getElementById('gpayCheck');
+  const cardCheck = document.getElementById('cardCheck');
+  const enteredTotalElem = document.getElementById('enteredTotal');
+  const totalMessage = document.getElementById('totalMessage');
+  const submitBtn = document.getElementById('submitBtn');
+  const paymentModePreview = document.getElementById('paymentModePreview');
+  const paymentBreakdownPreview = document.getElementById('paymentBreakdownPreview');
+  const changeAlert = document.getElementById('changeAlert');
+  const changeDetails = document.getElementById('changeDetails');
+  
+  // Store original values for change detection
+  const originalValues = {
+    cash: parseFloat(cashInput.value) || 0,
+    gpay: parseFloat(gpayInput.value) || 0,
+    card: parseFloat(cardInput.value) || 0,
+    cashEnabled: !cashInput.disabled,
+    gpayEnabled: !gpayInput.disabled,
+    cardEnabled: !cardInput.disabled
+  };
+  
+  // Initialize checkboxes based on current values
+  function initializeCheckboxes() {
+    const cashVal = parseFloat(cashInput.value);
+    const gpayVal = parseFloat(gpayInput.value);
+    const cardVal = parseFloat(cardInput.value);
+    
+    if (cashVal > 0) {
+      cashCheck.checked = true;
+      cashInput.disabled = false;
+    }
+    if (gpayVal > 0) {
+      gpayCheck.checked = true;
+      gpayInput.disabled = false;
+    }
+    if (cardVal > 0) {
+      cardCheck.checked = true;
+      cardInput.disabled = false;
+    }
+    
+    updatePaymentModePreview();
+    checkForChanges();
+  }
+  
+  initializeCheckboxes();
+  
+  // Toggle input fields based on checkbox
+  document.querySelectorAll('.payment-mode').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+      const targetId = this.getAttribute('data-target');
+      const inputField = document.getElementById(targetId);
+      if (this.checked) {
+        inputField.disabled = false;
+        if (inputField.value === '0' || inputField.value === '') {
+          inputField.value = '';
+        }
+        inputField.focus();
+      } else {
+        inputField.disabled = true;
+        inputField.value = '0';
+      }
+      calculateTotal();
+      updatePaymentModePreview();
+      checkForChanges();
+    });
+  });
+  
+  // Calculate total when any amount changes
+  document.querySelectorAll('.payment-amount').forEach(input => {
+    input.addEventListener('input', function() {
+      calculateTotal();
+      updatePaymentModePreview();
+      checkForChanges();
+    });
+  });
+  
+  function calculateTotal() {
+    let total = 0;
+    
+    // Only include amounts from enabled fields
+    if (!cashInput.disabled) {
+      total += parseFloat(cashInput.value) || 0;
+    }
+    if (!gpayInput.disabled) {
+      total += parseFloat(gpayInput.value) || 0;
+    }
+    if (!cardInput.disabled) {
+      total += parseFloat(cardInput.value) || 0;
+    }
+    
+    // Update display
+    enteredTotalElem.textContent = '₹' + total.toFixed(2);
+    
+    // Check if total matches invoice total (allow small rounding difference)
+    const diff = Math.abs(total - invoiceTotal);
+    const isValid = diff <= 0.01; // Allow 1 paisa difference
+    
+    // Update message and button
+    if (isValid) {
+      totalMessage.innerHTML = '<span class="text-success"><i class="fas fa-check-circle"></i> Amount matches invoice total</span>';
+      submitBtn.disabled = false;
+    } else {
+      const shortBy = invoiceTotal - total;
+      const message = shortBy > 0 
+        ? `Short by ₹${shortBy.toFixed(2)}`
+        : `Excess by ₹${(-shortBy).toFixed(2)}`;
+      totalMessage.innerHTML = `<span class="text-danger"><i class="fas fa-exclamation-circle"></i> ${message}</span>`;
+      submitBtn.disabled = true;
+    }
+  }
+  
+  function updatePaymentModePreview() {
+    const paymentModes = [];
+    const breakdown = [];
+    
+    if (cashCheck.checked && parseFloat(cashInput.value) > 0) {
+      paymentModes.push("Cash");
+      breakdown.push(`<span class="badge badge-success mr-1">Cash: ₹${parseFloat(cashInput.value) || 0}</span>`);
+    }
+    
+    if (gpayCheck.checked && parseFloat(gpayInput.value) > 0) {
+      paymentModes.push("GPay");
+      breakdown.push(`<span class="badge badge-info mr-1">GPay: ₹${parseFloat(gpayInput.value) || 0}</span>`);
+    }
+    
+    if (cardCheck.checked && parseFloat(cardInput.value) > 0) {
+      paymentModes.push("Card");
+      breakdown.push(`<span class="badge badge-primary mr-1">Card: ₹${parseFloat(cardInput.value) || 0}</span>`);
+    }
+    
+    if (paymentModes.length === 0) {
+      paymentModePreview.textContent = "Select payment method(s)";
+      paymentModePreview.className = "badge badge-secondary p-2";
+      paymentBreakdownPreview.innerHTML = "";
+    } else {
+      paymentModePreview.textContent = paymentModes.join(", ");
+      paymentModePreview.className = "badge badge-info p-2";
+      paymentBreakdownPreview.innerHTML = breakdown.join(" ");
+    }
+  }
+  
+  function checkForChanges() {
+    const currentCash = parseFloat(cashInput.value) || 0;
+    const currentGpay = parseFloat(gpayInput.value) || 0;
+    const currentCard = parseFloat(cardInput.value) || 0;
+    const currentCashEnabled = !cashInput.disabled;
+    const currentGpayEnabled = !gpayInput.disabled;
+    const currentCardEnabled = !cardInput.disabled;
+    
+    const hasChanges = (
+      Math.abs(currentCash - originalValues.cash) > 0.01 ||
+      Math.abs(currentGpay - originalValues.gpay) > 0.01 ||
+      Math.abs(currentCard - originalValues.card) > 0.01 ||
+      currentCashEnabled !== originalValues.cashEnabled ||
+      currentGpayEnabled !== originalValues.gpayEnabled ||
+      currentCardEnabled !== originalValues.cardEnabled
+    );
+    
+    if (hasChanges) {
+      changeAlert.style.display = 'block';
+      updateChangeDetails(currentCash, currentGpay, currentCard);
+    } else {
+      changeAlert.style.display = 'none';
+    }
+  }
+  
+  function updateChangeDetails(currentCash, currentGpay, currentCard) {
+    let changes = [];
+    
+    if (Math.abs(currentCash - originalValues.cash) > 0.01) {
+      changes.push(`Cash: ₹${originalValues.cash.toFixed(2)} → ₹${currentCash.toFixed(2)}`);
+    }
+    
+    if (Math.abs(currentGpay - originalValues.gpay) > 0.01) {
+      changes.push(`GPay: ₹${originalValues.gpay.toFixed(2)} → ₹${currentGpay.toFixed(2)}`);
+    }
+    
+    if (Math.abs(currentCard - originalValues.card) > 0.01) {
+      changes.push(`Card: ₹${originalValues.card.toFixed(2)} → ₹${currentCard.toFixed(2)}`);
+    }
+    
+    if ((!cashInput.disabled) !== originalValues.cashEnabled) {
+      changes.push(`Cash ${originalValues.cashEnabled ? 'disabled' : 'enabled'}`);
+    }
+    
+    if ((!gpayInput.disabled) !== originalValues.gpayEnabled) {
+      changes.push(`GPay ${originalValues.gpayEnabled ? 'disabled' : 'enabled'}`);
+    }
+    
+    if ((!cardInput.disabled) !== originalValues.cardEnabled) {
+      changes.push(`Card ${originalValues.cardEnabled ? 'disabled' : 'enabled'}`);
+    }
+    
+    changeDetails.innerHTML = changes.join('<br>');
+  }
+  
+  function resetForm() {
+    // Reset to original values
+    if (originalValues.cashEnabled) {
+      cashCheck.checked = true;
+      cashInput.disabled = false;
+      cashInput.value = originalValues.cash;
+    } else {
+      cashCheck.checked = false;
+      cashInput.disabled = true;
+      cashInput.value = '0';
+    }
+    
+    if (originalValues.gpayEnabled) {
+      gpayCheck.checked = true;
+      gpayInput.disabled = false;
+      gpayInput.value = originalValues.gpay;
+    } else {
+      gpayCheck.checked = false;
+      gpayInput.disabled = true;
+      gpayInput.value = '0';
+    }
+    
+    if (originalValues.cardEnabled) {
+      cardCheck.checked = true;
+      cardInput.disabled = false;
+      cardInput.value = originalValues.card;
+    } else {
+      cardCheck.checked = false;
+      cardInput.disabled = true;
+      cardInput.value = '0';
+    }
+    
+    calculateTotal();
+    updatePaymentModePreview();
+    checkForChanges();
+    
+    // Show reset confirmation
+    alert('Form has been reset to original values.');
+  }
+  
+  // Function to prepare modal content
+  function prepareModalContent(currentCash, currentGpay, currentCard, currentCashEnabled, currentGpayEnabled, currentCardEnabled) {
+    const changesTable = document.getElementById('modalChangesTable');
+    changesTable.innerHTML = '';
+    
+    // Calculate old and new totals
+    const oldTotal = originalValues.cash + originalValues.gpay + originalValues.card;
+    const newTotal = (currentCashEnabled ? currentCash : 0) + 
+                     (currentGpayEnabled ? currentGpay : 0) + 
+                     (currentCardEnabled ? currentCard : 0);
+    
+    // Update totals display
+    document.getElementById('modalOldTotal').textContent = '₹' + oldTotal.toFixed(2);
+    document.getElementById('modalNewTotal').textContent = '₹' + newTotal.toFixed(2);
+    
+    // Helper function to add row to modal table
+    function addRow(method, oldVal, newVal, oldEnabled, newEnabled) {
+      const row = document.createElement('tr');
+      
+      let status = '';
+      if (!oldEnabled && newEnabled) {
+        status = '<span class="badge badge-success">Enabled</span>';
+      } else if (oldEnabled && !newEnabled) {
+        status = '<span class="badge badge-danger">Disabled</span>';
+      } else if (Math.abs(newVal - oldVal) > 0.01) {
+        status = '<span class="badge badge-warning">Changed</span>';
+      } else {
+        status = '<span class="badge badge-secondary">No Change</span>';
+      }
+      
+      row.innerHTML = `
+        <td class="font-weight-bold">${method}</td>
+        <td>${oldEnabled ? '₹' + oldVal.toFixed(2) : '<span class="text-muted">Disabled</span>'}</td>
+        <td>${newEnabled ? '₹' + newVal.toFixed(2) : '<span class="text-muted">Disabled</span>'}</td>
+        <td>${status}</td>
+      `;
+      changesTable.appendChild(row);
+    }
+    
+    // Add rows for each payment method
+    addRow('Cash', originalValues.cash, currentCash, originalValues.cashEnabled, currentCashEnabled);
+    addRow('GPay', originalValues.gpay, currentGpay, originalValues.gpayEnabled, currentGpayEnabled);
+    addRow('Card', originalValues.card, currentCard, originalValues.cardEnabled, currentCardEnabled);
+  }
+  
+  // Form submission validation
+  document.getElementById('paymentForm').addEventListener('submit', function(e) {
+    e.preventDefault(); // Prevent default form submission
+    
+    // Re-calculate to ensure validity
+    calculateTotal();
+    checkForChanges();
+    
+    if (submitBtn.disabled) {
+      alert('Please ensure the total amount matches the invoice total (₹' + invoiceTotal.toFixed(2) + ').');
+      return false;
+    }
+    
+    // Validate at least one payment method is selected with amount > 0
+    let hasValidPayment = false;
+    if (cashCheck.checked && parseFloat(cashInput.value) > 0) hasValidPayment = true;
+    if (gpayCheck.checked && parseFloat(gpayInput.value) > 0) hasValidPayment = true;
+    if (cardCheck.checked && parseFloat(cardInput.value) > 0) hasValidPayment = true;
+    
+    if (!hasValidPayment) {
+      alert('Please select at least one payment method and enter an amount.');
+      return false;
+    }
+    
+    // Check if any changes were made
+    const currentCash = parseFloat(cashInput.value) || 0;
+    const currentGpay = parseFloat(gpayInput.value) || 0;
+    const currentCard = parseFloat(cardInput.value) || 0;
+    const currentCashEnabled = !cashInput.disabled;
+    const currentGpayEnabled = !gpayInput.disabled;
+    const currentCardEnabled = !cardInput.disabled;
+    
+    const hasChanges = (
+      Math.abs(currentCash - originalValues.cash) > 0.01 ||
+      Math.abs(currentGpay - originalValues.gpay) > 0.01 ||
+      Math.abs(currentCard - originalValues.card) > 0.01 ||
+      currentCashEnabled !== originalValues.cashEnabled ||
+      currentGpayEnabled !== originalValues.gpayEnabled ||
+      currentCardEnabled !== originalValues.cardEnabled
+    );
+    
+    if (!hasChanges) {
+      alert('No changes detected. Please make changes before submitting.');
+      return false;
+    }
+    
+    // Prepare modal content
+    prepareModalContent(currentCash, currentGpay, currentCard, currentCashEnabled, currentGpayEnabled, currentCardEnabled);
+    
+    // Show the modal
+    $('#confirmationModal').modal('show');
+  });
+  
+  // Handle confirmation button click
+  document.getElementById('confirmUpdateBtn').addEventListener('click', function() {
+    // Hide the modal
+    $('#confirmationModal').modal('hide');
+    
+    // Submit the form programmatically
+    setTimeout(function() {
+      // Create a new form element to submit
+      const form = document.getElementById('paymentForm');
+      // Remove the submit event listener temporarily to avoid recursion
+      const submitHandler = form.onsubmit;
+      form.onsubmit = null;
+      form.submit();
+      // Restore the submit handler
+      form.onsubmit = submitHandler;
+    }, 100);
+  });
+  
+  // Initial calculations
+  calculateTotal();
+  updatePaymentModePreview();
+  checkForChanges();
+});
+</script>
+
+<style>
+.payment-amount:disabled {
+  background-color: #f8f9fa;
+  cursor: not-allowed;
+}
+
+.form-check {
+  margin-bottom: 5px;
+}
+
+.form-check-input {
+  margin-top: 0.3rem;
+}
+
+.badge {
+  font-size: 0.9em;
+  padding: 5px 10px;
+}
+
+.alert {
+  border-radius: 8px;
+}
+
+.card {
+  border-radius: 10px;
+}
+
+.input-group-text {
+  font-weight: bold;
+}
+
+.form-check.p-2.border.rounded {
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.form-check.p-2.border.rounded:hover {
+  background-color: #f8f9fa;
+}
+
+.payment-change-details .change-item {
+  margin-bottom: 2px;
+  padding: 2px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.payment-change-details .change-item:last-child {
+  border-bottom: none;
+}
+
+.table-sm td, .table-sm th {
+  padding: 0.3rem;
+}
+
+.audit-info .info-item {
+  padding: 5px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.audit-info .info-item:last-child {
+  border-bottom: none;
+}
+
+.card-secondary {
+  border-color: #6c757d;
+}
+
+.card-secondary .card-header {
+  background-color: #6c757d;
+  color: white;
+}
+
+.card-default {
+  border-color: #dee2e6;
+}
+
+.card-default .card-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+}
+
+#changeAlert {
+  animation: fadeIn 0.5s;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Modal Styles */
+.modal-content {
+  border-radius: 10px;
+  border: none;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+}
+
+.modal-header {
+  border-radius: 10px 10px 0 0;
+}
+
+.modal-body {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.modal-footer {
+  border-top: 1px solid #dee2e6;
+  border-radius: 0 0 10px 10px;
+}
+
+/* Table styles for modal */
+.table-sm td, .table-sm th {
+  padding: 0.75rem;
+  vertical-align: middle;
+}
+
+.table-bordered {
+  border: 1px solid #dee2e6;
+}
+
+.thead-light th {
+  background-color: #f8f9fa;
+  border-bottom: 2px solid #dee2e6;
+}
+
+/* Badge styles */
+.badge {
+  font-size: 0.8em;
+  padding: 4px 8px;
+}
+
+.badge-success {
+  background-color: #28a745;
+}
+
+.badge-warning {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.badge-danger {
+  background-color: #dc3545;
+}
+
+.badge-secondary {
+  background-color: #6c757d;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .modal-dialog {
+    margin: 10px;
+  }
+  
+  .modal-body {
+    padding: 15px;
+  }
+  
+  .table-responsive {
+    font-size: 0.9em;
+  }
+}
+</style>
+
+{% endblock %}

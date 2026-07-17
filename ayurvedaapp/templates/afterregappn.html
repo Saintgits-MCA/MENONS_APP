@@ -1,0 +1,394 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<style>
+.card-primary > .card-header {
+    background-color: #00796b !important;
+    color: #fff !important;
+    border-bottom: 1px solid #00695c; 
+}
+.fee-not-configured {
+    background-color: #fff3cd !important;
+    border: 1px solid #ffc107 !important;
+}
+.fee-not-configured:focus {
+    border-color: #ffc107 !important;
+    box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25) !important;
+}
+</style>
+
+<!-- Safe JSON Injection -->
+<script id="appointmentFeesData" type="application/json">
+    {{ appointment_fees_json|safe }}
+</script>
+
+<div class="content-wrapper">
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Appointment Details</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item">
+              {% if ptafview == '1' %}
+              <a href="{% url 'appointmenttable' %}?menumanagement_id={{ idmngmnt }}">View</a>
+              {% endif %}
+            </li>
+            <li class="breadcrumb-item active">Appointment</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- Main content -->
+  <section class="content">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card card-primary">
+          <div class="card-header">
+            <h3 class="card-title">Appointments</h3>
+            <div class="card-tools">
+              <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                <!-- <i class="fas fa-minus"></i> -->
+              </button>
+            </div>
+          </div>
+          <form method="POST" action="{% url 'appointmentafterreg' %}?menumanagement_id={{ idmngmnt }}">
+            {% csrf_token %}
+            <div class="row">
+              <div class="col-md-6">
+                <div class="card">
+                  <div class="card-body">
+                    <div class="form-group">
+                      <label for="exampleInputRegisterNo">Token Number</label>
+                      <input type="text" class="form-control"  name="tokennumber" value="{{ tk_id }}" readonly>
+                    </div>
+
+                    <div class="form-group">
+                      <label for="mrSearch">MR Number</label>
+                      <input type="hidden" id="mrnumHidden" name="mrnum" class="form-control" value="{{ ptdt.id }}">
+                      <input type="text" id="mrnums" class="form-control" value="{{ ptdt.Medical_Record_Number }}">
+                    </div>
+
+                    <div class="form-group">
+                      <label for="exampleInputEmail1">Patient Address</label>
+                      <input type="text" id="patientAddress" class="form-control" value="{{ ptdt.Patient_Name }}">
+                    </div>
+
+                     <div class="form-group">
+    <label for="inputdept">Department</label>
+    <select class="form-control" name="deptname" id="inputdept" required>
+        <option selected disabled value="">Select</option>
+        {% for i in departmentobj %}
+            <option value="{{i.id}}">{{i.Department_Name}}</option>
+        {% endfor %}
+    </select>
+</div>
+                                        <div class="form-group">
+                                            <label for="exampleInputRegisterNo">Designation Name</label>
+                                            <select class="form-control" name="desgname" id="inputdesgn" required>
+                                                <option selected disabled value="">Select</option>
+                                                {% for i in designobj %}
+                                                    <option value="{{i.id}}">{{i.Designation_Name}}</option>
+                                                {% endfor %}
+                                            </select>
+                                            <input type="hidden" class="form-control" value="{{brnmae}}" name="branch" id="brch">
+                                        </div>
+                    <div class="form-group">
+                      <label for="docname">Doctor Name</label>
+                      <select class="form-control" name="docname" id="docname" required>
+                        <option selected disabled value="">Select</option>
+                      </select>
+                    </div>
+
+                    <div class="form-group">
+                      <label for="exampleInputappdate">Appointment Date</label>
+                      <input type="date" class="form-control" id="exampleInputdate" name="apntdate" required>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="card">
+                  <div class="card-body">
+                     <div class="card-body">
+                    <div class="form-group">
+                      <label for="exampleInputRegisterNo">Status</label>
+                       <select class="form-control" id="status" name="status" required>
+                          <option value="Consultation" selected>Consultation</option>
+                          <option value="Followup">Followup</option>
+                          <option value="Revisit">Revisit</option>
+                          <option value="Whatsapp">Whatsapp</option>
+                          <option value="Camp">Camp</option>
+                          <option value="Treatment">Treatment</option>
+                          <option value="Treatment Revisit">Treatment Revisit</option>
+                        </select>
+                    </div>
+                <div class="form-group">
+                  <label for="exampleInputContactNo">Appointment Fee</label>
+                  <input type="text" class="form-control" id="examplefee" name="fee" value="500" readonly>
+                </div>
+
+                    <div class="form-group">
+                      <label for="exampleInputContactNo">Contact No</label>
+                      <input type="text" class="form-control" id="exampleInputContactNo" name="contactnum" placeholder="Enter Contact No" >
+                    </div>
+ <div class="form-group">
+                      <label for="exampleInputRegisterNo">Payment Status</label>
+                       <select class="form-control" id="pstatus" name="pstatus" required>
+                               
+                                <option value="Cash">Cash</option>
+                                <option value="Gpay">Gpay</option>
+                                <option value="Card">Card</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                      <label for="exampleInputemail">Remarks</label>
+                      <input type="text" class="form-control" id="exampleInputRemarks" name="remarks" placeholder="Enter Remarks">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="card-footer">
+              {% if messages %}
+              {% for message in messages %}
+              <p style="color:green;">{{ message }}</p>
+              {% endfor %}
+              {% endif %}
+              {% if ptafadd == '1' %}
+              <button type="submit" class="btn btn-primary">Submit</button>
+              {% endif %}
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+
+<script>
+  $(document).ready(function () {
+    // Function to update patient details based on selected MR Number
+    function updatePatientDetails() {
+      var selectedMrNumber = $("#mrnums").val();
+      $.ajax({
+        type: "GET",
+        url: "{% url 'getmrdetails' %}",
+        data: { mrNumber: selectedMrNumber },
+        success: function (data) {
+          $("#patientAddress").val(data.address);
+        },
+        error: function (xhr, status, error) {
+          console.error("Error fetching patient details:", error);
+        },
+      });
+    }
+
+    $("#mrnums").on("change", updatePatientDetails);
+  });
+</script>
+
+  
+   <script>
+ $(document).ready(function () {
+    $('#brch,#deptname, #inputdesgn').on('change', function() {
+            var brch = $('#brch').val();
+            var desg = $('#inputdesgn').val();
+            var dept = $('#inputdept').val();
+            var dropdown = $('#docname');
+
+            dropdown.empty().append('<option selected disabled>Loading...</option>');
+
+            if (brch && desg && dept) {
+                $.ajax({
+                    type: 'GET',
+                    url: "{% url 'get_staff_by_branch_and_designation' %}",
+                    data: { branch: brch, designation: desg , department: dept},
+                    success: function(data) {
+                        dropdown.empty().append('<option selected disabled>Select</option>');
+                        if (data.length > 0) {
+                            data.forEach(function(item) {
+                                dropdown.append(`<option value="${item.Staff_id}">${item.Staff_firstname} ${item.Staff_lastname} - ${item.deprt}</option>`);
+                            });
+                            dropdown.val(data[0].Staff_id);  // Select the first staff member by default
+                            // Trigger change to update fee when doctor is auto-selected
+                            dropdown.trigger('change');
+                        } else {
+                            dropdown.append('<option selected disabled value="">No staff found for this Branch</option>');
+                            alert("No staff found for this branch. Please register staff before proceeding.");
+                        }
+                    },
+                    error: function(xhr) {
+                        dropdown.empty().append('<option selected disabled>Error fetching data</option>');
+                        console.error(xhr.responseText);
+                    }
+                });
+            }
+        });
+});
+
+   </script> 
+
+<script>
+$(document).ready(function() {
+    // ==================== FEE DATA FROM DATABASE ====================
+    // Parse the JSON data from the hidden script tag
+    const appointmentFees = JSON.parse(document.getElementById('appointmentFeesData').textContent);
+    
+    console.log('Appointment Fees Loaded:', appointmentFees);
+    console.log('Total fees configured:', appointmentFees.length);
+
+    // ==================== FEE LOOKUP FUNCTION ====================
+    function getFeeFromTable(branchId, doctorId, visitType) {
+        if (!branchId || !doctorId || !visitType) {
+            console.log('Missing parameters for fee lookup:', {branchId: branchId, doctorId: doctorId, visitType: visitType});
+            return null;
+        }
+        
+        // Convert to numbers for comparison
+        const branchNum = parseInt(branchId, 10);
+        const doctorNum = parseInt(doctorId, 10);
+        
+        console.log('Looking for fee - Branch: ' + branchNum + ', Doctor: ' + doctorNum + ', Type: ' + visitType);
+        
+        const fee = appointmentFees.find(function(f) {
+            return (
+                parseInt(f.branch_id, 10) === branchNum && 
+                parseInt(f.doctor_id, 10) === doctorNum && 
+                f.visit_type.toLowerCase() === visitType.toLowerCase()
+            );
+        });
+        
+        if (fee) {
+            console.log('✅ Found matching fee:', fee);
+            return fee.fee_amount;
+        } else {
+            console.log('❌ No fee found for this combination, using default 0');
+            return 0;
+        }
+    }
+
+    // Define static rates with default amounts
+    const staticRates = {
+        'Consultation': 500,
+        'Followup': 100,
+        'Revisit': 0,
+        'Whatsapp': 600,
+        'Camp': 300,
+        'Treatment': 250,
+        'Treatment Revisit': 0
+    };
+
+    // Define which statuses should have readonly fee field
+    const readonlyStatuses = ['Consultation', 'Followup', 'Revisit', 'Treatment Revisit'];
+
+    // Function to update fee field based on status
+    function updateFeeField(selectedStatus) {
+        var feeInput = $("#examplefee");
+        var branchId = $('#brch').val();
+        var doctorId = $('#docname').val();
+        
+        if (selectedStatus && selectedStatus !== "Select") {
+            
+            // Try to get fee from database
+            if (branchId && doctorId && selectedStatus) {
+                const dbFee = getFeeFromTable(branchId, doctorId, selectedStatus);
+                
+                if (dbFee !== null && dbFee !== undefined && dbFee > 0) {
+                    feeInput.val(dbFee);
+                    feeInput.removeClass('fee-not-configured');
+                } else {
+                    // Fallback to static rates if no DB fee found
+                    if (staticRates[selectedStatus] !== undefined) {
+                        feeInput.val(staticRates[selectedStatus]);
+                        if (staticRates[selectedStatus] === 0) {
+                            feeInput.removeClass('fee-not-configured');
+                        } else {
+                            feeInput.addClass('fee-not-configured');
+                        }
+                    } else {
+                        feeInput.val(0);
+                        feeInput.addClass('fee-not-configured');
+                    }
+                }
+            } else {
+                // Fallback to static rates if branch/doctor not available
+                if (staticRates[selectedStatus] !== undefined) {
+                    feeInput.val(staticRates[selectedStatus]);
+                    if (staticRates[selectedStatus] === 0) {
+                        feeInput.removeClass('fee-not-configured');
+                    } else {
+                        feeInput.addClass('fee-not-configured');
+                    }
+                } else {
+                    feeInput.val(0);
+                    feeInput.addClass('fee-not-configured');
+                }
+            }
+            
+            // Set readonly property based on status
+            if (readonlyStatuses.includes(selectedStatus)) {
+                feeInput.prop('readonly', true);
+            } else {
+                feeInput.prop('readonly', false);
+            }
+            
+            // Fetch actual rate from server for non-readonly statuses
+            if (!readonlyStatuses.includes(selectedStatus)) {
+                $.ajax({
+                    url: "{% url 'get_rate' %}",
+                    data: { status: selectedStatus },
+                    success: function(data) {
+                        if (data.rate && data.rate > 0) {
+                            feeInput.val(data.rate);
+                        }
+                    },
+                    error: function() {
+                        console.warn("Failed to fetch rate from server");
+                    }
+                });
+            }
+        } else {
+            feeInput.val(""); 
+            feeInput.prop('readonly', false);
+        }
+    }
+
+    // Handle status change
+    $("#status").change(function() {
+        var selectedStatus = $(this).val();
+        updateFeeField(selectedStatus);
+    });
+
+    // Update fee when doctor changes
+    $('#docname').change(function() {
+        var selectedStatus = $("#status").val();
+        if (selectedStatus && selectedStatus !== "Select") {
+            updateFeeField(selectedStatus);
+        }
+    });
+
+    // Initialize on page load - set Consultation as default
+    $(document).ready(function() {
+        $("#status").val('Consultation');
+        updateFeeField('Consultation');
+    });
+
+    // Optional: Prevent manual editing for readonly fields
+    $("#examplefee").on('keydown', function(e) {
+        if ($(this).prop('readonly')) {
+            e.preventDefault();
+            return false;
+        }
+    });
+});
+</script>
+
+{% endblock %}

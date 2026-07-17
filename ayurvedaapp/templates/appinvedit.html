@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="content-wrapper">
+
+    <section class="content-header">
+        <div class="container-fluid">
+            <h1>Invoice Details</h1>
+        </div>
+    </section>
+
+    <section class="content">
+
+        <!-- Filter Form -->
+        <div class="card card-primary">
+            <form method="POST" action="{% url 'appinvedit' %}">
+                {% csrf_token %}
+                <div class="card-body row">
+                    <div class="col-md-6">
+                        <label>Start Date</label>
+                        <input type="date" class="form-control" name="sdate" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label>End Date</label>
+                        <input type="date" class="form-control" name="edate" required>
+                    </div>
+                </div>
+                <div class="card-footer text-right">
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Invoice Table -->
+        <div class="card">
+            <div class="card-body">
+
+                {% if total_amount %}
+                <h5 class="text-center">
+                    {% if sdate and edate %}
+                    Total Invoice Amount ({{ sdate }} to {{ edate }}):
+                    {% else %}
+                    Total Invoice Amount:
+                    {% endif %}
+                    <strong>{{ total_amount|floatformat:2 }}</strong>
+                </h5><br>
+                {% endif %}
+
+                <table class="table table-bordered table-striped" id="example1">
+                    <thead>
+                        <tr>
+                            <th>SL No</th>
+                            <th>Branch</th>
+                            <th>Invoice No</th>
+                            <th>Patient Name</th>
+                            <th>Payment Mode</th>
+                            <th>Total Amount</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for i in inv %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{i.branch.Branch_Name}}</td>
+                            <td>{{ i.treatmentInvoicenumber }}</td>
+                            <td>{{ i.patientname }}</td>
+                            <td>{{ i.payementmode }}</td>
+                            <td>{{ i.total }}</td>
+                            <td>{{ i.currentdate }}</td>
+                            <td>
+                                <a href="{% url 'appinvoiceditform' %}?id={{ i.id }}" class="btn btn-sm btn-warning">Edit</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+
+    </section>
+
+</div>
+
+{% endblock %}

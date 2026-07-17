@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper">
+  <!-- Content Header (Page header) -->
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Enquiry Details</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item">
+              {% if enqobjmngadd == '1' %}<a href="{% url 'enquirydetails' %}?menumanagement_id={{ idmngmnt }}">Add</a>{% endif %}
+            </li>
+            <li class="breadcrumb-item active">Enquiry</li>
+          </ol>
+        </div>
+      </div>
+    </div><!-- /.container-fluid -->
+  </section>
+
+  <!-- Main content -->
+  <section class="content">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-12">
+          <form method="POST", action="{% url 'displayenquiry' %}?menumanagement_id={{ idmngmnt }}">
+          
+            {% csrf_token %}
+  <div class="row">
+      <div class="col-md-12">
+          <div class="card">
+         
+              <div class="card-body">
+                  <div class="row">
+                      <div class="col-md-6">
+                          <div class="form-group ">
+                            <label for="exampleInputRegisterNo"> Date</label>
+                          <input type="date" class="form-control" name="sdate" id="exampleInputdate" required>
+                          </div>
+                      </div>
+                  </div>
+            </div>
+            <div class="card-footer">
+              
+              <button type="submit" class="btn btn-primary">Submit</button>
+            
+            </div>
+          </form>
+        </div>
+      </div>
+      </div>
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-12">
+          
+
+          <!-- Status Count Display -->
+          <div class="status-counts">
+            <h2>Total Enquiries : {{ total_count }}</h2>
+            <ul class="status-list">
+              <li class="status-item pending">Pending: <span class="circle">{{ status_counts.Pending }}</span></li>
+              <li class="status-item recontact">Re-contact: <span class="circle">{{ status_counts.Recontact }}</span></li>
+              <li class="status-item converted">Converted: <span class="circle">{{ status_counts.Converted }}</span></li>
+              <li class="status-item priority">Priority: <span class="circle">{{ status_counts.Priority }}</span></li>
+              <li class="status-item dropped">Dropped: <span class="circle">{{ status_counts.Dropped }}</span></li>
+            </ul>
+          </div>
+
+          <!-- Enquiry Table -->
+          <div class="card">
+            <div class="scroll">
+              <div class="card-body">
+                <table id="example1" class="table table-bordered table-striped">
+                  <thead>
+                    <tr>
+                      <th>SL No</th>
+                      <th>Enquiry Date</th>
+                      <th>Name</th>
+                      <th>Age</th>
+                      <th>Phone Number</th>
+                      <th>Complaint</th>
+                      <th>Call Or Message</th>
+                      <th>Source Details</th>
+                      <th>Follow-up Status</th>
+                      <th>Language</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for i in enq %}
+                    <tr>
+                      <td>{{ forloop.counter }}</td>
+                      <td>{{ i.currentdate }}</td>
+                      <td>{{ i.name }}</td>
+                      <td>{{ i.age }}</td>
+                      <td>{{ i.Phone_number }}</td>
+                      <td>{{ i.complaint }}</td>
+                      <td>{{ i.callormsg }}</td>
+                      <td>{{ i.sourrcdts.sourcename }}</td>
+                      <td>{{ i.status }}</td>
+                      
+                      <td>{{i.language}}</td>
+                      <td>
+                        {% if enqedit == '1' %}
+                        <a href="{% url 'enquiryedit' %}?ids={{ i.id }}"><i class="nav-icon" style="width:20px"><img src="{% static 'assets/dist/img/icons/edit.svg' %}" class="img-square" style="width:20px"></i></a>
+                        {% endif %}
+                        {% if enqobjmngdelete == '1' %}
+                        <a href="{% url 'delenquiry' %}?ids={{ i.id }}"><i class="nav-icon" style="width:20px"><img src="{% static 'assets/dist/img/icons/delete.svg' %}" class="img-square" style="width:20px"></i></a>
+                        {% endif %}
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<style>
+/* Status Counts Styling */
+.status-counts {
+  margin-bottom: 20px;
+}
+.status-list {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  gap: 20px;
+}
+.status-item {
+  font-size: 16px;
+  font-weight: bold;
+}
+.circle {
+  display: inline-block;
+  width: 30px;
+  height: 30px;
+  line-height: 30px;
+  text-align: center;
+  border-radius: 50%;
+  color: #fff;
+  font-weight: bold;
+}
+.status-item.pending .circle {
+  background-color: #f39c12;
+}
+.status-item.recontact .circle {
+  background-color: #3498db;
+}
+.status-item.converted .circle {
+  background-color: #27ae60;
+}
+.status-item.priority .circle {
+  background-color: #e74c3c;
+}
+.status-item.dropped .circle {
+  background-color: #7f8c8d;
+}
+</style>
+
+{% endblock %}

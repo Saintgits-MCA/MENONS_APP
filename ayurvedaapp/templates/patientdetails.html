@@ -1,0 +1,261 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Patient Details</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item">
+                {% if ptdtmngview == '1' %} 
+                    <a href="{% url 'patientdetailtable' %}?menumanagement_id={{ idmngmnt }}">View All</a>
+                {% endif %}
+              </li>
+              <li class="breadcrumb-item active">Patient Details</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+      <!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="row">
+        <div class="col-md-12">
+          <div class="card card-primary">
+            <div class="card-header">
+              <h3 class="card-title">Patient Details</h3>
+              <div class="card-tools">
+                <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                  <!-- <i class="fas fa-minus"></i> -->
+                </button>
+              </div>
+            </div>
+            <form id="patientDetailsForm" method="POST" action="{% url 'patientdetails' %}?menumanagement_id={{ idmngmnt }}">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <!-- Form Fields -->
+                                <div class="form-group">
+                                    <label for="exampleInputFirstName">Patient Name</label>
+                                    <input type="text" class="form-control" id="exampleInputpatientname" name="patientname" placeholder="Enter Patient Name" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="exampleInputEmail1">Age</label>
+                                    <input type="text" class="form-control" id="exampleInputage" name="age" placeholder="Enter Age">
+                                </div>
+                                <div class="form-group">
+                                    <label for="exampleInputManagerName">Gender</label>
+                                    <br>
+                                    <input type="radio" value="Male" name="gender" id="genderMale" required>
+                                    <label for="genderMale">Male</label>
+                                    <input type="radio" value="Female" id="genderFemale" name="gender" required>
+                                    <label for="genderFemale">Female</label>
+                                    <input type="radio" value="Others" id="genderOthers" name="gender" required>
+                                    <label for="genderOthers">Others</label>
+                                </div>
+                         <div class="form-group">
+                                    <label for="patientDate">Date</label>
+                                    <input type="date" class="form-control" id="patientDate" name="patient_date" required>
+  </div>
+                                <!-- <div class="form-group">
+                                    <label for="exampleInputPincode">House Name</label>
+                                    <input type="text" class="form-control" id="exampleInputhousename" name="housename" placeholder="Enter House Name">
+                                </div>
+                                <div class="form-group">
+                                    <label for="exampleInputPincode">Pincode</label>
+                                    <input type="text" class="form-control" id="exampleInputPincode" name="pincode" placeholder="Enter Pincode">
+                                </div> -->
+                                <div class="form-group">
+                                    <label for="exampleInputemail">Email</label>
+                                    <input type="text" class="form-control" id="exampleInputemail" name="email" placeholder="Enter Email">
+                                </div>
+                                <div class="form-group">
+                                    <label for="exampleInputContactNo">Contact no</label>
+                                    <input type="text" class="form-control" id="exampleInputpassword" name="contactnumber" placeholder="Enter Contact no" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                              <div class="form-group">
+                    <label for="exampleInputHouse">Address</label>
+                  <textarea id="address" class="form-control" name="address"></textarea>
+                  </div>
+                                <!-- Select Fields -->
+                                <div class="form-group">
+                                    <label for="exampleInputRegisterNo">Country</label>
+                                    <select class="form-control" name="country">
+                                        <option selected disabled value="">Select</option>
+                                        {% for i in countryobj %}
+                                        <option value="{{ i.id }}">{{ i.Country_Name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="exampleInputRegisterNo">State</label>
+                                    <select class="form-control" name="state">
+                                        <option selected disabled value="">Select</option>
+                                        {% for i in stateobj %}
+                                        <option value="{{ i.id }}">{{ i.State_Name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <!-- <div class="form-group">
+                                   
+                                    <select class="form-control" name="district">
+                                        <option selected disabled value="">Select</option>
+                                        {% for i in districtobj %}
+                                        <option value="{{ i.id }}">{{ i.District_name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div> -->
+                                <div class="form-group">
+                                  <label for="exampleInputRegisterNo">District</label>
+                                  <input type="text" class="form-control" id="exampleInputCity" name="district" placeholder="Enter district">
+                              </div>
+                            <div class="form-group">
+                                <label>Consultation Type</label><br>
+
+                                <input type="radio" value="offline" name="consultation_type" id="consultOffline" checked>
+                                <label for="consultOffline">Offline</label>
+
+                                <input type="radio" value="online" name="consultation_type" id="consultOnline">
+                                <label for="consultOnline">Online</label>
+                            </div>
+                                <!-- <div class="form-group">
+                                    <label for="exampleInputRegisterNo">City</label>
+                                    <input type="text" class="form-control" id="exampleInputCity" name="city" placeholder="Enter City">
+                                </div> -->
+                                <!-- <div class="form-group">
+                                    <label for="exampleInputManagerName">Status</label>
+                                    <br>
+                                    <input type="radio" value="op" checked="checked" name="exampleInputStatus" id="statusActive">
+                                    <label for="statusActive">OP</label>
+                                    <input type="radio" value="ip" name="exampleInputStatus" id="statusInactive">
+                                    <label for="statusInactive">IP</label>
+                                </div> -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    {% if messages %}
+                    {% for message in messages %}
+                    <p style="color:green;">{{ message }}</p>
+                    {% endfor %}
+                    {% endif %}
+                    {%if ptdtmngadd == '1'%}
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                    {%endif%}
+                </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- /.content -->
+  </div>
+
+  <!-- Modal -->
+  <div class="modal fade" id="confirmationModal" tabindex="-1" role="dialog" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="confirmationModalLabel">Confirmation</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          Do you need an appointment now?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="modalCancelButton" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="modalConfirmButton">Yes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% block scripts %}
+
+  <script>
+  $(document).ready(function () {
+     var today = new Date();
+      var dd = String(today.getDate()).padStart(2, '0');
+      var mm = String(today.getMonth() + 1).padStart(2, '0'); // January is 0!
+      var yyyy = today.getFullYear();
+      today = yyyy + '-' + mm + '-' + dd;
+     document.getElementById('patientDate').value = today;
+      $("#patientDetailsForm").on("submit", function (e) {
+          e.preventDefault(); // Prevent immediate submission
+  
+          let formData = $(this).serialize();
+          let patientName = $("input[name='patientname']").val().trim();
+          let contactNumber = $("input[name='contactnumber']").val().trim();
+  
+          // Check if patient already exists
+          $.ajax({
+              url: "{% url 'check_patient_exists' %}",
+              type: "POST",
+              data: {
+                  patientname: patientName,
+                  contactnumber: contactNumber,
+                  csrfmiddlewaretoken: '{{ csrf_token }}'
+              },
+              success: function (response) {
+                  if (response.exists) {
+                      alert("Patient already registered.");
+                      location.reload();
+                  } else {
+                      $('#confirmationModal').modal('show'); // Show modal if patient is new
+                  }
+              },
+              error: function () {
+                  alert("An error occurred while checking for duplicate patients.");
+              }
+          });
+      });
+  
+      // If "Yes" is clicked, submit the form and go to appointment page
+      $("#modalConfirmButton").click(function () {
+          submitForm("{% url 'appointmentafterreg' %}?menumanagement_id={{ idmngmnt }}");
+      });
+  
+      // If "No" is clicked, submit the form and stay on patient details page
+      $("#modalCancelButton").click(function () {
+          submitForm("{% url 'patientdetails' %}?menumanagement_id={{ idmngmnt }}");
+      });
+  
+      function submitForm(redirectUrl) {
+          let formData = $("#patientDetailsForm").serialize();
+  
+          $.ajax({
+              url: "{% url 'patientdetails' %}?menumanagement_id={{ idmngmnt }}",
+              type: "POST",
+              data: formData,
+              success: function () {
+                  window.location.href = redirectUrl;
+              },
+              error: function () {
+                  alert("Failed to save patient details.");
+              }
+          });
+      }
+  });
+  </script>
+  {% endblock %}
+  {% endblock %}

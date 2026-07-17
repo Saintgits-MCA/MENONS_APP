@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<style>
+    .timetable-wrapper {
+        overflow-x: auto;
+        max-height: 70vh;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+    }
+
+    table.timetable {
+        border-collapse: collapse;
+        width: 100%;
+        min-width: 1000px;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        text-align: center;
+    }
+
+    table.timetable th,
+    table.timetable td {
+        border: 1px solid #ccc;
+        padding: 8px;
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+
+    table.timetable thead th {
+        background-color: #f8f9fa;
+        font-weight: bold;
+        position: sticky;
+        top: 0;
+        z-index: 2;
+    }
+
+    .time-sticky {
+        position: sticky;
+        left: 0;
+        background-color: #e9ecef !important;
+        z-index: 3;
+        font-weight: bold;
+        min-width: 110px;
+    }
+
+    .male-cell {
+        color: #007bff;
+        font-weight: 500;
+    }
+
+    .female-cell {
+        color: #e91e63;
+        font-weight: 500;
+    }
+
+    tbody tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+
+    .card .card-body {
+        overflow-x: auto;
+    }
+</style>
+
+<div class="content-wrapper">
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Time Slot Schedule Details</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item">
+              {% if tmsltadd == '1' %}
+                <a href="{% url 'treatment_timeslot_booking' %}?menumanagement_id={{ idmngmnt }}">Add</a>
+              {% endif %}
+            </li>
+            <li class="breadcrumb-item active">Time Slot Schedule List</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="content">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-12">
+<form method="get" class="mb-4">
+    <label for="procedure">Select Procedure:</label>
+    <select name="procedure" id="procedure" class="form-control"  onchange="this.form.submit()">
+        <option value="">-- All Procedures --</option>
+        {% for proc in procedures %}
+            <option value="{{ proc.id }}" {% if proc.id|stringformat:"s" == selected_procedure_id %}selected{% endif %}>
+                {{ proc.procedurename }}
+            </option>
+        {% endfor %}
+    </select>
+</form>
+
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Treatment Timetable</h3>
+            </div>
+            <div class="card-body timetable-wrapper">
+              <table  class="timetable">
+                <thead>
+                  <tr>
+                    <th class="time-sticky" rowspan="2">Time Slot</th>
+                    {% for d in date_labels %}
+                      <th colspan="2">{{ d.label }}</th>
+                    {% endfor %}
+                  </tr>
+                  <tr>
+                    {% for d in date_labels %}
+                      <th>Male</th>
+                      <th>Female</th>
+                    {% endfor %}
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for row in table_rows %}
+                    <tr>
+                      <td class="time-sticky">{{ row.slot }}</td>
+                      {% for cell in row.cells %}
+                        <td class="male-cell">{{ cell.male }}</td>
+                        <td class="female-cell">{{ cell.female }}</td>
+                      {% endfor %}
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

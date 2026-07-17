@@ -1,0 +1,119 @@
+<!-- patient_visit_cycle_list.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="content-wrapper">
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-12">
+            <h2>Patient Visit Cycle Log</h2>
+            <hr>
+        </div>
+    </div>
+
+    <!-- Simple Filter -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <form method="GET" class="row">
+                <div class="col-md-3">
+                    <select name="patient_id" class="form-control">
+                        <option value="">All Patients</option>
+                        {% for patient in patients %}
+                            <option value="{{ patient.id }}" {% if filters.patient_id == patient.id|stringformat:"s" %}selected{% endif %}>
+                                {{ patient.Patient_Name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="status" class="form-control">
+                        <option value="">All Status</option>
+                        {% for status in status_choices %}
+                            <option value="{{ status }}" {% if filters.status == status %}selected{% endif %}>
+                                {{ status }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <input type="text" name="search" class="form-control" placeholder="Search patient name or MR number..." value="{{ filters.search }}">
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary btn-block">Filter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="card px-2">
+        <div class="card-body table-responsive px-2">
+            <table class="table table-hover" id="example1">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Patient</th>
+                        <th>Doctor</th>
+                        <th>Consultation Date</th>
+                        <th>Status</th>
+                        <th>Visits (C/R/F)</th>
+                        <th>Total Fee</th>
+                        <th>Cycle</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cycle in cycles %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>
+                            {{ cycle.patient.Patient_Name }}<br>
+                            <small class="text-muted">{{ cycle.patient.Medical_Record_Number }}</small>
+                        </td>
+                        <td>Dr. {{ cycle.doctor.Staff_firstname }}</td>
+                        <td>{{ cycle.consultation_date|date:"d-m-Y" }}</td>
+                        <td>
+                            <span class="badge 
+                                {% if cycle.current_status == 'Consultation' %}badge-primary
+                                {% elif cycle.current_status == 'Revisit' %}badge-info
+                                {% elif cycle.current_status == 'Followup' %}badge-success
+                                {% endif %}">
+                                {{ cycle.current_status }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge badge-primary">{{ cycle.consultation_count }}</span>
+                            <span class="badge badge-info">{{ cycle.revisit_count }}</span>
+                            <span class="badge badge-success">{{ cycle.followup_count }}</span>
+                            <small class="text-muted">(C/R/F)</small>
+                        </td>
+                        <td>₹{{ cycle.total_fee_collected|floatformat:2 }}</td>
+                        <td>
+                            {% if cycle.is_cycle_active %}
+                                <span class="badge badge-success">Active</span>
+                            {% else %}
+                                <span class="badge badge-danger">Closed</span>
+                            {% endif %}
+                            <br>
+                            <small class="text-muted">{{ cycle.days_from_consultation }} days</small>
+                        </td>
+                        <td>
+                            <a href="{% url 'patient_visit_cycle_detail' %}?cycle_id={{ cycle.id }}" 
+                               class="btn btn-sm btn-info">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center">No visit cycles found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+       
+    </div>
+</div>
+</div>
+{% endblock %}

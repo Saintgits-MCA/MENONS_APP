@@ -1,0 +1,1044 @@
+{% extends 'base.html' %} {% load static %} {% block content %}
+
+<style>
+  /* === VARIABLES === */
+  :root {
+    --bg: #f6f8fb;
+    --card: #ffffff;
+    --text: #1f2a37;
+    --muted: #6b7280;
+    --brand: #2fbac6;
+    --tab: #8bd08a;
+    --accent: #3b82f6;
+    --ok: #22c55e;
+    --danger: #ef4444;
+    --shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    --radius: 14px;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    font: 15px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu,
+      Cantarell, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+    color: var(--text);
+    background: var(--bg);
+  }
+
+  .page {
+    max-width: 1200px;
+    margin: 28px auto;
+    padding: 0 18px;
+  }
+
+  /* HEADER */
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+  }
+  .page-header h1 {
+    font-size: 22px;
+    font-weight: 800;
+    color: #1f2937;
+  }
+  .breadcrumb {
+    font-size: 14px;
+    color: #6b7280;
+  }
+  .breadcrumb a {
+    text-decoration: none;
+    color: var(--brand);
+    font-weight: 600;
+  }
+
+  /* SEARCH */
+  .search-wrapper {
+    background: #fff;
+    padding: 18px;
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    margin-bottom: 20px;
+  }
+  .search-box {
+    display: flex;
+    gap: 12px;
+  }
+  .search-box input {
+    flex: 1;
+    height: 42px;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    padding: 0 14px;
+  }
+  .search-box button {
+    height: 42px;
+    padding: 0 18px;
+    border: none;
+    border-radius: 12px;
+    background: var(--brand);
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+  }
+  .search-box button:hover {
+    background: #2563eb;
+  }
+
+  /* PATIENT INFO */
+  .patient-details {
+    background: #fff;
+    border-radius: 14px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px 24px;
+  }
+
+  .patient-details .field {
+    display: flex;
+    gap: 6px;
+  }
+
+  .patient-details .label {
+    font-weight: 700;
+    color: #6b7280;
+  }
+
+  .patient-details .value {
+    color: #1f2937;
+    font-weight: 600;
+  }
+
+  /* CARD */
+  .card {
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+
+  /* LAB TEST GRID */
+  .lab-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-top: 20px;
+  }
+
+  .lab-card {
+    border: 1px solid #e5e7eb;
+    padding: 15px;
+    border-radius: 12px;
+    background-color: #f9fafb;
+    box-shadow: var(--shadow);
+  }
+
+  .lab-card-title {
+    font-weight: bold;
+    margin-bottom: 10px;
+    font-size: 16px;
+    color: #1f2937;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 8px;
+  }
+
+  .test-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .test-item {
+    padding: 8px 12px;
+    border: 1px solid #007bff;
+    border-radius: 8px;
+    background-color: #fff;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+  }
+
+  .test-item:hover {
+    background-color: #e3f2fd;
+    transform: translateY(-2px);
+  }
+
+  .test-item.selected {
+    background-color: #007bff;
+    color: #fff;
+    border-color: #0056b3;
+  }
+
+  /* SELECTED TESTS */
+  .selected-tests-container {
+    background: #fff;
+    border-radius: 14px;
+    padding: 20px;
+    margin-top: 20px;
+    box-shadow: var(--shadow);
+  }
+
+  .selected-tests {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .selected-tests span {
+    background: #4caf50;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .remove-test {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+    margin-left: 4px;
+  }
+
+  /* BUTTONS */
+  .action-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+  }
+
+  .btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .btn-primary {
+    background: var(--brand);
+    color: #fff;
+  }
+
+  .btn-primary:hover {
+    background: #2563eb;
+  }
+
+  .btn-secondary {
+    background: #6b7280;
+    color: #fff;
+  }
+
+  .btn-secondary:hover {
+    background: #4b5563;
+  }
+
+  /* MODAL */
+  .modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1050;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal.show {
+    display: flex;
+  }
+
+  .modal-content {
+    background: #fff;
+    border-radius: 18px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: var(--shadow);
+  }
+
+  .modal-header {
+    padding: 20px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .modal-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1f2937;
+  }
+
+  .modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #6b7280;
+  }
+
+  .modal-body {
+    padding: 20px;
+  }
+
+  /* TABLE */
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .table th,
+  .table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .table th {
+    background: #f9fafb;
+    font-weight: 600;
+    color: #374151;
+  }
+
+  .select-btn {
+    padding: 6px 12px;
+    background: var(--brand);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  .select-btn:hover {
+    background: #2563eb;
+  }
+
+  /* MESSAGES */
+  .message {
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+  }
+
+  .message.success {
+    background: #d1fae5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+  }
+
+  .message.error {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 1024px) {
+    .lab-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .lab-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .search-box {
+      flex-direction: column;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .lab-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  .select-all-group {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--brand);
+}
+
+.select-all-group:hover {
+  transform: scale(1.1);
+}
+
+.lab-card-title label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  transition: all 0.2s ease;
+}
+
+.lab-card-title label:hover {
+  color: var(--brand);
+}
+</style>
+
+<div class="page">
+  <!-- Header -->
+  <section class="content-header">
+    <div class="page-header">
+      <h1>Lab Test Requisition</h1>
+    </div>
+  </section>
+
+  <!-- Search Section -->
+  <div class="search-wrapper">
+    <div class="search-box">
+      <input
+        type="text"
+        id="mrSearch"
+        class="form-control"
+        placeholder="Type MR Number"
+      />
+      <button id="searchBtn">Search Patient</button>
+    </div>
+  </div>
+
+  <!-- Patient Info -->
+  <div class="card">
+    <div class="patient-details">
+      <div class="field">
+        <span class="label">MR No:</span>
+        <span class="value" id="mrNumber">-</span>
+      </div>
+      <div class="field">
+        <span class="label">Name:</span>
+        <span class="value" id="patientName">-</span>
+      </div>
+      <div class="field">
+        <span class="label">Gender:</span>
+        <span class="value" id="patientGender">-</span>
+      </div>
+      <div class="field">
+        <span class="label">Address:</span>
+        <span class="value" id="patientAddress">-</span>
+      </div>
+      <div class="field">
+        <span class="label">Phone:</span>
+        <span class="value" id="patientPhone">-</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lab Tests Selection -->
+  <div class="card">
+    <h2 style="margin-bottom: 20px">Select Lab Tests</h2>
+
+      <div class="lab-grid">
+  {% for group in groups %} {% if group.labtestchild_set.all %}
+  <div class="lab-card">
+    <div class="lab-card-title">
+      <div class="d-flex" style="align-items: right; gap: 10px;">
+        <span>{{ group.groupname }}</span>
+         <label class="d-flex text-right flex-end" style="gap: 5px; font-size: 12px; cursor: pointer;">
+        <input type="checkbox" class="select-all-group float-right" 
+               data-group="{{ forloop.counter }}" 
+               data-group-id="{{ group.id }}"  
+               onchange="toggleGroup(this)">
+        Select All
+      </label>
+      </div>
+    </div>
+    <div class="test-row">
+      {% for test in group.labtestchild_set.all %}
+      <button
+        class="test-item"
+        data-test-id="{{ test.id }}"
+        data-test-symbol="{{ test.symbol|default:test.testname }}"
+        data-test-name="{{ test.testname }}"
+        data-group="{{ forloop.parentloop.counter }}"
+        data-group-id="{{ group.id }}"
+        onclick="toggleTest(this)"
+      >
+        {{ test.symbol|default:test.testname }}
+      </button>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %} {% endfor %}
+</div>
+
+    <!-- Selected Tests -->
+    <div class="selected-tests-container">
+      <h3>Selected Lab Tests:</h3>
+      <div id="selectedTestsList" class="selected-tests">
+        <!-- Selected tests will appear here -->
+      </div>
+
+      <div class="action-buttons">
+        <button id="saveTestsBtn" class="btn btn-primary" disabled>
+          Save Lab Tests
+        </button>
+        <button id="clearSelectionBtn" class="btn btn-secondary">
+          Clear Selection
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Previous Lab Tests -->
+  <div class="card">
+    <h2 style="margin-bottom: 20px">Previous Lab Tests</h2>
+    <div class="table-responsive">
+      <table class="table" id="previousTestsTable">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Test Name</th>
+            <!-- <th>Status</th> -->
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Previous tests will be loaded here -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Search Results Modal -->
+<div class="modal" id="searchModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="modal-title">Search Results</h3>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <table class="table" id="searchResultsTable">
+        <thead>
+          <tr>
+            <th>MR Number</th>
+            <th>Patient Name</th>
+            <th>Address</th>
+            <th>Contact No</th>
+            <th>Gender</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Results will be appended here -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Global variables
+  let selectedPatientId = null;
+  let selectedTests = new Map(); // Using Map to store test id and symbol
+
+  // DOM Content Loaded
+  document.addEventListener("DOMContentLoaded", function () {
+    // Search button event
+    document
+      .getElementById("searchBtn")
+      .addEventListener("click", searchPatient);
+
+    // Save tests button event
+    document
+      .getElementById("saveTestsBtn")
+      .addEventListener("click", saveLabTests);
+
+    // Clear selection button event
+    document
+      .getElementById("clearSelectionBtn")
+      .addEventListener("click", clearSelection);
+
+    // Enter key support for search
+    document
+      .getElementById("mrSearch")
+      .addEventListener("keypress", function (e) {
+        if (e.key === "Enter") {
+          searchPatient();
+        }
+      });
+  });
+
+  // Search patient by MR number
+  function searchPatient() {
+    const query = document.getElementById("mrSearch").value.trim();
+    if (!query) {
+      alert("Please enter a MR number to search.");
+      return;
+    }
+
+    fetch(`/search_mrno/?query=${encodeURIComponent(query)}`)
+      .then((response) => response.json())
+      .then((data) => {
+        const tbody = document.querySelector("#searchResultsTable tbody");
+        tbody.innerHTML = "";
+
+        if (!data || data.length === 0) {
+          tbody.innerHTML =
+            '<tr><td colspan="6" style="text-align: center;">No matching records found.</td></tr>';
+        } else {
+          data.forEach((patient) => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+            <td>${patient.Medical_Record_Number || "N/A"}</td>
+            <td>${patient.Patient_Name || "N/A"}</td>
+            <td>${patient.address || "N/A"}</td>
+            <td>${patient.contactno || "N/A"}</td>
+            <td>${patient.Gender || "N/A"}</td>
+            <td>
+              <button class="select-btn" onclick="selectPatient(${
+                patient.id
+              }, '${patient.Medical_Record_Number || "N/A"}', '${
+              patient.Patient_Name || "N/A"
+            }', '${patient.Gender || "N/A"}', '${patient.address || "N/A"}', '${
+              patient.contactno || "N/A"
+            }')">
+                Select
+              </button>
+            </td>
+          `;
+            tbody.appendChild(row);
+          });
+        }
+
+        document.getElementById("searchModal").classList.add("show");
+      })
+      .catch((error) => {
+        console.error("Error searching patients:", error);
+        alert("Error retrieving patient data.");
+      });
+  }
+
+  // Select patient from search results
+  function selectPatient(id, mrNumber, name, gender, address, phone) {
+    selectedPatientId = id;
+
+    // Update patient info display
+    document.getElementById("mrNumber").textContent = mrNumber;
+    document.getElementById("patientName").textContent = name;
+    document.getElementById("patientGender").textContent = gender;
+    document.getElementById("patientAddress").textContent = address;
+    document.getElementById("patientPhone").textContent = phone;
+
+    // Close modal
+    closeModal();
+
+    // Clear previous selection
+    clearSelection();
+
+    // Load previous lab tests for this patient
+    loadPreviousLabTests(id);
+  }
+
+  // Close modal
+  function closeModal() {
+    document.getElementById("searchModal").classList.remove("show");
+  }
+let isGroupToggling = false;
+
+// Modified toggleGroup function to prevent individual uncheck when select all is checked
+function toggleGroup(checkbox) {
+    if (!selectedPatientId) {
+        alert("Please select a patient first.");
+        checkbox.checked = false;
+        return;
+    }
+
+    const group = checkbox.getAttribute('data-group');
+    const testItems = document.querySelectorAll(`.test-item[data-group="${group}"]`);
+    const isChecked = checkbox.checked;
+    
+    // Set flag to prevent individual toggles during group operation
+    isGroupToggling = true;
+    
+    // Check or uncheck all tests in this group
+    testItems.forEach(button => {
+        const testId = button.getAttribute('data-test-id');
+        
+        if (isChecked) {
+            // Only add if not already selected
+            if (!selectedTests.has(testId)) {
+                const testSymbol = button.getAttribute('data-test-symbol');
+                const testName = button.getAttribute('data-test-name');
+                selectedTests.set(testId, {
+                    symbol: testSymbol,
+                    name: testName,
+                });
+                button.classList.add('selected');
+            }
+        } else {
+            // Remove if selected
+            if (selectedTests.has(testId)) {
+                selectedTests.delete(testId);
+                button.classList.remove('selected');
+            }
+        }
+    });
+
+    // Reset flag after operation
+    isGroupToggling = false;
+    
+    // Update checkbox state (set indeterminate to false)
+    checkbox.indeterminate = false;
+    
+    updateSelectedTestsDisplay();
+    updateSaveButtonState();
+}
+
+// Modified toggleTest function with prevention logic
+function toggleTest(button) {
+    if (!selectedPatientId) {
+        alert("Please select a patient first.");
+        return;
+    }
+
+    const testId = button.getAttribute("data-test-id");
+    const testSymbol = button.getAttribute("data-test-symbol");
+    const testName = button.getAttribute("data-test-name");
+    const group = button.getAttribute("data-group");
+    
+    // Check if the group's "Select All" checkbox is checked
+    const groupCheckbox = document.querySelector(`.select-all-group[data-group="${group}"]`);
+    
+    // If the "Select All" checkbox is checked, prevent unchecking individual items
+    if (groupCheckbox && groupCheckbox.checked) {
+        if (selectedTests.has(testId)) {
+            alert("Cannot uncheck individual test while 'Select All' is checked. Please uncheck 'Select All' first.");
+            return;
+        }
+    }
+
+    if (selectedTests.has(testId)) {
+        // Remove from selection
+        selectedTests.delete(testId);
+        button.classList.remove("selected");
+    } else {
+        // Add to selection
+        selectedTests.set(testId, {
+            symbol: testSymbol,
+            name: testName,
+        });
+        button.classList.add("selected");
+    }
+
+    // ✅ NEW: Check if all tests in this group are now selected
+    const testItems = document.querySelectorAll(`.test-item[data-group="${group}"]`);
+    let allSelected = true;
+    let totalItems = 0;
+    
+    testItems.forEach(item => {
+        const id = item.getAttribute('data-test-id');
+        totalItems++;
+        if (!selectedTests.has(id)) {
+            allSelected = false;
+        }
+    });
+    
+    if (groupCheckbox) {
+        if (allSelected && totalItems > 0) {
+            groupCheckbox.checked = true;
+            groupCheckbox.indeterminate = false;
+        } else if (selectedTests.size === 0) {
+            groupCheckbox.checked = false;
+            groupCheckbox.indeterminate = false;
+        } else {
+            // Some items selected but not all - indeterminate state
+            groupCheckbox.checked = false;
+            groupCheckbox.indeterminate = true;
+        }
+    }
+
+    updateSelectedTestsDisplay();
+    updateSaveButtonState();
+}
+
+// Helper function to update group checkbox states
+function updateGroupCheckboxStates() {
+    const groupCheckboxes = document.querySelectorAll('.select-all-group');
+    
+    groupCheckboxes.forEach(checkbox => {
+        const group = checkbox.getAttribute('data-group');
+        const testItems = document.querySelectorAll(`.test-item[data-group="${group}"]`);
+        
+        if (testItems.length === 0) return;
+        
+        let selectedCount = 0;
+        testItems.forEach(button => {
+            const testId = button.getAttribute('data-test-id');
+            if (selectedTests.has(testId)) {
+                selectedCount++;
+            }
+        });
+        
+        const totalCount = testItems.length;
+        
+        if (selectedCount === 0) {
+            checkbox.checked = false;
+            checkbox.indeterminate = false;
+        } else if (selectedCount === totalCount) {
+            checkbox.checked = true;
+            checkbox.indeterminate = false;
+        } else {
+            checkbox.checked = false;
+            checkbox.indeterminate = true;
+        }
+    });
+}
+
+// Modified updateSelectedTestsDisplay to include this check
+function updateSelectedTestsDisplay() {
+    const container = document.getElementById("selectedTestsList");
+    container.innerHTML = "";
+
+    if (selectedTests.size === 0) {
+        container.innerHTML =
+            '<span style="color: #6b7280;">No tests selected</span>';
+        return;
+    }
+
+    // Update group checkbox states
+    updateGroupCheckboxStates();
+
+    selectedTests.forEach((testData, id) => {
+        const badge = document.createElement("span");
+        badge.innerHTML = `
+            ${testData.symbol}
+            <button class="remove-test" onclick="removeTest('${id}')">×</button>
+        `;
+        container.appendChild(badge);
+    });
+}
+
+// Modified removeTest function with prevention
+function removeTest(testId) {
+    // Find the test button to get its group
+    const button = document.querySelector(`.test-item[data-test-id="${testId}"]`);
+    if (button) {
+        const group = button.getAttribute("data-group");
+        const groupCheckbox = document.querySelector(`.select-all-group[data-group="${group}"]`);
+        
+        // If "Select All" is checked, prevent removal
+        if (groupCheckbox && groupCheckbox.checked) {
+            alert("Cannot remove individual test while 'Select All' is checked. Please uncheck 'Select All' first.");
+            return;
+        }
+    }
+    
+    selectedTests.delete(testId);
+
+    // Update button state
+    if (button) {
+        button.classList.remove("selected");
+    }
+
+    updateSelectedTestsDisplay();
+    updateSaveButtonState();
+}
+
+// Modified clearSelection function
+function clearSelection() {
+    // Uncheck all group checkboxes first
+    document.querySelectorAll('.select-all-group').forEach(checkbox => {
+        checkbox.checked = false;
+        checkbox.indeterminate = false;
+    });
+    
+    selectedTests.clear();
+
+    // Clear all selected buttons
+    document.querySelectorAll(".test-item.selected").forEach((button) => {
+        button.classList.remove("selected");
+    });
+
+    updateSelectedTestsDisplay();
+    updateSaveButtonState();
+}
+
+  // Update save button state
+  function updateSaveButtonState() {
+    const saveButton = document.getElementById("saveTestsBtn");
+    saveButton.disabled = selectedTests.size === 0 || !selectedPatientId;
+  }
+
+  // Load previous lab tests for the patient
+  function loadPreviousLabTests(patientId) {
+    fetch(`/get_patient_lab_tests/?patient_id=${patientId}`)
+      .then((response) => response.json())
+      .then((data) => {
+        const tbody = document.querySelector("#previousTestsTable tbody");
+        tbody.innerHTML = "";
+
+        if (!data.success || !data.lab_tests || data.lab_tests.length === 0) {
+          tbody.innerHTML =
+            '<tr><td colspan="3" style="text-align: center;">No previous lab tests found.</td></tr>';
+          return;
+        }
+
+        data.lab_tests.forEach((test) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+          <td>${test.created_at || "N/A"}</td>
+          <td>${test.labtestchild__testname || "N/A"}</td>
+          
+        `;
+          tbody.appendChild(row);
+        });
+      })
+      .catch((error) => {
+        console.error("Error loading previous lab tests:", error);
+      });
+  }
+
+  // Save selected lab tests
+  function saveLabTests() {
+    if (!selectedPatientId || selectedTests.size === 0) {
+        alert("Please select a patient and at least one test.");
+        return;
+    }
+
+    // ✅ Build data structure with both individual tests and groups
+    const testIds = [];
+    const groupIds = [];
+
+    // ✅ Check which groups have "Select All" checked
+    const groupCheckboxes = document.querySelectorAll('.select-all-group');
+    
+    groupCheckboxes.forEach(checkbox => {
+        const group = checkbox.getAttribute('data-group');
+        const groupId = checkbox.getAttribute('data-group-id');
+        const isChecked = checkbox.checked;
+        
+        // Get all test items in this group
+        const testItems = document.querySelectorAll(`.test-item[data-group="${group}"]`);
+        
+        if (isChecked) {
+            // ✅ If "Select All" is checked, ONLY add group ID (not individual test IDs)
+            if (groupId) {
+                groupIds.push(groupId);
+            }
+        } else {
+            // ✅ If "Select All" is NOT checked, add individual test IDs from this group
+            testItems.forEach(button => {
+                const testId = button.getAttribute('data-test-id');
+                if (selectedTests.has(testId)) {
+                    testIds.push(testId);
+                }
+            });
+        }
+    });
+
+    // ✅ Also handle any individual selections from groups that might not have a checkbox
+    // (This is a fallback for safety)
+    selectedTests.forEach((testData, testId) => {
+        // Check if this test is already in testIds
+        if (!testIds.includes(testId)) {
+            // Find which group this test belongs to
+            const button = document.querySelector(`.test-item[data-test-id="${testId}"]`);
+            if (button) {
+                const group = button.getAttribute('data-group');
+                const groupCheckbox = document.querySelector(`.select-all-group[data-group="${group}"]`);
+                
+                // If the group's checkbox is checked, don't add individual test
+                if (groupCheckbox && groupCheckbox.checked) {
+                    return; // Skip - group will handle this
+                }
+                testIds.push(testId);
+            } else {
+                testIds.push(testId);
+            }
+        }
+    });
+
+    // Debug logging
+    console.log("Individual Test IDs:", testIds);
+    console.log("Group IDs (Select All):", groupIds);
+
+    // Create form data
+    const formData = new FormData();
+    formData.append("test_ids", JSON.stringify(testIds));
+    formData.append("group_ids", JSON.stringify(groupIds)); 
+    formData.append("selectedPatientId", selectedPatientId);
+
+    // Get CSRF token
+    const csrfToken = getCSRFToken();
+    formData.append("csrfmiddlewaretoken", csrfToken);
+
+    fetch("{% url 'create_casehistorylabtestrequisition' %}", {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": csrfToken,
+            "X-Requested-With": "XMLHttpRequest",
+        },
+        body: formData,
+    })
+    .then((response) => {
+        console.log("Response status:", response.status);
+        return response.json();
+    })
+    .then((data) => {
+        console.log("Response data:", data);
+        if (data.success) {
+            const totalSaved = (data.tests_saved || 0) + (data.groups_saved || 0);
+            
+            // Clear selection
+            clearSelection();
+
+            // Reload previous tests
+            loadPreviousLabTests(selectedPatientId);
+        } else {
+            alert("Error saving lab tests: " + (data.error || "Unknown error"));
+        }
+    })
+    .catch((error) => {
+        console.error("Error saving lab tests:", error);
+        alert("Error saving lab tests. Please check console for details.");
+    });
+}
+
+  // Helper function to get CSRF token
+  function getCSRFToken() {
+    const name = "csrftoken";
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+      const cookies = document.cookie.split(";");
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === name + "=") {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+   $(document).ready(function() {
+        // Force full width always
+        $('.content-wrapper').css('margin-left', '0');
+        $('.main-header .navbar').css('margin-left', '0');
+        $('body').addClass('sidebar-collapse');
+    });
+</script>
+
+{% endblock %}

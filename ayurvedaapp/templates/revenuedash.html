@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<style>
+  body {
+    background-color: #f8f9fa;
+  }
+  .revenue-section {
+    margin-bottom: 40px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .card-header {
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+  .table th, .table td {
+    vertical-align: middle;
+    text-align: center;
+  }
+  .section-title {
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #343a40;
+  }
+  .filter-form {
+    margin-bottom: 40px;
+  }
+</style>
+
+<div class="content-wrapper">
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Revenue Details</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item active">Revenue</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="content">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card card-primary">
+          <div class="card-header">
+            <h3 class="card-title">Revenue</h3>
+            <div class="card-tools">
+              <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                <i class="fas fa-minus"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="container py-5">
+            <h2 class="text-center mb-4">📊 Revenue Monitoring Dashboard</h2>
+
+            <!-- Date Filter -->
+            <form method="get" class="row g-3 justify-content-center mb-4">
+              <div class="col-auto">
+                <label for="date" class="form-label">Filter by Date</label>
+                <input type="date" id="date" name="date" class="form-control" value="{{ selected_date|default:'' }}">
+              </div>
+              <div class="col-auto d-flex align-items-end">
+                <button class="btn btn-primary">Filter</button>
+              </div>
+            </form>
+
+            <!-- Summary Cards -->
+            <div class="row text-center mb-4">
+              <div class="col-md-3 mb-3">
+                <div class="card border-dark shadow-sm">
+                  <div class="card-body">
+                    <h5 class="text-dark">Total Revenue</h5>
+                    <h4>
+                      ₹ {{ treatment_total|default:0|add:pharmacy_total|default:0|add:consultation_total|default:0|floatformat:2 }}
+                    </h4>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3 mb-3">
+                <div class="card border-primary shadow-sm">
+                  <div class="card-body">
+                    <h5 class="text-primary">Treatment Revenue</h5>
+                    <h4>₹ {{ treatment_total|floatformat:2 }}</h4>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3 mb-3">
+                <div class="card border-success shadow-sm">
+                  <div class="card-body">
+                    <h5 class="text-success">Pharmacy Revenue</h5>
+                    <h4>₹ {{ pharmacy_total|floatformat:2 }}</h4>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3 mb-3">
+                <div class="card border-warning shadow-sm">
+                  <div class="card-body">
+                    <h5 class="text-warning">Consultation Revenue</h5>
+                    <h4>₹ {{ consultation_total|floatformat:2 }}</h4>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tabs -->
+            <ul class="nav nav-tabs mb-3" id="revenueTabs" role="tablist">
+              <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#treatment">Treatment</a></li>
+              <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#pharmacy">Pharmacy</a></li>
+              <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#consultation">Consultation</a></li>
+            </ul>
+
+            <!-- Tab Content -->
+            <div class="tab-content">
+              <!-- Treatment Tab -->
+              <div class="tab-pane fade show active" id="treatment">
+                <div class="table-responsive">
+                  <table class="table table-bordered table-striped">
+                    <thead class="table-primary">
+                      <tr><th>Branch</th><th>Total</th><th>Tax</th><th>Shipping</th></tr>
+                    </thead>
+                    <tbody>
+                      {% for row in treatment_data %}
+                        <tr>
+                          <td>{{ row.branch__Branch_Name }}</td>
+                          <td>₹ {{ row.total_revenue|floatformat:2 }}</td>
+                          <td>₹ {{ row.tax|floatformat:2 }}</td>
+                          <td>₹ {{ row.shipping|floatformat:2 }}</td>
+                        </tr>
+                      {% empty %}
+                        <tr><td colspan="4">No data</td></tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Pharmacy Tab -->
+              <div class="tab-pane fade" id="pharmacy">
+                <div class="table-responsive">
+                  <table class="table table-bordered table-striped">
+                    <thead class="table-success">
+                      <tr><th>Branch</th><th>Total Sales</th><th>Tax</th><th>Discount</th></tr>
+                    </thead>
+                    <tbody>
+                      {% for row in pharmacy_data %}
+                        <tr>
+                          <td>{{ row.branch__Branch_Name }}</td>
+                          <td>₹ {{ row.total_sales|floatformat:2 }}</td>
+                          <td>₹ {{ row.tax|floatformat:2 }}</td>
+                          <td>₹ {{ row.discount|floatformat:2 }}</td>
+                        </tr>
+                      {% empty %}
+                        <tr><td colspan="4">No data</td></tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Consultation Tab -->
+              <div class="tab-pane fade" id="consultation">
+                <div class="table-responsive">
+                  <table class="table table-bordered table-striped">
+                    <thead class="table-warning">
+                      <tr><th>Branch</th><th>Consultation</th><th>Registration</th><th>Total</th></tr>
+                    </thead>
+                    <tbody>
+                      {% for row in consultation_data %}
+                        <tr>
+                          <td>{{ row.branch__Branch_Name }}</td>
+                          <td>₹ {{ row.consultation_fee|floatformat:2 }}</td>
+                          <td>₹ {{ row.registration_fee|floatformat:2 }}</td>
+                          <td>₹ {{ row.total|floatformat:2 }}</td>
+                        </tr>
+                      {% empty %}
+                        <tr><td colspan="4">No data</td></tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div> <!-- /container -->
+        </div> <!-- /card -->
+      </div> <!-- /col -->
+    </div> <!-- /row -->
+  </section>
+</div> <!-- /content-wrapper -->
+{% endblock %}

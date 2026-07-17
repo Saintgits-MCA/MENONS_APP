@@ -1,0 +1,155 @@
+{% extends 'base.html' %} {% load static %} {% block content %}
+
+<!-- Content Wrapper -->
+<div class="content-wrapper">
+  <!-- Header -->
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Sales Report</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item active">Sales Report</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Filter Form -->
+  <section class="content">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card card-primary">
+          <div class="card-header">
+            <h3 class="card-title">Sales Report</h3>
+          </div>
+          <form method="POST" action="{% url 'salesreport' %}">
+            {% csrf_token %}
+            <div class="row">
+              <div class="col-md-12">
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label>Start Date</label>
+                        <input
+                          type="date"
+                          class="form-control"
+                          name="sdate"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label>End Date</label>
+                        <input
+                          type="date"
+                          class="form-control"
+                          name="edate"
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-footer">
+              <button type="submit" class="btn btn-primary">Submit</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Report Table -->
+  <section class="content">
+    <div class="container-fluid">
+      <div class="card">
+        <div class="card-body">
+          <center>
+            {% if total_amount %}
+            <h5>
+              {% if sdate and edate %} Total Invoice Amount ({{ sdate }} to {{edate }}): {% else %} Total Invoice Amount: {% endif %} {{total_amount|floatformat:2 }}
+            </h5>
+            {% endif %}
+          </center>
+
+          <table id="example1" class="table table-bordered table-striped">
+            <thead>
+              <tr>
+                <th>SL No</th>
+                <th>Invoice No</th>
+                <th>Patient Name</th>
+                <th>SGST Amount</th>
+                <th>CGST Amount</th>
+                <th>Total Amount</th>
+                <th>Payment Mode</th>
+                <th>Date</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+         <tbody>
+  {% for i in inv %}
+  <tr {% if not i.restockstatus %} class="table-danger" {% endif %}>
+    <td>{{ forloop.counter }}</td>
+    <td>{{ i.Invoicenumber }}</td>
+    <td>{{ i.patientname }}</td>
+
+    <!-- SGST -->
+    <td>
+      {% if not i.restockstatus %}
+        -{{ i.totalsgstamount }}
+      {% else %}
+        {{ i.totalsgstamount }}
+      {% endif %}
+    </td>
+
+    <!-- CGST -->
+    <td>
+      {% if not i.restockstatus %}
+        -{{ i.totalcgstamount }}
+      {% else %}
+        {{ i.totalcgstamount }}
+      {% endif %}
+    </td>
+
+    <!-- TOTAL -->
+    <td>
+      {% if not i.restockstatus %}
+        -{{ i.total }}
+      {% else %}
+        {{ i.total }}
+      {% endif %}
+    </td>
+
+    <td>{{ i.payementmode }}</td>
+    <td>{{ i.currentdate }}</td>
+
+    <td>
+      <a href="{% url 'newtaxinvview' %}?ids={{ i.id }}">
+        <button class="btn btn-primary">View</button>
+      </a>
+
+      {% if not i.restockstatus %}
+        <button class="btn btn-danger" disabled>Cancelled</button>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</tbody>
+
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+{% endblock %}

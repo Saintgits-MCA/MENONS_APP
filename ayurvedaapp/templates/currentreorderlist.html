@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper">
+  <!-- Content Header (Page header) -->
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Current Reorder List Details</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+           <!--   <li class="breadcrumb-item">
+              <a href="{% url 'storestockentry' %}">Add</a>
+            </li>
+            <li class="breadcrumb-item active">Current Reorder List</li> -->
+          </ol>
+        </div>
+      </div>
+    </div><!-- /.container-fluid -->
+  </section>
+
+  <!-- Main content -->
+  <section class="content">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-12">
+          <div class="card">
+            <div class="scroll">
+              <div class="card-body">
+                <!-- Stock table -->
+                <table id="example1" class="table table-bordered table-striped">
+                  <thead>
+                    <tr>
+                     
+                      <th>Medicine Name</th>
+                      <th>Company</th>
+                      <th>Quantity</th>
+                      <!-- Add more columns as needed -->
+                    </tr>
+                  </thead>
+                  <tbody>
+                  
+                    <!-- Iterate over out-of-stock items and display them in rows -->
+                    {% for item in out_of_stock_items %}
+                    <tr>
+                      
+                      <td>{{ item.itemnm.itemnm }}</td>
+                      <td>{{ item.Comapany_name.Comapany_name }}</td>
+                      <td>{{ item.qty }}</td>
+                      <!-- Add more columns as needed -->
+                    </tr>
+                    {% endfor %}
+                    
+                    <!-- Iterate over low stock items and display them in rows -->
+                    {% for item in low_stock_items %}
+                   
+                    <tr>
+                    
+                      <td>{{ item.itemnm.itemnm }}</td>
+                      <td>{{ item.Comapany_name.Comapany_name }}</td>
+                      <td>{{ item.qty }}</td>
+                      <!-- Add more columns as needed -->
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+<!-- /.content-wrapper -->
+{% endblock %}

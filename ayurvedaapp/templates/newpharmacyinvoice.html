@@ -1,0 +1,1313 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pharmacy Invoice</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Google Font: Source Sans Pro -->
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback"
+    />
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="{% static 'assets/plugins/fontawesome-free/css/all.min.css' %}"
+    />
+    <!-- daterange picker -->
+    <link
+      rel="stylesheet"
+      href="{% static 'assets/plugins/daterangepicker/daterangepicker.css' %}"
+    />
+    <!-- iCheck for checkboxes and radio inputs -->
+    <link
+      rel="stylesheet"
+      href="{% static 'assets/plugins/icheck-bootstrap/icheck-bootstrap.min.css' %}"
+    />
+    <!-- Bootstrap Color Picker -->
+    <link
+      rel="stylesheet"
+      href="{% static 'assets/plugins/bootstrap-colorpicker/css/bootstrap-colorpicker.min.css' %}"
+    />
+    <!-- Tempusdominus Bootstrap 4 -->
+    <link
+      rel="stylesheet"
+      href="{% static 'assets/plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css' %}"
+    />
+    <!-- Select2 -->
+    <link
+      rel="stylesheet"
+      href="{% static 'assets/plugins/select2/css/select2.min.css' %}"
+    />
+    <link
+      rel="stylesheet"
+      href="{% static 'assets/plugins/select2-bootstrap4-theme/select2-bootstrap4.min.css' %}"
+    />
+    <!-- Bootstrap4 Duallistbox -->
+    <link
+      rel="stylesheet"
+      href="{% static 'assets/plugins/bootstrap4-duallistbox/bootstrap-duallistbox.min.css' %}"
+    />
+    <!-- BS Stepper -->
+    <link
+      rel="stylesheet"
+      href="{% static 'assets/plugins/bs-stepper/css/bs-stepper.min.css' %}"
+    />
+    <!-- dropzonejs -->
+    <link
+      rel="stylesheet"
+      href="{% static 'assets/plugins/dropzone/min/dropzone.min.css' %}"
+    />
+    <!-- Theme style -->
+    <link
+      rel="stylesheet"
+      href="{% static 'assets/dist/css/adminlte.min.css' %}"
+    />
+    <link
+      rel="stylesheet"
+      href="{% static 'assets/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css' %}"
+    />
+    <link
+      rel="stylesheet"
+      href="{% static 'assets/plugins/datatables-responsive/css/responsive.bootstrap4.min.css' %}"
+    />
+    <link
+      rel="stylesheet"
+      href="{% static 'assets/plugins/datatables-buttons/css/buttons.bootstrap4.min.css' %}"
+    />
+    <style>
+      body {
+        font-family: "Roboto", sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f4f6f9;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 10px auto;
+        background: #ffffff;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        color: #333;
+      }
+
+      .header,
+      .footer {
+        text-align: center;
+        padding: 15px;
+      }
+
+      .header h5 {
+        margin: 0;
+        color: #007bff;
+      }
+
+      .footer p {
+        font-size: 14px;
+        color: #666;
+      }
+
+      .invoice-details,
+      .patient-details,
+      .search-section {
+        margin-top: 10px;
+        padding: 10px;
+        background: #f7f7f7;
+        border-radius: 5px;
+        border: 1px solid #e0e0e0;
+      }
+
+      .item-list {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 15px;
+        font-size: 13px;
+        table-layout: fixed;
+      }
+
+      .item-list th,
+      .item-list td {
+        padding: 8px;
+        text-align: left;
+        border: 1px solid #ddd;
+      }
+
+      .item-list th {
+        background-color: #007bff;
+        color: white;
+      }
+
+      .item-list tr:hover {
+        background-color: #e1f5fe;
+      }
+
+      .remove-button {
+        background-color: #dc3545;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 3px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: bold;
+      }
+
+      .remove-button:hover {
+        background-color: #c82333;
+      }
+
+      #totalDiscountInput,
+      #registrationfee,
+      #totalAmount {
+        width: 100%;
+        font-size: 1rem;
+        padding: 5px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+
+      .prescription-checkbox,
+      #selectAllPrescriptions {
+        margin: 0;
+        transform: scale(1.2);
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          padding: 10px;
+        }
+
+        .header,
+        .footer {
+          padding: 10px;
+        }
+
+        .item-list {
+          display: block;
+          overflow-x: auto;
+          white-space: nowrap;
+        }
+
+        .modal-content {
+          max-height: 90vh;
+          overflow-y: auto;
+        }
+      }
+
+      @media (max-width: 576px) {
+        .form-group-inline label,
+        .form-group-inline .form-control {
+          font-size: 0.9rem;
+        }
+      }
+
+      #itemSearchResults {
+        position: absolute;
+        background: white;
+        border: 1px solid #ddd;
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 1000;
+        width: calc(100% - 30px);
+      }
+
+      #itemSearchResults div {
+        padding: 8px;
+        cursor: pointer;
+        border-bottom: 1px solid #eee;
+      }
+
+      #itemSearchResults div:hover {
+        background-color: #f0f0f0;
+      }
+
+      /* Hide arrows for number input */
+      input[type="number"]::-webkit-inner-spin-button,
+      input[type="number"]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <a href="{% url 'index' %}">Back To Home</a>
+
+      <form
+        id="invoiceForm"
+        method="POST"
+        action="{% url 'new_pharmacy_invoice' %}"
+        onsubmit="return validateInvoiceForm()"
+      >
+        {% csrf_token %}
+
+        <div class="header">
+          {% for i in objhospt %}
+          <img
+            src="{{ i.Logo.url }}"
+            alt="{{ i.Name }} Logo"
+            style="width: 150px; height: 100px; margin-left: 20px"
+          />
+          <input
+            type="hidden"
+            class="form-control"
+            value="{{ i.id }}"
+            name="hosptname"
+          />
+          {% endfor %} {% for x in brname %}
+          <p>
+            {{ x.Branch_Address }} GST NO: {{ x.gstno }} Phone: {{
+            x.Branch_contactno }}
+          </p>
+          <p>Branch: {{ x.Branch_Name }}</p>
+          <input
+            type="hidden"
+            class="form-control"
+            value="{{ x.id }}"
+            name="branchname"
+          />
+          {% endfor %}
+        </div>
+
+        <!-- Add this near the Bill To section -->
+<div class="invoice-details">
+    <h3>Bill To:</h3>
+    
+    <!-- Toggle between registered patient and unregistered customer -->
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="customerType" id="registeredPatient" value="registered" checked onchange="toggleCustomerType()">
+                <label class="form-check-label" for="registeredPatient">Registered Patient</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="customerType" id="unregisteredCustomer" value="unregistered" onchange="toggleCustomerType()">
+                <label class="form-check-label" for="unregisteredCustomer">Unregistered Customer</label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Registered Patient Section -->
+    <div id="registeredPatientSection">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label for="mrSearch">MR Number/PhoneNo/Name:</label>
+                    <input type="text" id="mrSearch" class="form-control" placeholder="Type MR Number" />
+                </div>
+            </div>
+            <div class="col-md-4">
+                <button id="searchBtn" type="button" class="btn btn-primary mt-4">Search</button>
+            </div>
+            <div class="col-md-4">
+                <strong>
+                    Date:
+                    <input type="date" class="form-control" id="billdate" name="billdate" />
+                </strong>
+            </div>
+        </div>
+
+        <div class="row mt-3">
+            <div class="col-md-4 form-group">
+                <label for="mrDropdown">Selected MR Number/Patient</label>
+                <select class="form-control" name="mrnum" id="mrDropdown">
+                    <option selected disabled value="">Select</option>
+                    {% if patient %}
+                    <option value="{{ patient.id }}" selected>
+                        {{ patient.Medical_Record_Number }} - {{ patient.Patient_Name }}
+                    </option>
+                    {% endif %}
+                </select>
+            </div>
+            <div class="col-md-4 form-group">
+                <label for="ptname">Patient Name:</label>
+                <input type="text" id="ptname" name="ptname" class="form-control" 
+                       value="{% if patient %}{{ patient.Patient_Name }}{% endif %}" readonly />
+            </div>
+            <div class="col-md-4 form-group">
+                <label for="exampleInputAddress">Contact Number:</label>
+                <input type="text" id="exampleInputAddress" name="contact" class="form-control" 
+                       value="{% if patient %}{{ patient.contactno }}{% endif %}" readonly />
+            </div>
+        </div>
+    </div>
+
+    <!-- Unregistered Customer Section -->
+    <div id="unregisteredCustomerSection" style="display: none;">
+        <div class="row">
+            <div class="col-md-4 form-group">
+                <label for="unregName">Customer Name:</label>
+                <input type="text" id="unregName" name="unreg_name" class="form-control" placeholder="Enter customer name" />
+            </div>
+            <div class="col-md-4 form-group">
+                <label for="unregContact">Contact Number:</label>
+                <input type="text" id="unregContact" name="unreg_contact" class="form-control" placeholder="Enter contact number" />
+            </div>
+            <div class="col-md-4 form-group">
+                <label for="unregDate">Date:</label>
+                <input type="date" class="form-control" id="unregDate" name="unreg_date" />
+            </div>
+        </div>
+    </div>
+</div>
+
+        <div id="prescriptionsSection" style="display: none; margin-top: 20px">
+          <div class="card">
+            <div class="card-header">
+              <h5 class="mb-0">Patient Prescriptions</h5>
+            </div>
+            <div class="card-body">
+              <table
+                id="prescriptionsTable"
+                class="table table-sm table-bordered"
+              >
+                <thead>
+                  <tr>
+                    <th>
+                      <input
+                        type="checkbox"
+                        id="selectAllPrescriptions"
+                        onchange="toggleSelectAllPrescriptions(this)"
+                      />
+                    </th>
+                    <th>Medicine</th>
+                    <th>No. of Days</th>
+                    <th>Prescribed Qty</th>
+                    <th>Rate</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+                <tfoot>
+                  <tr>
+                    <td colspan="5" class="text-right">
+                      <strong>Grand Total:</strong>
+                    </td>
+                    <td id="previewGrandTotal">0.00</td>
+                  </tr>
+                  <tr>
+                    <td colspan="6" class="text-right">
+                      <button
+                        type="button"
+                        class="btn btn-success"
+                        onclick="addSelectedPrescriptions()"
+                      >
+                        Add Selected to Invoice
+                      </button>
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="search-section mt-4">
+          <h3>Add Items (New Medicine Master):</h3> 
+          <input
+            type="text"
+            id="itemSearchInput"
+            class="form-control"
+            placeholder="Search for items from new medicine master..."
+            onkeyup="searchItemsNew()"  
+          />
+          <div id="itemSearchResults" class="mt-2" style="display: none"></div>
+        </div>
+
+        <div class="table-responsive">
+          <table id="itemTable" class="table table-bordered item-list w-100">
+            <thead>
+              <tr>
+                <th>Particulars</th>
+                <th>Batch No</th>
+                <th>Expiry Date</th>
+                <th>Item Quantity</th>
+                <th>Unit</th>
+                <th>Company Name</th>
+                <th>Quantity</th>
+                <th>Rate</th>
+                <th>Tax (%)</th>
+                <th>SGST (%)</th>
+                <th>CGST (%)</th>
+                <th>Taxable Amt</th>
+                <th>SGST Amt</th>
+                <th>CGST Amt</th>
+                <th>Tax Amount</th>
+                <th>Amount + GST</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Rows will be added dynamically here -->
+            </tbody>
+          </table>
+        </div>
+
+        <div>
+          <input
+            type="hidden"
+            class="total"
+            id="itemsCount"
+            name="items_count"
+            value="0"
+          />
+        </div>
+
+        <div class="row">
+          <div class="col-md-6"></div>
+          <div class="col-md-2">
+            <label for="registrationfee">Registration Fee:</label>
+          </div>
+          <div class="col-md-4">
+            <input
+              type="number"
+              id="registrationfee"
+              name="registrationfee"
+              class="form-control"
+              min="0"
+              value="0"
+              onchange="updateTotal()"
+            />
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6"></div>
+          <div class="col-md-2">
+            <label for="totsgst">Total SGST:</label>
+          </div>
+          <div class="col-md-4">
+            <input
+              type="text"
+              id="totsgst"
+              name="totsgst"
+              class="form-control"
+              readonly
+            />
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6"></div>
+          <div class="col-md-2">
+            <label for="totcgst">Total CGST:</label>
+          </div>
+          <div class="col-md-4">
+            <input
+              type="text"
+              id="totcgst"
+              name="totcgst"
+              class="form-control"
+              readonly
+            />
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6"></div>
+          <div class="col-md-2">
+            <label for="tottaxamount">Total Tax Amount:</label>
+          </div>
+          <div class="col-md-4">
+            <input
+              type="text"
+              id="tottaxamount"
+              name="tottaxamount"
+              class="form-control"
+              readonly
+            />
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6"></div>
+          <div class="col-md-2">
+            <label for="totalDiscountInput">Total Discount:</label>
+          </div>
+          <div class="col-md-4">
+            <input
+              type="number"
+              id="totalDiscountInput"
+              name="totalDiscountInput"
+              class="form-control"
+              min="0"
+              value="0"
+              onchange="updateTotal()"
+            />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6"></div>
+          <div class="col-md-2">
+            <label for="totalAmount">Total:</label>
+          </div>
+          <div class="col-md-4">
+            <input
+              type="text"
+              id="totalAmount"
+              name="totalAmount"
+              class="form-control"
+              readonly
+            />
+          </div>
+        </div>
+
+        <div class="row mb-2">
+          <div class="col-md-6"></div>
+          <div class="col-md-2 text-end">
+            <label class="col-form-label">Payment Mode:</label>
+          </div>
+          <div class="col-md-4">
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                id="cashCheck"
+                name="payment_modes"
+                value="Cash"
+                checked
+                onchange="togglePaymentInputs()"
+              />
+              <label class="form-check-label" for="cashCheck">Cash</label>
+              <input
+                type="number"
+                class="form-control mt-2 payment-input"
+                id="cashInput"
+                name="cash_amount"
+                placeholder="Enter Cash Amount"
+                min="0"
+                step="0.01"
+              />
+            </div>
+
+            <div class="form-check mt-2">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                id="gpayCheck"
+                name="payment_modes"
+                value="GPay"
+                onchange="togglePaymentInputs()"
+              />
+              <label class="form-check-label" for="gpayCheck">GPay</label>
+              <input
+                type="number"
+                class="form-control mt-2 payment-input"
+                id="gpayInput"
+                name="gpay_amount"
+                placeholder="Enter GPay Amount"
+                style="display: none"
+                min="0"
+                step="0.01"
+              />
+            </div>
+
+            <div class="form-check mt-2">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                id="cardCheck"
+                name="payment_modes"
+                value="Card"
+                onchange="togglePaymentInputs()"
+              />
+              <label class="form-check-label" for="cardCheck">Card</label>
+              <input
+                type="number"
+                class="form-control mt-2 payment-input"
+                id="cardInput"
+                name="card_amount"
+                placeholder="Enter Card Amount"
+                style="display: none"
+                min="0"
+                step="0.01"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="card-footer">
+          <button type="submit" class="btn btn-primary">Submit</button>
+        </div>
+      </form>
+
+      <div class="footer">
+        <p>Thank you for your business!</p>
+      </div>
+    </div>
+
+    <div
+      class="modal fade"
+      id="searchModal"
+      tabindex="-1"
+      role="dialog"
+      aria-labelledby="searchModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title" id="searchModalLabel">Search Results</h5>
+            <button
+              type="button"
+              class="close"
+              data-dismiss="modal"
+              aria-label="Close"
+            >
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="table-responsive">
+              <table id="searchResultsTable" class="table table-bordered">
+                <thead>
+                  <tr>
+                    <th>MR Number</th>
+                    <th>Patient Name</th>
+                    <th>Address</th>
+                    <th>Contact No</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Results will be appended here -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-dismiss="modal"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- JavaScript Libraries -->
+    <script src="{% static 'assets/js/jquery-3.6.0.min.js' %}"></script>
+    <script src="{% static 'assets/plugins/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'assets/plugins/datatables/jquery.dataTables.min.js' %}"></script>
+    <script src="{% static 'assets/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js' %}"></script>
+    <script src="{% static 'assets/dist/js/adminlte.min.js' %}"></script>
+
+ <script>
+      // Global variables
+      let itemCounter = 0;
+      let patientId =
+        "{% if patient %}{{ patient.id }}{% else %}null{% endif %}";
+
+      $(document).ready(function () {
+        // If patient data is passed via URL, auto-load prescriptions
+        if (patientId !== "null") {
+          loadPrescriptions(patientId);
+        }
+
+        // Initialize DataTable for search results
+        let table = $("#searchResultsTable").DataTable({
+          paging: true,
+          searching: true,
+          info: true,
+          lengthChange: true,
+          pageLength: 10,
+        });
+
+        // Event listener for the search button click
+        $("#searchBtn").on("click", function () {
+          let query = $("#mrSearch").val();
+          if (query.trim() === "") {
+            alert("Please enter a search term.");
+            return;
+          }
+
+          table.clear().draw();
+
+          fetch(`/search_mrno?query=${query}`)
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.length > 0) {
+                data.forEach((item) => {
+                  let actionBtn = `<button class="btn btn-primary select-btn" 
+                                        data-id="${item.id}" 
+                                        data-name="${item.Patient_Name}" 
+                                        data-mrno="${item.Medical_Record_Number}" 
+                                        data-contact="${item.contactno}"
+                                        data-address="${item.Housename}">
+                                      Select
+                                    </button>`;
+
+                  table.row
+                    .add([
+                      item.Medical_Record_Number,
+                      item.Patient_Name,
+                      item.Housename || "N/A",
+                      item.contactno,
+                      actionBtn,
+                    ])
+                    .draw(false);
+                });
+
+                $("#searchModal").modal("show");
+              } else {
+                alert("No matching records found.");
+              }
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+              alert(
+                "There was an error retrieving the data. Please try again."
+              );
+            });
+        });
+
+        // Event delegation for select buttons
+        $("#searchResultsTable tbody").on("click", ".select-btn", function () {
+          let id = $(this).data("id");
+          let mrno = $(this).data("mrno");
+          let name = $(this).data("name");
+          let contact = $(this).data("contact");
+
+          $("#mrDropdown").html(
+            `<option value="${id}" selected>${mrno} - ${name}</option>`
+          );
+          $("#ptname").val(name);
+          $("#exampleInputAddress").val(contact);
+
+          // Update form action with the selected patient ID
+       
+          $("#searchModal").modal("hide");
+          loadPrescriptions(id);
+        });
+
+        // Initialize payment inputs visibility
+        togglePaymentInputs();
+      });
+
+      function loadPrescriptions(patientId) {
+        if (!patientId) {
+          $("#prescriptionsSection").hide();
+          return;
+        }
+
+        fetch(`/get_patient_prescriptionsinv/?patient_id=${patientId}`)
+          .then((res) => res.json())
+          .then((data) => {
+            const tbody = $("#prescriptionsTable tbody").empty();
+            let grandTotal = 0;
+
+            if (!data.length) {
+              tbody.append(
+                '<tr><td colspan="6" class="text-center">No prescriptions found</td></tr>'
+              );
+              $("#previewGrandTotal").text("0.00");
+              $("#prescriptionsSection").slideDown();
+              return;
+            }
+
+            data.forEach((p, idx) => {
+              let qty = p.prescqty || 0;
+              let rate = p.rate || 0;
+              let total = qty * rate;
+              grandTotal += total;
+
+              tbody.append(`
+                <tr data-index="${idx}" data-prescription='${JSON.stringify(
+                p
+              )}'>
+                  <td>
+                    <input type="checkbox" class="prescription-checkbox" onchange="togglePrescriptionSelection(this)">
+                  </td>
+                  <td>${p.medicine_name}</td>
+                  <td>${p.days || ""}</td>
+                  <td>${p.prescqty || 0}</td>
+                  <td>${rate}</td>
+                  <td class="item-total">${total.toFixed(2)}</td>
+                </tr>
+              `);
+            });
+
+            $("#previewGrandTotal").text(grandTotal.toFixed(2));
+            $("#prescriptionsSection").slideDown();
+          })
+          .catch((error) => {
+            console.error("Error loading prescriptions:", error);
+            $("#prescriptionsSection").hide();
+          });
+      }
+
+      function toggleSelectAllPrescriptions(checkbox) {
+        const isChecked = checkbox.checked;
+        $("#prescriptionsTable tbody tr").each(function () {
+          $(this).find(".prescription-checkbox").prop("checked", isChecked);
+        });
+      }
+
+      function togglePrescriptionSelection(checkbox) {
+        // If any checkbox is unchecked, uncheck the "Select All" checkbox
+        if (!checkbox.checked) {
+          $("#selectAllPrescriptions").prop("checked", false);
+        }
+
+        // If all checkboxes are checked, check the "Select All" checkbox
+        const allChecked =
+          $("#prescriptionsTable tbody tr .prescription-checkbox:checked")
+            .length ===
+          $("#prescriptionsTable tbody tr .prescription-checkbox").length;
+        $("#selectAllPrescriptions").prop("checked", allChecked);
+      }
+
+      function addSelectedPrescriptions() {
+        $("#prescriptionsTable tbody tr").each(function () {
+          if ($(this).find(".prescription-checkbox").is(":checked")) {
+            const prescriptionData = JSON.parse(
+              $(this).attr("data-prescription")
+            );
+            addPrescriptionToInvoiceNew(prescriptionData, $(this).data("index"));
+          }
+        });
+      }
+function addPrescriptionToInvoiceNew(prescription, index) {
+  fetch(`/search_new_medicine?term=${encodeURIComponent(prescription.medicine_name)}`)
+    .then(res => res.json())
+    .then(data => {
+      if (!Array.isArray(data) || data.length === 0) {
+        alert(`Medicine "${prescription.medicine_name}" not found.`);
+        return;
+      }
+
+      const medicine = data[0];
+
+      // Pick first batch and rate (you can later allow user to choose specific batch)
+      const batch = medicine.batches[0];
+      if (!batch) {
+        alert(`No stock available for "${prescription.medicine_name}".`);
+        return;
+      }
+
+      const rate = batch.rates.length > 0 ? batch.rates[0].mrp : 0;
+
+      const mergedItem = {
+        ...medicine,
+        ...batch,
+        item_name: medicine.itemnm,
+        medid: medicine.medid,
+        quantity: prescription.prescqty || 1,
+        rate: rate,
+        batchno: batch.Batch_no,
+        expdate: batch.Expiry_date,
+        compname: batch.compname,
+        compid: batch.compid,
+        suppid: batch.suppid,
+        stockbranch: batch.stockbranch,
+        unit: medicine.bsuntid?.unit || 'N/A'
+      };
+
+      addItemToInvoiceNew(mergedItem);
+
+      // Uncheck prescription checkbox
+      $(`#prescriptionsTable tbody tr[data-index="${index}"] .prescription-checkbox`).prop("checked", false);
+    })
+    .catch(err => {
+      console.error(err);
+      alert("Error fetching medicine data.");
+    });
+}
+
+ function searchItemsNew() {
+  const input = document.getElementById("itemSearchInput").value.trim();
+  const results = document.getElementById("itemSearchResults");
+  results.innerHTML = "";
+
+  if (!input) {
+    results.style.display = "none";
+    return;
+  }
+
+  fetch(`/search_new_medicine?term=${encodeURIComponent(input)}`)
+    .then(res => res.json())
+    .then(data => {
+      if (!Array.isArray(data) || data.length === 0) {
+        results.style.display = "none";
+        return;
+      }
+
+      data.forEach(medicine => {
+        const batches = medicine.batches || [];
+        batches.forEach(batch => {
+          const rates = batch.rates || [];
+
+          // Create a separate div for each rate
+          rates.forEach(rateObj => {
+            const mergedItem = {
+              medid: medicine.medid,
+              item_name: medicine.itemnm,
+              hsncode: medicine.hsncode,
+              unit: medicine.bsuntid?.unit || 'N/A',
+              batchno: batch.Batch_no,
+              expdate: batch.Expiry_date,
+              compname: batch.compname,
+              compid: batch.compid,
+              suppid: batch.suppid,
+              supplier_name: batch.supplier_name,
+              stockbranch: batch.stockbranch,
+              tax: batch.taxpercentage,
+              rate: rateObj.mrp,
+              quantity: 1
+            };
+
+            const div = document.createElement("div");
+            div.textContent = `${mergedItem.item_name} - Rate: ₹${mergedItem.rate} - Batch: ${mergedItem.batchno} - Exp: ${mergedItem.expdate} - Company: ${mergedItem.compname} - Tax: ${mergedItem.tax}`;
+
+            // Click adds this specific rate to invoice
+            div.onclick = () => addItemToInvoiceNew(mergedItem);
+
+            results.appendChild(div);
+          });
+        });
+      });
+
+      results.style.display = "block";
+    })
+    .catch(err => {
+      console.error(err);
+      results.style.display = "none";
+    });
+}
+
+
+
+
+      
+
+
+
+function renumberItems() {
+  const rows = document.querySelectorAll("#itemTable tbody tr");
+  itemCounter = 0;
+
+  rows.forEach((row, index) => {
+    itemCounter = index + 1;
+    row.querySelectorAll("input").forEach((input) => {
+      const name = input.getAttribute("name");
+      if (name) {
+        input.setAttribute(
+          "name",
+          name.replace(/items\[\d+\]/, `items[${itemCounter}]`)
+        );
+      }
+    });
+  });
+
+  updateItemsCount();
+}
+      
+      function addItemToInvoiceNew(item) {
+        itemCounter++;
+        updateItemsCount();
+
+        const tableBody = document
+          .getElementById("itemTable")
+          .getElementsByTagName("tbody")[0];
+        const newRow = tableBody.insertRow();
+
+        newRow.insertCell(
+          0
+        ).innerHTML = `<input type="text" name="items[${itemCounter}][particulars]" value="${item.item_name || item.itemnm}" readonly>`;
+        newRow.insertCell(
+          1
+        ).innerHTML = `<input type="text" name="items[${itemCounter}][batchno]" value="${item.batchno}" readonly>`;
+        newRow.insertCell(
+          2
+        ).innerHTML = `<input type="text" name="items[${itemCounter}][expirydate]" value="${item.expdate}" readonly>`;
+        newRow.insertCell(
+          3
+        ).innerHTML = `<input type="text" name="items[${itemCounter}][bsunit]" value="${item.bsunit || item.bsuntid?.unit || 'N/A'}" readonly>`;
+        newRow.insertCell(
+          4
+        ).innerHTML = `<input type="text" name="items[${itemCounter}][unitname]" value="${item.unit || item.bsuntid?.unit || 'N/A'}" readonly>`;
+        newRow.insertCell(
+          5
+        ).innerHTML = `<input type="text" name="items[${itemCounter}][compnm]" value="${item.compname}" readonly>`;
+        newRow.insertCell(6).innerHTML = `<input type="number" min="1" value="${
+          item.quantity || 1
+        }" name="items[${itemCounter}][quantity]" onchange="checkStockNew(this); updateTotal()">`;
+        newRow.insertCell(
+          7
+        ).innerHTML = `<input type="text" name="items[${itemCounter}][amount]" value="${item.rate}" onchange="updateTotal()" readonly>`;
+        newRow.insertCell(8).innerHTML = `<input type="number" min="0" value="${item.tax || 0}" name="items[${itemCounter}][tax]" onchange="updateTotal()">`;
+
+        newRow.insertCell(
+          9
+        ).innerHTML = `<input type="text" name="items[${itemCounter}][sgst]" value="0" readonly>`;
+        newRow.insertCell(
+          10
+        ).innerHTML = `<input type="text" name="items[${itemCounter}][cgst]" value="0" readonly>`;
+        newRow.insertCell(
+          11
+        ).innerHTML = `<input type="text" name="items[${itemCounter}][taxable]" readonly>`;
+        newRow.insertCell(
+          12
+        ).innerHTML = `<input type="text" name="items[${itemCounter}][sgstamt]" readonly>`;
+        newRow.insertCell(
+          13
+        ).innerHTML = `<input type="text" name="items[${itemCounter}][cgstamt]" readonly>`;
+        newRow.insertCell(
+          14
+        ).innerHTML = `<input type="text" name="items[${itemCounter}][taxamount]" readonly>`;
+        newRow.insertCell(
+          15
+        ).innerHTML = `<input type="text" name="items[${itemCounter}][sutotal]" value="0" readonly>`;
+        newRow.insertCell(16).innerHTML = `
+          <button class="remove-button" onclick="removeItem(this)">Remove</button>
+          <input type="hidden" name="items[${itemCounter}][hsncode]" value="${item.hsncode}">
+          <input type="hidden" name="items[${itemCounter}][suppid]"  value="${item.suppid || ''}">
+          <input type="hidden" name="items[${itemCounter}][compid]" value="${item.compid}">
+          <input type="hidden" name="items[${itemCounter}][medid]" value="${item.medid}">
+          <input type="hidden" name="items[${itemCounter}][stockbranch]" value="${item.stockbranch}">
+          <input type="hidden" name="items[${itemCounter}][unt]" value="${item.unit || item.bsuntid?.unit || 'N/A'}">`;
+
+        document.getElementById("itemSearchInput").value = "";
+        document.getElementById("itemSearchResults").style.display = "none";
+        updateTotal();
+          renumberItems(); 
+      }
+
+      function checkStockNew(input) {
+        const row = input.closest("tr");
+        const medId = row.querySelector('input[name*="[medid]"]').value;
+        const batchNo = row.querySelector('input[name*="[batchno]"]').value;
+        const compId = row.querySelector('input[name*="[compid]"]').value;
+        const suppId = row.querySelector('input[name*="[suppid]"]').value;
+        const qty = input.value;
+        const stockbranch = row.querySelector(
+          'input[name*="[stockbranch]"]'
+        ).value;
+
+        $.get("/get_reorder_level/", {
+          med_id: medId,
+          quantity: qty,
+          batchId: batchNo,
+          compid: compId,
+          selectedsupid: suppId,
+          stockbranch: stockbranch,
+        }).done((resp) => {
+          if (
+            resp.stock_status === "Stock depleted" ||
+            resp.stock_status === "Out Of Stock"
+          ) {
+            alert(
+              `Stock issue: ${resp.stock_status}. Available: ${resp.available_stock}`
+            );
+            row.remove();
+            itemCounter--;
+            updateItemsCount();
+              renumberItems(); 
+            updateTotal();
+          } else if (resp.stock_status === "Stock below reorder level") {
+            alert(
+              `Stock is below reorder level. Available: ${resp.available_stock}`
+            );
+          }
+        });
+      }
+
+      function removeItem(btn) {
+        btn.closest("tr").remove();
+        itemCounter--;
+        updateItemsCount();
+         renumberItems(); 
+        updateTotal();
+      }
+
+      function updateItemsCount() {
+        document.getElementById("itemsCount").value = itemCounter;
+      }
+
+      function updateTotal() {
+        const tbody = document.querySelector("#itemTable tbody");
+        const discount =
+          parseFloat(document.getElementById("totalDiscountInput").value) || 0;
+        const regFee =
+          parseFloat(document.getElementById("registrationfee").value) || 0;
+
+        let subtotal = 0,
+          sumCGST = 0,
+          sumSGST = 0,
+          sumTax = 0,
+          grandTotal = 0;
+
+        tbody.querySelectorAll("tr").forEach((row) => {
+          const qty =
+            parseFloat(row.cells[6].querySelector("input").value) || 0;
+          const mrpInclTax =
+            parseFloat(row.cells[7].querySelector("input").value) || 0;
+          const gstRate =
+            parseFloat(row.cells[8].querySelector("input").value) || 0;
+
+          // Base rate (without GST)
+          const baseRate = mrpInclTax / (1 + gstRate / 100);
+          const taxableValue = baseRate * qty;
+
+          // Split GST
+          const sgstRate = gstRate / 2;
+          const cgstRate = gstRate / 2;
+          const sgstAmt = taxableValue * (sgstRate / 100);
+          const cgstAmt = taxableValue * (cgstRate / 100);
+          const taxAmt = sgstAmt + cgstAmt;
+
+          const totalAmount = taxableValue + taxAmt;
+
+          // Update row fields
+          row.cells[9].querySelector("input").value = sgstRate.toFixed(2); // SGST %
+          row.cells[10].querySelector("input").value = cgstRate.toFixed(2); // CGST %
+          row.cells[11].querySelector("input").value = taxableValue.toFixed(2); // Taxable
+          row.cells[12].querySelector("input").value = sgstAmt.toFixed(2); // SGST Amt
+          row.cells[13].querySelector("input").value = cgstAmt.toFixed(2); // CGST Amt
+          row.cells[14].querySelector("input").value = taxAmt.toFixed(2); // Tax Amt
+          row.cells[15].querySelector("input").value = totalAmount.toFixed(2); // Total + GST
+
+          // Totals
+          subtotal += taxableValue;
+          sumCGST += cgstAmt;
+          sumSGST += sgstAmt;
+          sumTax += taxAmt;
+          grandTotal += totalAmount;
+        });
+
+        // Apply reg fee & discount
+        grandTotal = grandTotal - discount + regFee;
+
+        // Show totals
+        document.getElementById("totalAmount").value = grandTotal.toFixed(2);
+        document.getElementById("totsgst").value = sumSGST.toFixed(2);
+        document.getElementById("totcgst").value = sumCGST.toFixed(2);
+        document.getElementById("tottaxamount").value = sumTax.toFixed(2);
+      }
+
+        function togglePaymentInputs() {
+        const cashChecked = $("#cashCheck").is(":checked");
+        const gpayChecked = $("#gpayCheck").is(":checked");
+        const cardChecked = $("#cardCheck").is(":checked");
+        // Toggle visibility
+        $("#cashInput").toggle(cashChecked);
+        $("#gpayInput").toggle(gpayChecked);
+        $("#cardInput").toggle(cardChecked);
+        // Clear values when unchecked
+        if (!cashChecked) {
+          $("#cashInput").val("");
+        }
+        if (!gpayChecked) {
+          $("#gpayInput").val("");
+        }
+        if (!cardChecked) {
+          $("#cardInput").val("");
+        }
+      }
+
+      function validatePaymentAmounts() {
+        const totalAmount = parseFloat($("#totalAmount").val()) || 0;
+        let paymentTotal = 0;
+
+        if ($("#cashCheck").is(":checked")) {
+          paymentTotal += parseFloat($("#cashInput").val()) || 0;
+        }
+        if ($("#gpayCheck").is(":checked")) {
+          paymentTotal += parseFloat($("#gpayInput").val()) || 0;
+        }
+        if ($("#cardCheck").is(":checked")) {
+          paymentTotal += parseFloat($("#cardInput").val()) || 0;
+        }
+
+        // Allow for small floating point differences
+        return Math.abs(paymentTotal - totalAmount) < 0.01;
+      }
+
+      function validateInvoiceForm() {
+        const itemRows = document.querySelectorAll("#itemTable tbody tr");
+        const anyPaymentModeSelected =
+          $("#cashCheck").is(":checked") ||
+          $("#gpayCheck").is(":checked") ||
+          $("#cardCheck").is(":checked");
+
+        if (itemRows.length === 0) {
+          alert(
+            "Please add at least one item to the invoice before submitting."
+          );
+          return false;
+        }
+
+        if (!anyPaymentModeSelected) {
+          alert("Please select at least one payment mode.");
+          return false;
+        }
+
+        if (!validatePaymentAmounts()) {
+          alert(
+            "Payment amounts do not match the invoice total. Please check your payment entries."
+          );
+          return false;
+        }
+
+        return true;
+      }
+
+      // Set current date in bill date field
+      document.addEventListener("DOMContentLoaded", function () {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, "0");
+        const day = String(today.getDate()).padStart(2, "0");
+        const formattedDate = `${year}-${month}-${day}`;
+
+        const billDateField = document.getElementById("billdate");
+        if (billDateField) {
+          billDateField.value = formattedDate;
+        }
+
+        const unregDateField = document.getElementById("unregDate");
+        if (unregDateField) {
+          unregDateField.value = formattedDate;
+        }
+      });
+
+      function toggleCustomerType() {
+        const registeredRadio = document.getElementById('registeredPatient');
+        const unregisteredRadio = document.getElementById('unregisteredCustomer');
+        const registeredSection = document.getElementById('registeredPatientSection');
+        const unregisteredSection = document.getElementById('unregisteredCustomerSection');
+        
+        if (registeredRadio.checked) {
+            registeredSection.style.display = 'block';
+            unregisteredSection.style.display = 'none';
+            
+            // Make registered fields required
+            document.getElementById('mrDropdown').setAttribute('required', 'required');
+            document.getElementById('unregName').removeAttribute('required');
+            document.getElementById('unregContact').removeAttribute('required');
+        } else {
+            registeredSection.style.display = 'none';
+            unregisteredSection.style.display = 'block';
+            
+            // Make unregistered fields required
+            document.getElementById('mrDropdown').removeAttribute('required');
+            document.getElementById('unregName').setAttribute('required', 'required');
+            document.getElementById('unregContact').setAttribute('required', 'required');
+        }
+      }
+
+      // Initialize on page load
+      document.addEventListener('DOMContentLoaded', function() {
+          toggleCustomerType();
+      });
+    </script>
+
+  </body>
+</html>

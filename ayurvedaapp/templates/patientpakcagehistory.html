@@ -1,0 +1,338 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<style>
+    
+    body {
+        font-family: 'Roboto', sans-serif;
+        background-color: #f4f7fb;
+        margin: 0;
+        padding: 0;
+        color: #333;
+    }
+
+    .content-wrapper {
+        margin: 20px;
+        background-color: #fff;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .content-header {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        color: #098f20;
+        padding: 20px 0;
+        border-bottom: 2px solid #ccc;
+    }
+
+    .header-left img {
+        height: 70px;
+        border-radius: 8px;
+    }
+
+    .header-right h2 {
+        font-size: 28px;
+        margin: 0;
+        font-weight: bold;
+    }
+
+    .header-right p {
+        font-size: 16px;
+        margin-top: 5px;
+    }
+
+    .section-title {
+        font-size: 24px;
+        margin-bottom: 20px;
+        color: #007bff;
+    }
+
+    .profile {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 30px;
+        padding: 20px;
+        background-color: #e9ecef;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .profile h4 {
+        font-size: 26px;
+        margin: 0;
+    }
+
+    .profile p {
+        margin: 5px 0;
+        font-size: 16px;
+    }
+
+    .card {
+        background-color: #fff;
+        padding: 20px;
+        /* border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); */
+        margin-bottom: 30px;
+        page-break-inside: avoid;
+    }
+
+    .card h5 {
+        font-size: 20px;
+        color: #007bff;
+        margin-bottom: 15px;
+        border-bottom: 2px solid #007bff;
+        padding-bottom: 5px;
+    }
+
+    .btn-print {
+        display: inline-block;
+        background-color: #28a745;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        font-size: 16px;
+        text-decoration: none;
+        margin-top: 20px;
+        text-align: center;
+        cursor: pointer;
+    }
+
+    .btn-print:hover {
+        background-color: #218838;
+    }
+    .invoice-container {
+    background: #fff;
+    padding: 15px;
+/*    
+    box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+    border-radius: 5px; */
+  }
+
+  @media print {
+    body, html {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        background: #fff !important;
+        color: #000 !important;
+        overflow: visible !important;
+    }
+
+    @page {
+        size: A4 portrait;
+        margin: 10mm;
+    }
+
+    .btn-print {
+        display: none !important;
+    }
+
+    .content-wrapper,
+    .invoice-container {
+        box-shadow: none !important;
+        margin: 0 auto !important;
+        padding: 0 !important;
+        width: 100% !important;
+    }
+
+    .profile, .room-record, .record-item, .card {
+        background-color: #fff !important;
+        color: #000 !important;
+        border: 1px solid #ccc !important;
+        padding: 10px !important;
+        margin-bottom: 15px !important;
+        border-radius: 10px !important;
+        box-shadow: none !important;
+        page-break-inside: avoid;
+    }
+
+    table {
+        border-collapse: collapse !important;
+        width: 100% !important;
+    }
+
+    table, th, td {
+        border: 1px solid #000 !important;
+        color: #000 !important;
+        font-size: 12px !important;
+        padding: 8px !important;
+    }
+
+    th {
+        background-color: #dfefff !important;
+        color: #000 !important;
+    }
+
+    h2, h4, h5, p, strong {
+        color: #000 !important;
+    }
+
+    .header-left img {
+        height: 50px !important;
+    }
+
+    .section-title {
+        font-size: 18px !important;
+        font-weight: bold;
+        color: #000 !important;
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+}
+
+</style>
+
+<div id="invoice" class="invoice-container">
+    <div class="content-wrapper">
+
+        <!-- Hospital Header -->
+        <section class="content-header">
+            {% for i in objhospt %}
+            <div class="header-left">
+                <img src="{{ i.Logo.url }}" alt="{{ i.Name }} Logo">
+            </div>
+            <div class="header-right">
+                <h4 style="color: #098f20;">{{ i.Name }}</h4>
+                <p>Phone: {{ i.Contact_no }} | Branch: {{ i.Branch }} | Email: {{ i.Email }}</p>
+            </div>
+            {% endfor %}
+        </section>
+
+        <section class="content">
+            <div class="container mt-4">
+
+                <!-- Patient Details -->
+                <div class="section-title">IP Patient Package Details</div>
+                <div class="profile">
+                    <div>
+                        <h4>{{ admitted_record.MR_Number.Patient_Name }}</h4>
+                        <p><strong>Age:</strong> {{ admitted_record.MR_Number.Age }} | <strong>Patient ID:</strong> {{ admitted_record.MR_Number.Medical_Record_Number }}</p>
+                        <p><strong>Admitted:</strong> {{ admitted_record.Current_Date }}</p>
+                        <p><strong>Diagnosis:</strong> {{ admitted_record.reasonforadmission}}</p>
+                    </div>
+                    <div>
+                        <p><strong>Admission ID:</strong> {{ admitted_record.id }}</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                  
+                    <h5>Package Extension History</h5>
+                    {% if ippckextendeddt %}
+                    <table  class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Extended Amount</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for extension in ippckextendeddt %}
+                            <tr>
+                                <td>{{ extension.start_date }}</td>
+                                <td>{{ extension.end_date }}</td>
+                                <td>₹{{ extension.total_extendepackageamount }}</td>
+                                {%if  extension.dueofextend > "0.00" %}
+                                <td>Pending</td>
+                                {%else%}
+                                <td>Completed</td>
+                                {%endif%}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                        <p>No extension records found.</p>
+                    {% endif %}
+                </div>
+         
+              
+                <!-- Daily Medicine -->
+                <div class="card">
+                   
+            
+                   
+                    <h5>Payement History</h5>
+                    {% if paymenthistory %}
+                <table   class="table table-bordered table-striped">
+                    <thead>
+                        <tr>
+                            <th>Payment Date</th>
+                            <th>Amount Paid</th>
+                            <th>Total Amount</th>
+                            <th>Discount</th>
+                            <th>Due Amount</th>
+                            <th>Bystander Payment</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Print</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in paymenthistory %}
+                        <tr>
+                            <td>{{ payment.payment_date }}</td>
+                            <td>₹{{ payment.amount_paid }}</td>
+                            <td>₹{{ payment.total_amount }}</td>
+                            <td>₹{{ payment.discount }}</td>
+                            <td>₹{{ payment.due_amount }}</td>
+                            <td>₹{{ payment.bystander_payment }}</td>
+                            <td>{{ payment.start_date }}</td>
+                            <td>{{ payment.end_date }}</td>
+                            <td><a href="{% url 'individual_payment_receipt'  %}?ids={{payment.id}}">View Receipt</a>
+</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                    <p>No payment records found.</p>
+                {% endif %}
+                   
+                </div>
+              
+              
+             
+            </div>
+
+            <!-- Print Button -->
+            <div class="text-center">
+                <button onclick="printInvoice()" class="btn-print">Print Invoice</button>
+            </div>
+
+        </section>
+    </div>
+</div>
+
+<!-- Print Script -->
+
+<script>
+    function printInvoice() {
+        // Get the HTML content of the invoice div
+        var invoiceContent = document.getElementById('invoice').outerHTML;
+  
+        // Get the internal CSS styles from the parent document
+        var styles = Array.from(document.querySelectorAll('style'))
+            .map(style => style.innerHTML)
+            .join('\n');
+  
+        // Open a new window
+        var printWindow = window.open('', '_blank');
+        
+        // Set the HTML content of the new window along with the internal CSS styles
+        printWindow.document.write('<html><head><title>Invoice</title><style>' + styles + '</style></head><body>' + invoiceContent + '</body></html>');
+        printWindow.document.close();
+  
+        // Print the new window
+        printWindow.print();
+        
+    }
+  </script>
+
+{% endblock %}

@@ -1,0 +1,239 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="content-wrapper">
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>🧾 Create Credit Note</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item">
+              <a href="{% url 'creditnote_list' %}?menumanagement_id={{ idmngmnt }}">Credit Note</a>
+            </li>
+            <li class="breadcrumb-item active">Create Credit Note</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="content">
+
+    <!-- 🔍 Search Invoice -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <h5 class="card-title">Search Invoice</h5>
+        <div class="input-group mb-3">
+          <input type="text" id="invoiceSearch" class="form-control" placeholder="Enter Invoice Number">
+          <button class="btn btn-outline-primary" id="searchBtn">Search</button>
+        </div>
+        <div id="searchResults" class="list-group"></div>
+      </div>
+    </div>
+
+    <!-- 📋 Selected Invoice Details will appear here -->
+    <div id="invoiceContainer">  {% if messages %}
+                    {% for message in messages %}
+                    <p style="color:green;">{{message}}</p> 
+                    {% endfor %}
+                    {% endif %}</div>
+
+  </section>
+</div>
+
+<script>
+document.getElementById("searchBtn").addEventListener("click", function() {
+  const query = document.getElementById("invoiceSearch").value.trim();
+  const searchResults = document.getElementById("searchResults");
+  searchResults.innerHTML = "";
+
+  if (!query) {
+    searchResults.innerHTML = "<div class='text-danger p-2'>Enter an invoice number</div>";
+    return;
+  }
+
+  fetch(`/search_invoice/?q=${encodeURIComponent(query)}`)
+    .then(async res => {
+      const text = await res.text();
+      try {
+        return JSON.parse(text);
+      } catch {
+        throw new Error("Invalid JSON: " + text.slice(0, 200));
+      }
+    })
+    .then(data => {
+      searchResults.innerHTML = "";
+      if (!data || data.length === 0) {
+        searchResults.innerHTML = "<div class='p-2 text-muted'>No results found</div>";
+        return;
+      }
+      data.forEach(inv => {
+        const item = document.createElement("a");
+        item.classList.add("list-group-item", "list-group-item-action");
+        item.innerHTML = `<strong>${inv.Invoicenumber}</strong> — ${inv.patientname} (₹${inv.total})`;
+        item.addEventListener("click", () => loadInvoiceDetails(inv.id));
+        searchResults.appendChild(item);
+      });
+    })
+    .catch(err => {
+      searchResults.innerHTML = `<div class='text-danger p-2'>Error: ${err.message}</div>`;
+    });
+});
+
+function loadInvoiceDetails(invoiceId) {
+  const searchResults = document.getElementById("searchResults");
+  searchResults.innerHTML = "<div class='p-2 text-info'>Loading invoice details...</div>";
+
+  fetch(`/get_invoice_detailsforcreditnote/?invoice_id=${invoiceId}`)
+    .then(async res => {
+      const text = await res.text();
+      try {
+        return JSON.parse(text);
+      } catch {
+        throw new Error("Invalid JSON: " + text.slice(0, 200));
+      }
+    })
+    .then(data => {
+      if (data.error) {
+        searchResults.innerHTML = `<div class='text-danger p-2'>${data.error}</div>`;
+        return;
+      }
+
+      const invoice = data.invoice;
+      const items = data.items;
+      let html = `
+        <form method="POST" action="/create_creditnote/?invoice_id=${invoice.id}&menumanagement_id={{ idmngmnt }}">
+          {% csrf_token %}
+          <input type="hidden" name="invoice_id" value="${invoice.id}">
+          <div class="card shadow-sm p-4 mt-4">
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <h5>Invoice: ${invoice.Invoicenumber}</h5>
+                <p>Date: ${invoice.currentdate}</p>
+              </div>
+              <div class="col-md-6 text-end">
+                <h5>Patient: ${invoice.patientname}</h5>
+                <p>Phone: ${invoice.patientphno}</p>
+              </div>
+            </div>
+
+            <table class="table table-bordered text-center align-middle">
+              <thead class="table-primary">
+                <tr>
+                  <th>#</th>
+                  <th>Particulars</th>
+                  <th>Qty Sold</th>
+                  <th>MRP (₹)</th>
+                  <th>Tax (%)</th>
+                  <th>Return Qty</th>
+                  <th>Before Tax (₹)</th>
+                  <th>Tax Amount (₹)</th>
+                  <th>Total (₹)</th>
+                </tr>
+              </thead>
+              <tbody>
+      `;
+
+      items.forEach((item, index) => {
+        html += `
+          <tr>
+            <td>${index + 1}</td>
+            <td>${item.particulars}</td>
+            <td>${item.quantity}</td>
+            <td>${item.amount.toFixed(2)}</td>
+            <td>${item.tax.toFixed(2)}</td>
+            <td>
+              <input type="number" name="qty_${item.id}" class="form-control returnQty"
+                min="0" max="${item.remaining_qty}" value="0"
+                data-rate="${item.amount}" data-tax="${item.tax}">
+            </td>
+            <td><input type="number" class="form-control returnAmount" value="0" readonly></td>
+            <td><input type="number" class="form-control taxAmount" value="0" readonly></td>
+            <td><input type="number" class="form-control totalAmount" value="0" readonly></td>
+          </tr>
+        `;
+      });
+
+      html += `
+              </tbody>
+            </table>
+
+            <input type="hidden" name="subtotal" id="subtotalInput">
+            <input type="hidden" name="tax" id="taxInput">
+            <input type="hidden" name="total" id="totalInput">
+
+            <div class="row mt-4">
+              <div class="col-md-8">
+                <label class="form-label fw-bold">Reason for Credit Note</label>
+                <textarea name="reason" class="form-control" rows="3" placeholder="Enter reason..."></textarea>
+              </div>
+              <div class="col-md-4 text-end">
+                <div class="border rounded p-3 bg-light">
+                  <p>Subtotal (Before Tax): ₹<span id="subtotalDisplay">0.00</span></p>
+                  <p>Tax: ₹<span id="taxDisplay">0.00</span></p>
+                  <h5>Total Credit: ₹<span id="totalDisplay">0.00</span></h5>
+                </div>
+              </div>
+            </div>
+
+            <div class="text-end mt-4">
+              <button type="submit" class="btn btn-success btn-lg px-5">Create Credit Note</button>
+            </div>
+          </div>
+        </form>
+      `;
+
+      document.getElementById("invoiceContainer").innerHTML = html;
+      attachQtyHandlers();
+    })
+    .catch(err => {
+      searchResults.innerHTML = `<div class='text-danger p-2'>Error: ${err.message}</div>`;
+    });
+}
+
+function attachQtyHandlers() {
+  document.querySelectorAll('.returnQty').forEach(input => {
+    input.addEventListener('input', function() {
+      const qty = parseFloat(this.value) || 0;
+      const rate = parseFloat(this.dataset.rate) || 0;
+      const taxPercent = parseFloat(this.dataset.tax) || 0;
+
+      const totalInclTax = qty * rate;
+      const taxAmount = totalInclTax * (taxPercent / (100 + taxPercent));
+      const beforeTax = totalInclTax - taxAmount;
+
+      const row = this.closest('tr');
+      row.querySelector('.returnAmount').value = beforeTax.toFixed(2);
+      row.querySelector('.taxAmount').value = taxAmount.toFixed(2);
+      row.querySelector('.totalAmount').value = totalInclTax.toFixed(2);
+
+      updateTotals();
+    });
+  });
+}
+
+function updateTotals() {
+  let subtotal = 0, totalTax = 0;
+
+  document.querySelectorAll('tbody tr').forEach(row => {
+    subtotal += parseFloat(row.querySelector('.returnAmount')?.value || 0);
+    totalTax += parseFloat(row.querySelector('.taxAmount')?.value || 0);
+  });
+
+  const grandTotal = subtotal + totalTax;
+
+  document.getElementById('subtotalDisplay').textContent = subtotal.toFixed(2);
+  document.getElementById('taxDisplay').textContent = totalTax.toFixed(2);
+  document.getElementById('totalDisplay').textContent = grandTotal.toFixed(2);
+
+  document.getElementById('subtotalInput').value = subtotal.toFixed(2);
+  document.getElementById('taxInput').value = totalTax.toFixed(2);
+  document.getElementById('totalInput').value = grandTotal.toFixed(2);
+}
+</script>
+
+{% endblock %}

@@ -1,0 +1,414 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="content-wrapper">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Receive Transfer: {{ transfer.transfer_number }}</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{% url 'stock_transfer_list' %}">Stock Transfers</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'stock_transfer_detail' transfer.id %}">{{ transfer.transfer_number }}</a></li>
+                        <li class="breadcrumb-item active">Receive</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="container-fluid">
+            <form method="POST" id="receiveForm">
+                {% csrf_token %}
+                
+                <!-- Transfer Info Card -->
+                <div class="card card-primary card-outline">
+                    <div class="card-header">
+                        <h3 class="card-title">Transfer Information</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <table class="table table-sm table-borderless">
+                                    <tr>
+                                        <th width="40%">Transfer Number</th>
+                                        <td><strong>{{ transfer.transfer_number }}</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <th>From Branch</th>
+                                        <td>{{ transfer.from_branch.Branch_Name }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>To Branch</th>
+                                        <td>{{ transfer.to_branch.Branch_Name }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Dispatched On</th>
+                                        <td>{{ transfer.dispatched_at|date:"d-m-Y H:i"|default:"-" }}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <table class="table table-sm table-borderless">
+                                    <tr>
+                                        <th width="40%">Total Items</th>
+                                        <td>{{ transfer.total_items }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Total Approved Qty</th>
+                                        <td><strong class="text-success">{{ transfer.total_quantity }}</strong></td>
+                                    </tr>
+                                    {% if transfer.purchase_order %}
+                                    <tr>
+                                        <th>Purchase Order</th>
+                                        <td>{{ transfer.purchase_order.po_number }}</td>
+                                    </tr>
+                                    {% endif %}
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Items Table with Checkboxes -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Items to Receive</h3>
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-sm btn-default" id="selectAllBtn">
+                                <i class="fas fa-check-double"></i> Select All
+                            </button>
+                            <button type="button" class="btn btn-sm btn-default" id="deselectAllBtn">
+                                <i class="fas fa-times"></i> Deselect All
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover mb-0">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th width="5%">
+                                            <input type="checkbox" id="masterCheckbox">
+                                        </th>
+                                        <th width="5%">#</th>
+                                        <th width="20%">Item Name</th>
+                                        <th width="10%">Batch No</th>
+                                        <th width="10%">Expiry Date</th>
+                                        <th width="8%">Unit</th>
+                                        <th width="8%">Rate</th>
+                                        <th width="10%">Approved Qty</th>
+                                        <th width="12%">Received Qty</th>
+                                        <th width="12%">Short/Excess</th>
+                                        <th width="10%">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in items %}
+                                    <tr class="item-row" data-item-id="{{ item.id }}">
+                                        <td class="text-center">
+                                            <input type="checkbox" 
+                                                   name="selected_items" 
+                                                   value="{{ item.id }}" 
+                                                   class="item-checkbox"
+                                                   data-approved-qty="{{ item.quantity }}">
+                                        </td>
+                                        <td class="text-center">{{ forloop.counter }}</td>
+                                        <td>
+                                            <strong>{{ item.item.itemnm }}</strong>
+                                            {% if item.item.Generic_name %}
+                                                <br><small class="text-muted">{{ item.item.Generic_name }}</small>
+                                            {% endif %}
+                                            <input type="hidden" name="item_id_{{ item.id }}" value="{{ item.id }}">
+                                        </td>
+                                        <td>{{ item.batch_no }}</td>
+                                        <td>{{ item.expiry_date|date:"d-m-Y"|default:"-" }}</td>
+                                        <td>{{ item.unit.unitname|default:"-" }}</td>
+                                        <td>₹{{ item.rate }}</td>
+                                        <td class="text-center">
+                                            <strong class="text-primary">{{ item.quantity }}</strong>
+                                        </td>
+                                        <td>
+                                            <input type="number" 
+                                                   name="received_qty_{{ item.id }}" 
+                                                   class="form-control form-control-sm received-qty"
+                                                   value="{{ item.quantity }}"
+                                                   min="0"
+                                                   max="{{ item.quantity }}"
+                                                   step="1"
+                                                   data-item-id="{{ item.id }}"
+                                                   data-approved-qty="{{ item.quantity }}"
+                                                   disabled>
+                                            <small class="text-muted">Max: {{ item.quantity }}</small>
+                                        </td>
+                                        <td class="text-center" id="difference_{{ item.id }}">
+                                            <span class="badge badge-success">0</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-warning">Pending Receipt</span>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="11" class="text-center text-muted">No items found.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot class="thead-light">
+                                    <tr class="font-weight-bold">
+                                        <td colspan="7" class="text-right">TOTALS:</td>
+                                        <td id="total-approved">0</td>
+                                        <td id="total-received">0</td>
+                                        <td id="total-difference">0</td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Remarks and Actions -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Remarks & Actions</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="remarks">Remarks (optional)</label>
+                            <textarea name="remarks" id="remarks" class="form-control" rows="3" 
+                                      placeholder="Enter any remarks about receiving this transfer..."></textarea>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-box-open"></i> Confirm Receipt
+                                </button>
+                                <a href="{% url 'stock_transfer_detail' transfer.id %}" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left"></i> Cancel
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </section>
+</div>
+
+<script src="{% static 'assets/js/jquery-3.6.0.min.js' %}"></script>
+<script>
+$(document).ready(function() {
+    // ========================================
+    // 1. Master Checkbox Functionality
+    // ========================================
+    $('#masterCheckbox').change(function() {
+        var isChecked = $(this).prop('checked');
+        $('.item-checkbox').prop('checked', isChecked);
+        updateCheckboxState();
+        updateTotals();
+    });
+    
+    // Select All button
+    $('#selectAllBtn').click(function() {
+        $('#masterCheckbox').prop('checked', true);
+        $('.item-checkbox').prop('checked', true);
+        updateCheckboxState();
+        updateTotals();
+    });
+    
+    // Deselect All button
+    $('#deselectAllBtn').click(function() {
+        $('#masterCheckbox').prop('checked', false);
+        $('.item-checkbox').prop('checked', false);
+        updateCheckboxState();
+        updateTotals();
+    });
+    
+    // Individual checkbox change
+    $(document).on('change', '.item-checkbox', function() {
+        updateMasterCheckbox();
+        updateCheckboxState();
+        updateTotals();
+    });
+    
+    function updateMasterCheckbox() {
+        var totalCheckboxes = $('.item-checkbox').length;
+        var checkedCheckboxes = $('.item-checkbox:checked').length;
+        
+        if (checkedCheckboxes === 0) {
+            $('#masterCheckbox').prop('checked', false);
+            $('#masterCheckbox').prop('indeterminate', false);
+        } else if (checkedCheckboxes === totalCheckboxes) {
+            $('#masterCheckbox').prop('checked', true);
+            $('#masterCheckbox').prop('indeterminate', false);
+        } else {
+            $('#masterCheckbox').prop('indeterminate', true);
+        }
+    }
+    
+    function updateCheckboxState() {
+        $('.item-checkbox').each(function() {
+            var isChecked = $(this).prop('checked');
+            var row = $(this).closest('tr');
+            var receivedQtyInput = row.find('.received-qty');
+            
+            if (isChecked) {
+                receivedQtyInput.prop('disabled', false);
+                receivedQtyInput.attr('required', true);
+            } else {
+                receivedQtyInput.prop('disabled', true);
+                receivedQtyInput.attr('required', false);
+                receivedQtyInput.val(receivedQtyInput.data('approved-qty'));
+            }
+        });
+    }
+    
+    // ========================================
+    // 2. Received Quantity Validation
+    // ========================================
+    $(document).on('change keyup', '.received-qty', function() {
+        var itemId = $(this).data('item-id');
+        var approvedQty = parseInt($(this).data('approved-qty'));
+        var receivedQty = parseInt($(this).val()) || 0;
+        var difference = receivedQty - approvedQty;
+        var differenceSpan = $('#difference_' + itemId);
+        
+        // Validate
+        if (receivedQty > approvedQty) {
+            $(this).val(approvedQty);
+            receivedQty = approvedQty;
+            difference = 0;
+            alert('Received quantity cannot exceed approved quantity (' + approvedQty + ')');
+        }
+        if (receivedQty < 0) {
+            $(this).val(0);
+            receivedQty = 0;
+            difference = -approvedQty;
+        }
+        
+        // Update difference display
+        if (difference === 0) {
+            differenceSpan.html('<span class="badge badge-success">0</span>');
+        } else if (difference < 0) {
+            differenceSpan.html('<span class="badge badge-warning">Short: ' + Math.abs(difference) + '</span>');
+        } else {
+            differenceSpan.html('<span class="badge badge-info">Excess: ' + difference + '</span>');
+        }
+        
+        updateTotals();
+    });
+    
+    // ========================================
+    // 3. Update Totals Function
+    // ========================================
+    function updateTotals() {
+        var totalApproved = 0;
+        var totalReceived = 0;
+        var totalDifference = 0;
+        
+        $('.item-checkbox:checked').each(function() {
+            var row = $(this).closest('tr');
+            var approvedQty = parseInt($(this).data('approved-qty')) || 0;
+            var receivedQty = parseInt(row.find('.received-qty').val()) || 0;
+            var difference = receivedQty - approvedQty;
+            
+            totalApproved += approvedQty;
+            totalReceived += receivedQty;
+            totalDifference += difference;
+        });
+        
+        $('#total-approved').html('<strong>' + totalApproved + '</strong>');
+        $('#total-received').html('<strong class="text-success">' + totalReceived + '</strong>');
+        
+        if (totalDifference === 0) {
+            $('#total-difference').html('<strong class="text-success">0</strong>');
+        } else if (totalDifference < 0) {
+            $('#total-difference').html('<strong class="text-warning">Short: ' + Math.abs(totalDifference) + '</strong>');
+        } else {
+            $('#total-difference').html('<strong class="text-info">Excess: ' + totalDifference + '</strong>');
+        }
+    }
+    
+    // ========================================
+    // 4. Form Validation Before Submit
+    // ========================================
+    $('#receiveForm').submit(function(e) {
+        var hasSelected = false;
+        var hasErrors = false;
+        var shortItems = [];
+        
+        $('.item-checkbox:checked').each(function() {
+            hasSelected = true;
+            var row = $(this).closest('tr');
+            var itemName = row.find('td:eq(2) strong').text();
+            var approvedQty = parseInt($(this).data('approved-qty'));
+            var receivedQty = parseInt(row.find('.received-qty').val()) || 0;
+            
+            if (receivedQty === 0) {
+                alert('Please enter received quantity for item: ' + itemName);
+                hasErrors = true;
+                return false;
+            }
+            
+            if (receivedQty < approvedQty) {
+                shortItems.push(itemName + ' (Short by ' + (approvedQty - receivedQty) + ')');
+            }
+        });
+        
+        if (!hasSelected) {
+            alert('Please select at least one item to receive');
+            e.preventDefault();
+            return false;
+        }
+        
+        if (hasErrors) {
+            e.preventDefault();
+            return false;
+        }
+        
+        // Show confirmation with short items warning
+        var confirmMsg = 'Confirm receipt of selected items?';
+        if (shortItems.length > 0) {
+            confirmMsg = '⚠️ WARNING: The following items are short:\n' + shortItems.join('\n') + '\n\nContinue with receipt?';
+        }
+        
+        if (!confirm(confirmMsg)) {
+            e.preventDefault();
+            return false;
+        }
+    });
+    
+    // Initialize
+    updateTotals();
+    $('#masterCheckbox').prop('checked', true);
+    $('.item-checkbox').prop('checked', true);
+    updateCheckboxState();
+});
+</script>
+
+<style>
+.received-qty {
+    width: 100px;
+}
+.item-checkbox {
+    transform: scale(1.2);
+    cursor: pointer;
+}
+#masterCheckbox {
+    transform: scale(1.2);
+    cursor: pointer;
+}
+.btn-sm {
+    margin: 2px;
+}
+.table td {
+    vertical-align: middle;
+}
+</style>
+{% endblock %}

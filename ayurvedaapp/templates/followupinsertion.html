@@ -1,0 +1,309 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+  
+  .test-item {
+    padding: 8px 12px;
+    margin: 4px;
+    border: 1px solid #ccc;
+    background-color: #f8f8f8;
+    cursor: pointer;
+    border-radius: 6px;
+  }
+ .selected-tests {
+    display: flex;
+    flex-wrap: wrap; /* allows wrapping to next line if too many */
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .selected-tests span {
+    background: #4CAF50;
+    color: white;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: bold;
+  }
+  .test-item.selected {
+    background-color: #4CAF50;
+    color: white;
+    border-color: #388E3C;
+    font-weight: bold;
+  }
+
+</style>
+<div class="content-wrapper bg-light ">
+
+  <!-- Page Header -->
+  <section class="content-header ">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-sm-12 text-center">
+          <h2 class="text-primary">🩺 Patient Follow-Up Form</h2>
+          <hr class="border-primary">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Follow-Up Card -->
+  <section class="content">
+    <div class="container-fluid">
+      <div class="card shadow-sm border-primary">
+        <div class="card-header bg-primary text-white">
+          <strong>Case History Overview</strong>
+        </div>
+        <div class="card-body">
+
+          <!-- Patient Details -->
+          <div class="row">
+            <div class="col-md-4">
+                <p><strong>👤 Patient Name:</strong> {{ case_history.patient.Patient_Name }}</p>
+            </div>
+            <div class="col-md-4">
+                <p><strong>🩹 Chief Complaint:</strong> {{ case_history.chief_complaint }}</p>
+            </div>
+            <div class="col-md-4">
+                <p><strong>🧪 Tests Needed:</strong> {{ case_history.test_needed|default:"N/A" }}</p>
+            </div>
+          </div>
+      
+          <!-- Follow-Up Form -->
+         <form method="POST" action="{% url 'save_followup' %}">
+
+                           {% csrf_token %}
+            <input type="hidden" id="case_history_id" name="case_history_id" value="{{ case_history.pk }}">
+  <input type="hidden" id="ptid" name="ptid" value="{{ case_history.patient_id }}">
+
+            <!-- Progress Note -->
+            <div class="form-group">
+              <label for="progress_note">📝 Progress Note:</label>
+              <textarea class="form-control" id="progress_note" name="progress_note" rows="3" placeholder="Describe progress since last visit..."></textarea>
+            </div>
+
+            <!-- Additional Tests -->
+            <!-- <div class="form-group">
+              <label for="testneeded">🧫 Additional Tests Needed:</label>
+              <input type="text" class="form-control" name="testneeded" id="testneeded" placeholder="Enter any new required tests">
+            </div> -->
+
+            <!-- Prescription Section -->
+            <hr class="my-4">
+            <h5 class="text-primary">💊 Prescription</h5>
+
+            <table class="table table-bordered align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>Medicine</th>
+                  <th>No. of Days</th>
+                  <th>Prescribed QTY</th>
+                  <th style="text-align:center">☀︎</th>
+                  <th style="text-align:center">🌤</th>
+                  <th style="text-align:center">☽</th>
+                  <th>Diet Timing</th>
+                  <th>Guidelines</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="prescription-body">
+                <tr class="prescription-row">
+                  <td class="position-relative">
+                    <input type="text" name="medicine[]" class="form-control medicine-input" placeholder="Search medicine..." autocomplete="off">
+                    <div class="autocomplete-list list-group position-absolute w-100" style="z-index:1050;"></div>
+                    <input type="hidden" name="medicine_id[]" class="medicine-id">
+                    <input type="hidden" name="stock_id[]" class="stock-id">
+                  </td>
+                  <td><input type="number" name="days[]" class="form-control days" min="1" value="1"></td>
+                  <td><input class="form-control qty" name="qty[]" min="1" value="1"></td>
+                  <td><input class="form-control morning text-center" name="morning[]"></td>
+                  <td><input class="form-control noon text-center" name="noon[]"></td>
+                  <td><input class="form-control night text-center" name="night[]"></td>
+                  <td>
+                    <select name="diet_timing[]" class="form-control diet_timing">
+                      <option value="None">None</option>
+                      <option value="Before Diet">Before Diet</option>
+                      <option value="After Diet">After Diet</option>
+                    </select>
+                  </td>
+                  <td><textarea name="guidelines[]" rows="2" class="form-control guidelines"></textarea></td>
+                  <td><button type="button" class="btn btn-sm btn-danger remove-row">🗑</button></td>
+                </tr>
+              </tbody>
+            </table>
+            <button type="button" id="addRow" class="btn btn-success">➕ Add Prescription</button>
+
+            <!-- Treatment Section -->
+            <hr class="my-4">
+            <h5 class="text-success">🛠 Treatment Details</h5>
+
+            <table class="table table-bordered align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>Treatment</th>
+                  <th>Count</th>
+                  <th>Date</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="treatment-body">
+                <tr class="treatment-row">
+                  <td class="position-relative">
+                    <input type="text" name="treatment[]" class="form-control treatment-input" placeholder="Search treatment..." autocomplete="off">
+                    <div class="autocomplete-list list-group position-absolute w-100" style="z-index:1050;"></div>
+                    <input type="hidden" name="treatment_id[]" class="treatment-id">
+                  </td>
+                  <td><input type="number" name="count[]" class="form-control count" min="1" value="1"></td>
+                  <td><input type="date" name="date[]" class="form-control date"></td>
+                  <td><button type="button" class="btn btn-sm btn-danger remove-row">🗑</button></td>
+                </tr>
+              </tbody>
+            </table>
+            <button type="button" id="addTreatmentRow" class="btn btn-success">➕ Add Treatment</button>
+
+            <!-- Lab Tests -->
+        
+
+            <!-- Form Actions -->
+            <div class="mt-4 text-center">
+              <button type="submit" id="saveFollowUpBtn" class="btn btn-success btn-lg">💾 Save Follow-Up</button>
+              <a href="{% url 'case_history_list' %}" class="btn btn-secondary btn-lg ml-2">↩ Back</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Scripts -->
+<script>
+// ✅ Fix: autocomplete + prescription add/remove
+function attachAutocomplete(input) {
+  const listDiv = input.parentNode.querySelector(".autocomplete-list");
+  const hiddenInput = input.parentNode.querySelector(".medicine-id");
+  const stockidinput = input.parentNode.querySelector(".stock-id");
+
+  input.addEventListener("input", function() {
+    const val = this.value.trim();
+    listDiv.innerHTML = "";
+    if (!val) return;
+
+    fetch(`/medicine-search/?q=${encodeURIComponent(val)}`)
+      .then(res => res.json())
+      .then(data => {
+        listDiv.innerHTML = "";
+        data.forEach(med => {
+          const item = document.createElement("button");
+          item.type = "button";
+          item.className = "list-group-item list-group-item-action";
+          item.innerHTML = `<div><strong>${med.name}</strong></div>
+                            <div style="font-size:12px; color:blue;">Brand: ${med.brand || "-"} | Qty: ${med.qty}</div>`;
+          item.onclick = () => {
+            input.value = med.name;
+            hiddenInput.value = med.id;
+            stockidinput.value = med.stockid;
+            listDiv.innerHTML = "";
+          };
+          listDiv.appendChild(item);
+        });
+      });
+  });
+}
+
+document.querySelectorAll(".medicine-input").forEach(attachAutocomplete);
+
+document.getElementById("addRow").addEventListener("click", function() {
+  const row = document.querySelector(".prescription-row");
+  const newRow = row.cloneNode(true);
+  newRow.querySelectorAll("input, textarea").forEach(el => el.value = "");
+  newRow.querySelectorAll("select").forEach(el => el.selectedIndex = 0);
+  newRow.querySelector(".autocomplete-list").innerHTML = "";
+  attachAutocomplete(newRow.querySelector(".medicine-input"));
+  document.getElementById("prescription-body").appendChild(newRow);
+});
+
+document.getElementById("prescription-body").addEventListener("click", function(e) {
+  if (e.target.classList.contains("remove-row")) {
+    if (this.querySelectorAll(".prescription-row").length > 1) {
+      e.target.closest("tr").remove();
+    }
+  }
+});
+
+// ✅ Treatment autocomplete
+document.addEventListener("DOMContentLoaded", function() {
+  const body = document.getElementById("treatment-body");
+  document.getElementById("addTreatmentRow").addEventListener("click", function() {
+    let row = document.querySelector(".treatment-row").cloneNode(true);
+    row.querySelectorAll("input").forEach(el => el.value = "");
+    body.appendChild(row);
+  });
+
+  body.addEventListener("click", function(e) {
+    if (e.target.classList.contains("remove-row")) {
+      if (body.querySelectorAll(".treatment-row").length > 1) {
+        e.target.closest("tr").remove();
+      }
+    }
+  });
+
+  body.addEventListener("input", function(e) {
+    if (e.target.classList.contains("treatment-input")) {
+      let input = e.target;
+      let list = input.nextElementSibling;
+      let query = input.value.trim();
+      if (query.length < 2) {
+        list.innerHTML = "";
+        return;
+      }
+      fetch(`/search_treatments/?q=${encodeURIComponent(query)}`)
+        .then(res => res.json())
+        .then(data => {
+          list.innerHTML = "";
+          data.results.forEach(t => {
+            let item = document.createElement("button");
+            item.type = "button";
+            item.className = "list-group-item list-group-item-action";
+            item.textContent = t.name;
+            item.dataset.id = t.id;
+            item.onclick = function() {
+              input.value = this.textContent;
+              input.closest("td").querySelector(".treatment-id").value = this.dataset.id;
+              list.innerHTML = "";
+            };
+            list.appendChild(item);
+          });
+        });
+    }
+  });
+});
+
+// ✅ Lab Test toggle
+const selectedTests = new Set();
+function toggleTest(button) {
+  const testName = button.getAttribute("data-test");
+  if (selectedTests.has(testName)) {
+    selectedTests.delete(testName);
+    button.classList.remove("selected");
+  } else {
+    selectedTests.add(testName);
+    button.classList.add("selected");
+  }
+  renderSelectedTests();
+}
+
+function renderSelectedTests() {
+  const list = document.getElementById("test-list");
+  list.innerHTML = "";
+  const testsArray = Array.from(selectedTests);
+  document.getElementById("selected_lab_tests").value = JSON.stringify(testsArray);
+  testsArray.forEach(test => {
+    const span = document.createElement("span");
+    span.textContent = test;
+    list.appendChild(span);
+  });
+}
+</script>
+
+{% endblock %}

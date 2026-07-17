@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+
+  <h2 class="text-center mb-4 text-primary fw-bold">Daily  Sales Report</h2>
+
+  <!-- 📅 Date Filter -->
+  <form method="get" class="text-center mb-4">
+    <label for="date" class="me-2 fw-bold">Select Date:</label>
+    <input type="date" name="date" id="date"
+           value="{{ selected_date|date:'Y-m-d' }}"
+           class="form-control d-inline-block" style="width:auto;">
+    <button type="submit" class="btn btn-primary ms-2">Filter</button>
+  </form>
+
+  <!-- Report Header -->
+  <div class="row justify-content-center mb-4">
+    <div class="col-md-4 mb-3">
+      <div class="card text-center shadow-sm border-primary">
+        <div class="card-body">
+          <h6 class="text-muted mb-1">Report Date</h6>
+          <h4 class="fw-bold text-primary">{{ selected_date|date:"d M Y" }}</h4>
+        </div>
+      </div>
+    </div>
+
+    {% if not is_superadmin and branch_name %}
+    <div class="col-md-4 mb-3">
+      <div class="card text-center shadow-sm border-success">
+        <div class="card-body">
+          <h6 class="text-muted mb-1">Branch</h6>
+          <h4 class="fw-bold text-success">{{ branch_name }}</h4>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- 📑 BILL SUMMARY CARDS -->
+  <div class="row text-center mb-4">
+
+    <div class="col-md-4 mb-3">
+      <div class="card shadow-sm border-primary">
+        <div class="card-body">
+          <h6 class="text-muted mb-1">Total Bills Generated</h6>
+          <h3 class="fw-bold text-primary">{{ total_bill_count }}</h3>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+      <div class="card shadow-sm border-success">
+        <div class="card-body">
+          <h6 class="text-muted mb-1">Active Bills</h6>
+          <h3 class="fw-bold text-success">{{ active_bill_count }}</h3>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+      <div class="card shadow-sm border-danger">
+        <div class="card-body">
+          <h6 class="text-muted mb-1">Cancelled Bills</h6>
+          <h3 class="fw-bold text-danger">{{ cancelled_bill_count }}</h3>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 💰 Payment Summary -->
+  <div class="row text-center mb-4">
+
+    <div class="col-md-3 mb-3">
+      <div class="card shadow-sm border-success">
+        <div class="card-body">
+          <h6 class="text-muted mb-1">Total Cash (₹)</h6>
+          <h3 class="fw-bold text-success">{{ total_cash|floatformat:2 }}</h3>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3 mb-3">
+      <div class="card shadow-sm border-primary">
+        <div class="card-body">
+          <h6 class="text-muted mb-1">Total GPay (₹)</h6>
+          <h3 class="fw-bold text-primary">{{ total_gpay|floatformat:2 }}</h3>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3 mb-3">
+      <div class="card shadow-sm border-warning">
+        <div class="card-body">
+          <h6 class="text-muted mb-1">Total Card (₹)</h6>
+          <h3 class="fw-bold text-warning">{{ total_card|floatformat:2 }}</h3>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3 mb-3">
+      <div class="card shadow-sm border-dark">
+        <div class="card-body">
+          <h6 class="text-muted mb-1">TOTAL Amount (₹)</h6>
+          <h3 class="fw-bold text-dark">{{ total_amount|floatformat:2 }}</h3>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 📦 Quantity Summary -->
+  <div class="row text-center mb-4">
+    <div class="col-md-12">
+      <div class="card shadow-sm border-secondary">
+        <div class="card-body">
+          <h6 class="text-muted mb-1">Total Quantity Sold</h6>
+          <h3 class="fw-bold text-secondary">{{ total_qty }}</h3>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 💊 Medicine-wise Sales Table -->
+  <div class="card shadow-sm border-0">
+    <div class="card-header bg-dark text-white fw-bold">
+      Item-wise Sales Details (Excluding Cancelled Bills)
+    </div>
+
+    <div class="table-responsive">
+      <table id="example1" class="table table-bordered table-striped">
+        <thead class="table-dark">
+          <tr>
+            {% if is_superadmin %}
+              <th>Branch</th>
+            {% endif %}
+            <th>Item Name</th>
+            <th>Quantity Sold</th>
+            <th>Total Amount (₹)</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% if sales %}
+            {% for s in sales %}
+            <tr>
+              {% if is_superadmin %}
+                <td>{{ s.invmasterid__branch__Branch_Name }}</td>
+              {% endif %}
+              <td>{{ s.particulars }}</td>
+              <td>{{ s.total_qty }}</td>
+              <td>{{ s.total_amount|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+          {% else %}
+          <tr>
+            <td colspan="{% if is_superadmin %}4{% else %}3{% endif %}" class="text-center text-muted">
+              No sales found for this date.
+            </td>
+          </tr>
+          {% endif %}
+        </tbody>
+
+        {% if sales %}
+        <tfoot class="table-light">
+          <tr>
+            {% if is_superadmin %}
+              <td colspan="2" class="text-end fw-bold">Total:</td>
+            {% else %}
+              <td class="text-end fw-bold">Total:</td>
+            {% endif %}
+            <td class="fw-bold">{{ total_qty }}</td>
+            <td class="fw-bold">{{ total_amount|floatformat:2 }}</td>
+          </tr>
+        </tfoot>
+        {% endif %}
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

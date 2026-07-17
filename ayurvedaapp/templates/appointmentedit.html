@@ -1,0 +1,534 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="content-wrapper">
+
+<!-- Page Header -->
+<section class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2 align-items-center">
+            <div class="col-sm-6">
+                <h1 class="m-0">
+                    {% if is_online_appointment %}
+                        Edit Online Appointment
+                    {% else %}
+                        Edit Appointment
+                    {% endif %}
+                </h1>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    {% if mgn == '1' %}
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'appointmenttable' %}?menumanagement_id={{ idmngmnt }}">Appointments</a>
+                    </li>
+                    {% endif %}
+                    <li class="breadcrumb-item active">Edit</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Main Content -->
+<section class="content">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-teal">
+                    <h3 class="card-title mb-0">
+                        {% if is_online_appointment %}
+                            <i class="fas fa-globe mr-2"></i>Update Online Appointment
+                        {% else %}
+                            <i class="fas fa-calendar-check mr-2"></i>Update Appointment
+                        {% endif %}
+                    </h3>
+                </div>
+
+                <form method="POST" action="{% url 'editappointment' %}" id="editAppointmentForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="appoinid" value="{{ objedappo.id }}">
+
+                    <div class="card-body">
+
+                        <!-- Token Number with Badge -->
+                        <div class="form-group">
+                            <label>Token Number</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" name="tokennumber" value="{{ objedappo.Tokenno }}" readonly>
+                                <div class="input-group-append">
+                                    {% if is_online_appointment %}
+                                        <span class="input-group-text bg-success text-white">
+                                            <i class="fas fa-globe"></i> Online
+                                        </span>
+                                    {% else %}
+                                        <span class="input-group-text bg-info text-white">
+                                            <i class="fas fa-clinic-medical"></i> Regular
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Patient Info -->
+                        <div class="form-group">
+                            <label>Patient Details</label>
+                            <div class="border rounded p-2 bg-light">
+                                {% if objedappo.MR_Number %}
+                                    <strong>{{ objedappo.MR_Number.Patient_Name }}</strong><br>
+                                    <small class="text-muted">
+                                        MR No: {{ objedappo.MR_Number.Medical_Record_Number }} | 
+                                        Contact: {{ objedappo.contactno }}
+                                    </small>
+                                {% else %}
+                                    <span class="text-muted">No patient information available</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Contact Number - NO VALIDATION, accepts any format -->
+                        <div class="form-group">
+                            <label>Contact Number</label>
+                            <input type="text" class="form-control" name="contactnum" 
+                                value="{{ objedappo.contactno|default:'' }}" 
+                                placeholder="Enter contact number (any format)">
+                            <small class="form-text text-muted">Accepts any format: landline, mobile with/without country code</small>
+                        </div>
+
+                        <!-- Status Selection with appropriate badge -->
+                        <div class="form-group">
+                            <label>Appointment Status</label>
+
+                            <!-- Disabled dropdown (visible, not editable) -->
+                            <select class="form-control" disabled>
+                                <option>{{ objedappo.status }}</option>
+                            </select>
+
+                            <!-- Hidden field to submit value -->
+                            <input type="hidden" name="status" value="{{ objedappo.status }}">
+
+                            {% if objedappo.status %}
+                            <div class="mt-2">
+                                Current Status:
+                                <span class="badge badge-pill
+                                    {% if objedappo.status == 'Consultation' %}badge-info
+                                    {% elif objedappo.status == 'Followup' %}badge-success
+                                    {% elif objedappo.status == 'Revisit' %}badge-primary
+                                    {% elif objedappo.status == 'Whatsapp' %}badge-secondary
+                                    {% elif objedappo.status == 'Camp' %}badge-warning
+                                    {% elif objedappo.status == 'Treatment' %}badge-danger
+                                    {% elif 'zoho' in objedappo.status|lower %}badge-info
+                                    {% elif 'whatsapp' in objedappo.status|lower %}badge-success
+                                    {% else %}badge-secondary{% endif %}">
+                                    {{ objedappo.status }}
+                                </span>
+                                
+                                {% if objedappo.Fee %}
+                                    <span class="badge badge-pill badge-light ml-2">
+                                        Fee: ₹{{ objedappo.Fee }}
+                                    </span>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                       {% if is_superadmin %}
+        <div class="form-group">
+            <label>Select Branch *</label>
+            <select class="form-control" name="branch" id="branchSelect" required>
+                <option value="">-- Select Branch --</option>
+                {% for branch in branches %}
+                    <option value="{{ branch.id }}" 
+                        {% if branch.id == objedappo.Branch_id %}selected{% endif %}>
+                        {{ branch.Branch_Name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        {% else %}
+        <input type="hidden" name="branch" id="branchSelect" value="{{ objedappo.Branch_id }}">
+        <div class="form-group">
+            <label>Current Branch</label>
+            <div class="border rounded p-2 bg-light">
+                <strong>
+                    {% if objedappo.Branch %}
+                        {{ objedappo.Branch.Branch_Name }}
+                    {% else %}
+                        No branch assigned
+                    {% endif %}
+                </strong>
+            </div>
+        </div>
+        {% endif %}
+
+          <div class="form-group">
+            <label>Department *</label>
+            <select class="form-control" name="deptname" id="departmentSelect" required>
+                <option value="">-- Select Department --</option>
+                {% for dept in departmentobj %}
+                    <option value="{{ dept.id }}" 
+                        {% if dept.id == doctor_department_id %}selected{% endif %}>
+                        {{ dept.Department_Name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Designation *</label>
+            <select class="form-control" name="desgname" id="designationSelect" required>
+                <option value="">-- Select Designation --</option>
+                {% for desg in designobj %}
+                    <option value="{{ desg.id }}" 
+                        {% if desg.id == doctor_designation_id %}selected{% endif %}>
+                        {{ desg.Designation_Name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Doctor Section -->
+        <div class="form-group">
+            <label>Doctor</label>
+            
+            <!-- Current Doctor Display -->
+            <div class="mb-3">
+                <div class="border rounded p-2 bg-light">
+                    <strong>Current Doctor:</strong>
+                    {% if objedappo.Doctor_Name %}
+                        <span class="ml-2">
+                            Dr. {{ objedappo.Doctor_Name.Staff_firstname }} {{ objedappo.Doctor_Name.Staff_lastname }}
+                        </span>
+                        {% if doctor_allocation_exists %}
+                            <br>
+                            <small class="text-muted">
+                                Department: {{ objedappo.Doctor_Name.Department_Name.Department_Name|default:'' }} |
+                                Designation: {{ objedappo.Doctor_Name.Designation_Name.Designation_Name|default:'' }}
+                            </small>
+                        {% endif %}
+                    {% else %}
+                        <span class="text-muted ml-2">No doctor assigned</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Select Doctor Dropdown -->
+            <label>Select New Doctor *</label>
+            <select class="form-control" name="docname" id="doctorSelect" required>
+                <option value="">-- Select Doctor --</option>
+                {% for doctor in doctors %}
+                    <option value="{{ doctor.id }}" 
+                        {% if doctor.id == objedappo.Doctor_Name_id %}selected{% endif %}
+                        data-designation-id="{{ doctor.designation_id }}"
+                        data-department-id="{{ doctor.department_id }}">
+                        Dr. {{ doctor.first_name }} {{ doctor.last_name }}
+                        {% if doctor.designation %} - {{ doctor.designation }}{% endif %}
+                    </option>
+                {% endfor %}
+            </select>
+            <small class="form-text text-muted" id="doctorCount">
+                {% if doctors|length > 0 %}
+                    {{ doctors|length }} doctor(s) available in this branch
+                {% else %}
+                    Select branch, department, and designation to see doctors
+                {% endif %}
+            </small>
+        </div>
+                        <!-- Appointment Date -->
+                        <div class="form-group">
+                            <label>Appointment Date *</label>
+                            <input type="date" class="form-control" name="apntdate"
+                                  value="{{ objedappo.Appointment_date|date:'Y-m-d' }}"
+                                  min="{% now 'Y-m-d' %}"
+                                  required>
+                        </div>
+
+                        <!-- Time Details (for online appointments only) -->
+                        {% if is_online_appointment %}
+                        <div class="form-group">
+                            <label>Time Details</label>
+                            <div class="border rounded p-2 bg-light">
+                                {% if objedappo.visit_start_time and objedappo.visit_end_time %}
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <strong>Start Time:</strong> 
+                                            {{ objedappo.visit_start_time|time:"h:i A" }}
+                                        </div>
+                                        <div class="col-md-6">
+                                            <strong>End Time:</strong> 
+                                            {{ objedappo.visit_end_time|time:"h:i A" }}
+                                        </div>
+                                    </div>
+                                    {% if objedappo.visit_duration %}
+                                    <div class="row mt-2">
+                                        <div class="col-md-12">
+                                            <strong>Duration:</strong> {{ objedappo.visit_duration }} minutes
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-muted">No specific time slot selected</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Remarks -->
+                        <div class="form-group">
+                            <label>Remarks</label>
+                            <textarea class="form-control" name="remarks" rows="3" 
+                                      placeholder="Enter any remarks...">{{ objedappo.Remark|default:'' }}</textarea>
+                        </div>
+
+                        <!-- Hidden preserved fields -->
+                        <input type="hidden" name="address" value="{{ objedappo.MR_Number.Housename|default:'' }}">
+                        <input type="hidden" name="desgname" value="{{ objedappo.Doctor_Name.designation_id|default:'' }}">
+
+                        <!-- Messages -->
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }} mt-3">
+                                    {{ message }}
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+
+                    </div>
+
+                    <div class="card-footer d-flex justify-content-between">
+                        <a href="{% url 'appointmenttable' %}?menumanagement_id={{ idmngmnt }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to List
+                        </a>
+                        {% if mgnedit == '1' %}
+                        <button type="submit" class="btn {% if is_online_appointment %}btn-success{% else %}btn-primary{% endif %}" id="submitBtn">
+                            <i class="fas fa-save"></i> 
+                            {% if is_online_appointment %}
+                                Update Online Appointment
+                            {% else %}
+                                Update Appointment
+                            {% endif %}
+                        </button>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+</div>
+
+{# Safe data passing to JavaScript using json_script #}
+{{ objedappo.Branch_id|default:''|json_script:"branch-id-data" }}
+{{ objedappo.Doctor_Name_id|default:''|json_script:"doctor-id-data" }}
+{{ is_superadmin|yesno:"true,false"|json_script:"is-superadmin-data" }}
+{{ is_online_appointment|yesno:"true,false"|json_script:"is-online-data" }}
+
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+// Safe parsing of Django variables using json_script
+const initialBranchId = JSON.parse(document.getElementById('branch-id-data').textContent);
+const currentDoctorId = JSON.parse(document.getElementById('doctor-id-data').textContent);
+const isSuperadmin = JSON.parse(document.getElementById('is-superadmin-data').textContent);
+const isOnlineAppointment = JSON.parse(document.getElementById('is-online-data').textContent);
+
+// Global variables
+let currentBranchId = initialBranchId;
+let currentDepartmentId = null;
+let currentDesignationId = null;
+
+// Function to load doctors based on branch, department, and designation
+function loadDoctorsByFilters() {
+    const branchId = $('#branchSelect').val();
+    const departmentId = $('#departmentSelect').val();
+    const designationId = $('#designationSelect').val();
+    const doctorSelect = $('#doctorSelect');
+    const doctorCount = $('#doctorCount');
+    
+    // Check if all three filters are selected
+    if (!branchId || !departmentId || !designationId) {
+        doctorSelect.html('<option value="">-- Select Doctor --</option>').prop('disabled', true);
+        
+        let missingFields = [];
+        if (!branchId) missingFields.push('branch');
+        if (!departmentId) missingFields.push('department');
+        if (!designationId) missingFields.push('designation');
+        
+        doctorCount.html(`<span class="text-warning">Please select: ${missingFields.join(', ')}</span>`);
+        return;
+    }
+    
+    // Show loading
+    doctorSelect.html('<option value="">Loading doctors...</option>').prop('disabled', true);
+    doctorCount.html('<i class="fas fa-spinner fa-spin"></i> Loading doctors...');
+    
+    // AJAX call to get doctors by branch, department, and designation
+    $.ajax({
+        url: "{% url 'get_staff_by_branch_and_designation' %}",
+        data: { 
+            branch: branchId,
+            department: departmentId,
+            designation: designationId
+        },
+        cache: false,
+        success: function(data) {
+            doctorSelect.empty().prop('disabled', false);
+            
+            if (data && data.length > 0) {
+                // Add default option
+                doctorSelect.append('<option value="">-- Select Doctor --</option>');
+                
+                data.forEach(function(doctor) {
+                    const option = $('<option>', {
+                        value: doctor.Staff_id,
+                        'data-designation-id': doctor.designation_id || '',
+                        'data-designation': doctor.designation || '',
+                        'data-department': doctor.deprt || ''
+                    }).html(`Dr. ${doctor.Staff_firstname} ${doctor.Staff_lastname || ''} ${doctor.deprt ? '- ' + doctor.deprt : ''}`);
+                    doctorSelect.append(option);
+                });
+                
+                // Update count display
+                const totalDoctors = data.length;
+                doctorCount.html(`${totalDoctors} doctor(s) available for this selection`);
+                
+                // Auto-select the current doctor if still available in filtered list
+                if (currentDoctorId && doctorSelect.find('option[value="' + currentDoctorId + '"]').length > 0) {
+                    doctorSelect.val(currentDoctorId);
+                }
+                
+                console.log(`Loaded ${totalDoctors} doctors for branch ${branchId}, department ${departmentId}, designation ${designationId}`);
+            } else {
+                doctorSelect.append('<option value="">-- No doctors available for this selection --</option>');
+                doctorCount.html('<span class="text-danger">No doctors found matching the selected branch, department, and designation</span>');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error loading doctors:', error);
+            console.error('Response:', xhr.responseText);
+            doctorSelect.html('<option value="">-- Error loading doctors --</option>');
+            doctorCount.html('<span class="text-danger">Error loading doctors. Please try again.</span>');
+        }
+    });
+}
+
+$(function () {
+    // Initialize Select2 if available
+    if (typeof $.fn.select2 !== 'undefined') {
+        $('.select2').select2({
+            theme: 'bootstrap4',
+            placeholder: 'Select an option',
+            allowClear: false,
+            width: '100%'
+        });
+    }
+    
+    // Branch change listener - ONLY for superadmin
+    if (isSuperadmin) {
+        $('#branchSelect').on('change', function() {
+            console.log('Branch changed to:', $(this).val());
+            loadDoctorsByFilters();
+        });
+    }
+    
+    // Department change listener
+    $('#departmentSelect').on('change', function() {
+        console.log('Department changed to:', $(this).val());
+        loadDoctorsByFilters();
+    });
+    
+    // Designation change listener
+    $('#designationSelect').on('change', function() {
+        console.log('Designation changed to:', $(this).val());
+        loadDoctorsByFilters();
+    });
+    
+    // Load doctors for initial selections
+    setTimeout(function() {
+        if (initialBranchId && $('#departmentSelect').val() && $('#designationSelect').val()) {
+            loadDoctorsByFilters();
+        } else {
+            // If initial selections exist, try to load
+            const initialDept = $('#departmentSelect').val();
+            const initialDesg = $('#designationSelect').val();
+            if (initialBranchId && initialDept && initialDesg) {
+                loadDoctorsByFilters();
+            }
+        }
+    }, 100);
+    
+    // Disable form submit button after click
+    $('#editAppointmentForm').on('submit', function () {
+        $('#submitBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Updating...');
+    });
+    
+    // Set minimum date to today for appointment date
+    const today = new Date().toISOString().split('T')[0];
+    $('input[name="apntdate"]').attr('min', today);
+    
+    // Log appointment type for debugging
+    console.log('Appointment Type:', isOnlineAppointment ? 'Online' : 'Regular');
+    console.log('Menu Management ID:', '{{ idmngmnt }}');
+    console.log('Edit Permission:', '{{ mgnedit }}');
+});
+</script>
+
+<style>
+.bg-teal {
+    background-color: #00796b !important;
+    color: #fff;
+}
+.card {
+    border-radius: 0.75rem;
+    border: 1px solid #dee2e6;
+}
+.card-header {
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+}
+.form-group {
+    margin-bottom: 1.5rem;
+}
+.badge-info {
+    background-color: #17a2b8;
+    color: #fff;
+}
+.badge-success {
+    background-color: #28a745;
+    color: #fff;
+}
+.badge-primary {
+    background-color: #007bff;
+    color: #fff;
+}
+.badge-warning {
+    background-color: #ffc107;
+    color: #212529;
+}
+.badge-danger {
+    background-color: #dc3545;
+    color: #fff;
+}
+.badge-secondary {
+    background-color: #6c757d;
+    color: #fff;
+}
+/* Select2 customization - only if select2 is loaded */
+.select2-container--bootstrap4 .select2-selection {
+    border-radius: 0.25rem;
+    min-height: 38px;
+}
+.select2-container--bootstrap4 .select2-selection--single .select2-selection__rendered {
+    line-height: 36px;
+}
+</style>
+{% endblock %}
+
+{% block styles %}
+{{ block.super }}
+{% endblock %}

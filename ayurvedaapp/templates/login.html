@@ -1,0 +1,189 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NEXGENEHR Ayurveda | Log in</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .top-bar {
+      position: absolute;
+      top: 20px;
+      left: 30px;
+      z-index: 10;
+    }
+
+    .main-logo {
+      height: 60px;
+      width: auto;
+    }
+
+    .background {
+      background-image: url("{% static 'assets/dist/img/logibbg.jpg' %}");
+      background-size: cover;
+      background-position: center;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      padding-left: 5%;
+      padding-right: 5%;
+    }
+
+    .login-panel {
+      width: 100%;
+      max-width: 400px;
+      background-color: rgba(255, 255, 255, 0.95);
+      padding: 40px 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .login-panel img.logo {
+      display: block;
+      margin: 0 auto 20px auto;
+      width: 180px;
+      height: auto;
+    }
+
+    .login-panel h2 {
+      text-align: center;
+      font-size: 24px;
+      color: #2e7d32;
+      margin-bottom: 20px;
+    }
+
+    .login-panel label {
+      display: block;
+      margin-bottom: 5px;
+      color: #444;
+      font-weight: 500;
+    }
+
+    .login-panel input {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 20px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    .login-panel button {
+      background-color: #388e3c;
+      color: #fff;
+      border: none;
+      padding: 12px;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      width: 100%;
+      transition: background 0.3s ease;
+    }
+
+    .login-panel button:hover {
+      background-color: #2e7d32;
+    }
+
+    footer {
+      text-align: center;
+      font-size: 14px;
+      color: #666;
+      margin-top: 20px;
+    }
+
+    @media (max-width: 768px) {
+      .background {
+        justify-content: center;
+        padding: 20px;
+      }
+
+      .login-panel {
+        padding: 30px 20px;
+      }
+
+      .login-panel img.logo {
+        width: 150px;
+      }
+
+      .login-panel h2 {
+        font-size: 22px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .login-panel {
+        padding: 25px 15px;
+      }
+
+      .login-panel h2 {
+        font-size: 20px;
+      }
+
+      .login-panel input,
+      .login-panel button {
+        font-size: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Top Branding Bar -->
+<div class="top-bar">
+  <img src="{% static 'assets/dist/img/nextgen.webp' %}" alt="Main Hospital Logo" class="main-logo">
+</div>
+
+<!-- Background with Login Panel -->
+<div class="background">
+  <div class="login-panel">
+    <img src="{% static 'assets/dist/img/nextgen.webp' %}" alt="Hospital Logo" class="logo">
+   
+    <form method="POST" action="{% url 'staff_login' %}">
+      {% csrf_token %}
+      <label for="username">Username</label>
+      <input type="text" name="username" id="username" required>
+      <label for="password">Password</label>
+      <input type="password" name="password" id="password" required>
+       <div class="row">
+          <div class="col-8">
+            <div class="icheck-primary">
+              {% if messages %}
+                {% for message in messages %}
+                  <p style="color:red;">{{message}}</p> 
+                {% endfor %}
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      <button type="submit">Login</button>
+    </form>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer>
+  <strong>&copy; <span id="year"></span> <a href="https://tissertechnologies.com">Tisser Technologies LLP</a>.</strong> All rights reserved.
+</footer>
+
+<!-- Scripts -->
+<script>
+  document.getElementById("year").textContent = new Date().getFullYear();
+</script>
+<script src="{% static 'assets/plugins/jquery/jquery.min.js'%}"></script>
+<script src="{% static 'assets/plugins/bootstrap/js/bootstrap.bundle.min.js'%}"></script>
+<script src="{% static 'assets/dist/js/adminlte.min.js'%}"></script>
+
+</body>
+</html>

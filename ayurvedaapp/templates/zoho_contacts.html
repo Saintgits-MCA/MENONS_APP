@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="content-wrapper">
+  <section class="content-header">
+    <h1>Online Patients</h1>
+  </section>
+
+  <section class="content">
+    <div class="card">
+      <div class="card-body">
+
+        <table id="zohoContactTable" class="table table-bordered table-striped">
+          <thead>
+            <tr>
+              <th>SL No</th>
+              <th>MR No</th>
+              <th>Patient Name</th>
+              <th>Zoho ID</th>
+              <th>Email</th>
+              <th>Contact</th>
+              <th>Date</th>
+              <th>Consultation Type</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in contacts %}
+            <tr>
+              <td>{{ forloop.counter }}</td>
+              <td>{{ p.Medical_Record_Number }}</td>
+              <td>{{ p.Patient_Name }}</td>
+              <td>{{ p.zoho_contact_id }}</td>
+              <td>{{ p.Email }}</td>
+              <td>{{ p.contactno }}</td>
+              <td>{{ p.Date|date:"d-m-Y" }}</td>
+              <td>{{ p.consultation_type }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ✅ CENTER MODAL -->
+<!-- <div class="modal fade" id="syncModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content text-center">
+      <div class="modal-body">
+        <h5 id="syncModalMessage"></h5>
+      </div>
+    </div>
+  </div>
+</div> -->
+
+<script>
+let isSyncing = false;
+
+$(document).ready(function () {
+
+  let table = $('#zohoContactTable').DataTable({
+    responsive: true,
+    pageLength: 20,
+    dom: 'Bfrtip',
+    buttons: ['copy', 'csv', 'excel', 'pdf', 'print']
+  });
+
+  // 🔽 Scroll Detection
+  $(window).on("scroll", function () {
+    if (isSyncing) return;
+
+    if ($(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
+      syncZohoContacts();
+    }
+  });
+
+  function showModalMessage(message) {
+    $("#syncModalMessage").text(message);
+    $("#syncModal").modal('show');
+
+    setTimeout(function () {
+      $("#syncModal").modal('hide');
+    }, 3000); // ⏱ auto hide after 3 seconds
+  }
+
+  function syncZohoContacts() {
+    isSyncing = true;
+
+    $.ajax({
+      url: "{% url 'sync_zoho_contacts' %}",
+      method: "GET",
+      success: function (res) {
+
+        if (res.new_count > 0) {
+          res.patients.forEach(function (p) {
+            table.row.add([
+              table.rows().count() + 1,
+              p.mrno,
+              p.name,
+              p.zoho_id,
+              p.email,
+              p.contact,
+              p.date,
+              p.consultation
+            ]).draw(false);
+          });
+
+          showModalMessage(res.new_count + " new patient(s) added.");
+        } else {
+          showModalMessage("No new patients found.");
+        }
+      },
+      error: function () {
+        showModalMessage("Error syncing Zoho contacts.");
+      },
+      complete: function () {
+        isSyncing = false;
+      }
+    });
+  }
+
+});
+</script>
+
+{% endblock %}

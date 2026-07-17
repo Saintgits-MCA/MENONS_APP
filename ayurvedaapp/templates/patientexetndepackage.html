@@ -1,0 +1,315 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<head>
+    <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"> -->
+    <style>
+        .largetextarea {
+            height: 120px;
+        }
+        body, .content-wrapper {
+            background-color: #ffffff;
+        }
+    </style>
+</head>
+
+<div class="content-wrapper">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1><i class="fas fa-file-invoice-dollar me-2"></i> Extend IP Package Dates</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        
+                        <a href="{% url 'packagepaymenttable' %}">View</a>/
+                        <li class="breadcrumb-item active">Extend IP Package Dates</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="content">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-info-circle me-2"></i> Extend IP Package Dates</h3>
+                    </div>
+                    <form method="POST" action="{% url 'patientpackageextendeddtsave' %}">
+                        {% csrf_token %}
+                        <div class="card-body border rounded p-3 mb-3 bg-light">
+                            <h5 class="text-primary mb-3"><i class="fas fa-user me-2"></i> Patient Search</h5>
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="input-group mb-3">
+                                        <input type="text" id="mrSearch" class="form-control"required placeholder="Enter MR Number / Name / Phone">
+                                        <button type="button" id="searchBtn" class="btn btn-primary">
+                                            <i class="fas fa-search me-1"></i> Search
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row bg-white p-3 border rounded">
+                                <div class="col-md-6">
+                                    <p><strong>MRNO:</strong> <span id="mrno"></span></p>
+                                    <p><strong>Patient Name:</strong> <span id="ptname"></span></p>
+                                    <p><strong>Age:</strong> <span id="age"></span></p>
+                                    <input type="hidden" id="pt_id" name="pt_id">
+                                    <input type="hidden" id="ipno" name="ipno">
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Contact Number:</strong> <span id="contactno"></span></p>
+                                  
+                                    <p><strong>Diagnosis:</strong> <span id="diagnosis"></span></p>
+                                    <p><strong>Admission Date:</strong> <span id="admissiondate"></span></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-body border rounded p-3 mb-3 bg-light">
+                            <h5 class="text-primary mb-3"><i class="fas fa-box-open me-2"></i> Package Information</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label>Selected Package</label>
+                                    <input type="text" id="selectedpckg" class="form-control mb-2" readonly>
+                                    <input type="hidden" id="selectedpckid" class="form-control mb-2" readonly>
+                                  
+                                    
+                                    <label>Package Per Day Rate</label>
+                                    <input type="number" id="perdayrate" class="form-control" min="0" step="0.01" onchange="calculatePackageBilling()" readonly>
+                                </div>
+                                <div class="col-md-6">
+                                    <label>Total Package Rate</label>
+                                    <input type="number" id="totalpckrate" class="form-control mb-2" readonly>
+
+                                    <label>Amount Paid</label>
+                                    <input type="number" id="amntpaid" class="form-control mb-2" min="0" readonly>
+
+                                    <label>Amount Due</label>
+                                    <input type="number" id="amntdue" class="form-control" readonly>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-body border rounded p-3 mb-3 bg-light">
+                            <h5 class="text-primary mb-3"><i class="fas fa-calendar-plus me-2"></i> Package Extension Billing</h5>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label>Start Date</label>
+                                    <input type="text" id="start_date" name="start_date" class="form-control mb-2" required onchange="calculatePackageBilling()" >
+                                </div>
+                                <div class="col-md-4">
+                                    <label>End Date</label>
+                                    <input type="text" id="end_date" name="end_date" class="form-control mb-2"required onchange="calculatePackageBilling()" >
+                                </div>
+                                <div class="col-md-4">
+                                    <label>Extended Total Package Rate</label>
+                                    <input type="number" name="extendedtotalpckrate" id="extendedtotalpckrate" class="form-control mb-2" required readonly>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-footer text-end">
+                            <button type="submit" class="btn btn-success btn-lg px-5">
+                                <i class="fas fa-check-circle me-2"></i> Submit
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+<!-- Search Patient Modal -->
+<div class="modal fade" id="searchModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Search Results</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <table id="searchResultsTable" class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>MR Number</th>
+                            <th>Patient Name</th>
+                            <th>Contact No</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="alreadyExtendedModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-warning text-dark">
+        <h5 class="modal-title">Warning</h5>
+        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+      </div>
+      <div class="modal-body">
+        This patient already has a package extension in the selected date range.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Okay</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Scripts -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script> --><script>
+let paidDates = [];
+let extendedDateSet = new Set();
+
+function calculatePackageBilling() {
+    const startDate = document.getElementById('start_date').value;
+    const endDate = document.getElementById('end_date').value;
+    const perDayRate = parseFloat(document.getElementById('perdayrate').value) || 0;
+
+    if (startDate && endDate) {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+
+        if (end >= start) {
+            const diffTime = end - start;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+            const total = diffDays * perDayRate;
+            document.getElementById('extendedtotalpckrate').value = total.toFixed(2);
+            checkIfPaidInDateRange(startDate, endDate);
+        } else {
+            alert('End date must be after or equal to start date.');
+            document.getElementById('extendedtotalpckrate').value = '';
+        }
+    }
+}
+
+function checkIfPaidInDateRange(start, end) {
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    let conflict = false;
+
+    while (startDate <= endDate) {
+        const formatted = startDate.toISOString().split('T')[0];
+        if (extendedDateSet.has(formatted)) {
+            conflict = true;
+            break;
+        }
+        startDate.setDate(startDate.getDate() + 1);
+    }
+
+    if (conflict) {
+        $('#alreadyExtendedModal').modal('show');
+        document.getElementById('extendedtotalpckrate').value = '';
+    }
+}
+
+function initDatePickers() {
+    flatpickr("#start_date", {
+        disable: paidDates,
+        dateFormat: "Y-m-d"
+    });
+    flatpickr("#end_date", {
+        disable: paidDates,
+        dateFormat: "Y-m-d"
+    });
+}
+
+$(document).ready(function () {
+    const table = $('#searchResultsTable').DataTable({ paging: true, searching: true });
+
+    $('#searchBtn').on('click', function () {
+        const query = $('#mrSearch').val().trim();
+        if (!query) {
+            alert('Please enter a search term.');
+            return;
+        }
+
+        fetch(`/ipsearch_patinetwithpackage?query=${query}`)
+            .then(res => res.json())
+            .then(data => {
+                table.clear().draw();
+                if (data.length) {
+                    data.forEach(item => {
+                        const btn = `<button class="btn btn-primary select-btn"
+                            data-mrno="${item.Medical_Record_Number}" 
+                            data-name="${item.Patient_Name}" 
+                            data-contact="${item.contactno}" 
+                            data-admissiondate="${item.Admission_Date}" 
+                            data-patientid="${item.patientid}"
+                            data-age="${item.age}" 
+                            data-diagnosis="${item.diagnosis}" 
+                            data-ipnoid="${item.ip_id}" 
+                            data-totamnt="${item.total_package_amount}" 
+                            data-paidamnt="${item.amount_paid}" 
+                            data-dueamnt="${item.due_amount}" 
+                            data-pckname="${item.package}" 
+                            data-pckperrate="${item.perdaypckrate}"
+                            data-pckid="${item.pckid}"
+                            data-originalstart="${item.original_start}"
+                            data-originalend="${item.original_end}"
+                            data-extendeddates='${JSON.stringify(item.extended_dates)}'
+                        >
+                        Select</button>`;
+                        table.row.add([item.Medical_Record_Number, item.Patient_Name, item.contactno || 'N/A', btn]).draw(false);
+                    });
+                    $('#searchModal').modal('show');
+                } else {
+                    alert('No admitted patients with a Package.');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Error retrieving data.');
+            });
+    });
+$('#searchResultsTable tbody').on('click', '.select-btn', function () {
+    const btn = $(this);
+
+    $('#pt_id').val(btn.data('patientid'));
+    $('#ipno').val(btn.data('ipnoid'));
+    $('#mrno').text(btn.data('mrno'));
+    $('#ptname').text(btn.data('name'));
+    $('#contactno').text(btn.data('contact'));
+    $('#age').text(btn.data('age'));
+    $('#diagnosis').text(btn.data('diagnosis'));
+    $('#admissiondate').text(btn.data('admissiondate'));
+    $('#totalpckrate').val(btn.data('totamnt'));
+    $('#amntpaid').val(btn.data('paidamnt'));
+    $('#amntdue').val(btn.data('dueamnt'));
+    $('#selectedpckg').val(btn.data('pckname'));
+    $('#perdayrate').val(btn.data('pckperrate'));
+    $('#selectedpckid').val(btn.data('pckid'));
+
+    $('#searchModal').modal('hide');
+
+    // ✅ Move this inside the click function
+    extendedDateSet.clear();
+
+    const originalStart = new Date(btn.data('originalstart'));
+    const originalEnd = new Date(btn.data('originalend'));
+
+    for (let d = new Date(originalStart); d <= originalEnd; d.setDate(d.getDate() + 1)) {
+        extendedDateSet.add(d.toISOString().split('T')[0]);
+    }
+
+    const extendedDates = btn.data('extendeddates') || [];
+    extendedDates.forEach(date => extendedDateSet.add(date));
+
+    paidDates = Array.from(extendedDateSet);
+    initDatePickers();
+});
+
+});
+</script>
+
+{% endblock %}

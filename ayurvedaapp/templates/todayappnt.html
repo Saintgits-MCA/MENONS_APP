@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="content-wrapper">
+
+  <!-- Page Header -->
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Appointment Details</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right"></ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content -->
+  <section class="content">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-12">
+
+          <div class="card">
+            <div class="scroll">
+              <div class="card-body">
+
+                <table id="example1" class="table table-bordered table-striped">
+                  <thead>
+                    <tr>
+                      <th>SL NO</th>
+                      <th>Token Number</th>
+                      <th>Patient Name</th>
+                      <th>Doctor Name</th>
+                      <th>Contact Number</th>
+                      <th>Appointment Date</th>
+                      <th>Booked Time</th>
+                      <th>Consultation Type</th>
+                      <th>Status</th>
+                      <th>Casehistory</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {% for row in appointments %}
+                    <tr>
+                      <td>{{ forloop.counter }}</td>
+                      <td>{{ row.appointment.Tokenno }}</td>
+                      <td>{{ row.appointment.MR_Number.Patient_Name }}</td>
+                      <td>{{ row.appointment.Doctor_Name.Staff_firstname }}</td>
+                      <td>{{ row.appointment.contactno }}</td>
+                      <td>{{ row.appointment.Appointment_date }}</td>
+
+                      <!-- Booked Time -->
+                      <td>
+                        {% if row.appointment.visit_start_time %}
+                          {{ row.appointment.visit_start_time|time:"h:i A" }}
+                          –
+                          {{ row.appointment.visit_end_time|time:"h:i A" }}
+                        {% else %}
+                          --
+                        {% endif %}
+                      </td>
+
+                      <!-- Consultation Type (ONLINE/OFFLINE + Status) -->
+                      <td>
+                        {% if row.consultation_type == 'online' %}
+                          <span class="badge badge-success">ONLINE</span>
+                        {% else %}
+                          <span class="badge badge-secondary">OFFLINE</span>
+                        {% endif %}
+
+                        <br>
+
+                        {% if row.appointment.status %}
+                          <small class="status-text">
+                            ({{ row.appointment.status|upper }})
+                          </small>
+                        {% endif %}
+                      </td>
+
+                      <!-- Consulted / Pending -->
+                      <td>
+                        {% if row.consulted %}
+                          <span class="badge badge-success">✅ Consulted</span>
+                        {% else %}
+                          <span class="badge badge-warning">⏳ Pending</span>
+                        {% endif %}
+                      </td>
+
+                      <!-- View Casehistory -->
+                      <td>
+                          <a href="{% url 'casehistory_view' %}?ids={{ row.appointment.MR_Number_id }}" title="View" class="text-decoration-none btn btn-sm btn-primary ml-2">
+                            <i class="fas fa-eye"></i>
+                          </a>
+                      </td>
+
+                      <!-- Actions -->
+                      <td>
+                        <a href="{% url 'create_casehistory' %}?ids={{ row.appointment.MR_Number_id }}" class="text-decoration-none btn btn-sm btn-outline-primary">
+                         <i class="fas fa-file-medical me-1"></i> Prescription</a>
+
+                        <a href="{% url 'editappointment' %}?ids={{ row.appointment.id }}">
+                          <img src="{% static 'assets/dist/img/icons/edit.svg' %}" style="width:20px">
+                        </a>
+
+                        <a href="{% url 'delappointment' %}?ids={{ row.appointment.id }}"
+                           onclick="return confirm('Do You really want to delete this data?')">
+                          <img src="{% static 'assets/dist/img/icons/delete.svg' %}" style="width:20px">
+                        </a>
+                      </td>
+
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+
+                </table>
+
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Badge Styling -->
+<style>
+  .badge {
+      display: inline-block;
+      padding: 0.35em 0.7em;
+      font-size: 75%;
+      font-weight: 600;
+      border-radius: 0.25rem;
+      color: #fff;
+  }
+
+  .badge-success {
+      background-color: #28a745;
+  }
+
+  .badge-secondary {
+      background-color: #6c757d;
+  }
+
+  .badge-warning {
+      background-color: #ffc107;
+      color: #212529;
+  }
+
+  .badge-success:hover {
+      background-color: #218838;
+  }
+
+  .badge-secondary:hover {
+      background-color: #5a6268;
+  }
+
+  .badge-warning:hover {
+      background-color: #e0a800;
+  }
+
+  .status-text {
+      font-size: 12px;
+      font-weight: 600;
+      color: #17a2b8;
+  }
+</style>
+
+{% endblock %}

@@ -1,0 +1,251 @@
+{% extends 'base.html' %} {% load static %} {% block content %}
+
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper">
+  <!-- Content Header (Page header) -->
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Physical Stock Entry Details</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item">
+              {% if stckmgmntview == '1' %}
+              <a
+                href="{% url 'inventoryphysicaltable' %}?menumanagement_id={{ idmngmnt }}"
+                >View All</a>
+
+              {%endif%}
+            </li>
+            <li class="breadcrumb-item active">Store Stock</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+    <!-- /.container-fluid -->
+  </section>
+
+  <!-- Main content -->
+  <section class="content">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card card-primary">
+          <div class="card-header">
+            <h3 class="card-title">Physical Stock</h3>
+
+            <div class="card-tools">
+              <button
+                type="button"
+                class="btn btn-tool"
+                data-card-widget="collapse"
+                title="Collapse"
+              >
+                <!-- <i class="fas fa-minus"></i> -->
+              </button>
+            </div>
+          </div>
+          <form
+            method="POST"
+            ,
+            action="{% url 'inventorystockentry' %}?menumanagement_id={{ idmngmnt }}"
+          >
+            {% csrf_token %}
+            <div class="row">
+              <div class="col-md-6">
+                <div class="card">
+                  <div class="card-body">
+                    <div class="form-group">
+                      <label for="exampleInputEmail1">Store</label>
+                      <select
+                        class="form-control"
+                        id="store"
+                        name="store"
+                        required>
+                        <option selected disabled value="">Select</option>
+                        {% for i in stornm %}
+                        <option value="{{i.id}}">{{i.storename}}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label for="exampleInputEmail1">Supplier Name</label>
+                      <select
+                        class="form-control"
+                        id="spname"
+                        name="spname"
+                        required
+                      >
+                        <option selected disabled value="">Select</option>
+                        {% for i in supplerdt %}
+                        <option value="{{i.id}}">{{i.shopname}}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label for="exampleInputEmail1"
+                        >Supplier Contact Number</label
+                      >
+                      <input
+                        type="type"
+                        class="form-control"
+                        name="cno"
+                        placeholder="Enter Contact Number"
+                        id="cno"
+                      />
+                    </div>
+
+                    <div class="form-group">
+                      <label for="exampleInputEmail1">Company</label>
+                      <select
+                        class="form-control"
+                        id="mdcompany"
+                        name="mdcompany"
+                        required
+                      >
+                        <option selected disabled value="">Select</option>
+                        {% for i in companym %}
+                        <option value="{{i.id}}">{{i.Comapany_name}}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label for="exampleInputEmail1">Item</label>
+                      <select
+                        class="form-control"
+                        id="item"
+                        name="item"
+                        required
+                      >
+                        <option selected disabled value="">Select</option>
+                        {% for i in mdnm %}
+                        <option value="{{i.id}}">{{i.itemnm}}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label for="exampleInputRegisterNo">Unit</label>
+                      <select
+                        class="form-control"
+                        id="bsunty"
+                        name="bsunty"
+                        required
+                      >
+                        <option selected disabled value="">
+                          --Select Base Unit--
+                        </option>
+                        {% for i in unit %}
+                        <option value="{{i.id}}">{{i.unitname}}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="card">
+                  <div class="card-body">
+                    <div class="form-group">
+                      <label for="exampleInputHouse">Batch Number</label>
+                      <input
+                        type="type"
+                        class="form-control"
+                        name="btchno"
+                        placeholder="Enter Batch Number"
+                        id="exampleInputbystname"
+                        required
+                      />
+                    </div>
+                    <div class="form-group">
+                      <label for="exampleInputPincode">Manufacture Date</label>
+                      <input
+                        type="date"
+                        class="form-control"
+                        name="mdate"
+                        placeholder="Enter Quanity"
+                        id="exampleInputbystname"
+                      />
+                    </div>
+                    <div class="form-group">
+                      <label for="exampleInputPincode">Expiry Date</label>
+                      <input
+                        type="date"
+                        class="form-control"
+                        name="edate"
+                        placeholder="Enter Quanity"
+                        id="exampleInputbystname"
+                        required
+                      />
+                    </div>
+                    <div class="form-group">
+                      <label for="exampleInputPincode">Rate</label>
+                      <input
+                        type="text"
+                        class="form-control"
+                        name="rate"
+                        placeholder="Enter Price"
+                        id="exampleInputbystname"
+                        required
+                      />
+                    </div>
+                    <div class="form-group">
+                      <label for="exampleInputPincode">Quantity</label>
+                      <input
+                        type="text"
+                        class="form-control"
+                        name="qnty"
+                        placeholder="Enter Quantity"
+                        id="exampleInputbystname"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% if message %}
+            <p style="color: red">{{message}}</p>
+            {% endif %}
+            <div class="card-footer">
+              {% if messages %} {% for message in messages %}
+              <p style="color: green">{{message}}</p>
+              {% endfor %} {% endif %} {% if stckmgmntadd == '1' %}
+              <button type="submit" class="btn btn-primary">Submit</button>
+              {% endif %}
+            </div>
+          </form>
+          <!-- /.card-body -->
+        </div>
+        <!-- /.card -->
+      </div>
+    </div>
+  </section>
+  <!-- /.content -->
+</div>
+<!-- /.content-wrapper -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+  $(document).ready(function () {
+    $("#spname").change(function () {
+      var spnameid = $(this).val();
+      $.ajax({
+        url: "/get_supplierdetails/",
+        type: "GET",
+        data: { spnameid: spnameid },
+        success: function (response) {
+          $("#cno").val(response.cno);
+        },
+        error: function (xhr, status, error) {
+          console.error(xhr.responseText);
+        },
+      });
+    });
+  });
+</script>
+
+{% endblock %}

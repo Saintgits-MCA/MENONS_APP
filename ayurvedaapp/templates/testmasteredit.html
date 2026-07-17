@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="content-wrapper">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Edit Test Master</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item">
+                            {% if testmstrview == '1' %}
+                                <a href="{% url 'testmastertable' %}?menumanagement_id={{ idmngmnt }}">View All</a>
+                            {% endif %}
+                        </li>
+                        <li class="breadcrumb-item active">Edit Test</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="card card-primary">
+            <div class="card-header">
+                <h3 class="card-title">Edit Test Details</h3>
+            </div>
+
+            <form method="POST" action="{% url 'testmasteredit' %}?menumanagement_id={{ idmngmnt }}">
+                {% csrf_token %}
+                <input type="hidden" name="testid" value="{{ objtest.id }}">
+
+                <div class="card-body">
+
+                    <div class="form-group">
+                        <label>Group Name</label>
+                        <input type="text" class="form-control" name="groupname" value="{{ objtest.groupname }}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Rate</label>
+                        <input type="text" class="form-control" name="rate" value="{{ objtest.rate }}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Status</label><br>
+
+                        <input type="radio" name="status" value="Active" id="active"
+                            {% if objtest.status %}checked{% endif %}>
+                        <label for="active">Active</label>
+
+                        <input type="radio" name="status" value="Inactive" id="inactive"
+                            {% if not objtest.status %}checked{% endif %}>
+                        <label for="inactive">Inactive</label>
+                    </div>
+
+                </div>
+
+                <div class="card-footer">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <p style="color:green;">{{ message }}</p>
+                        {% endfor %}
+                    {% endif %}
+                    {% if testmstredit == '1' %}
+                        <button type="submit" class="btn btn-primary">Update</button>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </section>
+</div>
+
+{% endblock %}

@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="content-wrapper">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>IP Patient Details (Edit)</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item">
+                            {% if ipobjmngview == '1' %}
+                                <a href="{% url 'iptable' %}?menumanagement_id={{ ipmngid }}">View All</a>
+                            {% endif %}
+                        </li>
+                        <li class="breadcrumb-item active">Edit IP Patient</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title">Edit IP Patient</h3>
+                    </div>
+
+                      {% if messages %}
+                        {% for message in messages %}
+                            <p style="color:green;">{{message}}</p> 
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="POST" action="{% url 'edit_ippatient' %}">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Admission ID (Read-Only)</label>
+                                        <input type="text" class="form-control" name="admssid" value="{{ admission.id }}" readonly>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">MR Number (Read-Only)</label>
+                                        <input type="text" class="form-control" value="{{ admission.MR_Number.Medical_Record_Number }}" readonly>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Blood Group</label>
+                                        <input type="text" name="bloodgroup" class="form-control" value="{{ admission.bloodgroup }}" required>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Age</label>
+                                        <input type="number" name="age" class="form-control" value="{{ admission.age }}" required>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Address</label>
+                                        <textarea name="address" class="form-control" rows="3">{% if admission.address %}{{ admission.address }}{% elif admission.MR_Number.address %}{{ admission.MR_Number.address }}{% else %}None{% endif %}</textarea>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Contact Number</label>
+                                        <input type="text" name="contactnumber" class="form-control" value="{{ admission.contactnumber }}" required>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Diagnosis / Reason for Admission</label>
+                                        <textarea name="reasonforadmission" class="form-control" rows="3" required>{{ admission.reasonforadmission }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 d-none">
+                                <div class="card-body">
+                                    <div class="form-group">
+                                        <label>Do you need a package?</label><br>
+                                        <input type="radio" name="need_package" value="yes" id="needPackageYes" {% if admission.need_package %}checked{% endif %}>
+                                        <label for="needPackageYes">Yes</label>
+                                        <input type="radio" name="need_package" value="no" id="needPackageNo" {% if not admission.need_package %}checked{% endif %}>
+                                        <label for="needPackageNo">No</label>
+                                    </div>
+
+                                    <div id="packageFields" style="display: {% if admission.need_package %}block{% else %}none{% endif %};">
+                                        <div class="form-group">
+                                            <label>Package Name</label>
+                                            <select class="form-control" name="package">
+                                                <option value="">--select--</option>
+                                                {% for i in pktdt %}
+                                                    <option value="{{ i.id }}" {% if i.id == admission.package.id %}selected{% endif %}>{{ i.packagename }} - {{ i.rate }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                          <div class="form-group">
+
+                                            <label for="start_date">Start Date:</label>
+                                            <input type="date"  class="form-control"  name="start_date" id="start_date" value="{{ admission.start_date|date:'Y-m-d' }}">
+                                            </div>
+                                            <div class="form-group">
+                                            <label for="end_date">End Date:</label>
+                                            <input type="date"  class="form-control"  name="end_date" id="end_date" value="{{ admission.end_date|date:'Y-m-d' }}">
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Do you need a bystander?</label><br>
+                                            <input type="radio" name="need_bystander" value="True" id="bystanderYes" {% if admission.need_bystander %}checked{% endif %}>
+                                            <label for="bystanderYes">Yes</label>
+                                            <input type="radio" name="need_bystander" value="False" id="bystanderNo" {% if not admission.need_bystander %}checked{% endif %}>
+                                            <label for="bystanderNo">No</label>
+                                        </div>
+
+                                        <div class="form-group" id="bystanderRateField" style="display: {% if admission.need_bystander %}block{% else %}none{% endif %};">
+                                            <label for="bystander_rate">Bystander Rate</label>
+                                            <input type="text" class="form-control" id="bystander_rate" name="bystander_rate" value="{{ admission.bystander_rate }}">
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label>Package Advance Amount</label>
+                                            <input type="text" class="form-control" name="advance_amount" value="{{ admission.advance_amount }}">
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label>Package Discount Amount</label>
+                                            <input type="text" class="form-control" name="discount" value="{{ admission.discount }}">
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label>Total Package Rate</label>
+                                            <input type="text" class="form-control"   id="selectedDateTotal"  name="total_package_rate" value="{{ admission.total_package_rate }}">
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label>Total Amount Paid</label>
+                                            <input type="text" class="form-control" id="total_amount_paid" name="total_amount_paid" value="{{ admission.totalpaidamount }}">
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label>Due Amount</label>
+                                            <input type="text" class="form-control" id="selectedDateDue" name="due_amount" value="{{ admission.due_amount }}">
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Total Amount </label>
+                                            <input type="text" class="form-control"  id="total_amount_paid" name="totalamount" readonly>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-footer">
+                            {% if ipobjmngedit == '1' %}
+                                <button type="submit" class="btn btn-primary">Update Admission</button>
+                            {% endif %}
+                            <a href="{% url 'iptable' %}?menumanagement_id={{ idmngmnt }}" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const packageYes = document.getElementById('needPackageYes');
+    const packageNo = document.getElementById('needPackageNo');
+    const packageFields = document.getElementById('packageFields');
+    const bystanderYes = document.getElementById('bystanderYes');
+    const bystanderNo = document.getElementById('bystanderNo');
+    const bystanderRateField = document.getElementById('bystanderRateField');
+    function togglePackageFields() {
+        packageFields.style.display = packageYes.checked ? 'block' : 'none';
+    }
+    function toggleBystanderRate() {
+        bystanderRateField.style.display = bystanderYes.checked ? 'block' : 'none';
+    }
+   function calculateTotal() {
+    const pkgSelect = document.querySelector('select[name="package"]');
+    const fromDateInput = document.querySelector('input[name="start_date"]');
+    const toDateInput = document.querySelector('input[name="end_date"]');
+    
+    const selectedOption = pkgSelect ? pkgSelect.options[pkgSelect.selectedIndex] : null;
+    const pkgRate = selectedOption ? parseFloat(String(selectedOption.textContent.split('-')[1] || '0').trim()) : 0;
+
+    const bystanderRate = parseFloat(document.querySelector('input[name="bystander_rate"]').value) || 0;
+    const advance = parseFloat(document.querySelector('input[name="advance_amount"]').value) || 0;
+    const discount = parseFloat(document.querySelector('input[name="discount"]').value) || 0;
+
+    const fromDate = new Date(fromDateInput.value);
+    const toDate = new Date(toDateInput.value);
+
+    if (isNaN(fromDate) || isNaN(toDate) || fromDate > toDate) {
+        document.querySelector('input[name="total_package_rate"]').value = '';
+        document.querySelector('input[name="due_amount"]').value = '';
+        document.querySelector('input[name="totalamount"]').value = '';
+        return;
+    }
+
+    const duration = Math.ceil((toDate - fromDate) / (1000 * 60 * 60 * 24)) + 1;
+    const total = duration * pkgRate;
+    const payingAmount = total - discount;
+
+    const due = total - advance;
+    const amountpaid = advance + bystanderRate;
+
+    document.querySelector('input[name="total_package_rate"]').value = total.toFixed(2);
+    document.querySelector('input[name="due_amount"]').value = due.toFixed(2);
+    document.querySelector('input[name="totalamount"]').value = amountpaid.toFixed(2);
+}
+
+    packageYes.addEventListener('change', togglePackageFields);
+    packageNo.addEventListener('change', togglePackageFields);
+    bystanderYes.addEventListener('change', toggleBystanderRate);
+    bystanderNo.addEventListener('change', toggleBystanderRate);
+    document.querySelector('input[name="start_date"]').addEventListener('change', calculateTotal);
+document.querySelector('input[name="end_date"]').addEventListener('change', calculateTotal);
+
+    document.querySelector('select[name="package"]').addEventListener('change', calculateTotal);
+    document.querySelector('input[name="bystander_rate"]').addEventListener('input', calculateTotal);
+    document.querySelector('input[name="advance_amount"]').addEventListener('input', calculateTotal);
+    document.querySelector('input[name="discount"]').addEventListener('input', calculateTotal);
+
+    // Initial
+    togglePackageFields();
+    toggleBystanderRate();
+    calculateTotal();
+});
+</script>
+
+{% endblock %}

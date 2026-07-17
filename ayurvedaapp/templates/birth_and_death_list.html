@@ -1,0 +1,715 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<style>
+    :root {
+        --hospital-green: #1f8f5f;
+        --hospital-green-soft: #e8f7ef;
+        --hospital-border: #d7ded8;
+        --hospital-bg: #f3f6f4;
+        --label-color: #244438;
+    }
+
+    .list-card {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .list-tabs .nav-tabs {
+        background: #f8faf9;
+        border-bottom: 2px solid var(--hospital-border);
+        padding: 0 15px;
+    }
+
+    .list-tabs .nav-tabs .nav-link {
+        border: none;
+        border-radius: 0;
+        color: #415b50;
+        font-weight: 600;
+        padding: 12px 25px;
+        position: relative;
+        transition: all 0.3s;
+    }
+
+    .list-tabs .nav-tabs .nav-link:hover {
+        background: var(--hospital-green-soft);
+        color: var(--hospital-green);
+    }
+
+    .list-tabs .nav-tabs .nav-link.active {
+        color: var(--hospital-green);
+        background: #fff;
+        border-bottom: 3px solid var(--hospital-green);
+    }
+
+    .list-tabs .nav-tabs .nav-link i {
+        margin-right: 8px;
+    }
+
+    .list-tabs .tab-content {
+        padding: 20px 0;
+    }
+
+    .filter-section {
+        background: #f8faf9;
+        padding: 15px 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        border: 1px solid var(--hospital-border);
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        gap: 15px;
+    }
+
+    .filter-section .form-group {
+        margin-bottom: 0;
+        flex: 1;
+        min-width: 180px;
+    }
+
+    .filter-section label {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--label-color);
+        margin-bottom: 4px;
+        display: block;
+    }
+
+    .filter-section .form-control,
+    .filter-section .form-select {
+        height: 38px;
+        border-radius: 6px;
+        border: 1px solid var(--field-border);
+        font-size: 14px;
+        background: #fff;
+        width: 100%;
+    }
+
+    .filter-section .btn-group {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        min-width: 200px;
+    }
+
+    .filter-section .btn {
+        height: 38px;
+        padding: 0 20px;
+        border-radius: 6px;
+        font-weight: 600;
+        white-space: nowrap;
+        font-size: 13px;
+        flex: 1;
+        min-width: 80px;
+    }
+
+    .btn-hospital {
+        background-color: var(--hospital-green);
+        border-color: var(--hospital-green);
+        color: #fff;
+    }
+
+    .btn-hospital:hover {
+        background-color: #176d49;
+        border-color: #176d49;
+        color: #fff;
+    }
+
+    .btn-outline-hospital {
+        color: var(--hospital-green);
+        border-color: var(--hospital-green);
+        background: transparent;
+    }
+
+    .btn-outline-hospital:hover {
+        background-color: var(--hospital-green);
+        color: #fff;
+    }
+
+    .dataTables_wrapper {
+        padding: 10px 0;
+    }
+
+    .dataTables_wrapper .dataTables_filter {
+        margin-bottom: 15px;
+    }
+
+    .dataTables_wrapper .dataTables_filter input {
+        border: 1px solid var(--field-border);
+        border-radius: 6px;
+        padding: 6px 12px;
+        min-width: 200px;
+    }
+
+    .dataTables_wrapper table.dataTable {
+        border-collapse: collapse !important;
+    }
+
+    .dataTables_wrapper table.dataTable thead th {
+        background: #f8faf9;
+        color: var(--label-color);
+        font-weight: 700;
+        font-size: 13px;
+        border-bottom: 2px solid var(--hospital-border);
+        padding: 12px 15px;
+    }
+
+    .dataTables_wrapper table.dataTable tbody td {
+        padding: 10px 15px;
+        vertical-align: middle;
+        font-size: 13px;
+        border-bottom: 1px solid #f0f2f1;
+    }
+
+    .dataTables_wrapper table.dataTable tbody tr:hover {
+        background-color: var(--hospital-green-soft);
+    }
+
+    .badge-registered {
+        background: #4CAF50;
+        color: #fff;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .badge-unregistered {
+        color: #fff;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .badge-male {
+        background: #2196F3;
+        color: #fff;
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+    }
+
+    .badge-female {
+        background: #E91E63;
+        color: #fff;
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+    }
+
+    .badge-transgender {
+        background: #9C27B0;
+        color: #fff;
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+    }
+
+    .thumbnail-small {
+        width: 40px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 4px;
+        border: 1px solid #ddd;
+    }
+
+    .stats-summary {
+        display: flex;
+        gap: 20px;
+        padding: 15px 0;
+        flex-wrap: wrap;
+    }
+
+    .stat-item {
+        background: #fff;
+        padding: 12px 20px;
+        border-radius: 8px;
+        border-left: 4px solid var(--hospital-green);
+        box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        min-width: 150px;
+    }
+
+    .stat-item .number {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--hospital-green);
+    }
+
+    .stat-item .label {
+        font-size: 12px;
+        color: #888;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .stat-item.death {
+        border-left-color: #dc3545;
+    }
+    .stat-item.death .number {
+        color: #dc3545;
+    }
+    .stat-item.registered .number {
+        color: #4CAF50;
+    }
+    .stat-item.unregistered .number {
+        color: #FF9800;
+    }
+
+    /* Responsive: 2 rows at 90-100% zoom */
+    @media screen and (max-width: 1200px) {
+        .filter-section {
+            flex-wrap: wrap;
+        }
+        .filter-section .form-group {
+            flex: 1 1 calc(50% - 15px);
+            min-width: 150px;
+        }
+        .filter-section .btn-group {
+            flex: 1 1 100%;
+            justify-content: flex-start;
+        }
+    }
+
+    @media screen and (max-width: 768px) {
+        .filter-section .form-group {
+            flex: 1 1 100%;
+            min-width: 100%;
+        }
+        .filter-section .btn-group {
+            flex: 1 1 100%;
+            flex-direction: column;
+        }
+        .filter-section .btn-group .btn {
+            width: 100%;
+            text-align: center;
+        }
+        .stats-summary {
+            flex-direction: column;
+        }
+        .stat-item {
+            min-width: 100%;
+        }
+    }
+
+    /* Fix for 90-100% zoom on desktop */
+    @media screen and (min-width: 769px) and (max-width: 1400px) {
+        .filter-section .form-group {
+            flex: 1 1 calc(33.33% - 15px);
+            min-width: 120px;
+        }
+        .filter-section .btn-group {
+            flex: 1 1 100%;
+            justify-content: flex-start;
+            margin-top: 5px;
+        }
+    }
+
+    .photo-cell {
+        width: 60px;
+        text-align: center;
+    }
+    .photo-cell img {
+        width: 40px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 4px;
+        border: 1px solid #ddd;
+        background: #f5f5f5;
+    }
+    .photo-cell .no-photo {
+        color: #999;
+        font-size: 11px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .photo-cell .no-photo i {
+        font-size: 20px;
+        color: #ccc;
+    }
+    /* Image Preview Modal */
+.image-preview-modal {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.9);
+    cursor: pointer;
+}
+
+.image-preview-modal.show {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.image-preview-modal .close-preview {
+    position: absolute;
+    top: 20px;
+    right: 35px;
+    color: #fff;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 10000;
+    transition: 0.3s;
+}
+
+.image-preview-modal .close-preview:hover {
+    color: #bbb;
+}
+
+.image-preview-modal .preview-content {
+    max-width: 90%;
+    max-height: 90%;
+    object-fit: contain;
+    border-radius: 4px;
+    box-shadow: 0 0 30px rgba(0,0,0,0.5);
+    animation: zoomIn 0.3s ease;
+}
+
+@keyframes zoomIn {
+    from {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.photo-cell img {
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.photo-cell img:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+}
+</style>
+
+<div class="content-wrapper registration-list-page">
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Birth / Death Registrations</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="{% url 'birth_and_death_registration' %}">Birth or Death Registration</a></li>
+            <li class="breadcrumb-item active">Birth or Death List</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+    <section class="content">
+        <div class="container-fluid">
+            <!-- Alert Container -->
+            <div id="formAlert" class="alert" role="alert" style="display:none;"></div>
+
+            <!-- Stats Summary -->
+            <div class="stats-summary">
+                <div class="stat-item">
+                    <div class="number">{{ total_births }}</div>
+                    <div class="label">Total Births</div>
+                </div>
+                <div class="stat-item death">
+                    <div class="number">{{ total_deaths }}</div>
+                    <div class="label">Total Deaths</div>
+                </div>
+            </div>
+<div id="imagePreviewModal" class="image-preview-modal" onclick="closeImagePreview()">
+    <span class="close-preview">&times;</span>
+    <img id="previewImage" class="preview-content" src="" alt="Preview">
+</div>
+            <div class="list-card">
+                <!-- Tabs -->
+                <div class="list-tabs">
+                    <ul class="nav nav-tabs" id="registrationTabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_tab == 'birth' %}active{% endif %}" id="birth-tab" data-toggle="tab" href="#birthTab" role="tab">
+                                <i class="fas fa-baby"></i> Birth Registrations
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_tab == 'death' %}active{% endif %}" id="death-tab" data-toggle="tab" href="#deathTab" role="tab">
+                                <i class="fas fa-cross"></i> Death Registrations
+                            </a>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content" id="tabContent">
+                        <!-- Birth Tab -->
+                        <div class="tab-pane fade {% if active_tab == 'birth' %}show active{% endif %}" id="birthTab" role="tabpanel">
+                            <!-- Filter Section -->
+                            <form method="GET" action="{% url 'birth_death_list' %}" id="birthFilterForm">
+                                <div class="filter-section">
+                                    <input type="hidden" name="tab" value="birth">
+                                    <div class="form-group">
+                                        <label for="birthRegType"><i class="fas fa-tag mr-1"></i>Registration Type</label>
+                                        <select class="form-control form-select" id="birthRegType" name="birth_reg_type">
+                                            <option value="">All Types</option>
+                                            <option value="registered" {% if birth_reg_type == 'registered' %}selected{% endif %}>Registered</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="birthDateFrom"><i class="fas fa-calendar-alt mr-1"></i>Date From</label>
+                                        <input type="date" class="form-control" id="birthDateFrom" name="birth_date_from" value="{{ birth_date_from }}">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="birthDateTo"><i class="fas fa-calendar-alt mr-1"></i>Date To</label>
+                                        <input type="date" class="form-control" id="birthDateTo" name="birth_date_to" value="{{ birth_date_to }}">
+                                    </div>
+                                    <div class="form-group btn-group">
+                                        <button type="submit" class="btn btn-hospital">
+                                            <i class="fas fa-filter mr-1"></i> Apply Filter
+                                        </button>
+                                        <a href="{% url 'birth_death_list' %}?tab=birth" class="btn btn-outline-hospital pt-2 text-center align-middle">
+                                            <i class="fas fa-undo mr-1 pt-1"></i> Reset
+                                        </a>
+                                    </div>
+                                </div>
+                            </form>
+
+                            <!-- Birth Table -->
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="example1" style="width:100%;">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Photo</th>
+                                            <th>Mother Name</th>
+                                            <th>MR No</th>
+                                            <th>Gender</th>
+                                            <th>Birth Date & Time</th>
+                                            <th>Weight</th>
+                                            <th>Blood Group</th>
+                                            <th>Type</th>
+                                            <th>Created By</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for record in birth_data %}
+                                        <tr>
+                                            <td>{{ forloop.counter }}</td>
+                                            <td class="photo-cell">
+                                                {% if record.photo %}
+                                                    <img src="{{ record.photo }}" alt="Birth Photo">
+                                                {% else %}
+                                                    <div class="no-photo">
+                                                        <i class="fas fa-user"></i>
+                                                        <span>No photo</span>
+                                                    </div>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ record.mother_name }}</td>
+                                            <td>{{ record.mother_mr_no }}</td>
+                                            <td>
+                                                <span class="badge 
+                                                    {% if record.gender == 'Male' %}badge-male
+                                                    {% elif record.gender == 'Female' %}badge-female
+                                                    {% else %}badge-transgender{% endif %}">
+                                                    {{ record.gender }}
+                                                </span>
+                                            </td>
+                                            <td>{{ record.date_time_of_birth }}</td>
+                                            <td>{{ record.weight }}</td>
+                                            <td>{{ record.blood_group }}</td>
+                                            <td><span class="badge-registered">Registered</span></td>
+                                            <td>{{ record.created_by }}</td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="10" class="text-center">No birth records found</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Death Tab -->
+                        <div class="tab-pane fade {% if active_tab == 'death' %}show active{% endif %}" id="deathTab" role="tabpanel">
+                            <!-- Filter Section -->
+                            <form method="GET" action="{% url 'birth_death_list' %}" id="deathFilterForm">
+                                <div class="filter-section">
+                                    <input type="hidden" name="tab" value="death">
+                                    <div class="form-group">
+                                        <label for="deathRegType"><i class="fas fa-tag mr-1"></i>Registration Type</label>
+                                        <select class="form-control form-select" id="deathRegType" name="death_reg_type">
+                                            <option value="">All Types</option>
+                                            <option value="registered" {% if death_reg_type == 'registered' %}selected{% endif %}>Registered</option>
+                                            <option value="unregistered" {% if death_reg_type == 'unregistered' %}selected{% endif %}>Unregistered</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="deathDateFrom"><i class="fas fa-calendar-alt mr-1"></i>Date From</label>
+                                        <input type="date" class="form-control" id="deathDateFrom" name="death_date_from" value="{{ death_date_from }}">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="deathDateTo"><i class="fas fa-calendar-alt mr-1"></i>Date To</label>
+                                        <input type="date" class="form-control" id="deathDateTo" name="death_date_to" value="{{ death_date_to }}">
+                                    </div>
+                                    <div class="form-group btn-group">
+                                        <button type="submit" class="btn btn-hospital">
+                                            <i class="fas fa-filter mr-1"></i> Apply Filter
+                                        </button>
+                                        <a href="{% url 'birth_death_list' %}?tab=death" class="btn btn-outline-hospital pt-2 text-center align-middle">
+                                            <i class="fas fa-undo mr-1"></i> Reset
+                                        </a>
+                                    </div>
+                                </div>
+                            </form>
+
+                            <!-- Death Table -->
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="example3" style="width:100%;">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Photo</th>
+                                            <th>Patient Name</th>
+                                            <th>MR No</th>
+                                            <th>Gender</th>
+                                            <th>Death Date & Time</th>
+                                            <th>Room</th>
+                                            <th>Doctor</th>
+                                            <th>Type</th>
+                                            <th>Created By</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for record in death_data %}
+                                        <tr>
+                                            <td>{{ forloop.counter }}</td>
+                                            <td class="photo-cell">
+                                                {% if record.photo %}
+                                                    <img src="{{ record.photo }}" alt="Death Photo">
+                                                {% else %}
+                                                    <div class="no-photo">
+                                                        <i class="fas fa-user"></i>
+                                                        <span>No photo</span>
+                                                    </div>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ record.patient_name }}</td>
+                                            <td>{{ record.patient_mr_no }}</td>
+                                            <td>
+                                                <span class="badge 
+                                                    {% if record.gender == 'Male' %}badge-male
+                                                    {% elif record.gender == 'Female' %}badge-female
+                                                    {% else %}badge-transgender{% endif %}">
+                                                    {{ record.gender }}
+                                                </span>
+                                            </td>
+                                            <td>{{ record.death_datetime }}</td>
+                                            <td>{{ record.room }}</td>
+                                            <td>{{ record.consulting_doctor }}</td>
+                                            <td>
+                                                {% if record.registration_type == 'Registered' %}
+                                                    <span class="badge-registered">Registered</span>
+                                                {% else %}
+                                                    <span class="badge-danger badge-unregistered">Unregistered</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ record.created_by }}</td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="10" class="text-center">No death records found</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script>
+
+// Preserve tab when form is submitted - using JavaScript to ensure tab stays
+document.addEventListener('DOMContentLoaded', function() {
+    // Get current tab from URL
+    var urlParams = new URLSearchParams(window.location.search);
+    var currentTab = urlParams.get('tab') || 'birth';
+    
+    // When any filter form is submitted, ensure tab parameter is preserved
+    var forms = document.querySelectorAll('form[method="GET"]');
+    forms.forEach(function(form) {
+        form.addEventListener('submit', function(e) {
+            // The hidden input already has the tab value
+            // This just ensures it's submitted
+            var tabInput = form.querySelector('input[name="tab"]');
+            if (!tabInput) {
+                var hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.name = 'tab';
+                hidden.value = currentTab;
+                form.appendChild(hidden);
+            }
+        });
+    });
+});
+
+// ============================================================
+// IMAGE PREVIEW FUNCTIONALITY
+// ============================================================
+function openImagePreview(imageSrc) {
+    var modal = document.getElementById('imagePreviewModal');
+    var previewImg = document.getElementById('previewImage');
+    
+    if (modal && previewImg) {
+        previewImg.src = imageSrc;
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden'; // Prevent scrolling
+    }
+}
+
+function closeImagePreview() {
+    var modal = document.getElementById('imagePreviewModal');
+    if (modal) {
+        modal.classList.remove('show');
+        document.body.style.overflow = ''; // Restore scrolling
+    }
+}
+
+// Close preview with Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeImagePreview();
+    }
+});
+
+// Initialize all images with click event
+document.addEventListener('DOMContentLoaded', function() {
+    // Add click event to all photo images
+    var photoImages = document.querySelectorAll('.photo-cell img');
+    photoImages.forEach(function(img) {
+        img.addEventListener('click', function(e) {
+            e.stopPropagation();
+            openImagePreview(this.src);
+        });
+    });
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,408 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<style>
+  #roomscroll{
+    height: 100px;
+    width: 450px;
+    overflow:scroll;
+  }
+</style>
+<link href="{% static 'assets/calender/main.css' %}" rel="stylesheet" />
+<link rel="stylesheet" type="text/css" href="{% static 'assets/calendercss/main.css' %}" />
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1 class="m-0">Dashboard</h1>
+          </div><!-- /.col -->
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="#">Home</a></li>
+              <li class="breadcrumb-item active">Dashboard </li>
+            </ol>
+          </div>
+          <!-- /.col -->
+        </div><!-- /.row -->
+      </div>
+      <!-- /.container-fluid -->
+    </div>
+    <!-- /.content-header -->
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <!-- Small boxes (Stat box) -->
+        <div class="row">
+          <div class="col-lg-3 col-6">
+            <!-- small box -->
+            <div class="small-box bg-info">
+              <div class="inner">
+               <h3>{{today_appointments_count}}</h3>
+
+                <p>Todays Appointments</p>
+              </div>
+              <div class="icon">
+                <i class="ion ion-bag"></i>
+              </div>
+              <a href="{% url 'appointment'%}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+            </div>
+          </div>
+          <!-- ./col -->
+          <div class="col-lg-3 col-6">
+            <!-- small box -->
+            <div class="small-box bg-success">
+              <div class="inner">
+                <h3>{{patient_count}}<sup style="font-size: 20px"></sup></h3>
+
+                <p>Patients</p>
+              </div>
+              <div class="icon">
+                <i class="ion ion-stats-bars"></i>
+              </div>
+              <a href="{% url 'patientdetails'%}" class="small-box-footer">More info<i class="fas fa-arrow-circle-right"></i></a>
+            </div>
+          </div>
+          <!-- ./col -->
+          <div class="col-lg-3 col-6">
+            <!-- small box -->
+            <div class="small-box bg-warning">
+              <div class="inner">
+               <h3>{{staff_count}}</h3>
+                <p>Staff</p>
+              </div>
+              <div class="icon">
+                <i class="ion ion-person-add"></i>
+              </div>
+              <a href="{% url 'staffdetail'%}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+            </div>
+          </div>
+          
+        </div>
+        
+        <div class="row">
+         <div class="col-md-9">
+            <div id="calendar"></div>
+          </div>
+
+        <div class="modal fade show" id="eventModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary">
+                        <h5 class="modal-title text-white" id="exampleModalLongTitle">Room Availabilty</h5>
+                        <button id="modalClose1" type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+            <form method="post">
+    {% csrf_token %}
+    <div class="modal-body">
+        <div class="form-group">
+            <label for="id_title" class="col-form-label"><h3>RoomCount:</h3></label>
+          
+            <label><h4 >{{room_count}}</h4></label>
+        </div>
+        <div class="form-group">
+           <div class="row">
+            <div class="col-md-6"><label><h4 id="bookRoomCount"></h4></label></div>  
+            <div class="col-md-6">
+            <button type="button" id="viewAdmissionDetailsBtn" class="btn btn-primary">
+              View Booking Details
+          </button>
+          </div>
+        </div>
+           
+            <h4 id="availableRoomCount"></h4>
+        </div>
+        <div class="form-group">
+            <!-- <label for="id_start_time" class="col-form-label">Start Date:</label>
+            {{ form.start_time }} -->
+            <div id="redirbutton"></div>
+        </div>
+        <div class="form-group">
+            <label for="id_end_time" class="col-form-label">Available Roomdetails:</label>
+            <div id="roomscroll"> <p id="availableRoomDetails"></p></div>
+          
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button id="modalClose2" type="button" class="btn btn-danger">Close</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+    </div>
+</form>
+
+                </div>
+            </div>
+        </div>
+        <div class="modal fade show" id="detailModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered" role="document">
+              <div class="modal-content">
+                  <div class="modal-header bg-primary">
+                      <h5 class="modal-title text-white" id="title_event_detail"></h5>
+                      <button id="modalDetailClose" type="button" class="close" data-dismiss="modal" aria-label="Close">
+                          <span aria-hidden="true">&times;</span>
+                      </button>
+                  </div>
+                  <form method="">
+                      {% csrf_token %}
+                      <div class="modal-body">
+                          
+                          <div class="form-group">
+                              <label for="message-text" class="col-form-label">Description:</label>
+                              <p id = "description_event_detail">
+
+                              </p>
+                          </div>
+                          <div class="form-group">
+                              <label for="message-text" class="col-form-label">Start:</label>
+                              <p id = "start_event_detail">
+                          </div>
+                          <div class="form-group">
+                              <label for="message-text" class="col-form-label">End:</label>
+                              <p id = "end_event_detail">
+                          </div>
+                      </div>
+                      <div class="modal-footer">
+                          <button id="delete-event-button" data-event-id="" type="button" class="btn btn-danger">Delete</button>
+                          <button id="add-to-next-week" data-event-id-week="" type="button" class="btn btn-success">Next Week</button>
+                          <button id="add-to-next-day" data-event-id-day="" type="button" class="btn btn-primary">Next Day</button>
+
+                      </div>
+                  </form>
+              </div>
+          </div>
+      </div>
+        </div>
+        <!-- /.row (main row) -->
+      </div><!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+  </div>
+<script src="{% static 'assets/calender/main.js' %}"></script>
+<script>
+  function converterDataParaDjangoFormat(data) {
+      const dataJS = new Date(data);
+      const ano = dataJS.getFullYear();
+      const mes = (dataJS.getMonth() + 1).toString().padStart(2, '0');
+      const dia = dataJS.getDate().toString().padStart(2, '0');
+      const hora = dataJS.getHours().toString().padStart(2, '0');
+      const minuto = dataJS.getMinutes().toString().padStart(2, '0');
+      const segundo = dataJS.getSeconds().toString().padStart(2, '0');
+      const formatoDjango = `${ano}-${mes}-${dia} ${hora}:${minuto}:${segundo}`;
+      return formatoDjango;
+  }
+    document.addEventListener('DOMContentLoaded', function() {
+      var calendarEl = document.getElementById('calendar');
+      var today = new Date();
+      var calendar = new FullCalendar.Calendar(calendarEl, {
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek,timeGridDay,list'
+        },
+        initialDate: today,
+        navLinks: true,
+        selectable: true,
+        selectMirror: true,
+        select: function(arg) {
+        console.log('clicked');
+        var formattedStartDate = arg.end.toISOString().split('T')[0]; // Convert to 'YYYY-MM-DD'
+        console.log(formattedStartDate);
+        console.log(arg.start);
+        $.ajax({
+            url: '/getbookcount/' + formattedStartDate, // adjust the URL accordingly
+            method: 'GET',
+            success: function(response) {
+                
+                console.log('Booking count:', response.booking_count);
+                
+                var totalRooms=response.room_count;
+                var bookedRoomCount = response.booking_count;
+                
+                var availableRoomCount = totalRooms - bookedRoomCount;
+
+                    $('#bookRoomCount').text('Booked Rooms: ' + bookedRoomCount);
+                    $('#availableRoomCount').text('Available Rooms: ' + availableRoomCount);
+                    console.log('Available rooms:', response.available_rooms);
+
+                    var availableRoomDetails = response.available_rooms.map(function(room) {
+                        return '<p>Room Number: ' + room.room_number + ', Type: ' + room.room_type + '</p>' + ', Branch : ' + room.branch + '</p>';
+                    });
+                    $('#availableRoomDetails').html(availableRoomDetails.join(''));
+
+                  },
+            error: function(error) {
+                console.error('Error fetching booked room count:', error);
+            }
+            
+        });
+       
+          document.getElementById('viewAdmissionDetailsBtn').addEventListener('click', function() {
+                
+                $.ajax({
+                    url: '/getadmissiondetails/' + formattedStartDate, 
+                    method: 'GET',
+                    success: function(response) {
+                        console.log('Admission details:', response.admission_details);
+
+                        var admissionDetails = response.admission_details.map(function(admission) {
+                            return '<p>Bystander Name: ' + admission.student_name ;
+                        });
+                        $('#admissionDetailsContainer').html(admissionDetails.join(''));
+                        
+            window.location.href = '/getbookingdetails/' + formattedStartDate;
+                    },
+                    error: function(error) {
+                        console.error('Error fetching admission details:', error);
+                    }
+                });
+              });
+            
+
+    var modal = document.getElementById('eventModal')
+          modal.style.display = 'block'
+   
+    var startTimeElement = document.getElementById('id_start_time');
+    var endTimeElement = document.getElementById('id_end_time');
+
+    if (startTimeElement && endTimeElement) {
+      startTimeElement.value = converterDataParaDjangoFormat(arg.start);
+      endTimeElement.value = converterDataParaDjangoFormat(arg.end);
+    }
+    calendar.unselect();
+  },
+  eventClick: function(arg) {
+          console.log('clicked')
+          var title = arg.event.title;
+          var start = formatDateTime(arg.event.start) ;
+          var end = formatDateTime(arg.event.end);
+          var description = arg.event.extendedProps.description || '';
+          var id = arg.event.id;
+          var modalInputEnd = document.getElementById('end_event_detail'); 
+          var modal = document.getElementById('detailModal')
+          var modalTitle = document.getElementById('title_event_detail'); 
+          var modalStart = document.getElementById('start_event_detail'); 
+          var modalEnd = document.getElementById('end_event_detail'); 
+          var modalDescripition = document.getElementById('description_event_detail'); 
+          var deleteButton = document.getElementById("delete-event-button");
+          var nextWeek = document.getElementById("add-to-next-week");
+          var nextDay = document.getElementById("add-to-next-day");
+
+          deleteButton.setAttribute("data-event-id", id);
+          nextWeek.setAttribute("data-event-id-week", id);
+          nextDay.setAttribute("data-event-id-day", id);
+          modal.style.display = 'block' 
+          modalTitle.textContent = title;
+          modalStart.textContent = start;
+          modalEnd.textContent = end;
+          modalDescripition.textContent = description;
+          modal.style.display = 'block';
+        },
+        editable: true,
+        dayMaxEvents: true,
+         // allow "more" link when too many events
+       
+      });
+
+      calendar.render();
+    });
+    const closeBtn1 = document.getElementById('modalClose1');
+    const closeBtn2 = document.getElementById('modalClose2');
+    const closeBtn3 = document.getElementById('modalDetailClose');
+    closeBtn1.addEventListener('click',()=>{
+      const eventModal = document.getElementById('eventModal')
+      eventModal.style.display = 'none';
+    });
+    closeBtn2.addEventListener('click',()=>{
+      const eventModal = document.getElementById('eventModal')
+      eventModal.style.display = 'none';
+    });
+    closeBtn3.addEventListener('click',()=>{
+      const eventModal = document.getElementById('detailModal')
+      eventModal.style.display = 'none';
+    });
+    function formatDateTime(dateTime) {
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', timeZoneName: 'short' };
+      const dataFormatada = new Date(dateTime).toLocaleDateString('pt-BR', options);
+      return dataFormatada;
+    };
+    document.getElementById('delete-event-button').addEventListener('click', function() {
+      const eventId = this.getAttribute('data-event-id');
+      if (confirm('Are you sure you want to delete this event?')) {
+          $.ajax({
+              url: `/delete_event/${eventId}/`,
+              type: 'POST',
+              data: {
+                  csrfmiddlewaretoken: '{{ csrf_token }}',
+              },
+              success: function(response) {
+                  alert(response.message);
+                  window.location.reload();
+              },
+              error: function(xhr, status, error) {
+                  alert('Error!');
+              }
+          
+          });
+      }});
+      
+      document.getElementById('add-to-next-week').addEventListener('click', function() {
+          const eventId = this.getAttribute('data-event-id-week');
+          if (confirm('Are you sure you want add this event to next week?')) {
+              $.ajax({
+                url: `/next_week/${eventId}/`,
+                  type: 'POST',
+                  data: {
+                      csrfmiddlewaretoken: '{{ csrf_token }}',
+                  },
+                  success: function(response) {
+                      alert(response.message);
+                      window.location.reload();
+                  },
+                  error: function(xhr, status, error) {
+                      alert('Error!');
+                  }
+              });
+          }
+  });
+
+  document.getElementById('add-to-next-day').addEventListener('click', function() {
+    const eventId = this.getAttribute('data-event-id-day');
+    if (confirm('Are you sure you want add this event to next day?')) {
+        $.ajax({
+          url: `/next_day/${eventId}/`,
+            type: 'POST',
+            data: {
+                csrfmiddlewaretoken: '{{ csrf_token }}',
+            },
+            success: function(response) {
+                alert(response.message);
+                window.location.reload();
+            },
+            error: function(xhr, status, error) {
+                alert('Error!');
+            }
+        });
+    }
+});
+
+</script>
+<!-- Include jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<!-- Include Bootstrap JS -->
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+<script src="{% static 'assets/calenderjs/js/jquery-3.3.1.min.js' %}"></script>
+<script src="{% static 'assets/calenderjs/popper.js' %}"></script>
+<script src="{% static 'assets/calenderjs/js/bootstrap.min.js' %}"></script>
+<script src="{% static 'assets/calenderjs/main.js' %}"></script>
+<!-- The javascript plugin to display page loading on top-->
+<script src="{% static 'assets/calenderjs/plugins/pace.min.js'%}"></script>
+
+ {% endblock %}
+
+ 

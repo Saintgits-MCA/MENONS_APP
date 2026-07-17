@@ -1,0 +1,239 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<!-- Content Wrapper -->
+<div class="content-wrapper">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-3">
+                <div class="col-sm-6">
+                    <h1 class="text-primary">Patient Case History</h1>
+                </div>
+                <div class="col-sm-6 text-right">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{% url 'case_history_list' %}">View All</a></li>
+                        <li class="breadcrumb-item active">Case History</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="content">
+        <div class="row">
+          <div class="col-md-12">
+            <div class="card card-primary">
+           
+            <!-- Case History Title -->
+            <div class="text-center mb-4">
+                <h2 class="font-weight-bold">Case History for {{ case_history.patient.Patient_Name }}</h2>
+            </div>
+
+            <!-- Flexbox Row for Personal and Case Information -->
+            <div class="row">
+                <!-- Personal Information Section -->
+                <div class="col-md-6 mb-4">
+                    {% if personal_info %}
+                    <div class="card shadow">
+                        <div class="card-header bg-info text-white">
+                            <i class="fas fa-user"></i> <strong>Personal Information</strong>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item"><strong>Age:</strong> {{ personal_info.age }}</li>
+                                <li class="list-group-item"><strong>Weight:</strong> {{ personal_info.weight }} kg</li>
+                                <li class="list-group-item"><strong>Height:</strong> {{ personal_info.height }} cm</li>
+                                <li class="list-group-item"><strong>MR No:</strong> {{ personal_info.mrno.Medical_Record_Number }}</li>
+                            </ul>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="card shadow">
+                        <div class="card-header bg-info text-white">
+                            <i class="fas fa-user"></i> <strong>Personal Information</strong>
+                        </div>
+                    <div class="card-body">No personal information available.</div>
+                    </div>
+                    {% endif %}
+
+                </div>
+
+                <!-- Case Information Section -->
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow">
+                        <div class="card-header bg-primary text-white">
+                            <i class="fas fa-file-medical"></i> <strong>Case Information</strong>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item"><strong>Status:</strong> {{ case_history.get_status_display }}</li>
+                                <li class="list-group-item"><strong>Chief Complaint:</strong> {{ case_history.chief_complaint }}</li>
+                                <li class="list-group-item"><strong>Final Diagnosis:</strong> {{ case_history.final_diagnosis }}</li>
+                                <li class="list-group-item"><strong>Test Needed:</strong> {{ case_history.test_needed }}</li>
+                                <li class="list-group-item"><strong>Diet Plan:</strong>
+                                    {% if case_history.diet %}
+                                        {{ case_history.diet.name }}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </li>
+                                <li class="list-group-item"><strong>Follow-up Date:</strong> {{ case_history.follow_up_date }}</li>
+                                <li class="list-group-item"><strong>Doctor:</strong> {{ case_history.assigned_doctor.Staff_firstname }}</li>
+                            <li class="list-group-item"><strong>Uploaded Result:</strong> </li>
+                          
+                            {% with uploaded_files as files %}
+                            {% if files %}
+                                <ul class="list-unstyled">
+                                    {% for file in files %}
+                                        <li>
+                                            <a href="{{ file.file.url }}" target="_blank">
+                                                View Report ({{ file.uploaded_at|date:"Y-m-d" }})
+                                            </a>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <span class="text-muted">No reports uploaded.</span>
+                            {% endif %}
+                        {% endwith %}
+                          </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Prescriptions Section -->
+            <div class="card mb-4 shadow">
+                <div class="card-header bg-primary text-white">
+                    <i class="fas fa-pills"></i> <strong>Prescriptions</strong>
+                </div>
+                <div class="card-body">
+                    {% if prescriptions %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>Medicine Name</th>
+                                    <th>Count</th>
+                                    <th>Dosage</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for prescription in prescriptions %}
+                                <tr>
+                                    <td>{{ prescription.medicine_name }}</td>
+                                    <td>{{ prescription.count }}</td>
+                                    <td>{{ prescription.dosage }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No prescriptions found.</p>
+                    {% endif %}
+                </div>
+            </div>
+<!-- Treatment Details Section -->
+<div class="card mb-4 shadow">
+    <div class="card-header bg-primary text-white">
+        <i class="fas fa-stethoscope"></i> <strong>Treatment Details</strong>
+    </div>
+    <div class="card-body">
+        {% if treatments %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead class="bg-light">
+                    <tr>
+                        <th>Treatment Name</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Handled By</th>
+                        <th>Given By</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for treatment in treatments %}
+                    <tr>
+                        <td>{{ treatment.tratmntid.Treatment_name }}</td>
+                        <td>{{ treatment.treatment_date }}</td>
+                        <td>{{ treatment.treatmenttime }}</td>
+                        <td>{{ treatment.get_handled_by_names|default:"N/A" }}</td>
+                        <td>{{ treatment.get_given_by_names|default:"N/A" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted">No treatment details found.</p>
+        {% endif %}
+    </div>
+</div>
+
+            <!-- Follow-Up Details Section -->
+            <div class="card mb-4 shadow">
+                <div class="card-header bg-primary text-white">
+                    <i class="fas fa-calendar-check"></i> <strong>Follow-Up Details</strong>
+                </div>
+                <div class="card-body">
+                    {% if follow_ups %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Follow-Up Notes</th>
+                                    <th>Handled  By</th>
+                                    <th>Reports</th> <!-- New column for reports -->
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for follow_up in follow_ups %}
+                                <tr>
+                                    <td>{{ follow_up.created_at }}</td>
+                                    <td>{{ follow_up.notes }}</td>
+                                    <td>{{ follow_up.handledbystaff.Staff_firstname }}</td>
+                                    <td>
+                                        {% with follow_up.reports.all as reports %}
+                                            {% if reports %}
+                                                <ul class="list-unstyled">
+                                                    {% for report in reports %}
+                                                        <li>
+                                                            <a href="{{ report.file.url }}" target="_blank">
+                                                                View Report ({{ report.uploaded_at|date:"Y-m-d" }})
+                                                            </a>
+                                                        </li>
+                                                    {% endfor %}
+                                                </ul>
+                                            {% else %}
+                                                <span class="text-muted">No reports uploaded.</span>
+                                            {% endif %}
+                                        {% endwith %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No follow-up details found.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="text-center mt-4">
+                <a href="{% url 'edit_case_history'%}?ids={{case_history.id}}" class="btn btn-warning btn-lg mr-2">Edit Case History</a>
+                <a href="{% url 'case_history_list' %}" class="btn btn-secondary btn-lg">Back to List</a>
+            </div>
+
+        </div>
+        </div>
+        </div>
+        </div>
+        </section>
+  
+    
+
+{% endblock %}

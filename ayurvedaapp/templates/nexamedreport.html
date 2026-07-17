@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<body>
+    <div class="content-wrapper">
+        <!-- Content Header (Page header) -->
+        <section class="content-header">
+            <div class="container-fluid">
+                <div class="row mb-2">
+                    <div class="col-sm-6">
+                        <h1>Medical Report</h1>
+                    </div>
+                    <div class="col-sm-6">
+                        <ol class="breadcrumb float-sm-right">
+                            <li class="breadcrumb-item"><a href="#">Home</a></li>
+                            <li class="breadcrumb-item active">Medical Report</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="content">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card card-primary">
+                        <div class="card-header">
+                            <h3 class="card-title">Medical Report Details for MR No: {{ mrno }} on {{ date }}</h3>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="card">
+                                    <div class="card-body">
+                                        {% if prescriptions %}
+                                            <table id="example1" class="table table-bordered table-striped">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Drug History</th>
+                                                        <th>Complaint</th>
+                                                        <th>Diagnosis</th>
+                                                        <th>Test Needed</th>
+                                                        <th>Report Uploaded</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for prescription in prescriptions %}
+                                                        <tr>
+                                                            <td>{{ prescription.drugHistory }}</td>
+                                                            <td>{{ prescription.historyofpresentcomplaint }}</td>
+                                                            <td>{{ prescription.finaldiagnosis }}</td>
+                                                            <td>{{ prescription.testneeded }}</td>
+                                                            <td>
+                                                                {% if medical_files %}
+                                                                    <ul>
+                                                                        {% for file in medical_files %}
+                                                                            {% if file.report_id == prescription.id %}
+                                                                                <li>
+                                                                                    <a href="{{ file.file.url }}" target="_blank" rel="noopener noreferrer">
+                                                                                        {{ file.file.name }}
+                                                                                    </a>
+                                                                                </li>
+                                                                            {% endif %}
+                                                                        {% endfor %}
+                                                                    </ul>
+                                                                {% else %}
+                                                                    No reports uploaded.
+                                                                {% endif %}
+                                                            </td>
+                                                        </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        {% else %}
+                                            <p>No prescriptions found for this date.</p>
+                                        {% endif %}
+                                        
+                                        <!-- Adjust link to go back to the previous page--> 
+                                        
+                                        {%if idmngmnt %}
+                  <a href="{% url 'savecasehistory'%}?menumanagement_id={{ idmngmnt }}">Back</a></li>
+                {%endif%}                                   
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+{% endblock %}

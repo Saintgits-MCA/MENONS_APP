@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<style>
+  .invoice-container {
+    background: #fff;
+    padding: 15px;
+    max-width: 700px;
+    margin: 20px auto;
+    box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+  }
+
+  h2 {
+    text-align: center;
+    margin: 10px 0;
+  }
+
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .box {
+    width: 48%;
+    border: 1px solid #000;
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  .total {
+    text-align: right;
+    font-weight: bold;
+    margin-bottom: 10px;
+  }
+
+  .amount-words {
+    font-weight: bold;
+  }
+
+  .top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-bottom: 20px;
+  }
+
+  .logo img {
+    width: 100px;
+  }
+
+  .header-center {
+    flex: 1;
+    text-align: center;
+    font-size: 14px;
+  }
+
+  .header-center h6 {
+    margin: 0;
+    font-size: 16px;
+    color: green;
+  }
+
+  .emergency-box {
+    background-color: red;
+    color: white;
+    font-weight: bold;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+  
+  @media print {
+   
+
+  html {
+    counter-reset: page;
+  }
+    body {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .header-center h6 {
+      color: green;
+    }
+
+    .print-btn {
+      display: none !important;
+    }
+
+    @page {
+      size: A4 portrait;
+      margin: 15mm 10mm 20mm 10mm;
+    }
+
+    .invoice-container {
+      box-shadow: none !important;
+      margin: 0 auto !important;
+      width: 100% !important;
+      padding: 0 !important;
+    }
+
+  
+  }
+</style>
+<div id="advanceinvoice">
+<div class="invoice-container">
+  <!-- Top Row with Logo and Hospital Info -->
+  <div class="top-row">
+    {% for i in objhospt %}
+    <div class="logo">
+      <img src="{{ i.Logo.url }}" alt="{{ i.Name }} Logo">
+    </div>
+
+    <div class="header-center">
+      <h6>{{ i.Name }}</h6>
+      <div>{{ i.Address }}</div>
+      <div>Phone: {{ i.Contact_no }} | Email: {{ i.Email }} || GST NO: {{ i.GST }}</div>
+     
+    </div>
+    
+    <div class="emergency-box">
+      EMERGENCY ☎  {{ i.Contact_no }}
+    </div>
+    {% endfor %}
+  </div>
+
+  <h2>Package Advance Receipt</h2>
+
+  <!-- Patient Details Section -->
+  <div class="info-row">
+    <div class="box">
+      <strong>Patient Details:</strong><br>
+      <p><strong>Name:</strong> {{ patient.Patient_Name}}</p>
+      <p><strong>MR Number:</strong> {{ patient.Medical_Record_Number}}</p>
+      <p><strong>Contact:</strong> {{ admission.contactnumber }}</p>
+      <p><strong>Admission Date:</strong> {{ admission_date }}</p>
+    </div>
+
+    <div class="box">
+      <strong>Bill Details:</strong><br>
+      <p><strong>Bill Date:</strong> {{ admission.Current_Date }}</p>
+      <p><strong>IP No:</strong> {{ admission.id }}</p>
+
+    </div>
+  </div>
+   <table class="table table-bordered" style="width: 100%; font-size: 14px; margin-bottom: 20px;">
+    <thead style="background-color: #f2f2f2;">
+      <tr>
+        <th colspan="2" style="text-align: center;">Package & Bystander Details</th>
+      </tr>
+    </thead>
+    <tbody>
+       {% if admission.need_package  %}
+       <tr><th>Selected Package:</th><td>{{ admission.package.packagename }}</td></tr>
+        <tr><th>Package Duration :</th><td>{{ admission.start_date}} to  {{ admission.end_date}}</td></tr>
+        <tr><th>Total Package Rate:</th><td> ₹{{ admission.totalpackageamountwithoutdiscount}}</td></tr>
+        <tr><th>Total Package Discount:</th><td>₹{{ admission.discount }}</td></tr>
+        <tr><th>Total Package Rate After Discount:</th><td> ₹{{ admission.total_package_rate }}</td></tr>
+        
+        <tr><th>Amount Paid on package:</th><td> ₹{{ admission.advance_amount }}</td></tr>
+      <tr><th>Amount Due on  Package:</th><td> ₹{{ admission.due_amount }}</td></tr>
+        
+  {% if bystander_rate %}
+    <tr><th>Total Bystander Rate :</th><td>₹{{ bystander_rate }}</td></tr>
+        
+       {% endif %}
+         {% endif %}
+      </tbody>
+
+   </table>
+
+  
+  <!-- Payment Details Section -->
+  <div class="total">
+    <h4>Total Amount Paid: ₹{{now_paid_amount }}</h4>
+  </div>
+  
+  
+  <!-- Footer and Notes -->
+  <div class="footer">
+    <p>This is a computer-generated statement and does not require a signature.</p>
+    <p>If you have any questions regarding the bill, please contact us at: 
+      {% for i in objhospt %}<a href="mailto:{{ i.Email }}">{{ i.Email }}</a>
+        {%endfor%}</p>
+  </div>
+  <div class="print-btn">
+    <button onclick="printInvoice()" class="btn btn-primary">Print Invoice</button>
+  </div>
+</div>
+</div>
+
+
+<script>
+function printInvoice() {
+  var invoiceContent = document.getElementById('advanceinvoice').outerHTML;
+  var styles = Array.from(document.querySelectorAll('style'))
+    .map(style => style.innerHTML)
+    .join('\n');
+
+  var printWindow = window.open('', '_blank');
+  printWindow.document.write('<html><head><title>Invoice</title><style>' + styles + '</style></head><body>' + invoiceContent + '</body></html>');
+  printWindow.document.close();
+  printWindow.print();
+}
+</script>
+{% endblock %}

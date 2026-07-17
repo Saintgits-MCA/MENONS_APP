@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirm Treatment Details</title>
+  
+</head>
+<body>
+    <div class="container">
+        <h2>Confirm Treatment Details</h2>
+        <h4>MR Number: {{ mr_number_id }}</h4>
+        <h4>Room No: {{ room_no }}</h4>
+count{{record_count}}={{treatment_details}}
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Treatment ID</th>
+                    <th>Handled By</th>
+                    <th>Given By</th>
+                    <th>Treatment Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for detail in treatment_details %}
+                <tr>
+                    <td>{{ detail.treatment_id }}</td>
+                    <td>{{ detail.handled_by }}</td>
+                    <td>{{ detail.given_by }}</td>
+                    <td>{{ detail.treatment_details }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+            <input type="hidden" name="mr_number" value="{{ mr_number_id }}">
+            <input type="hidden" name="room_no" value="{{ room_no }}">
+            <input type="hidden" name="record_count" value="{{ record_count }}">
+            <input type="hidden" name="treatment_details" value="{{ treatment_details|safe }}">
+            <button type="submit" class="btn btn-primary">Confirm and Save</button>
+           </form>
+    </div>
+</body>
+</html>

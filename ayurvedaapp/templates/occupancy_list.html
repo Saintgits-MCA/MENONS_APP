@@ -1,0 +1,148 @@
+{% extends 'base.html' %} {% load static %} {% block content %}
+
+<div class="content-wrapper">
+  <!-- Page Header -->
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Occupancy List (Doctor Wise)</h1>
+        </div>
+      </div>
+
+      <!-- Filter Card -->
+      <div class="card">
+        <div class="card-body">
+          <form method="GET" action="" id="filterForm">
+            <div class="row">
+              <div class="col-lg-3 col-md-6">
+                <div class="form-group">
+                  <label>From Date</label>
+                  <input type="date" class="form-control" name="from_date" value="{{ from_date }}" id="fromDate">
+                </div>
+              </div>
+
+              <div class="col-lg-3 col-md-6">
+                <div class="form-group">
+                  <label>To Date</label>
+                  <input type="date" class="form-control" name="to_date" value="{{ to_date }}" id="toDate">
+                </div>
+              </div>
+
+              <div class="col-lg-2 col-md-6">
+                <div class="form-group">
+                  <label>Doctor Name</label>
+                  <select class="form-control" name="doctor" id="doctorFilter">
+                    <option value="">All Doctors</option>
+                    {% for doctor in doctors %}
+                    <option value="{{ doctor.id }}" {% if doctor_id == doctor.id|stringformat:"s" %}selected{% endif %}>
+                      {{ doctor.name }}
+                    </option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+
+              <div class="col-lg-2 col-md-6">
+                <div class="form-group">
+                  <label>&nbsp;</label>
+                  <button type="submit" class="btn btn-primary btn-block">
+                    <i class="fas fa-search"></i> Search
+                  </button>
+                </div>
+              </div>
+
+              <div class="col-lg-2 col-md-6">
+                <div class="form-group">
+                  <label>&nbsp;</label>
+                  <button type="button" class="btn btn-secondary btn-block" onclick="resetFilters()">
+                    <i class="fas fa-undo"></i> Reset
+                  </button>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content -->
+  <section class="content">
+    <div class="container-fluid">
+      <div class="card">
+        <div class="card-body">
+          <!-- Report Header -->
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <h5 class="mb-0 font-weight-bold">Occupancy List</h5>
+              <small class="text-muted">
+                Period: {% if from_date and to_date %}
+                  {{ from_date|date:"d-M-Y" }} to {{ to_date|date:"d-M-Y" }}
+                {% elif from_date %}
+                  From {{ from_date|date:"d-M-Y" }}
+                {% elif to_date %}
+                  To {{ to_date|date:"d-M-Y" }}
+                {% else %}
+                  All Dates
+                {% endif %}
+              </small>
+            </div>
+            <div class="col-md-6 text-right">
+              <span class="badge badge-primary">Total: {{ total_count }}</span>
+            </div>
+          </div>
+
+          <!-- Table with DataTable -->
+          <table id="example1" class="table table-bordered table-striped table-hover">
+            <thead>
+              <tr>
+                <th>Sl.No</th>
+                <th>Room</th>
+                <th>Name & Address of Patient</th>
+                <th>Admission Date</th>
+                <th>Doctor</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {% if occupancy_data %}
+                {% for item in occupancy_data %}
+                <tr>
+                  <td>{{ item.sl_no }}</td>
+                  <td>
+                    <strong>{{ item.room }}</strong>
+                  </td>
+                  <td>
+                    {{ item.patient_details|safe }}
+                  </td>
+                  <td>{{ item.admission_date|date:"d/m/Y" }}</td>
+                  <td>{{ item.doctor }}</td>
+                </tr>
+                {% endfor %}
+              {% else %}
+                <tr>
+                  <td colspan="5" class="text-center text-muted py-3">
+                    No occupancy records found
+                  </td>
+                </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+
+<script>
+function resetFilters() {
+  document.getElementById('fromDate').value = '';
+  document.getElementById('toDate').value = '';
+  document.getElementById('doctorFilter').value = '';
+  document.getElementById('filterForm').submit();
+}
+
+</script>
+{% endblock %}

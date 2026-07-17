@@ -1,0 +1,232 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<!-- Modal for displaying search results -->
+<div class="modal fade" id="searchModal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="searchModalLabel">Search Results</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <table id="searchResultsTable" class="display table table-bordered">
+          <thead>
+            <tr>
+              <th>MR Number</th>
+              <th>Patient Name</th>
+              <th>Address</th>
+              <th>Contact No</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+           <h1>Book Treatment Room</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+               <li class="breadcrumb-item">
+                {%if trmntroombkadd == '1'%}<a href="{% url 'treatmentroombookingtable'%}?menumanagement_id={{ idmngmnt }}">View</a>
+             {%endif%}</li> <li class="breadcrumb-item active">Treatment Booking </li>
+            </ol>
+          </div>
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
+
+  <section class="content">
+    <div class="card card-primary">
+      <div class="card-header"><h3 class="card-title">Booking Form</h3></div>
+      <form method="POST", action="{% url 'treatment_room_booking' %}?menumanagement_id={{ idmngmnt }}">
+        {% csrf_token %}
+        <div class="card-body">
+             <div class="card-body">
+        {% if messages %}
+  {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
+      <strong>
+        {% if message.tags == 'success' %}
+          ✅ Success!
+        {% elif message.tags == 'error' %}
+          ❌ Error!
+        {% elif message.tags == 'warning' %}
+          ⚠️ Warning!
+        {% elif message.tags == 'info' %}
+          ℹ️ Note:
+        {% endif %}
+      </strong>
+      {{ message }}
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+  {% endfor %}
+{% endif %}
+
+          <div class="row">
+            <!-- LEFT COLUMN -->
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="mrSearch">MR Number/PhoneNo/Name</label>
+                <div class="input-group">
+                  <input type="text" id="mrSearch" class="form-control" placeholder="Type MR Number">
+                  <div class="input-group-append">
+                    <button id="searchBtn" class="btn btn-primary" type="button">Search</button>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="mrDropdown">Selected MR Number/Patient</label>
+                <select class="form-control" name="mrnum" id="mrDropdown" required>
+                  <option selected disabled value="">Select</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="exampleInputAddress">Patient Details</label>
+                <input type="text" id="exampleInputAddress" class="form-control" readonly>
+              </div>
+              <div class="form-group">
+                <label for="treatmntroom">Select Treatment Room</label>
+                <select class="form-control" name="treatmntroom" required>
+                  <option value="">-- Select Room --</option>
+                  {% for room in rooms %}
+                    <option value="{{ room.id }}">Floor {{ room.Floorno }} - Room {{ room.Roomno }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="handledBy">Handled By (Doctor/Nurse)</label>
+                <select name="handlingatsff" class="form-control" required>
+                  <option selected disabled value="">-- Select --</option>
+                  {% for doctor in doctor_staff %}
+                    <option value="{{ doctor.id }}">{{ doctor.Staff.Staff_firstname }} {{ doctor.Staff.Staff_lastname }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+
+            <!-- RIGHT COLUMN -->
+            <div class="col-md-6">
+              
+
+              <div class="form-group">
+                <label for="bookingdate">Booking Start Date</label>
+                <input type="date" class="form-control" name="bookingdate" value="{{ today }}" required>
+              </div>
+ <div class="form-group">
+<label for="bookingenddate">Booking End Date:</label>
+<input type="date"  class="form-control"  name="bookingenddate" id="bookingenddate" value="{{ today }}" required>
+</div>
+              <div class="form-group">
+                <label for="bookingstarttime">Start Time</label>
+                <input type="time" class="form-control" name="bookingstarttime" required>
+              </div>
+
+              <div class="form-group">
+                <label for="bookingendtime">End Time</label>
+                <input type="time" class="form-control" name="bookingendtime" required>
+              </div>
+            </div>
+          </div> <!-- end .row -->
+        </div> <!-- end .card-body -->
+
+        <div class="card-footer">
+          <button type="submit" class="btn btn-primary">Book Now</button>
+        </div>
+      </form>
+    </div>
+  </section>
+</div>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const dateInput = document.querySelector('input[name="bookingdate"]');
+    const today = new Date().toISOString().split('T')[0];
+    dateInput.setAttribute('min', today);
+  });
+</script>
+
+
+<script>
+$(document).ready(function () {
+  let table = $('#searchResultsTable').DataTable({
+    paging: true,
+    searching: true,
+    info: true,
+    lengthChange: true,
+    pageLength: 10
+  });
+
+  $('#searchBtn').on('click', function () {
+    let query = $('#mrSearch').val().trim();
+    if (!query) {
+      alert('Please enter a search term.');
+      return;
+    }
+
+    table.clear().draw();
+
+    fetch(`/search_mrno?query=${query}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.length > 0) {
+          data.forEach(item => {
+            const actionBtn = `
+              <button class="btn btn-primary select-btn" 
+                data-id="${item.id}"
+                data-mrno="${item.Medical_Record_Number}"
+                data-name="${item.Patient_Name}"
+                data-contact="${item.contactno}"
+                data-address="${item.Housename || 'N/A'}">
+                Select
+              </button>`;
+
+            table.row.add([
+              item.Medical_Record_Number,
+              item.Patient_Name,
+              item.Housename || 'N/A',
+              item.contactno,
+              actionBtn
+            ]).draw(false);
+          });
+          $('#searchModal').modal('show');
+        } else {
+          alert('No matching records found.');
+        }
+      }).catch(err => {
+        console.error(err);
+        alert('Error retrieving data.');
+      });
+  });
+
+  $('#searchResultsTable tbody').on('click', '.select-btn', function () {
+    let $btn = $(this);
+    let id = $btn.data('id');
+    let mrno = $btn.data('mrno');
+    let name = $btn.data('name');
+    let contact = $btn.data('contact');
+
+    $('#mrDropdown').html(`<option value="${id}" selected>${mrno} - ${name}</option>`);
+    $('#exampleInputAddress').val(`${mrno} - ${name} (${contact})`);
+    $('#searchModal').modal('hide');
+  });
+});
+</script>
+{% endblock %}

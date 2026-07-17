@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="content-wrapper">
+
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6"><h1>Edit Normal Value</h1></div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="{% url 'normal_value_list' %}">Normal Values</a></li>
+            <li class="breadcrumb-item active">Edit Normal Value</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="content">
+    <div class="row">
+      <div class="col-md-8">
+        <div class="card card-primary">
+          <div class="card-header">
+            <h3 class="card-title">Edit Normal Value - {{ normal_value.testchild.testname }}</h3>
+          </div>
+          
+          <form method="POST" action="{% url 'normal_value_edit' %}?id={{ normal_value.id }}" onsubmit="return validateNormalForm()">
+            {% csrf_token %}
+            <input type="hidden" name="id" value="{{ normal_value.id }}">
+            
+            <div class="card-body">
+              {% if messages %}
+                {% for message in messages %}
+                  <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                  </div>
+                {% endfor %}
+              {% endif %}
+
+              <!-- Test Name -->
+              <div class="form-group">
+                <label>Test Name <span class="text-danger">*</span></label>
+                <select class="form-control" id="groupSelect" name="group" required>
+                  <option value="">-- Select Test --</option>
+                  {% for g in lbchild %}
+                    <option value="{{ g.id }}" {% if normal_value.testchild.id == g.id %}selected{% endif %}>
+                      {{ g.testname }}
+                    </option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <!-- Gender -->
+              <div class="form-group">
+                <label>Gender <span class="text-danger">*</span></label>
+                <select class="form-control" name="gender" required>
+                  <option value="">Select Gender</option>
+                  <option value="Male" {% if normal_value.gender == "Male" %}selected{% endif %}>Male</option>
+                  <option value="Female" {% if normal_value.gender == "Female" %}selected{% endif %}>Female</option>
+                  <option value="Newborn" {% if normal_value.gender == "Newborn" %}selected{% endif %}>Newborn (0–1 month)</option>
+                  <option value="Infant" {% if normal_value.gender == "Infant" %}selected{% endif %}>Infant (1 month–1 year)</option>
+                  <option value="Both" {% if normal_value.gender == "Both" %}selected{% endif %}>Both</option>
+                </select>
+              </div>
+
+              <!-- Age Range -->
+              <div class="form-group">
+                <label>Age Range (optional)</label>
+                <div class="row">
+                  <div class="col-md-6">
+                    <input type="number" onwheel="this.blur()" class="form-control" name="age_from" 
+                           value="{{ normal_value.age_from|default:'' }}" placeholder="Age From">
+                  </div>
+                  <div class="col-md-6">
+                    <input type="number" onwheel="this.blur()" class="form-control" name="age_to" 
+                           value="{{ normal_value.age_to|default:'' }}" placeholder="Age To">
+                  </div>
+                </div>
+                <small class="form-text text-muted">Use if you want specific age (in years or decimals). Otherwise leave blank.</small>
+              </div>
+
+              <!-- Unit -->
+              <div class="form-group">
+                <label>Unit</label>
+                <select class="form-control" name="unit">
+                  <option value="">-- Select Unit --</option>
+                  {% for u in unt %}
+                    <option value="{{ u.id }}" {% if normal_value.unit and normal_value.unit.id == u.id %}selected{% endif %}>
+                      {{ u.unit }}
+                    </option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <!-- Normal Value Range -->
+              <div class="form-group">
+                <label>Normal Value Range <span class="text-danger">*</span></label>
+                <div class="row">
+                  <div class="col-md-6">
+                    <input type="number" onwheel="this.blur()" class="form-control" name="min_value" 
+                           value="{{ normal_value.min_value }}" placeholder="Min Value" required>
+                  </div>
+                  <div class="col-md-6">
+                    <input type="number" onwheel="this.blur()" class="form-control" name="max_value" 
+                           value="{{ normal_value.max_value }}" placeholder="Max Value" required>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <div class="card-footer">
+              <button type="submit" class="btn btn-primary">Update</button>
+              <a href="{% url 'normal_value_list' %}" class="btn btn-secondary ml-2">Cancel</a>
+            </div>
+
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+function validateNormalForm() {
+    var minVal = parseFloat(document.getElementsByName("min_value")[0].value);
+    var maxVal = parseFloat(document.getElementsByName("max_value")[0].value);
+
+    if (minVal >= maxVal) {
+      alert("Min value must be less than Max value.");
+      return false;
+    }
+
+    var ageFromField = document.getElementsByName("age_from")[0];
+    var ageToField = document.getElementsByName("age_to")[0];
+    if (ageFromField.value && ageToField.value) {
+      var a1 = parseFloat(ageFromField.value);
+      var a2 = parseFloat(ageToField.value);
+      if (a1 >= a2) {
+        alert("Age From must be less than Age To.");
+        return false;
+      }
+    }
+
+    return true;
+}
+</script>
+
+{% endblock %}

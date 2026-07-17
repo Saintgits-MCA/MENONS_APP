@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Medicines Sold on {{ selected_date }}</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{% url 'dailymedicinesale' %}">Back to Dates</a></li>
+                        <li class="breadcrumb-item active">Medicines Sold on {{ selected_date }}</li>
+                    </ol>
+                </div>
+            </div>
+        </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                    <!-- /.card -->
+                    <div class="card">
+                        <div class="scroll">
+                            <!-- /.card-header -->
+                            <div class="card-body">
+                                <table id="example2" class="table table-bordered table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>SL NO</th>
+                                            <th>Particulars</th>
+                                            <th>Total Quantity</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% if medicines %}
+                                            {% for medicine in medicines %}
+                                                <tr>
+                                                    <td>{{ forloop.counter }}</td>
+                                                    <td>{{ medicine.particulars }}</td>
+                                                    <td>{{ medicine.total_quantity }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        {% else %}
+                                            <tr>
+                                                <td colspan="2">No medicines sold on this date.</td>
+                                            </tr>
+                                        {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <!-- /.card-body -->
+                        </div>
+                    </div>
+                    <!-- /.card -->
+                </div>
+                <!-- /.col -->
+            </div>
+            <!-- /.row -->
+        </div>
+        <!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+</div>
+<!-- /.content-wrapper -->
+
+{% endblock %}

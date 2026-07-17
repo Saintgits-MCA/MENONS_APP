@@ -1,0 +1,80 @@
+{% extends 'base.html' %} {% load static %} {% block content %}
+<div class="content-wrapper">
+  <!-- Page Header -->
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Pharmacy Queue List</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+            <li class="breadcrumb-item active">Pharmacy Queue</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content -->
+  <section class="content">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card card-primary">
+          <div class="card-header">
+            <h3 class="card-title">Today's Prescriptions</h3>
+            <div class="card-tools">
+              <button
+                type="button"
+                class="btn btn-tool"
+                data-card-widget="collapse"
+                title="Collapse"
+              ></button>
+            </div>
+          </div>
+          <div class="card-body">
+            <table id="example1" class="table table-bordered table-striped">
+              <thead>
+                <tr>
+                  <th>Sl No</th>
+                  <th>Prescription Date</th>
+                  <th>Patient Name</th>
+                  <th>Contact No</th>
+                  <th>Doctor</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in pharmacy_queue %}
+                <tr>
+                  <td>{{ forloop.counter }}</td>
+                  <td>{{ item.prescriptiondate }}</td>
+                  <td>{{ item.patient.Patient_Name }}</td>
+                  <td>{{ item.patient.contactno }}</td>
+                  <td>{{ item.prescribeddoctor.Staff_firstname }}</td>
+                  <td>
+                    <a
+                      href="{% url 'invoiceprescrition'%}?ids={{item.patient.id}}"
+                      class="btn btn-sm btn-success"
+                    >
+                      Generate Invoice
+                    </a>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="8" class="text-center text-danger">
+                    No prescriptions found for today.
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

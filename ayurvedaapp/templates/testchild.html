@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="content-wrapper">
+  <!-- Content Header -->
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Test Child</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item">
+              {% if testchildview == '1' %}
+                <a href="{% url 'testchildtable' %}?menumanagement_id={{ idmngmnt }}">View All</a>
+              {% endif %}
+            </li>
+            <li class="breadcrumb-item active">Create Test Child</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content -->
+  <section class="content">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card card-primary">
+          <div class="card-header">
+            <h3 class="card-title">Add Test Child</h3>
+          </div>
+
+          <form method="POST" action="{% url 'testchild' %}?menumanagement_id={{ idmngmnt }}" onsubmit="return validateForm()">
+            {% csrf_token %}
+            <div class="card-body">
+
+              <!-- Group Dropdown -->
+              <div class="form-group">
+                <label for="groupSelect">Group</label>
+                <select class="form-control" id="groupSelect" name="group" required>
+                  <option value="">-- Select Group --</option>
+                  {% for g in groups %}
+                    <option value="{{ g.id }}">{{ g.groupname }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <!-- Test Name -->
+              <div class="form-group">
+                <label for="testname">Test Name</label>
+                <input type="text" class="form-control" id="testname" name="testname" placeholder="Enter Test Name" required>
+              </div>
+ <div class="form-group">
+                <label for="testname">Symbols</label>
+                <input type="text" class="form-control" id="symbol" name="symbol" placeholder="eg:FT3" required>
+              </div>
+              <div class="form-group">
+                <label for="testname">Rate</label>
+                <input type="text" class="form-control" id="rate" name="rate" placeholder="eg:FT3" required>
+              </div>
+              <!-- Status -->
+              <div class="form-group">
+                <label>Status</label><br>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="status" id="statusActive" value="Active" required>
+                  <label class="form-check-label" for="statusActive">Active</label>
+                </div>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="status" id="statusInactive" value="Inactive">
+                  <label class="form-check-label" for="statusInactive">Inactive</label>
+                </div>
+               
+              </div>
+
+            </div>
+
+            <!-- Messages & Submit -->
+            <div class="card-footer">
+              {% if messages %}
+                {% for message in messages %}
+                  <p style="color:green;">{{ message }}</p>
+                {% endfor %}
+              {% endif %}
+              <button type="submit" class="btn btn-primary">Submit</button>
+            </div>
+
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+  function validateForm() {
+      var group = document.getElementById("groupSelect").value;
+      var testname = document.getElementById("testname").value.trim();
+      var statusChecked = document.querySelector('input[name="status"]:checked');
+
+      if (group === "") {
+          alert("Please select a group.");
+          return false;
+      }
+
+      if (testname === "") {
+          alert("Test name is required.");
+          return false;
+      }
+
+      if (!statusChecked) {
+          alert("Please select a status.");
+          return false;
+      }
+
+      return true;
+  }
+</script>
+
+{% endblock %}

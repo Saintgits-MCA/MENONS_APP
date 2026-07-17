@@ -1,0 +1,232 @@
+{% extends 'base.html' %} 
+{% load static %} 
+{% block content %}
+<style>
+  .invoice-container {
+    background: #fff;
+    padding: 12px;
+    max-width: 600px;
+    margin: 10px auto;
+    box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+    font-size: 11px;
+  }
+
+  h2 {
+    text-align: center;
+    margin: 8px 0;
+    font-size: 14px;
+  }
+
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .box {
+    width: 48%;
+    border: 1px solid #000;
+    padding: 6px;
+    font-size: 11px;
+  }
+
+  .order-details table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    word-break: break-word;
+  }
+
+  .order-details th,
+  .order-details td {
+    border: 1px solid black;
+    padding: 4px;
+    font-size: 10px;
+    text-align: left;
+    vertical-align: top;
+    word-wrap: break-word;
+  }
+
+  .order-details th,
+  .order-details td {
+    font-size: 11px;
+    padding: 6px 4px;
+  }
+
+  .order-details td {
+    line-height: 1.4em;
+  }
+
+  .total {
+    text-align: right;
+    font-weight: bold;
+    margin: 8px 0;
+    font-size: 11px;
+  }
+
+  .amount-words {
+    font-weight: bold;
+    font-size: 11px;
+  }
+
+  .invoice-header-img,
+  .invoice-footer-img {
+    width: 100%;
+    max-width: 600px;
+    height: auto;
+    margin: 0 auto;
+    display: block;
+  }
+
+  .invoice-header-img {
+    margin-bottom: 15px;
+  }
+
+  .invoice-footer-img {
+    margin-top: 20px;
+  }
+
+  .footer-content {
+    text-align: center;
+    margin-top: 15px;
+    padding-top: 10px;
+    border-top: 1px solid #ffffff;
+  }
+
+  @media print {
+    .print-btn {
+      display: none !important;
+    }
+
+    @page {
+      size: A5 portrait;
+      margin: 10mm 8mm 15mm 8mm;
+    }
+
+    .invoice-container {
+      box-shadow: none !important;
+      margin: 0 auto !important;
+      width: 100% !important;
+      padding: 6px !important;
+      max-width: 100% !important;
+      position: relative;
+
+      /* FIX: prevent extra blank page */
+      padding-bottom: 40mm !important;
+    }
+
+    /* Fixed footer at bottom */
+    .invoice-footer-img {
+      position: fixed;
+      bottom: -8mm;   /* Move footer slightly down */
+      left: 0;
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+
+    .footer-content {
+      margin-top: 0 !important;
+      padding-top: 0 !important;
+    }
+  }
+</style>
+
+<div id="invoice" class="invoice-container">
+  <div class="header-content">
+    {% if header_footer and header_footer.header_image %}
+    <img src="{{ header_footer.header_image.url }}" class="invoice-header-img" />
+    {% endif %}
+  </div>
+
+  <h2>LABORATORY INVOICE</h2>
+
+  <div class="info-row">
+    <div class="box">
+      <strong>Patient Name: </strong> {{ invoice.patient.Patient_Name }}<br>
+      Contact Number: {{ invoice.patient.contactno }} <br>
+    </div>
+    <div class="box">
+      <strong>Bill Details</strong><br>
+      Invoice Number: {{ invoice.invoiceno }}<br>
+      Bill Date: {{ invoice.date }}<br>
+    </div>
+  </div>
+
+  <div class="order-details">
+    <table>
+      <thead>
+        <tr>
+          <th>Slno</th>
+          <th>Test Name</th>
+          <th style="width: 60px;">Qty</th>
+          <th style="width: 100px;">Rate</th>
+          <th style="width: 120px;">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in items %}
+        <tr>
+          <td>{{ item.sl_no }}</td>
+          <td>{{ item.testname }}</td>
+          <td>{{ item.qty }}</td>
+          <td class="text-right">{{ item.rate }}</td>
+          <td class="text-right">{{ item.amount }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="total">
+    <p><strong>Subtotal:</strong> {{ invoice.subtotal }}</p>
+    <p><strong>Tax%:</strong> {{ invoice.tax_percentage }}</p>
+    <p><strong>Tax Amount:</strong> <span id="taxAmount"></span></p>
+    <p><strong>Discount:</strong> {{ invoice.discount }}</p>
+    <p><strong>Consultation Fee :</strong> {{ invoice.consultation_fee }}</p>
+    <p><strong>Registration Fee :</strong> {{ invoice.registration_fee }}</p>
+    <p><strong>Total Amount:</strong> {{ invoice.total }}</p>
+  </div>
+
+  <div class="amount-words">In Words: {{ amount_in_words }}</div>
+
+  <p>Note: Return unused medicines with original packaging and receipts within 15 days.</p>
+
+  <div class="footer">
+    {% for i in objhospt %}
+    <p>For billing and general queries, please mail:
+      <a href="mailto:{{ i.Email }}">{{ i.Email }}</a>
+    </p>
+    {% endfor %}
+  </div>
+
+  <div class="footer-content">
+    {% if header_footer and header_footer.footer_image %}
+    <img src="{{ header_footer.footer_image.url }}" class="invoice-footer-img">
+    {% endif %}
+  </div>
+
+  <div class="print-btn">
+    <button onclick="printInvoice()" class="btn btn-primary">Print Invoice</button>
+     <a href="{% url 'lab_invoice_list' %}" class="btn btn-secondary float-right">
+                                    <i class="fas fa-arrow-left"></i> Back
+                                </a>
+  </div>
+</div>
+
+<script>
+  document.getElementById('taxAmount').innerHTML = ({{ invoice.subtotal }} * {{ invoice.tax_percentage }} / 100).toFixed(2);
+
+  function printInvoice() {
+    var invoiceContent = document.getElementById('invoice').outerHTML;
+    var styles = Array.from(document.querySelectorAll('style'))
+      .map(style => style.innerHTML)
+      .join('\n');
+    var printWindow = window.open('', '_blank');
+    printWindow.document.write('<html><head><title>Invoice</title><style>' + styles + '</style></head><body>' + invoiceContent + '</body></html>');
+    printWindow.document.close();
+    printWindow.print();
+  }
+</script>
+
+{% endblock %}

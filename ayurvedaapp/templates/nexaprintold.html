@@ -1,0 +1,281 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<style>
+    .header {
+        text-align: center;
+    }
+    
+    .header h6 {
+        margin: 5px 0;
+        color: black;
+    }
+
+    .details {
+        /* margin: 10px 0; */
+        border: 1px solid black;
+        /* padding: 5px; */
+    }
+/* 
+    .details p {
+        margin: 5px 0;
+    } */
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+    }
+
+    th, td {
+        border: 1px solid black;
+        padding: 8px;
+        text-align: left;
+    }
+
+    
+
+    .grand-total {
+        text-align: right;
+        font-weight: bold;
+        margin-top: 10px;
+    }
+
+    .page-break {
+        page-break-before: always;
+    }
+.sbdt{
+  margin-right: 25px;
+}
+    @media print {
+        /* Set the page size to A5 */
+        @page {
+            size: A4;
+        }
+        p{
+          font-size: 12px;
+        }
+        .sbdt{
+          margin-right: 25px;
+        }
+        .text-right {
+            text-align: right; /* Align content to the right */
+        }
+        .text-center
+        {
+            text-align: center;
+        }
+    .footer{
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      padding: 10px;
+    }
+    .row{
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start; /* Aligns content at the top of each column */
+      }
+      .col-md-6 {
+          flex: 0 0 50%; /* Each column takes up 50% of the width */
+          max-width: 50%;
+      }
+      }
+</style>
+<body>
+  <div class="content-wrapper">
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Invoice</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item">
+                {% if mninvview == '1' %}
+                  <a href="{% url 'invlist' %}">View</a>
+                {% endif %}                               
+              </li>
+              <li class="breadcrumb-item active">Invoice</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="content">
+      <div class="container-fluid">
+        <form id="invoiceForm"  >
+          {% csrf_token %}
+          <div class="row">
+            <div class="col-12">
+              <div class="invoice p-3 mb-3" id="invoice"> <!-- This is the div we will print -->
+                {% for chunk in chinvoice_chunks %}
+                  <div class="header">
+                    {% for i in objhospt %}
+                    <img src="{{i.Logo.url }}" alt="{{ i.Name }} Logo" style="width: 100px; height: 100px; ">
+                       
+                      <h6 style="color:green;">{{ i.Name }}</h6>
+                      <p>
+                        <input type="hidden" class="form-control" value="{{ i.id }}" name="hosptname">
+                        {{ i.Address }}
+                        GST NO: {{ i.GST }}<br>
+                        Phone: {{ i.Contact_no }}
+                        Email: {{ i.Email }}
+                      </p>
+                    {% endfor %}
+                    {% for x in brname %}
+                     <p>Branch: {{ x.Branch_Name }}</p> 
+                      <input type="hidden" class="form-control" value="{{ x.id }}" name="branchname">
+                    {% endfor %}
+                  </div>
+                    <div class="details">
+                         <div class="row clearfix">
+                          {% if forloop.first %}
+                                <div class="col-md-6">
+                                  <div class="details-container">
+                                    <div class="patient-details">
+                                      <!-- Patient details here -->
+                                      <p>Patient Name:{{ lsinvoice.patientname }}</p>
+                                      <p>Patient Phone Number:{{ lsinvoice.patientphno }}</p>
+                                    </div>
+                                  </div>
+                                </div>
+                                {% endif %}
+                                    <div  class="col-md-6">
+                                      <div class="bill-details">
+                                        <p>Invoice Number: {{ lsinvoice.Invoicenumber }}</p>
+                                        <p>Date:{{ lsinvoice.currentdate }}</p>
+                                        <!-- Bill details here -->
+                                      </div>
+                                    </div>
+                        </div>
+                    </div>
+                  <div class="order-details">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Sl.No</th>
+                          <th>Particulars</th>
+                          <th>Batch No</th>
+                          <th>Expiry Date</th>
+                       <!--       <th>Item Quanity</th>
+                      <th>Unit</th> -->
+                          <th>Company Name</th>
+                          <th>Quantity</th>
+                          <th>Rate</th>
+                          <th>Tax (%)</th>
+                         <!--  <th>Tax Amount</th> -->
+                          <th>Amount+Gst</th>
+                          <!-- <th>No.</th>
+                          <th>Particulars</th>
+                          <th>Quantity</th>
+                          <th>Rate</th>
+                          <th>Tax</th>
+                          <th>Tax Amount</th>
+
+                          <th>MRP<br>(inc.Tax)</th> -->
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <!-- {{chinvoice}} -->
+                        {% for item in chinvoice %}
+                          <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ item.particulars }}-{{item.unt}}</td>
+                            <td>{{item.batchno}}</td>
+                            <td>{{item.expirydate}}</td>
+                          
+                           
+                            
+                            <td>{{item.mfg}}</td>
+                            <td>{{ item.quantity }}</td>
+                            
+                            <td>{{ item.amount }}</td>
+                            <td>{{item.tax}}%</td>
+                           <!-- <td>{{item.taxamount}}</td> -->
+                            <td>{{ item.sutotal }}</td>
+                          </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {% if not forloop.last %}
+                    <div class="page-break"></div> <!-- Page break for subsequent items -->
+                  {% endif %}
+                {% endfor %}
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="text-left">
+                      <p>Prepared By: {{ staffn.Staff.Staff_firstname }}</p>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="text-right sbdt">
+                      <!-- <p>Subtotal: ₹{{ lsinvoice.subtotal }}</p> -->
+                      <p>Discount: ₹{{ lsinvoice.discount }}</p>
+                      <!-- <p>Tax: ₹{{ lsinvoice.tax }}</p> -->
+                      <!-- <p>Shipping: ₹{{ lsinvoice.shipping }}</p>
+                      {% if lsinvoice.consultationfee %}
+                        <p>Consultation fee: ₹{{ lsinvoice.consultationfee }}</p>
+                      {% endif %}
+                      {% if not lsinvoice.consultationfee and lsinvoice.consultationfeecumregfee %}
+                        <p>Consultation Cum Registration Fee: ₹{{ lsinvoice.consultationfeecumregfee }}</p>
+                      {% endif %} -->
+                      <p><h5>Total Amount: ₹{{ lsinvoice.total }}</h5></p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="text-center mt-4">
+                  
+                  <div class="footer">
+               
+                    <p>Thank you for choosing our hospital. We appreciate your trust in us.</p>
+                  </div>
+                </div>
+               
+                <!-- Table and other content here -->
+            
+              
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <button onclick="printInvoice()" class="btn btn-primary">Print Invoice</button>
+ 
+    </section>
+  </div>
+  
+  <!-- Print button -->
+ 
+  <!-- JavaScript function to print the invoice -->
+  
+<script>
+  function printInvoice() {
+      // Get the HTML content of the invoice div
+      var invoiceContent = document.getElementById('invoice').outerHTML;
+
+      // Get the internal CSS styles from the parent document
+      var styles = Array.from(document.querySelectorAll('style'))
+          .map(style => style.innerHTML)
+          .join('\n');
+
+      // Open a new window
+      var printWindow = window.open('', '_blank');
+      
+      // Set the HTML content of the new window along with the internal CSS styles
+      printWindow.document.write('<html><head><title>Invoice</title><style>' + styles + '</style></head><body>' + invoiceContent + '</body></html>');
+      printWindow.document.close();
+
+      // Print the new window
+      printWindow.print();
+      
+  }
+</script>
+  </script>
+{% endblock %}

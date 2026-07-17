@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="content-wrapper">
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Edit Room/Ward</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item">
+              {% if roomview == '1' %}
+                <a href="{% url 'roomtable' %}?menumanagement_id={{ idmngmnt }}">View All</a>
+              {% endif %}
+            </li>
+            <li class="breadcrumb-item active">Edit Room/Ward</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="content">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card card-primary">
+          <div class="card-header">
+            <h3 class="card-title">Edit Details</h3>
+          </div>
+
+          <form method="POST" action="{% url 'editroom' %}?menumanagement_id={{ idmngmnt }}">
+            {% csrf_token %}
+            <input type="hidden" name="roomid" value="{{ objedroom.id }}">
+
+            <div class="row">
+              <div class="col-md-6">
+                <div class="card">
+                  <div class="card-body">
+                    <div class="form-group">
+                      <label>Branch Name</label>
+                      <select class="form-control" name="branchname" required>
+                        {% for i in branchobj %}
+                          <option value="{{ i.id }}" {% if i.id == objedroom.branchidrm_id %}selected{% endif %}>{{ i.Branch_Name }}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+
+                    <div class="form-group">
+                      <label>Floor Number</label>
+                      <input type="text" class="form-control" name="floornumber" value="{{ objedroom.Floorno }}" required>
+                    </div>
+
+                    <div class="form-group">
+                      <label>Block Number</label>
+                      <input type="text" class="form-control" name="blocknumber" value="{{ objedroom.Blockno }}" required>
+                    </div>
+
+                    <div class="form-group">
+                      <label>Accommodation Type:</label><br>
+                      <input type="radio" value="Ward" name="accommodation" id="accommodationWard" {% if objedroom.wardorroom == "Ward" %}checked{% endif %} required>
+                      <label for="accommodationWard">Ward</label> 
+
+                      <input type="radio" value="Room" id="accommodationRoom" name="accommodation" {% if objedroom.wardorroom == "Room" %}checked{% endif %} required>
+                      <label for="accommodationRoom">Room</label>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="card">
+                  <div class="card-body">
+
+                    <div class="form-group" id="roomTypeField">
+                      <label>Room Type</label>
+                      <select class="form-control" name="roomtype">
+                          
+                        <option value="Premium"  {% if objedroom.Room_type == 'Premium' %}selected{% endif %}>Premium</option>
+                        <option value="Single"  {% if objedroom.Room_type == 'Single' %}selected{% endif %}>Single</option>
+                    </select>
+                    </div>
+
+                    <div class="form-group" id="roomNoField">
+                      <label>Room Number</label>
+                      <input type="text" class="form-control" name="roomnumber" value="{{ objedroom.Roomno }}">
+                    </div>
+
+                    <div class="form-group" id="bedTypeField">
+                      <label>Bed Type</label>
+                      <select class="form-control" name="bedtype">
+                        <option value="single" {% if objedroom.bed_type == 'single' %}selected{% endif %}>Single</option>
+                        <option value="double" {% if objedroom.bed_type == 'double' %}selected{% endif %}>Double</option>
+                      </select>
+                    </div>
+
+                    <div class="form-group" id="bedNoField">
+                      <label>Bed Number</label>
+                      <input type="text" class="form-control" name="wardbedno" value="{{ objedroom.wardbedno }}">
+                    </div>
+
+                    <div class="form-group">
+                      <label>Rate</label>
+                      <input type="text" class="form-control" name="rate" value="{{ objedroom.rate }}" required>
+                    </div>
+
+                    <div class="form-group" id="nursingChargeField">
+                      <label>Nursing Charge</label>
+                      <input type="number" step="0.01" class="form-control" name="nursingcharge" value="{{ objedroom.nursing_charge }}" placeholder="Enter Nursing Charge">
+                    </div>
+
+                    <div class="form-group" id="waterElectricityChargeField">
+                      <label>Water & Electricity Charge</label>
+                      <input type="number" step="0.01" class="form-control" name="waterelectricitycharge" value="{{ objedroom.water_electricity_charge }}" placeholder="Enter Water & Electricity Charge">
+                    </div>
+
+                    <div class="form-group">
+                      <label>Availability</label><br>
+                      <input type="radio" name="is_available" value="1" id="available" {% if objedroom.is_available %}checked{% endif %}>
+                      <label for="available">Available</label>
+
+                      <input type="radio" name="is_available" value="0" id="not_available" {% if not objedroom.is_available %}checked{% endif %}>
+                      <label for="not_available">Not Available</label>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-footer">
+              {% if messages %}
+                {% for message in messages %}
+                  <p style="color:green;">{{ message }}</p>
+                {% endfor %}
+              {% endif %}
+              {% if roomedit == '1' %}
+                <button type="submit" class="btn btn-primary">Submit</button>
+              {% endif %}
+            </div>
+          </form>
+
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+      let wardRadio = document.getElementById("accommodationWard");
+      let roomRadio = document.getElementById("accommodationRoom");
+
+      let roomTypeField = document.getElementById("roomTypeField");
+      let roomNoField = document.getElementById("roomNoField");
+      let bedTypeField = document.getElementById("bedTypeField");
+      let bedNoField = document.getElementById("bedNoField");
+      let nursingChargeField = document.getElementById("nursingChargeField");
+      let waterElectricityChargeField = document.getElementById("waterElectricityChargeField");
+
+      function toggleFields() {
+          if (wardRadio.checked) {
+              bedTypeField.style.display = "block";
+              bedNoField.style.display = "block";
+              roomTypeField.style.display = "none";
+              roomNoField.style.display = "none";
+              nursingChargeField.style.display = "none";
+              waterElectricityChargeField.style.display = "none";
+          } else if (roomRadio.checked) {
+              bedTypeField.style.display = "block";
+              roomTypeField.style.display = "block";
+              roomNoField.style.display = "block";
+              bedNoField.style.display = "none";
+              nursingChargeField.style.display = "block";
+              waterElectricityChargeField.style.display = "block";
+          }
+      }
+
+      wardRadio.addEventListener("change", toggleFields);
+      roomRadio.addEventListener("change", toggleFields);
+
+      toggleFields();
+  });
+</script>
+
+{% endblock %}

@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Follow Up Detail</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="{% url 'followuptable'%}?menumanagement_id={{ idmngmnt }}">View All</a></li>
+              <li class="breadcrumb-item active">Follow Up  </li>
+            </ol>
+          </div>
+        </div>
+      </div>
+      <!-- /.container-fluid -->
+    </section>
+    <!-- Main content -->
+    <section class="content">
+      <div class="row">
+        <div class="col-md-12">
+          <div class="card card-primary">
+            <div class="card-header">
+              <h3 class="card-title">Follow Up  Details</h3>
+              <div class="card-tools">
+                <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse"> 
+                </button>
+              </div>
+            </div>
+            <form method="POST", action="{% url 'followupdetails' %}?menumanagement_id={{ idmngmnt }}" id="followup-form">
+            {% csrf_token %}
+      <div class="row">
+        {%for enq in enq%}
+        <div class="col-md-6">
+            <div class="card">
+          
+              <div class="card-body">
+                 <div class="form-group">
+                  <label for="exampleInputEmail1">Name</label>
+                  <input type="hidden" class="form-control" id="enqid" name="enqid" value="{{enq.id}}">
+                  <input type="text" class="form-control" id="enqname" name="enqname" value="{{enq.name}}">
+                </div>
+
+               
+                <div class="form-group">
+                  <label for="exampleInputEmail1">age</label>
+                  <input type="text" class="form-control" id="age" name="age"  value="{{enq.age}}" required>
+                              </div>
+                  
+                <div class="form-group">
+                  <label for="exampleInputRegisterNo">Phone Number</label>
+                  <input type="text" class="form-control" id="phno" name="phno" value="{{enq.Phone_number}}">
+                </div>
+               
+                <div class="form-group">
+                  <label for="exampleInputHouse">Complaint</label>
+                  <textarea class="form-control"  name="desc">{{enq.complaint}}</textarea>
+                </div>
+               
+              </div>
+            </div>
+          </div>
+              <!-- /.card-body -->
+           
+            <div class="col-md-6">
+            <div class="card">
+              <div class="card-body">
+                <div class="form-group">
+                  <label for="exampleInputRegisterNo">Status</label>
+                    <select class="form-control" name="stid" id="status-select">
+                        <option selected>Select</option>
+                        <option value="Pending" {% if enq.status == 'Pending' %}selected{% endif %}>Pending</option>
+                        <option value="Recontact" {% if enq.status == 'Recontact' %}selected{% endif %}>Re-contact</option>
+                        <option value="Recontact2" {% if enq.status == 'Recontact2' %}selected{% endif %}>Re-contact2</option>
+                        
+                        <option value="Converted" {% if enq.status == 'Converted' %}selected{% endif %}>Converted</option>
+                        <option value="Priority" {% if enq.status == 'Priority' %}selected{% endif %}>Priority</option>
+                        <option value="Dropped" {% if enq.status == 'Dropped' %}selected{% endif %}>Dropped</option>
+                       
+                            <!-- {% for i in stid %}
+                              <option value="{{i.id}}" {% if i.id == enq.statustype_id %} selected {% endif %}>{{i.stype}}</option>
+                            {% endfor %} -->
+                    </select>
+                </div>
+              
+                <div class="form-group" id="remainder-date-field">
+                  <label for="exampleInputHouse">Remainder Date</label>
+                  <input type="date" class="form-control" name="remainderdt"  >
+                </div>
+                <div class="form-group">
+                  <label for="exampleInputHouse">Remark</label>
+                    <textarea class="form-control"  name="remark"></textarea>
+                </div>
+                </div>
+              </div>
+            </div>
+            {% endfor %} 
+          </div>
+                <div class="card-footer">
+                   {% if messages %}
+                      {% for message in messages %}
+                        <p style="color:green;">{{message}}</p> 
+                      {% endfor %}
+                  {% endif %}
+                  <button type="submit" class="btn btn-primary">Submit</button>
+                </div>
+              </form>
+            <!-- /.card-body -->
+          </div>
+          <!-- /.card -->
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body1">
+    
+    
+    <table id="example1" class="table table-bordered table-striped">
+    <thead>
+    <tr>
+    <th>Sl No</th>
+    <th>Update on</th>
+    <th>Follow up By</th>
+    <th>Customer Feedback</th>
+    <th>Remainder Date</th>
+  
+    </tr>
+    </thead> 
+    <tbody>
+    {% for i in follwupdt %}
+    <tr>
+      <td>{{ forloop.counter }}</td>
+      <td>{{i.followedby.Staff_firstname}}</td>
+      <td>{{i.followupdate}}</td>
+     
+      <td>{{i.remarks}}</td>
+      <td>{{i.remainderdate}}</td>
+    {% endfor %}
+    
+    </tbody>
+    </table>
+    
+    </div>
+    </div>
+    </div>
+    </div>
+    </section>
+    <!-- /.content -->
+  </div>
+  <!-- /.content-wrapper -->
+ 
+<script>
+  // Function to toggle the visibility of the remainder date field
+  function toggleRemainderDateField() {
+    var statusSelect = document.getElementById('status-select');
+    var remainderDateField = document.getElementById('remainder-date-field');
+
+    if (statusSelect.value === 'Converted') { // Check if status is closed
+      remainderDateField.style.display = 'none'; // Hide the remainder date field
+    }
+    else if (statusSelect.value === 'Dropped') { // Check if status is closed
+      remainderDateField.style.display = 'none'; // Hide the remainder date field
+    } 
+    else {
+      remainderDateField.style.display = 'block'; // Show the remainder date field
+    }
+  }
+
+  
+  toggleRemainderDateField();
+  document.getElementById('status-select').addEventListener('change', toggleRemainderDateField);
+
+  document.getElementById('followup-form').addEventListener('submit', function(event) {
+    var statusSelect = document.getElementById('status-select');
+    var remainderDateField = document.getElementById('remainder-date-field');
+    var remainderDateInput = document.querySelector('input[name="remainderdt"]');
+    
+    if (statusSelect.value === 'Pending' || statusSelect.value === 'Recontact' || statusSelect.value === 'Recontact2' || statusSelect.value === 'Priority' ) {
+      if (remainderDateInput.value === '') { 
+        alert('Remainder date cannot be empty for status Pending or status Converted.');
+        event.preventDefault(); 
+      }
+    }
+  });
+</script>
+ {% endblock %}

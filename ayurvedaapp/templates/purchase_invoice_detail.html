@@ -1,0 +1,261 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="content-wrapper" style="background: #f4f7fc;">
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                    <!-- Invoice Card -->
+                    <div class="card" style="border-radius: 24px; border: none; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);">
+                        <div class="card-header bg-white" style="border-radius: 24px 24px 0 0; border-bottom: 1px solid #e9edf2;">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h3 class="card-title mb-0" style="font-weight: 600; color: #1f3b4c;">
+                                    <i class="fas fa-file-invoice-dollar me-2" style="color: #2b7a62;"></i> 
+                                    Purchase Invoice Details
+                                </h3>
+                                <div>
+                                    <a href="{% url 'purchase_invoice_list' %}" class="btn btn-primary" style="border-radius: 40px;">
+                                        <i class="fas fa-arrow-left me-2"></i> Back to List
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body" style="padding: 1.8rem;">
+                            
+                            <!-- Invoice Header -->
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <div class="card" style="border-radius: 16px; border: 1px solid #eef2f8;">
+                                        <div class="card-body">
+                                            <h5 class="mb-3" style="color: #2b7a62;">
+                                                <i class="fas fa-info-circle me-2"></i> Invoice Information
+                                            </h5>
+                                            <table class="table table-borderless">
+                                                <tr>
+                                                    <td style="width: 40%;"><strong>Invoice Number:</strong></td>
+                                                    <td>{{ invoice.invoice_number }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Invoice Date:</strong></td>
+                                                    <td>{{ invoice.invoice_date|date:"d-m-Y" }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Payment Terms:</strong></td>
+                                                    <td>{{ invoice.payment_terms }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Created By:</strong></td>
+                                                    <td>{{invoice.created_by.Staff.Staff_firstname}} {{invoice.created_by.Staff.Staff_lastname}}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Created Date:</strong></td>
+                                                    <td>{{ invoice.created_date|date:"d-m-Y H:i:s" }}</td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card" style="border-radius: 16px; border: 1px solid #eef2f8;">
+                                        <div class="card-body">
+                                            <h5 class="mb-3" style="color: #2b7a62;">
+                                                <i class="fas fa-truck me-2"></i> Supplier Details
+                                            </h5>
+                                            <table class="table table-borderless">
+                                                <tr>
+                                                    <td style="width: 40%;"><strong>Supplier Name:</strong></td>
+                                                    <td>{{ invoice.supplier.shopname }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Supplier Code:</strong></td>
+                                                    <td>{{ invoice.supplier.suppliercode|default:"-" }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Contact:</strong></td>
+                                                    <td>{{ invoice.supplier.contactnumber|default:"-" }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Address:</strong></td>
+                                                    <td>{{ invoice.supplier.address|default:"-" }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Supplier Bill No:</strong></td>
+                                                    <td>{{ invoice.supplier_bill_number|default:"-" }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Supplier Bill Date:</strong></td>
+                                                    <td>{{ invoice.supplier_bill_date|date:"d-m-Y"|default:"-" }}</td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Store & Company Details -->
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <div class="card" style="border-radius: 16px; border: 1px solid #eef2f8;">
+                                        <div class="card-body">
+                                            <h5 class="mb-3" style="color: #2b7a62;">
+                                                <i class="fas fa-store me-2"></i> Store Details
+                                            </h5>
+                                            <table class="table table-borderless">
+                                                <tr>
+                                                    <td style="width: 40%;"><strong>Store Name:</strong></td>
+                                                    <td>{{ invoice.store.storename }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Branch:</strong></td>
+                                                    <td>{{ invoice.branch.Branch_Name|default:"-" }}</td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                                </div>
+                            </div>
+
+                            <!-- Items Table -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <div class="card" style="border-radius: 16px; border: 1px solid #eef2f8;">
+                                        <div class="card-header bg-white" style="border-radius: 16px 16px 0 0;">
+                                            <h5 class="mb-0" style="color: #2b7a62;">
+                                                <i class="fas fa-table-list me-2"></i> Medicine Items
+                                            </h5>
+                                        </div>
+                                        <div class="card-body p-0">
+                                            <div class="table-responsive">
+                                                <table class="table table-bordered" style="margin-bottom: 0;">
+                                                    <thead style="background: #f9fbfd;">
+                                                        <tr>
+                                                            <th>#</th>
+                                                            <th>Medicine Name</th>
+                                                            <th>Company</th>
+                                                            <th>Batch No</th>
+                                                            {% comment %} <th>Mfg mo/Yr</th> {% endcomment %}
+                                                            <th>Expiry mo/Yr</th>
+                                                            <th>Qty/Unit</th>
+                                                            <th>Free/Unit</th>
+                                                            <th>Purchase Rate</th>
+                                                            <th>Wholesale Rate</th>
+                                                            <th>Retail Rate</th>
+                                                            <th>Total</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% for item in invoice.items.all %}
+                                                        <tr>
+                                                            <td>{{ forloop.counter }}</td>
+                                                            <td>
+                                                                <strong>{{ item.medicine.itemnm }}</strong>
+                                                                <br>
+                                                                <small class="text-muted">{{ item.medicine.Generic_name|default:"" }}</small>
+                                                            </td>
+                                                            <td>{{ item.company.Comapany_name|default:"-" }}</td>
+                                                            <td>{{ item.batch_no }}</td>
+                                                            {% comment %} <td>{{ item.manufacturer_date|date:"M-Y"|default:"-" }}</td> {% endcomment %}
+                                                            <td>{{ item.expiry_date|date:"M-Y"|default:"-" }}</td>
+                                                            <td class="text-center">{{ item.quantity }} - ({{item.unt.unitname}})</td>
+                                                            <td class="text-center">{{ item.free_quantity|default:"0" }} ({{item.unt.unitname}})</td>
+                                                            <td class="text-right">₹ {{ item.unit_price|floatformat:2 }}</td>
+                                                            <td class="text-right">₹ {{ item.wholesalerate|floatformat:2 }}</td>
+                                                            <td class="text-right">₹ {{ item.retalrate|floatformat:2 }}</td>
+                                                            <td class="text-right"><strong>₹ {{ item.total_amount|floatformat:2 }}</strong></td>
+                                                        </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                    <tfoot style="background: #f9fbfd;">
+                                                        <tr>
+                                                            <td colspan="10" class="text-right"><strong>Subtotal:</strong></td>
+                                                            <td colspan="1" class="text-right"><strong>₹ {{ invoice.subtotal|floatformat:2 }}</strong></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td colspan="10" class="text-right"><strong>Total GST ({% widthratio invoice.total_gst invoice.subtotal 100 %}%):</strong></td>
+                                                            <td colspan="1" class="text-right"><strong>₹ {{ invoice.total_gst|floatformat:2 }}</strong></td>
+                                                        </tr>
+                                                        {% if invoice.total_discount > 0 %}
+                                                        <tr>
+                                                            <td colspan="10" class="text-right"><strong>Discount:</strong></td>
+                                                            <td colspan="1" class="text-right text-danger"><strong>- ₹ {{ invoice.total_discount|floatformat:2 }}</strong></td>
+                                                            
+                                                        </tr>
+                                                        {% endif %}
+                                                        {% if invoice.shipping_charge > 0 %}
+                                                        <tr>
+                                                            <td colspan="10" class="text-right"><strong>Shipping Charge:</strong></td>
+                                                            <td colspan="1" class="text-right"><strong>+ ₹ {{ invoice.shipping_charge|floatformat:2 }}</strong></td>
+                                                        </tr>
+                                                        {% endif %}
+                                                        {% if invoice.other_charge > 0 %}
+                                                        <tr>
+                                                            <td colspan="10" class="text-right"><strong>Other Charges:</strong></td>
+                                                            <td colspan="1" class="text-right"><strong>+ ₹ {{ invoice.other_charge|floatformat:2 }}</strong></td>
+                                                        </tr>
+                                                        {% endif %}
+                                                        <tr style="background: #e8f5e9;">
+                                                            <td colspan="10" class="text-right"><strong>Grand Total:</strong></td>
+                                                            <td colspan="1" class="text-right">
+                                                                <strong style="font-size: 1.2 em; color: #2b7a62;">₹ {{ invoice.grand_total|floatformat:2 }}</strong>
+                                                            </td>
+                                                        </tr>
+                                                    </tfoot>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Notes Section -->
+                            {% if invoice.notes %}
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <div class="card" style="border-radius: 16px; border: 1px solid #eef2f8;">
+                                        <div class="card-body">
+                                            <h5 class="mb-2" style="color: #2b7a62;">
+                                                <i class="fas fa-sticky-note me-2"></i> Notes
+                                            </h5>
+                                            <p class="mb-0">{{ invoice.notes|linebreaks }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Amount in Words -->
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="alert alert-info" style="border-radius: 16px; background: #e3f2fd; border: none;">
+                                        <i class="fas fa-language me-2"></i>
+                                        <strong>Amount in Words:</strong> {{ invoice.amount_in_words }}
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script>
+$(document).ready(function() {
+    // Add any additional JavaScript if needed
+});
+</script>
+
+<style>
+.card { border-radius: 20px; border: 1px solid #eef2f8; margin-bottom: 20px; }
+.card-header { background: white; border-radius: 20px 20px 0 0; border-bottom: 1px solid #eef2f8; padding: 1rem 1.2rem; }
+.table th { background: #f9fbfd; }
+.table td { vertical-align: middle; }
+.btn { border-radius: 40px; padding: 10px 25px; }
+</style>
+
+{% endblock %}

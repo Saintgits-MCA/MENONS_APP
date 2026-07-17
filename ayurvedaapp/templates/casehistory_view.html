@@ -1,0 +1,1396 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Patient Case History - {{ patient.Patient_Name }}</title>
+  
+  <style>
+    :root {
+      --primary-color: #4a6cf7;
+      --secondary-color: #6f42c1;
+      --success-color: #28a745;
+      --warning-color: #ffc107;
+      --danger-color: #dc3545;
+      --light-bg: #f8f9fa;
+      --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      --border-radius: 12px;
+    }
+    
+    body {
+      background-color: #f5f7fb;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    .content-wrapper {
+      background-color: transparent;
+      padding: 20px;
+    }
+    
+    .patient-header {
+      background: white;
+      border-radius: var(--border-radius);
+      padding: 25px;
+      margin-bottom: 25px;
+      box-shadow: var(--card-shadow);
+      border-left: 5px solid var(--primary-color);
+    }
+    
+    .patient-id {
+      background: var(--primary-color);
+      color: white;
+      border-radius: 20px;
+      padding: 8px 15px;
+      font-weight: bold;
+      font-size: 0.9rem;
+    }
+    
+    .stats-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+    
+    .stat-card {
+      background: white;
+      border-radius: var(--border-radius);
+      padding: 20px;
+      box-shadow: var(--card-shadow);
+      text-align: center;
+      transition: transform 0.3s ease;
+    }
+    
+    .stat-card:hover {
+      transform: translateY(-5px);
+    }
+    
+    .stat-number {
+      font-size: 2rem;
+      font-weight: bold;
+      color: var(--primary-color);
+      margin-bottom: 5px;
+    }
+    
+    .stat-label {
+      font-size: 0.9rem;
+      color: #6c757d;
+    }
+    
+    .info-card {
+      background: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--card-shadow);
+      overflow: hidden;
+      margin-bottom: 20px;
+      transition: transform 0.3s ease;
+    }
+    
+    .info-card:hover {
+      transform: translateY(-5px);
+    }
+    
+    .card-header {
+      background: #f8f9fa;
+      padding: 15px 20px;
+      border-bottom: 1px solid #eee;
+      font-weight: 700;
+      color: #333;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .card-body {
+      padding: 20px;
+    }
+    
+    .tab-container {
+      background: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--card-shadow);
+      overflow: hidden;
+      margin-bottom: 25px;
+    }
+    
+    .tab-buttons {
+      display: flex;
+      background: #f8f9fa;
+      border-bottom: 1px solid #eee;
+      padding: 0 20px;
+      flex-wrap: wrap;
+    }
+    
+    .tab-button {
+      padding: 12px 20px;
+      background: none;
+      border: none;
+      font-weight: 600;
+      color: #6c757d;
+      cursor: pointer;
+      transition: all 0.3s;
+      border-bottom: 3px solid transparent;
+    }
+    
+    .tab-button.active {
+      color: var(--primary-color);
+      border-bottom-color: var(--primary-color);
+    }
+    
+    .tab-content {
+      display: none;
+      padding: 25px;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 40px 0;
+      color: #6c757d;
+    }
+    
+    .empty-state i {
+      font-size: 3rem;
+      margin-bottom: 10px;
+      opacity: 0.6;
+    }
+    
+    .table-responsive {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    
+    .table-card table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    .table-card th {
+      background: var(--secondary-color);
+      color: white;
+      padding: 10px 12px;
+      text-align: left;
+      font-weight: 600;
+    }
+    
+    .table-card td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .table-card tbody tr:hover {
+      background-color: #f8f9fa;
+    }
+
+    /* Timeline Styles */
+    .timeline-container {
+      position: relative;
+      max-height: 700px;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    .timeline-item {
+      position: relative;
+      padding: 20px;
+      margin-bottom: 20px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      border-left: 4px solid var(--primary-color);
+      transition: all 0.3s ease;
+    }
+
+    .timeline-item:hover {
+      transform: translateX(5px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+    }
+
+    .timeline-date {
+      font-size: 0.85rem;
+      color: var(--primary-color);
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .timeline-date i {
+      font-size: 0.8rem;
+    }
+
+    .timeline-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .timeline-doctor {
+      background: var(--primary-color);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .timeline-branch {
+      background: var(--secondary-color);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .timeline-status {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+    }
+
+    .status-consultation {
+      background: #e3f2fd;
+      color: #1976d2;
+    }
+
+    .status-followup {
+      background: #fff3e0;
+      color: #f57c00;
+    }
+
+    .timeline-content {
+      margin-bottom: 15px;
+    }
+
+    .complaint-section {
+      margin-bottom: 12px;
+    }
+
+    .complaint-label {
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 5px;
+      display: block;
+    }
+
+    .complaint-text {
+      background: #f8f9fa;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #e9ecef;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .diagnosis-section {
+      background: #e8f5e8;
+      padding: 12px;
+      border-radius: 8px;
+      border-left: 4px solid var(--success-color);
+    }
+
+    .diagnosis-label {
+      font-weight: 600;
+      color: var(--success-color);
+      margin-bottom: 5px;
+    }
+
+    .followup-info {
+      background: #fff3e0;
+      padding: 10px 15px;
+      border-radius: 8px;
+      border-left: 4px solid var(--warning-color);
+      margin-top: 10px;
+    }
+
+    .followup-label {
+      font-weight: 600;
+      color: var(--warning-color);
+      margin-bottom: 3px;
+    }
+
+    /* Prescription History Styles */
+    .prescription-history-scroll {
+      max-height: 600px;
+      overflow-y: auto;
+      padding-right: 8px;
+      scroll-behavior: smooth;
+    }
+
+    .prescription-date-block {
+      margin-bottom: 20px;
+    }
+
+    .date-header {
+      background: var(--primary-color);
+      color: white;
+      padding: 10px 15px;
+      border-radius: 6px 6px 0 0;
+      font-weight: bold;
+      margin-bottom: 0;
+    }
+
+    .table-bordered {
+      border: 1px solid #dee2e6;
+    }
+
+    .table-bordered th,
+    .table-bordered td {
+      border: 1px solid #dee2e6;
+    }
+
+    .align-middle {
+      vertical-align: middle !important;
+    }
+
+    .text-center {
+      text-align: center !important;
+    }
+
+    .bg-light {
+      background-color: #f8f9fa !important;
+    }
+
+    .position-sticky {
+      position: sticky !important;
+    }
+
+    .top-0 {
+      top: 0 !important;
+    }
+
+    .z-10 {
+      z-index: 10 !important;
+    }
+
+    .mb-0 {
+      margin-bottom: 0 !important;
+    }
+
+    .fw-bold {
+      font-weight: bold !important;
+    }
+
+    .mb-3 {
+      margin-bottom: 1rem !important;
+    }
+
+    .py-3 {
+      padding-top: 1rem !important;
+      padding-bottom: 1rem !important;
+    }
+
+    .text-muted {
+      color: #6c757d !important;
+    }
+
+    /* Scrollable Sections */
+    .scroll-section {
+      max-height: 600px;
+      overflow-y: auto;
+      padding-right: 8px;
+      scroll-behavior: smooth;
+    }
+
+    .health-state {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    
+    .health-state-label {
+      min-width: 150px;
+      font-weight: 600;
+    }
+    
+    .health-state-value {
+      color: var(--primary-color);
+    }
+    
+    .history-item {
+      margin-bottom: 15px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #f5f5f5;
+    }
+    
+    .history-item:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+    
+    .history-date {
+      font-weight: bold;
+      color: var(--primary-color);
+      margin-bottom: 5px;
+    }
+    
+    .section-title {
+      font-weight: 700;
+      color: #333;
+      margin: 0 0 15px 0;
+      font-size: 1.2rem;
+    }
+
+    /* Patient Info Styles */
+    .patient-info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .info-item {
+      background: #f8f9fa;
+      padding: 12px 15px;
+      border-radius: 8px;
+      border-left: 4px solid var(--primary-color);
+    }
+
+    .info-label {
+      font-size: 0.85rem;
+      color: #6c757d;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+
+    .info-value {
+      font-size: 1rem;
+      color: #333;
+      font-weight: 500;
+    }
+    
+    /* Vitals Tab Specific Styles */
+    .vital-section {
+      margin-bottom: 20px;
+    }
+
+    .vital-section-title {
+      color: var(--primary-color);
+      font-weight: 600;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #f0f0f0;
+    }
+
+    .vital-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+    }
+
+    .vital-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: #f8f9fa;
+      border-radius: 6px;
+      border-left: 3px solid var(--primary-color);
+    }
+
+    .vital-label {
+      font-weight: 600;
+      color: #555;
+      font-size: 0.9rem;
+    }
+
+    .vital-value {
+      font-weight: 700;
+      color: #333;
+      font-size: 0.95rem;
+    }
+
+    .lifestyle-factors {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* Color coding for abnormal values */
+    .text-warning {
+      color: #ff6b35 !important;
+    }
+
+    .text-danger {
+      color: #dc3545 !important;
+    }
+
+    .text-info {
+      color: #17a2b8 !important;
+    }
+
+    .text-success {
+      color: #28a745 !important;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 992px) {
+      .stats-container {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      }
+      
+      .tab-buttons {
+        flex-wrap: wrap;
+      }
+      
+      .tab-button {
+        flex: 1;
+        min-width: 120px;
+        text-align: center;
+      }
+
+      .patient-info-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .timeline-header {
+        flex-direction: column;
+        gap: 8px;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .content-wrapper {
+        padding: 10px;
+      }
+      
+      .patient-header {
+        padding: 15px;
+      }
+      
+      .health-state {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .health-state-label {
+        min-width: auto;
+        margin-bottom: 5px;
+      }
+
+      .table-responsive {
+        font-size: 0.8rem;
+      }
+
+      .tab-button {
+        padding: 10px 12px;
+        font-size: 0.9rem;
+      }
+
+      .timeline-item {
+        padding: 15px;
+      }
+
+      .vital-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .vital-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+      }
+      
+      .lifestyle-factors {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Patient Timeline & Case History</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="{% url 'index' %}">Home</a></li>
+              <li class="breadcrumb-item active">Patient Timeline</li>
+            </ol>
+          </div>
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <!-- Patient Header -->
+        <div class="patient-header">
+          <div class="d-flex justify-content-between align-items-center flex-wrap">
+            <div>
+              <h2 class="mb-1">{{ patient.Patient_Name }}</h2>
+              <p class="mb-0">Complete Medical Timeline & History</p>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+              <span class="patient-id">MR No: {{ patient.Medical_Record_Number }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Patient Information -->
+        <div class="patient-info-grid">
+          <div class="info-item">
+            <div class="info-label">Age</div>
+            <div class="info-value">
+              {% with latest_vital=vitals.last %}
+                {% if latest_vital and latest_vital.age %}
+                  {{ latest_vital.age }}
+                {% else %}
+                  {{ patient.Age }}
+                {% endif %}
+              {% endwith %}
+            </div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Gender</div>
+            <div class="info-value">{{ patient.Gender }}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Contact</div>
+            <div class="info-value">{{ patient.contactno }}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Email</div>
+            <div class="info-value">{{ patient.Email }}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Address</div>
+            <div class="info-value">{{ patient.address|default:"Not specified" }}</div>
+          </div>
+        </div>
+        
+        <!-- Stats Overview -->
+        <div class="stats-container">
+          <div class="stat-card">
+            <div class="stat-number">{{ case_histories.count|default:"0" }}</div>
+            <div class="stat-label">Consultations</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">{{ prescriptions.count|default:"0" }}</div>
+            <div class="stat-label">Prescriptions</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">{{ treatment_plans.count|default:"0" }}</div>
+            <div class="stat-label">Treatments</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">{{ lab_requisitions.count|default:"0" }}</div>
+            <div class="stat-label">Lab Tests</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">{{ vitals.count|default:"0" }}</div>
+            <div class="stat-label">Vital Records</div>
+          </div>
+        </div>
+        
+        <!-- Tab Container -->
+        <div class="tab-container">
+          <!-- Tab Buttons -->
+          <div class="tab-buttons">
+            <button class="tab-button active" data-tab="timeline">Patient Timeline</button>
+            <button class="tab-button" data-tab="prescriptions">Prescriptions</button>
+            <button class="tab-button" data-tab="lab-tests">Lab Tests</button>
+            <button class="tab-button" data-tab="treatments">Treatments</button>
+            <button class="tab-button" data-tab="diet-plans">Diet Plans</button>
+            <button class="tab-button" data-tab="vitals">Vitals</button>
+            <button class="tab-button" data-tab="medical-history">Medical History</button>
+          </div>
+          
+          <!-- Patient Timeline Tab -->
+          <div class="tab-content active" id="timeline-tab">
+            <h3 class="section-title">Patient Consultation Timeline</h3>
+            
+            <div class="info-card">
+              <div class="card-header bg-light position-sticky top-0 z-10">
+                <h6 class="mb-0 fw-bold">Medical Consultation History</h6>
+                <span class="badge bg-primary">{{ case_histories.count }} consultations</span>
+              </div>
+              <div class="card-body">
+                <div class="timeline-container">
+                  {% if case_histories %}
+                    {% for case in case_histories %}
+                    <div class="timeline-item">
+                      <!-- Timeline Header -->
+                      <div class="timeline-date">
+                        <i class="fas fa-calendar-alt"></i>
+                        {{ case.created_at|date:"F d, Y" }}
+                        {% if case.follow_up_date %}
+                        <i class="fas fa-arrow-right ms-3 me-1"></i>
+                        Follow-up: {{ case.follow_up_date|date:"F d, Y" }}
+                        {% endif %}
+                      </div>
+                      
+                      <div class="timeline-header">
+                        <div class="d-flex flex-wrap align-items-center gap-2">
+                          <!-- Doctor Information -->
+                          {% if case.assigned_doctor %}
+                          <span class="timeline-doctor">
+                            <i class="fas fa-user-md me-1"></i>
+                            Dr. {{ case.assigned_doctor.Staff_firstname }} {{ case.assigned_doctor.Staff_lastname }}
+                          </span>
+                          {% endif %}
+                          
+                          <!-- Branch Information -->
+                          {% if case.branchcasehstry %}
+                          <span class="timeline-branch">
+                            <i class="fas fa-hospital me-1"></i>
+                            {{ case.branchcasehstry.Branch_Name }}
+                          </span>
+                          {% endif %}
+
+                          <!-- Prepared By Information -->
+                          {% if case.preparedby %}
+                          <span class="timeline-doctor" style="background: var(--success-color);">
+                            <i class="fas fa-user-edit me-1"></i>
+                            Prepared by: {{ case.preparedby.Staff_firstname }} {{ case.preparedby.Staff_lastname }}
+                          </span>
+                          {% endif %}
+                        </div>
+                        
+                        <!-- Status -->
+                        <span class="timeline-status {% if case.status == 'Consultation' %}status-consultation{% else %}status-followup{% endif %}">
+                          <i class="fas {% if case.status == 'Consultation' %}fa-stethoscope{% else %}fa-redo{% endif %} me-1"></i>
+                          {{ case.status }}
+                        </span>
+                      </div>
+
+                      <!-- Chief Complaint -->
+                      <div class="timeline-content">
+                        <div class="complaint-section">
+                          <span class="complaint-label">Chief Complaint:</span>
+                          <div class="complaint-text">
+                            {{ case.chief_complaint|safe }}
+                          </div>
+                        </div>
+
+                        <!-- Present Complaint -->
+                        {% if case.present_complaint %}
+                        <div class="complaint-section">
+                          <span class="complaint-label">Present Complaint Details:</span>
+                          <div class="complaint-text">
+                            {{ case.present_complaint|safe }}
+                          </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Final Diagnosis -->
+                        {% if case.final_diagnosis %}
+                        <div class="diagnosis-section">
+                          <span class="diagnosis-label">Final Diagnosis:</span>
+                          <div>{{ case.final_diagnosis }}</div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Follow-up Information -->
+                        {% if case.follow_up_date %}
+                        <div class="followup-info">
+                          <div class="followup-label">Scheduled Follow-up</div>
+                          <div><strong>Date:</strong> {{ case.follow_up_date|date:"F d, Y" }}</div>
+                          {% if case.follow_ups.all %}
+                            <div><strong>Follow-up Notes:</strong> 
+                              {% for follow_up in case.follow_ups.all %}
+                                {{ follow_up.notes }}
+                              {% endfor %}
+                            </div>
+                          {% endif %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Related Treatments -->
+                        {% with case.casetreatmntplan.all as treatments %}
+                          {% if treatments %}
+                          <div class="complaint-section mt-3">
+                            <span class="complaint-label">Treatments Prescribed:</span>
+                            <div class="complaint-text">
+                              {% for treatment in treatments %}
+                                <span class="badge bg-info me-1 mb-1">
+                                  {{ treatment.treatment.Treatment_name }} ({{ treatment.count }})
+                                </span>
+                              {% endfor %}
+                            </div>
+                          </div>
+                          {% endif %}
+                        {% endwith %}
+
+                        <!-- Related Diet Plans -->
+                        {% with case.casehistdietplan.all as diets %}
+                          {% if diets %}
+                          <div class="complaint-section mt-2">
+                            <span class="complaint-label">Diet Plans:</span>
+                            <div class="complaint-text">
+                              {% for diet in diets %}
+                                <div class="mb-1">
+                                  <strong>{{ diet.diet.name }}</strong> - {{ diet.noofdays }} days
+                                  {% if diet.foodtobeavoided %}
+                                  <br><small>Foods to avoid: {{ diet.foodtobeavoided }}</small>
+                                  {% endif %}
+                                </div>
+                              {% endfor %}
+                            </div>
+                          </div>
+                          {% endif %}
+                        {% endwith %}
+                      </div>
+
+                      <!-- Doctor and Branch Footer -->
+                      <div class="timeline-date" style="font-size: 0.8rem; color: #6c757d;">
+                        <i class="fas fa-user-md me-1"></i>
+                      {% if case.prepairedby_id %}
+  Consulting Doctor: 
+  Dr. {{ case.prepairedby.Staff_firstname }} {{ case.prepairedby.Staff_lastname }}
+  
+  <i class="fas fa-hospital ms-3 me-1"></i>
+  Branch: 
+  {% with allocation=case.prepairedby.staffallocation_set.first %}
+      {% if allocation and allocation.Branch_Name %}
+          {{ allocation.Branch_Name.Branch_Name }}
+      {% else %}
+          Not Assigned
+      {% endif %}
+  {% endwith %}
+{% endif %}
+
+                      </div>
+                    </div>
+                    {% endfor %}
+                  {% else %}
+                    <div class="empty-state">
+                      <i class="fas fa-clipboard-list"></i>
+                      <h4>No Consultation History</h4>
+                      <p>No medical consultations recorded for this patient yet.</p>
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Prescriptions Tab -->
+          <div class="tab-content" id="prescriptions-tab">
+            <h3 class="section-title">Prescription History</h3>
+            
+            <div class="info-card" style="background: transparent; border: none; box-shadow: none; height: 100%;">
+              <div class="card-header bg-light position-sticky top-0 z-10">
+                <h6 class="mb-0 fw-bold">Prescription History</h6>
+              </div>
+              <!-- Scrollable Section for Prescriptions -->
+              <div class="prescription-history-scroll">
+                {% regroup prescriptions by prescriptiondate as date_groups %}
+                {% for group in date_groups reversed %}
+                <div class="prescription-date-block mb-3">
+                  <div class="date-header">
+                    {{ group.grouper|date:"d-m-Y" }}
+                    {% with first_prescription=group.list.0 %}
+                      {% if first_prescription.prescribeddoctor %}
+                      <small class="ms-2">(Prescribed by: Dr. {{ first_prescription.prescribeddoctor.Staff_firstname }} {{ first_prescription.prescribeddoctor.Staff_lastname }})</small>
+                      {% endif %}
+                    {% endwith %}
+                  </div>
+                  <div class="table-responsive">
+                    <table class="table table-bordered align-middle text-center">
+                      <thead>
+                        <tr>
+                          <th>Medicine</th>
+                          <th>No Of Days</th>
+                          <th>☀️</th>
+                          <th>🌤</th>
+                          <th>🌙</th>
+                          <th>Diet Timing</th>
+                          <th>Guidelines</th>
+                          <th>Prescribed By</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for prescription in group.list %}
+                        <tr>
+                          <td>{{ prescription.medicine_name }}</td>
+                          <td>{{ prescription.noofdays }}</td>
+                          <td>{{ prescription.moringtime }}</td>
+                          <td>{{ prescription.noontime }}</td>
+                          <td>{{ prescription.nighttime }}</td>
+                          <td>{{ prescription.beforeorafterdiet }}</td>
+                          <td>{{ prescription.medicineguideline|default:"-" }}</td>
+                          <td>
+                            {% if prescription.prescribeddoctor %}
+                              Dr. {{ prescription.prescribeddoctor.Staff_firstname }} {{ prescription.prescribeddoctor.Staff_lastname }}
+                            {% else %}
+                              -
+                            {% endif %}
+                          </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                          <td colspan="8" class="text-muted">No prescriptions available</td>
+                        </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                {% empty %}
+                <p class="text-muted text-center py-3">No prescription history available</p>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+          
+          <!-- Lab Tests Tab -->
+          <div class="tab-content" id="lab-tests-tab">
+            <h3 class="section-title">Laboratory Tests</h3>
+            
+            <div class="info-card">
+              <div class="card-header">
+                <span>Requested Lab Tests</span>
+                <span class="badge bg-primary">{{ lab_requisitions.count }}</span>
+              </div>
+              <div class="card-body">
+                <div class="scroll-section">
+                  {% if lab_requisitions %}
+                    {% regroup lab_requisitions by created_at|date:"d M Y" as date_groups %}
+                    {% for date_group in date_groups reversed %}
+                    <div class="history-item">
+                      <div class="history-date">{{ date_group.grouper }}</div>
+                      <div>
+                        {% for test in date_group.list %}
+                        <div class="mb-2 p-2 border rounded">
+                          <strong>{{ test.labtestchild.testname }}</strong>
+                          {% if test.handledbystaff %}
+                          <small class="text-muted ms-2">
+                            (Requested by: Dr. {{ test.handledbystaff.Staff_firstname }} {{ test.handledbystaff.Staff_lastname }})
+                          </small>
+                          {% endif %}
+                        </div>
+                        {% endfor %}
+                      </div>
+                    </div>
+                    {% endfor %}
+                  {% else %}
+                    <div class="empty-state">
+                      <i class="fas fa-vial"></i>
+                      <p>No lab tests requested</p>
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+            
+            <div class="info-card mt-4">
+              <div class="card-header">
+                <span>Lab Results</span>
+                <span class="badge bg-primary">{{ lab_results.count }}</span>
+              </div>
+              <div class="card-body">
+                <div class="scroll-section">
+                  {% if lab_results %}
+                    {% regroup lab_results by labtestdate|date:"d M Y" as date_groups %}
+                    {% for date_group in date_groups reversed %}
+                    <div class="history-item">
+                      <div class="history-date">{{ date_group.grouper }}</div>
+                      <div>
+                        {% for result in date_group.list %}
+                        <div class="mb-2 p-3 border rounded">
+                          <strong>{{ result.labtest.testname }}:</strong> 
+                          <span class="text-primary fw-bold">{{ result.result_value }}</span>
+                          <small class="text-muted">(Ref: {{ result.normal_value }})</small>
+                          {% if result.preparedby %}
+                          <small class="text-muted ms-2">
+                            (Report by: Dr. {{ result.preparedby.Staff_firstname }} {{ result.preparedby.Staff_lastname }})
+                          </small>
+                          {% endif %}
+                          {% if result.report_file %}
+                          <a href="{{ result.report_file.url }}" class="btn btn-sm btn-outline-primary ms-2" target="_blank">
+                            <i class="fas fa-eye me-1"></i>View Report
+                          </a>
+                          {% endif %}
+                        </div>
+                        {% endfor %}
+                      </div>
+                    </div>
+                    {% endfor %}
+                  {% else %}
+                    <div class="empty-state">
+                      <i class="fas fa-clipboard-list"></i>
+                      <p>No lab results available</p>
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Treatments Tab -->
+          <div class="tab-content" id="treatments-tab">
+            <h3 class="section-title">Treatment History</h3>
+            
+            <div class="info-card table-card">
+              <div class="card-header">
+                <span>Previous Treatments</span>
+                <span class="badge bg-primary">{{ treatment_plans.count }}</span>
+              </div>
+              <div class="card-body">
+                <div class="scroll-section">
+                  {% if treatment_plans %}
+                    <div class="table-responsive">
+                      <table class="table">
+                        <thead>
+                          <tr>
+                            <th>Date</th>
+                            <th>Treatment</th>
+                            <th>Count</th>
+                            <th>Doctor</th>
+                            <th>Branch</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {% regroup treatment_plans by created_at|date:"d M Y" as date_groups %}
+                          {% for date_group in date_groups reversed %}
+                            {% for treatment in date_group.list %}
+                            <tr>
+                              <td>{{ date_group.grouper }}</td>
+                              <td>{{ treatment.treatment.Treatment_name }}</td>
+                              <td>{{ treatment.count }}</td>
+                              <td>
+                                {% if treatment.preparedby %}
+                                  Dr. {{ treatment.preparedby.Staff_firstname }} {{ treatment.preparedby.Staff_lastname }}
+                                {% else %}
+                                  -
+                                {% endif %}
+                              </td>
+                              <td>
+                                {% if treatment.branch %}
+                                  {{ treatment.branch.Branch_Name }}
+                                {% else %}
+                                  -
+                                {% endif %}
+                              </td>
+                            </tr>
+                            {% endfor %}
+                          {% endfor %}
+                        </tbody>
+                      </table>
+                    </div>
+                  {% else %}
+                    <div class="empty-state">
+                      <i class="fas fa-stethoscope"></i>
+                      <p>No treatments available</p>
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Diet Plans Tab -->
+          <div class="tab-content" id="diet-plans-tab">
+            <h3 class="section-title">Diet Plans</h3>
+            
+            <div class="info-card">
+              <div class="card-header">
+                <span>Diet Recommendations</span>
+                <span class="badge bg-primary">{{ diet_plans.count }}</span>
+              </div>
+              <div class="card-body">
+                <div class="scroll-section">
+                  {% if diet_plans %}
+                    {% for d in diet_plans reversed %}
+                    <div class="history-item">
+                      <div class="history-date">{{ d.created_at|date:"d M Y" }}</div>
+                      <div class="health-state">
+                        <span class="health-state-label">Diet Plan:</span>
+                        <span class="health-state-value">{{ d.diet.name }}</span>
+                      </div>
+                      <div class="health-state">
+                        <span class="health-state-label">Duration:</span>
+                        <span class="health-state-value">{{ d.noofdays }} days</span>
+                      </div>
+                      <div class="health-state">
+                        <span class="health-state-label">Foods to Avoid:</span>
+                        <span class="health-state-value">{{ d.foodtobeavoided|default:"None specified" }}</span>
+                      </div>
+                      <div class="health-state">
+                        <span class="health-state-label">Assigned by:</span>
+                        <span class="health-state-value">
+                          {% if d.handledbystaff %}
+                            Dr.{{ d.handledbystaff.Staff_firstname }} {{ d.handledbystaff.Staff_lastname }}
+                          {% else %}
+                            Not specified
+                          {% endif %}
+                        </span>
+                      </div>
+                      <div class="health-state">
+                        <span class="health-state-label">Branch:</span>
+                        <span class="health-state-value">
+                          {% if d.branch %}
+                            {{ d.branch.Branch_Name }}
+                          {% else %}
+                            Not specified
+                          {% endif %}
+                        </span>
+                      </div>
+                    </div>
+                    {% endfor %}
+                  {% else %}
+                    <div class="empty-state">
+                      <i class="fas fa-utensils"></i>
+                      <p>No diet plans available</p>
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Vitals Tab -->
+          <div class="tab-content" id="vitals-tab">
+            <h3 class="section-title">Vital Signs & Health Metrics</h3>
+            
+            <div class="info-card">
+              <div class="card-header">
+                <span>Vital Signs History</span>
+                <span class="badge bg-primary">{{ vitals.count }}</span>
+              </div>
+              <div class="card-body">
+                <div class="scroll-section">
+                  {% if vitals %}
+                    {% for vital in vitals reversed %}
+                    <div class="timeline-item">
+                      <div class="timeline-date">
+                        <i class="fas fa-calendar-alt"></i>
+                        {{ vital.created_at|date:"F d, Y" }}
+                      </div>
+                      
+                      <div class="row">
+                        <!-- Basic Vitals -->
+                        <div class="col-md-12">
+                          <div class="vital-section mb-3">
+                            <h6 class="vital-section-title">Basic Measurements</h6>
+                            <div class="vital-grid">
+                              <div class="vital-item">
+                                <span class="vital-label">Age:</span>
+                                <span class="vital-value">{{ vital.age|default:"-" }}</span>
+                              </div>
+                              <div class="vital-item">
+                                <span class="vital-label">Weight:</span>
+                                <span class="vital-value">{{ vital.weight|default:"-" }} kg</span>
+                              </div>
+                              <div class="vital-item">
+                                <span class="vital-label">Height:</span>
+                                <span class="vital-value">{{ vital.height|default:"-" }} cm</span>
+                              </div>
+                              <div class="vital-item">
+                                <span class="vital-label">BMI:</span>
+                                <span class="vital-value {% if vital.bmi and vital.bmi > 25 %}text-warning{% elif vital.bmi and vital.bmi < 18.5 %}text-info{% endif %}">
+                                  {{ vital.bmi|default:"-" }}
+                                </span>
+                              </div>
+                              <div class="vital-item">
+                                <span class="vital-label">Blood Pressure:</span>
+                                <span class="vital-value {% if vital.bp %}text-danger{% endif %}">
+                                  {{ vital.bp|default:"-" }}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <!-- Recorded By -->
+                      <div class="timeline-date mt-3" style="font-size: 0.8rem; color: #6c757d;">
+                        <i class="fas fa-user-md"></i>
+                        {% if vital.handledbystaff %}
+                          Recorded by: Dr. {{ vital.handledbystaff.Staff_firstname }} {{ vital.handledbystaff.Staff_lastname }}
+                        {% else %}
+                          Recorded by: Not specified
+                        {% endif %}
+                        {% if vital.branch %}
+                          <i class="fas fa-hospital ms-3 me-1"></i>
+                          Branch: {{ vital.branch.Branch_Name }}
+                        {% endif %}
+                      </div>
+                    </div>
+                    {% endfor %}
+                  {% else %}
+                    <div class="empty-state">
+                      <i class="fas fa-heartbeat"></i>
+                      <h4>No Vital Records</h4>
+                      <p>No vital signs recorded for this patient yet.</p>
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Medical History Tab -->
+          <div class="tab-content" id="medical-history-tab">
+            <h3 class="section-title">Medical & Surgical History</h3>
+            
+            <div class="row">
+              <!-- Medical History Column -->
+              <div class="col-md-6">
+                <div class="info-card">
+                  <div class="card-header">
+                    <span>Medical History</span>
+                    <span class="badge bg-primary">{{ med_surg_hist.count }}</span>
+                  </div>
+                  <div class="card-body">
+                    <div class="scroll-section">
+                      {% if med_surg_hist %}
+                        {% for h in med_surg_hist reversed %}
+                          {% if h.medicalhistory and h.medicalhistory.strip != "<p><br></p>" %}
+                          <div class="history-item">
+                            <div class="history-date">{{ h.created_at|date:"d M Y" }}</div>
+                            <div class="medical-history-content p-3 border rounded bg-light">
+                              {{ h.medicalhistory|safe }}
+                              {% if h.handledbystaff %}
+                              <div class="mt-2 text-muted small">
+                                <i class="fas fa-user-md me-1"></i>
+                                Recorded by: Dr. {{ h.handledbystaff.Staff_firstname }} {{ h.handledbystaff.Staff_lastname }}
+                              </div>
+                              {% endif %}
+                            </div>
+                          </div>
+                          {% endif %}
+                        {% endfor %}
+                      {% else %}
+                        <div class="empty-state">
+                          <i class="fas fa-notes-medical"></i>
+                          <p>No medical history available</p>
+                        </div>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Surgical History Column -->
+              <div class="col-md-6">
+                <div class="info-card">
+                  <div class="card-header">
+                    <span>Surgical History</span>
+                    <span class="badge bg-primary">{{ med_surg_hist.count }}</span>
+                  </div>
+                  <div class="card-body">
+                    <div class="scroll-section">
+                      {% if med_surg_hist %}
+                        {% for h in med_surg_hist reversed %}
+                          {% if h.surgicalhist and h.surgicalhist.strip != "<p><br></p>" %}
+                          <div class="history-item">
+                            <div class="history-date">{{ h.created_at|date:"d M Y" }}</div>
+                            <div class="surgical-history-content p-3 border rounded bg-light">
+                              {{ h.surgicalhist|safe }}
+                              {% if h.handledbystaff %}
+                              <div class="mt-2 text-muted small">
+                                <i class="fas fa-user-md me-1"></i>
+                                Recorded by: Dr. {{ h.handledbystaff.Staff_firstname }} {{ h.handledbystaff.Staff_lastname }}
+                              </div>
+                              {% endif %}
+                            </div>
+                          </div>
+                          {% endif %}
+                        {% endfor %}
+                      {% else %}
+                        <div class="empty-state">
+                          <i class="fas fa-notes-medical"></i>
+                          <p>No surgical history available</p>
+                        </div>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+
+      </div><!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+  </div>
+  <!-- /.content-wrapper -->
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Tab functionality
+      const tabButtons = document.querySelectorAll('.tab-button');
+      const tabContents = document.querySelectorAll('.tab-content');
+      
+      tabButtons.forEach(button => {
+        button.addEventListener('click', function() {
+          // Remove active class from all buttons and tabs
+          tabButtons.forEach(btn => btn.classList.remove('active'));
+          tabContents.forEach(content => content.classList.remove('active'));
+          
+          // Add active class to clicked button and corresponding tab
+          this.classList.add('active');
+          const tabId = this.getAttribute('data-tab') + '-tab';
+          document.getElementById(tabId).classList.add('active');
+        });
+      });
+      
+      // Add animation to cards
+      const cards = document.querySelectorAll('.stat-card, .info-card');
+      cards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+          this.style.transform = 'translateY(-5px)';
+          this.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.15)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+          this.style.transform = '';
+          this.style.boxShadow = '';
+        });
+      });
+
+      // Smooth scrolling for scroll sections
+      const scrollSections = document.querySelectorAll('.scroll-section, .prescription-history-scroll, .timeline-container');
+      scrollSections.forEach(section => {
+        section.addEventListener('scroll', function() {
+          // Add shadow when scrolled
+          if (this.scrollTop > 0) {
+            this.style.boxShadow = 'inset 0 2px 4px rgba(0,0,0,0.1)';
+          } else {
+            this.style.boxShadow = 'none';
+          }
+        });
+      });
+
+      // Timeline item hover effects
+      const timelineItems = document.querySelectorAll('.timeline-item');
+      timelineItems.forEach(item => {
+        item.addEventListener('mouseenter', function() {
+          this.style.borderLeftColor = 'var(--secondary-color)';
+        });
+        
+        item.addEventListener('mouseleave', function() {
+          this.style.borderLeftColor = 'var(--primary-color)';
+        });
+      });
+    });
+  </script>
+</body>
+</html>
+{% endblock %}

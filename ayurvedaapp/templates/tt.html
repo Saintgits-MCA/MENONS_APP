@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Daily Treatment</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+</head>
+<body>
+<div id="DailyTreatment" class="tabcontent">
+    <h3>Daily Treatment</h3>
+    <div class="card">
+        <div class="card-body">
+            <form method="POST">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="mrSearchdt">MR Number</label>
+                            <input type="text" id="mrSearchdt" class="form-control" placeholder="Type MR Number">
+                            <select class="form-control" name="mrDropdowndt" id="mrDropdowndt" required>
+                                <option selected disabled value="">Select</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-12">
+                        <table id="example1" class="table table-bordered table-striped">
+                            <thead>
+                            <tr>
+                                <input type="hidden" id="rows_countdt" name="rows_countdt" value="1">
+                                <th>Date</th>
+                                <th>Treatment
+                                    <input type="text" class="form-control" id="searchInputtreatment" placeholder="Search for Treatment...">
+                                    <select class="form-control" name="searchResultstreatment" id="searchResultstreatment"></select>
+                                </th>
+                                <th>Staff
+                                    <input type="text" class="form-control" id="searchStaff" placeholder="Search for Staff...">
+                                    <div class="staffdetails" id="staffdetails"></div>
+                                    <input type="hidden" id="selectedStaffId" name="selectedStaffId">
+                                </th>
+                                <th>Selected Staff
+                                    <input type="text" class="form-control" id="selectedStaffNames" readonly>
+                                </th>
+                                <th>Time</th>
+                                <th>
+                                    <button type="button" style="width:60px;height:40px;" class="btn btn-primary" id="add1">Add</button>
+                                </th>
+                            </tr>
+                            </thead>
+                            <tbody id="tbody2">
+                            <tr class="recordsheet2"></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card-footer">
+                    {% if messages %}
+                    {% for message in messages %}
+                    <p style="color:green;">{{ message }}</p>
+                    {% endfor %}
+                    {% endif %}
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+var checkedStaff = {};
+
+function populateCheckboxes(searchTerm = '') {
+    var staffDetails = document.getElementById('staffdetails');
+    staffDetails.innerHTML = '';
+
+    if (searchTerm) {
+        $.ajax({
+            url: '{% url "search_staff" %}',  // Adjust this URL to match your URL configuration
+            method: 'GET',
+            data: { term: searchTerm },
+            success: function(data) {
+                data.forEach(function(staff) {
+                    var checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.id = 'staff' + staff.id;
+                    checkbox.value = staff.id;
+
+                    if (checkedStaff[staff.id]) {
+                        checkbox.checked = true;
+                    }
+
+                    checkbox.addEventListener('change', function() {
+                        if (this.checked) {
+                            checkedStaff[staff.id] = true;
+                        } else {
+                            checkedStaff[staff.id] = false;
+                        }
+                        updateSelectedStaffInput();
+                    });
+
+                    var label = document.createElement('label');
+                    label.setAttribute('for', 'staff' + staff.id);
+                    label.textContent = staff.fname + ' ' + staff.lname;
+
+                    var br = document.createElement('br');
+
+                    staffDetails.appendChild(checkbox);
+                    staffDetails.appendChild(label);
+                    staffDetails.appendChild(br);
+                });
+            }
+        });
+    }
+}
+
+function updateSelectedStaffInput() {
+    var selectedStaffNames = [];
+    Object.keys(checkedStaff).forEach(function(id) {
+        if (checkedStaff[id]) {
+            var staffElement = document.querySelector('label[for="staff' + id + '"]').textContent;
+            selectedStaffNames.push(staffElement);
+        }
+    });
+    document.getElementById('selectedStaffNames').value = selectedStaffNames.join(', ');
+}
+
+document.addEventListener('DOMContentLoaded', (event) => {
+    document.getElementById('searchStaff').addEventListener('input', function() {
+        var searchTerm = this.value.trim();
+        populateCheckboxes(searchTerm);
+    });
+
+    document.getElementById('add1').addEventListener('click', addTreatment);
+});
+
+function addTreatment() {
+    var treatmentName = document.getElementById('searchInputtreatment').value.trim();
+    var selectedStaff = [];
+
+    Object.keys(checkedStaff).forEach(function(id) {
+        if (checkedStaff[id]) {
+            var staffElement = document.querySelector('label[for="staff' + id + '"]').textContent;
+            selectedStaff.push(staffElement);
+        }
+    });
+
+    if (treatmentName === '' || selectedStaff.length === 0) {
+        alert('Please enter Treatment Name and select at least one Staff Member.');
+        return;
+    }
+
+    var table = document.getElementById('example1').getElementsByTagName('tbody')[0];
+    var newRow = table.insertRow();
+    newRow.innerHTML = `
+        <td><input type="date" class="form-control" name="date[]"></td>
+        <td>${treatmentName}</td>
+        <td><input type="text" class="form-control" name="staffNames[]" value="${selectedStaff.join(', ')}" readonly></td>
+        <td><input type="time" class="form-control" name="time[]"></td>
+        <td><button type="button" class="btn btn-danger remove">Remove</button></td>
+    `;
+
+    newRow.querySelector('.remove').addEventListener('click', function() {
+        newRow.remove();
+    });
+
+    clearCheckboxes();
+    updateSelectedStaffInput();
+}
+
+function clearCheckboxes() {
+    Object.keys(checkedStaff).forEach(function(id) {
+        checkedStaff[id] = false;
+        document.getElementById('staff' + id).checked = false;
+    });
+    updateSelectedStaffInput();
+}
+</script>
+</body>
+</html>

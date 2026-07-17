@@ -1,0 +1,419 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<head>
+    <style>
+        .largetextarea {
+            height: 120px;
+        }
+    </style>
+</head>
+
+<div class="content-wrapper">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Patient Discharge</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        {% if dischrgview == '1'%}
+                            <li class="breadcrumb-item"><a href="{% url 'dischargetable' %}?menumanagement_id={{ idmngmnt }}">View All</a></li>
+                        {% endif %}
+                        <li class="breadcrumb-item active">Discharge</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="content">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title">Discharge Details</h3>
+                    </div>
+                    <form method="POST" action="{% url 'discharge' %}?menumanagement_id={{ idmngmnt }}">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card-body">
+                                    <div class="form-group">
+                                        <label for="mrSearch">MR Number/Phone No/Name</label>
+                                        <div class="input-group">
+                                            <input type="text" id="mrSearch" class="form-control" placeholder="Type MR Number">
+                                            <button type="button" id="searchBtn" class="btn btn-primary">Search</button>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <p><strong>MRNO:</strong> <span id="mrno"></span></p>
+                                        <input type="hidden" id="pt_id" name="pt_id">
+                                        <input type="hidden" id="ipno" name="ipno">
+                                        <p><strong>Patient Name:</strong> <span id="ptname"></span></p>
+                                        <p><strong>Contact Number:</strong> <span id="contactno"></span></p>
+                                        <p><strong>Age:</strong> <span id="age"></span></p>
+                                        <p><strong>Diagnosis:</strong> <span id="diagnosis"></span></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card-body">
+                                    <p><strong>Admission Date:</strong> <span id="admissiondate"></span></p>
+                                    <input type="hidden" class="form-control" id="accommodation_typeid"name="accommodation_typeid" >
+                                    <input type="hidden" class="form-control" id="floorid"name="floorid" >
+                                    <input type="hidden" class="form-control" id="roomid"name="roomid" >
+                                    <input type="hidden" class="form-control" id="bedid"name="bedid" >
+                                   
+                                    <div id="roomSection">
+                                        <p><strong>Room No.:</strong> <span id="room"></span></p>
+                                        <p><strong>Floor No.:</strong> <span id="floor"></span></p>
+                                    </div>
+                                    <div id="wardSection">
+                                        <p><strong>Bed No.:</strong> <span id="bed"></span></p>
+                                        <p><strong>Floor No.:</strong> <span id="floor_ward"></span></p>
+                                    </div>
+                                    <p><strong>Admitted Doctor:</strong> <span id="doctor"></span></p>
+                                </div>
+                            </div>
+                        </div>
+<div class="row">
+    <div class="col-md-12">
+        <div class="card-body">
+            <h4>Internal Medications and Treatment Procedures</h4>
+            <table class="table table-bordered" id="medicationsTable">
+                <thead>
+                    <tr>
+                        <th>Sl No.</th>
+                        <th>Internal Medications (with dose and duration)</th>
+                        <th>Treatment Procedures (with medicines and duration)</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Rows will be added dynamically here -->
+                </tbody>
+            </table>
+            <button type="button" class="btn btn-success" id="addRowBtn">Add Row</button>
+        </div>
+        
+    </div>
+</div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card-body">
+                                    <div class="form-group">
+                                        <label for="treatmentsum">Treatment Summary/Discharge Summary</label>
+                                        <textarea class="form-control largetextarea" name="treatmentsum" placeholder="Enter Treatment Summary"></textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="dischargeddate">Discharged Date</label>
+                                        <input type="date" class="form-control" name="dischargeddate" required>
+                                    </div>
+                                    
+                                  <div class="form-group">
+                                      <label for="firstname1">Doctor Name</label>
+                                      <input type="text" class="form-control" name="firstname1" placeholder="Enter Doctor's Name" required>
+                                  </div>
+                                </div>
+                                
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card-body">
+                                    <div class="form-group">
+                                        <label for="treatmentsum">Condition On Discharge</label>
+                                        <textarea class="form-control largetextarea" name="condtnondischarge" ></textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="nxtchkupdate">Next Checkup Date</label>
+                                        <input type="date" class="form-control" name="nxtchkupdate" >
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="additional">Additional Notes</label>
+                                        <textarea class="form-control largetextarea" name="additional" placeholder="Enter Additional Notes"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                               <div class="card-body">
+                                <h4>Advice on Discharge</h4>
+                                <table class="table table-bordered" id="adviceTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Sl No.</th>
+                                            <th>Advice</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Advice rows will be added dynamically -->
+                                    </tbody>
+                                </table>
+                                <button type="button" class="btn btn-success" id="addAdviceRowBtn">Add Advice</button>
+                                
+                               </div>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <button type="submit" class="btn btn-primary">Submit</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Search Patient Modal -->
+<div class="modal fade" id="searchModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+          <div class="modal-header bg-primary text-white">
+              <h5 class="modal-title">Search Results</h5>
+              <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+          </div>
+          <div class="modal-body">
+              <table id="searchResultsTable" class="table table-bordered">
+                  <thead>
+                      <tr>
+                          <th>MR Number</th>
+                          <th>Patient Name</th>
+                          <th>Contact No</th>
+                          <th>Action</th>
+                      </tr>
+                  </thead>
+                  <tbody></tbody>
+              </table>
+          </div>
+          <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          </div>
+      </div>
+  </div>
+</div>
+<script>
+    $(document).ready(function() {
+    let slNo = 1;
+
+    // Function to add a new row
+    function addRow() {
+        let newRow = `
+            <tr>
+                <td>${slNo}</td>
+                <td><input type="text" name="internal_medications[]" class="form-control" placeholder="Enter Internal Medications" ></td>
+                <td><input type="text" name="treatment_procedures[]" class="form-control" placeholder="Enter Treatment Procedures" ></td>
+                <td><button type="button" class="btn btn-danger btn-sm removeRowBtn">Remove</button></td>
+            </tr>
+        `;
+        $('#medicationsTable tbody').append(newRow);
+        slNo++;
+    }
+
+    // Add a new row when 'Add Row' button clicked
+    $('#addRowBtn').click(function() {
+        addRow();
+    });
+
+    // Remove a row
+    $('#medicationsTable').on('click', '.removeRowBtn', function() {
+        $(this).closest('tr').remove();
+        updateSerialNumbers();
+    });
+
+    // Update serial numbers after row removal
+    function updateSerialNumbers() {
+        slNo = 1;
+        $('#medicationsTable tbody tr').each(function() {
+            $(this).find('td:first').text(slNo);
+            slNo++;
+        });
+    }
+
+    // Optionally, add the first row automatically when the page loads
+    addRow();
+});
+let adviceSlNo = 1;
+
+// Function to add a new advice row
+function addAdviceRow() {
+    let newAdviceRow = `
+        <tr>
+            <td>${adviceSlNo}</td>
+            <td><input type="text" name="advice_on_discharge[]" class="form-control" placeholder="Enter Advice" ></td>
+            <td><button type="button" class="btn btn-danger btn-sm removeAdviceBtn">Remove</button></td>
+        </tr>
+    `;
+    $('#adviceTable tbody').append(newAdviceRow);
+    adviceSlNo++;
+}
+
+// Add row on button click
+$('#addAdviceRowBtn').click(function() {
+    addAdviceRow();
+});
+
+// Remove advice row
+$('#adviceTable').on('click', '.removeAdviceBtn', function() {
+    $(this).closest('tr').remove();
+    updateAdviceSerials();
+});
+
+// Update serial numbers for advice
+function updateAdviceSerials() {
+    adviceSlNo = 1;
+    $('#adviceTable tbody tr').each(function() {
+        $(this).find('td:first').text(adviceSlNo);
+        adviceSlNo++;
+    });
+}
+
+// Optionally add one row on load
+addAdviceRow();
+
+</script>
+  <script>
+    $(document).ready(function() {
+        // Initialize DataTables
+        let searchResultsTable = $('#searchResultsTable').DataTable({ paging: true, searching: true, info: true, lengthChange: true, pageLength: 10 });
+        // Search for Patient by Medical Record Number
+        $('#searchBtn').on('click', function() {
+            let query = $('#mrSearch').val().trim();
+            if (query === '') {
+                alert('Please enter a search term.');
+                return;
+            }
+            fetch(`/ipsearch_mrno?query=${query}`)
+                .then(response => response.json())
+                .then(data => {
+                    searchResultsTable.clear().draw();
+                    if (data.length > 0) {
+                        data.forEach(item => {
+                            let actionBtn = `<button class="btn btn-primary select-btn" 
+                                data-mrno="${item.Medical_Record_Number}" 
+                                data-name="${item.Patient_Name}" 
+                                data-contact="${item.contactno}" 
+                                data-admissiondate="${item.Admission_Date}" 
+                                data-room="${item.room_number}" 
+                                data-bed="${item.bed_number}" 
+                                data-floor="${item.floor_number}" 
+                                data-doctor="${item.doctor}"
+                                data-patientid="${item.patientid}"
+                                data-age="${item.age}"
+                                data-diagnosis="${item.diagnosis}"
+                                data-ipnoid="${item.ip_id}"
+                                data-accommodation_type="${item.accommodation_type}"
+                                >
+                                Select
+                            </button>`;
+
+                            searchResultsTable.row.add([item.Medical_Record_Number, item.Patient_Name, item.contactno || 'N/A', actionBtn]).draw(false);
+                        });
+
+                        $('#searchModal').modal('show');
+                    } else {
+                        alert('No admitted patients with a room found.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('There was an error retrieving the data. Please try again.');
+                });
+        });
+
+        // Handle patient selection
+        $('#searchResultsTable tbody').on('click', '.select-btn', function() {
+            let btn = $(this);
+            $('#pt_id').val(btn.data('patientid'));
+            $('#ipno').val(btn.data('ipnoid'));
+            $('#mrno').text(btn.data('mrno'));
+            $('#ptname').text(btn.data('name'));
+            $('#contactno').text(btn.data('contact'));
+            $('#age').text(btn.data('age'));
+            $('#diagnosis').text(btn.data('diagnosis'));
+            $('#admissiondate').text(btn.data('admissiondate'));
+            $('#doctor').text(btn.data('doctor'));
+            $('#accommodation_typeid').val(btn.data('accommodation_type'));
+            
+            let room = btn.data('room');
+    let bed = btn.data('bed');
+    let floor = btn.data('floor');
+    if (room && room !== "N/A") {
+       // Show Room Section, Hide Ward Section
+        $('#floorid').val(floor );
+        $('#roomid').val(room);
+    
+        $('#room').text(room);
+        $('#floor').text(floor);
+        $('#roomSection').show();
+        $('#wardSection').hide();
+    } else {
+        // Show Ward Section, Hide Room Section
+        $('#floorid').val(floor );
+        $('#bedid').val(bed);
+       
+        $('#bed').text(bed);
+        $('#floor_ward').text(floor);
+        $('#wardSection').show();
+        $('#roomSection').hide();
+    }
+        $('#searchModal').modal('hide');
+        });
+        $('#searchResultsTable tbody').on('click', '.select-btn', function() {
+        let btn = $(this);
+        let patientipId = btn.data('ipnoid');
+
+        // Check if the patient is already discharged
+        fetch(`/check_discharge_status?patientipId=${patientipId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.is_discharged) {
+                    alert(`Patient already discharged on ${data.discharged_date}`);
+                } else {
+                    // Fill the form with selected patient details
+                    $('#pt_id').val(btn.data('patientid'));
+                    $('#ipno').val(btn.data('ipnoid'));
+                    $('#mrno').text(btn.data('mrno'));
+                    $('#ptname').text(btn.data('name'));
+                    $('#contactno').text(btn.data('contact'));
+                    $('#age').text(btn.data('age'));
+                    $('#diagnosis').text(btn.data('diagnosis'));
+                    $('#admissiondate').text(btn.data('admissiondate'));
+                    $('#doctor').text(btn.data('doctor'));
+
+                    let room = btn.data('room');
+                    let bed = btn.data('bed');
+                    let floor = btn.data('floor');
+
+                    if (room && room !== "N/A") {
+                        $('#floorid').val(floor );
+                        $('#roomid').val(room);
+                      
+                        $('#room').text(room);
+                        $('#floor').text(floor);
+                        $('#roomSection').show();
+                        $('#wardSection').hide();
+                    } else {
+                        $('#floorid').val(floor );
+                        $('#bedid').val(bed);
+                      
+                        $('#bed').text(bed);
+                        $('#floor_ward').text(floor);
+                        $('#wardSection').show();
+                        $('#roomSection').hide();
+                    }
+
+                    $('#searchModal').modal('hide');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error checking discharge status. Please try again.');
+            });
+    });
+    });
+  </script>
+
+  <!-- /.content-wrapper -->
+{% endblock %}

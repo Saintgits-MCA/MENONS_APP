@@ -1,0 +1,291 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<head>
+    <!-- ... -->
+    <!-- Include Signature Pad library -->
+   <style>
+      .largetextarea {
+    height: 120px;
+  }
+    </style>
+</head>
+
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Patient  Discharge </h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item">
+                <a href="{% url 'dischargetable'%}">View All</a></li>
+              <li class="breadcrumb-item active">Discharge </li>
+            </ol>
+          </div>
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+
+      <div class="row">
+        <div class="col-md-12">
+          <div class="card card-primary">
+            <div class="card-header">
+              <h3 class="card-title">Discharge Details </h3>
+
+              <div class="card-tools">
+                <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                  <!-- <i class="fas fa-minus"></i> -->
+                </button>
+              </div>
+            </div>
+             <form method="POST", action="{% url 'discharge' %}?menumanagement_id={{ idmngmnt }}">
+                {% csrf_token %}
+      <div class="row">
+          <div class="col-md-6">
+              <div class="card">
+                <div class="card-body">
+                  <div class="form-group">
+                        <label for="exampleInputFirstName">MR Number</label>
+                        <select class="form-control" name="mrnumber" id="mrDropdown" required>
+                          <option selected disabled value="">Select</option>
+                            {% for i in mrnumobj %}
+                                <option value="{{i.MR_No_id}}">{{i.MR_No.Medical_Record_Number}}</option>
+                            {% endfor %}
+                      </select>
+                 </div>
+                 <div class="form-group">
+                    <label for="exampleInputFirstName">Patient First Name</label>
+                    <input type="text" class="form-control" id="FirstName" name="firstname" placeholder="Enter First Name" >   
+                  </div>
+
+                  <div class="form-group">
+                    <label for="exampleInputManagerName">Email</label>
+                    <input type="text" class="form-control" id="exampleInputEmail" name="email" placeholder="Enter Email">
+                  </div>
+                  <div class="form-group">
+                    <label for="exampleInputContactNo">Contact No</label>
+                    <input type="text" class="form-control" id="exampleInputContactNo" name="contactnum" placeholder="Enter Contact No">
+                  </div>
+                  <div class="form-group">
+                    <label for="exampleInputRegisterNo">Admitted Date</label>
+                    <input type="date" class="form-control" id="exampleInputdate" name="admdate">
+                  </div>
+
+                  <div class="form-group">
+                    <label for="exampleInputHouse">Address</label>
+                    <input type="textArea" class="form-control largetextarea" id="exampleInputAddress" name="address" placeholder="Enter Address">
+                  </div>
+
+                   <div class="form-group">
+                      <label >Pincode</label>
+                      <input type="text" class="form-control" id="exampleInputPincode" name="pincode" placeholder="Enter Pincode">
+                   </div>
+                  
+                  <div class="form-group">
+                    <label for="exampleInputRegisterNo">Country</label>
+                     <select class="form-control" name="country" required>
+                        <option selected disabled value="">Select</option>
+                         {% for i in countryobj %}
+                            <option value="{{i.id}}">{{i.Country_Name}}</option>
+                          {% endfor %}
+                    
+                      </select>
+                  </div>
+                  <div class="form-group">
+                     <label for="exampleInputRegisterNo">State</label>
+                     <select class="form-control" name="state" required>
+                        <option selected disabled value="">Select</option>
+                          {% for i in stateobj %}
+                            <option value="{{i.id}}">{{i.State_Name}}</option>
+                           {% endfor %}
+                    </select>
+                  </div>
+                   <div class="form-group">
+                     <label for="exampleInputRegisterNo">District</label>
+                     <select class="form-control" name="district" required>
+                        <option selected disabled value="">Select</option>
+                            {% for i in districtobj %}
+                                <option value="{{i.id}}">{{i.District_name}}</option>
+                            {% endfor %}
+                      </select>
+                  </div>
+                  <div class="form-group">
+                      <label for="exampleInputRegisterNo">City</label>
+                      <select class="form-control" name="city" required>
+                        <option selected disabled value="">Select</option>
+                           {% for i in cityobj %}
+                                <option value="{{i.id}}">{{i.City_name}}</option>
+                           {% endfor %}
+                      </select>
+                  </div>
+
+                   <div class="form-group">
+                        <label for="exampleInputHouse">Treatment Summary</label>
+                        <input type="textArea" class="form-control largetextarea" id="exampleInputAddress" name="treatmentsum" placeholder="Enter Treatment Summary">
+                    
+                   </div>
+                </div>
+              </div>
+            </div>
+
+           <div class="col-md-6">
+              <div class="card">
+            
+                <div class="card-body">
+
+                  <div class="form-group">
+                    <label for="exampleInputRegisterNo">Discharged Date</label>
+                    <input type="date" class="form-control" id="exampleInputdate" name="dischargeddate" required>
+                  </div>
+
+                  <div class="form-group">
+                        <label for="exampleInputManagerName">Doctor Approved?</label>
+                        <br>
+                        <input type="radio"value="YES" name="gridRadios" id="exampleInputStatus" >
+                        <label for="exampleInputManagerName">Yes</label>
+                        <input type="radio"value="NO"id="exampleInputStatus" name="gridRadios" >
+                        <label for="exampleInputManagerName">No</label>
+                  </div>
+
+                  <div class="form-group">
+                    <!-- <label for="exampleInputFirstName">  Name</label><br> -->
+                    <label for="exampleInputFirstName"> Doctor First Name</label>
+                    <input type="text" class="form-control" id="exampleInputFirstName" name="firstname1" placeholder="Enter  First Name">
+                  </div>
+                  <div class="form-group">
+                    <label for="exampleInputEmail1">Doctor Last Name</label>
+                    <input type="text" class="form-control" id="exampleInputLastName" name="lastname1" placeholder="Enter  Last Name">
+                  </div> 
+                  <div class="form-group">
+                    <label for="exampleInputRegisterNo">Next Checkup Date</label>
+                    <input type="date" class="form-control" id="exampleInputdate" name="nxtchkupdate">
+                  </div>
+                  <div class="form-group">
+                    <label for="exampleInputHouse">Additional Notes</label>
+                    <input type="textArea" class="form-control largetextarea" id="exampleInputAddress" name="additional" placeholder="Enter Additional Notes">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Medication Details</label>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Medication</th>
+                            <th>Dosage</th>
+                            <th>Amount</th>
+                            <th>Frequency</th>
+                            <th>Ending Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="medicationTable">
+                        <tr>
+                            <td>
+                                <input type="text" name="medication[]" required>
+                            </td>
+                            <td>
+                                <input type="text" name="dosage[]" required>
+                            </td>
+                            <td>
+                                <input type="text" name="amount[]" required>
+                            </td>
+                            <td>
+                                <input type="text" name="frequency[]" required>
+                            </td>
+                            <td>
+                                <input type="date" name="ending_date[]" required>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            <button type="button" class="btn btn-primary" onclick="addRow()">Add Medication</button>
+        </div>
+        <div class="card-footer">
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </div>
+    </form>
+    </div>
+ </div>
+</div>
+</section>
+<script>
+        function addRow() {
+            var table = document.getElementById("medicationTable");
+            var row = table.insertRow(-1); 
+            var cell1 = row.insertCell(0);
+            var cell2 = row.insertCell(1);
+            var cell3 = row.insertCell(2);
+            var cell4 = row.insertCell(3);
+            var cell5 = row.insertCell(4); 
+            cell1.innerHTML = '<input type="text" name="medication[]" required>';
+            cell2.innerHTML = '<input type="text" name="dosage[]" required>';
+            cell3.innerHTML = '<input type="text" name="amount[]" required>';
+            cell4.innerHTML = '<input type="text" name="frequency[]" required>';
+            cell5.innerHTML = '<input type="date" name="ending_date[]" required>';
+        }
+    </script>
+</div>
+  </div>
+  <script>
+     document.addEventListener('DOMContentLoaded', function() {
+      var patientdt=document.getElementById('mrnumber')
+      $.ajax({
+            url: '/getptdetails/' + patientdt, // adjust the URL accordingly
+            method: 'GET',
+            success: function(response) {
+                
+                console.log('Patient details:', response.objpt);
+                
+            }
+          });
+     });
+  </script>
+  <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+  <script>
+    $(document).ready(function () {
+      // Function to update patient name and address based on selected MR Number
+      function updatePatientDetails() {
+        var selectedMrNumber = $("#mrDropdown").val();
+  
+        // Make an AJAX request to fetch patient details
+        $.ajax({
+          type: "GET",
+          url: "{% url 'getmrdetails' %}",  // Update this URL based on your project structure
+          data: { mrNumber: selectedMrNumber },
+          success: function (data) {
+            // Update patient name and address in the text input boxes
+            $("#FirstName").val(data.patient_name);
+            $("#exampleInputAddress").val(data.address);
+            
+            $("#exampleInputEmail").val(data.pt_email);
+            $("#exampleInputContactNo").val(data.pt_phno);
+            $("#exampleInputPincode").val(data.pt_pincode);
+            
+            $("#exampleInputdate").val(data.pt_admitteddate);
+            
+            // Add similar lines to update other fields if needed
+          },
+          error: function (xhr, status, error) {
+            console.error("Error fetching patient details:", error);
+          },
+        });
+      }
+  
+      // Bind the updatePatientDetails function to the onchange event of the MR Number dropdown
+      $("#mrDropdown").on("change", updatePatientDetails);
+    });
+  </script>
+  <!-- /.content-wrapper -->
+{% endblock %}

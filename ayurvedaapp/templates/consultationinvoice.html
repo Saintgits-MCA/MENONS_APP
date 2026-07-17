@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<style>
+  /* Custom styles */
+  .invoice-header {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .patient-details {
+    margin-bottom: 20px;
+  }
+  .form-control[readonly] {
+    background-color: #e9ecef;
+  }
+  .error-message {
+    color: red;
+    margin-top: 10px;
+    display: none;
+  }
+</style>
+
+<div class="content-wrapper">
+  <!-- Content Header (Page header) -->
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Consultation Invoice</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="{% url 'consltinvlist'%}">View all</a></li>
+            <li class="breadcrumb-item active">Consultation Invoice</li>
+          </ol>
+        </div>
+      </div>
+    </div><!-- /.container-fluid -->
+  </section>
+
+  <section class="content">
+    <div class="container-fluid">
+      <form id="invoiceForm" method="POST" action="{% url 'saveconsultation' %}" onsubmit="return validateForm()">
+        {% csrf_token %}
+        <div class="row">
+          <div class="col-12">
+            <!-- Main content -->
+            <div class="invoice p-3 mb-3">
+              <div class="container">
+                <div class="row">
+                  <div class="col">
+                    <div class="invoice-header">
+                      {% for i in objhospt %}
+                      <h2>{{ i.Name }}</h2>
+                      <p>
+                        <input type="hidden" class="form-control" value="{{ i.id }}" name="hosptname">
+                        {{ i.Address }}<br>
+                        GST NO: {{ i.GST }}<br>
+                        Phone: {{ i.Contact_no }}<br>
+                        Email: {{ i.Email }}<br>
+                      </p>
+                      {% endfor %}
+                      {% for x in brname %}
+                      <p>
+                        Branch: {{ x.Branch_Name }}
+                        <input type="hidden" class="form-control" value="{{ x.id }}" name="branchname">
+                      </p>
+                      {% endfor %}
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-sm-4 invoice-col">
+                    <label for="mrDropdown">MR Number</label>
+                    <select class="form-control" name="mrnum" id="mrDropdown" required>
+                      <option selected disabled>Select</option>
+                      {% for i in mrnoobj %}
+                      <option value="{{ i.id }}">{{ i.Medical_Record_Number }}</option>
+                      {% endfor %}
+                    </select>
+                    <label for="ptname">Name</label>
+                    <input type="text" class="form-control" name="ptname" id="ptname" required>
+                    <label for="ptphno">Phone</label>
+                    <input type="text" class="form-control" name="ptphno" id="ptphno" required>
+                  </div>
+                  <div class="col-sm-4"></div>
+                  <div class="col-sm-4 invoice-col">
+                    <b>Date: {{ today }}</b><br>
+                    <b>Invoice No: {{inv_id}}</b>
+                    <input type="hidden" class="form-control" value="{{inv_id}}" name="invno">
+                  </div>
+                </div>
+                <!-- Invoice Items -->
+                <div class="row">
+                  <div class="col-md-12">
+                    <div class="table-responsive">
+                      <table class="table">
+                        <tr>
+                          <th>Consultation Fee:</th>
+                          <td><input type="number" class="form-control" id="cfee" name="cfee" min="0" step="0.01" oninput="disableOther('cfee')" ></td>
+                        </tr>
+                        <tr>
+                          <th>Consultation Cum Registration Fee:</th>
+                          <td><input type="number" class="form-control" id="rgfee" name="rgfee" min="0" step="0.01" oninput="disableOther('rgfee')" ></td>
+                        </tr>
+                        <tr>
+                          <th>Tax Percentage:</th>
+                          <td><input type="number" class="form-control" id="taxperc" name="taxperc" min="0" step="0.01" oninput="totaltaxinctx()"></td>
+                          <td><input type="hidden" class="form-control" id="totdis"></td>
+                        </tr>
+                        <tr>
+                          <th>Discount:</th>
+                          <td><input type="number" class="form-control" id="discount" name="discount" min="0" step="0.01" oninput="totaltaxinctx()"></td>
+                        </tr>
+                        <tr>
+                          <th>Total Including Tax:</th>
+                          <td><input type="text" class="form-control" id="totalIncludingTax" name="totalIncludingTax" readonly></td>
+                          <input type="hidden" id="record_count" name="record_count" value="1">
+                        </tr>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+                <div class="error-message" id="error-message">Please fill in either the Consultation Fee or the Consultation Cum Registration Fee.</div>
+              </div>
+              <div class="card-footer">
+                <button type="submit" class="btn btn-primary">Submit</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </section>
+</div>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script>
+  $(document).ready(function () {
+    function updatePatientDetails() {
+      var selectedMrNumber = $("#mrDropdown").val();
+      $.ajax({
+        type: "GET",
+        url: "{% url 'getmrdetails' %}",
+        data: { mrNumber: selectedMrNumber },
+        success: function (data) {
+          $("#ptname").val(data.Patient_Name);
+          $("#ptphno").val(data.phno);
+        },
+        error: function (xhr, status, error) {
+          console.error("Error fetching patient details:", error);
+        },
+      });
+    }
+
+    $("#mrDropdown").on("change", updatePatientDetails);
+  });
+
+  function disableOther(inputId) {
+    var confee = document.getElementById('cfee');
+    var conrgfee = document.getElementById('rgfee');
+    if (inputId === 'cfee') {
+      if (confee.value) {
+        conrgfee.disabled = true;
+      } else {
+        conrgfee.disabled = false;
+      }
+    } else if (inputId === 'rgfee') {
+      if (conrgfee.value) {
+        confee.disabled = true;
+      } else {
+        confee.disabled = false;
+      }
+    }
+    totaltaxinctx();
+  }
+  function totaltaxinctx() {
+    var taxPercentage = parseFloat(document.getElementById('taxperc').value) || 0;
+    var confee = parseFloat(document.getElementById('cfee').value) || 0;
+    var conrgfee = parseFloat(document.getElementById('rgfee').value) || 0;
+    var disc = parseFloat(document.getElementById('discount').value) || 0;
+    var taxAmount = (taxPercentage / 100) * (confee + conrgfee);
+    var totalAmount = (confee + conrgfee + taxAmount - disc).toFixed(2);
+    document.getElementById('totalIncludingTax').value = totalAmount;
+  }
+  function validateForm() {
+    var confee = document.getElementById('cfee').value;
+    var conrgfee = document.getElementById('rgfee').value;
+    var errorMessage = document.getElementById('error-message');
+    if (!confee && !conrgfee) {
+      errorMessage.style.display = 'block';
+      return false; // Prevent form submission
+    }
+    errorMessage.style.display = 'none';
+    return true; // Allow form submission
+  }
+  function validateTaxPercentage(inputElement) {
+    var inputValue = inputElement.value.trim();
+    if (inputValue.endsWith('%')) {
+      alert("Tax percentage should be a number. Do not include '%' symbol.");
+      inputElement.value = inputValue.slice(0, -1);
+    }
+  }
+  document.getElementById('taxperc').addEventListener('input', function () {
+    validateTaxPercentage(this);
+  });
+</script>
+{% endblock %}

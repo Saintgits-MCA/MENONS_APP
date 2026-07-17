@@ -1,0 +1,683 @@
+{% extends 'base.html' %} 
+{% load static %} 
+{% block content %}
+<style>
+    h1 { 
+        text-align: center; 
+        margin-bottom: 5px; 
+        color: #2c3e50; 
+    }
+    h2 { 
+        margin-top: 40px; 
+        margin-bottom: 15px; 
+        color: #34495e; 
+        border-left: 6px solid #3498db; 
+        padding-left: 10px; 
+    }
+    
+    /* Visit Type Summary Cards - Compact Box Style */
+    .visit-summary {
+        margin: 20px 0 25px;
+    }
+
+    .visit-summary h2 {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 15px;
+        padding-left: 15px;
+        border-left: 4px solid #007bff;
+    }
+
+    .visit-summary-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+        gap: 12px;
+        padding: 5px;
+    }
+
+    /* Compact Box Style Cards */
+    .visit-card {
+        border-radius: 8px;
+        padding: 15px 12px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        min-height: 130px;
+        border: 1px solid rgba(255,255,255,0.2);
+        /* ALL CARDS USE #009688 COLOR */
+        background: #009688;
+    }
+
+    .visit-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+        background: #00897b; /* Slightly darker on hover */
+    }
+
+    .visit-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: rgba(255,255,255,0.3);
+    }
+
+    .visit-icon {
+        font-size: 22px;
+        margin-bottom: 8px;
+        opacity: 0.9;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+    }
+
+    /* All text in cards is white */
+    .visit-card h6 {
+        font-size: 11px;
+        margin-bottom: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+        opacity: 0.9;
+        color: white;
+        text-shadow: 1px 1px 1px rgba(0,0,0,0.3);
+    }
+
+    .visit-card .count {
+        font-size: 1.6rem;
+        font-weight: 700;
+        margin: 5px 0;
+        color: rgb(255, 255, 255);
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        line-height: 1.2;
+    }
+
+    .visit-amount {
+        font-size: 0.9rem;
+        font-weight: 600;
+        padding: 4px 8px;
+        border-radius: 12px;
+        background: rgba(255,255,255,0.2);
+        backdrop-filter: blur(5px);
+        display: inline-block;
+        margin-top: 4px;
+        color: white;
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .visit-amount i {
+        margin-right: 4px;
+        font-size: 0.8rem;
+    }
+
+    /* REMOVED individual gradient backgrounds - ALL CARDS USE #009688 */
+
+    /* Summary boxes styling */
+    .summary-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin: 15px 0 20px;
+    }
+
+    .summary-box {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px 12px;
+        text-align: center;
+        box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+        border: 1px solid #e9ecef;
+    }
+
+    .summary-box h4 {
+        font-size: 13px;
+        margin-bottom: 6px;
+        color: #555;
+        text-transform: uppercase;
+        font-weight: 600;
+    }
+
+    .summary-box span {
+        font-size: 18px;
+        font-weight: 700;
+        display: block;
+    }
+
+    .cash { border-top: 4px solid #28a745; }
+    .gpay { border-top: 4px solid #17a2b8; }
+    .card { border-top: 4px solid #ffc107; }
+    .total { 
+        border-top: 4px solid #007bff;
+        background: #007bff;
+        color: #fff;
+    }
+
+    .total h4,
+    .total span {
+        color: #fff;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 992px) {
+        .visit-summary-container {
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 10px;
+        }
+        
+        .visit-card {
+            padding: 12px 10px;
+            min-height: 120px;
+        }
+        
+        .visit-card .count {
+            font-size: 1.5rem;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .visit-summary-container {
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 8px;
+        }
+        
+        .visit-card {
+            padding: 10px 8px;
+            min-height: 110px;
+        }
+        
+        .visit-icon {
+            font-size: 20px;
+            margin-bottom: 6px;
+            height: 25px;
+        }
+        
+        .visit-card h6 {
+            font-size: 10px;
+        }
+        
+        .visit-card .count {
+            font-size: 1.4rem;
+        }
+        
+        .visit-amount {
+            font-size: 0.8rem;
+            padding: 3px 6px;
+        }
+        
+        .summary-row {
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+        
+        .summary-box {
+            padding: 12px 10px;
+        }
+        
+        .summary-box span {
+            font-size: 16px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .visit-summary-container {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+        
+        .visit-card {
+            min-height: 100px;
+        }
+    }
+
+    /* Print styles */
+    @media print {
+        .visit-summary-container {
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+        
+        .visit-card, .summary-box {
+            box-shadow: none;
+            border: 1px solid #ddd;
+        }
+    }
+</style>
+
+<div class="content-wrapper">
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Daily Transaction Report</h1>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="content">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card card-primary">
+          <div class="card-header">
+            <h3 class="card-title">Filter Report</h3>
+          </div>
+          <div class="row">
+            <div class="col-md-12">
+              <div class="card">
+                <div class="card-body">
+                  <form method="get" style="margin-bottom:20px;">
+                    <div class="row">
+                      <div class="col-md-3">
+                        {% if is_superadmin %}
+                        Branch:
+                        <select name="branch" class="form-control">
+                          <option value="">All Branches</option>
+                          {% for branch in branches %}
+                          <option value="{{ branch.id }}" {% if branch.id == selected_branch_id %}selected{% endif %}>
+                            {{ branch.Branch_Name }}
+                          </option>
+                          {% endfor %}
+                        </select>
+                        {% endif %}
+                      </div>
+                      <div class="col-md-3">
+                        From: <input type="date" class="form-control" name="start_date" value="{{ start_date|date:'Y-m-d' }}" required>
+                      </div>
+                      <div class="col-md-3">
+                        To: <input type="date" class="form-control" name="end_date" value="{{ end_date|date:'Y-m-d' }}" required>
+                      </div>
+                      <div class="col-md-2">
+                        <br>
+                        <button type="submit" class="btn btn-primary">Filter</button>
+                      </div>
+                    </div>
+                  </form>
+
+                  <hr>
+
+                  <!-- 📊 Visit Type Summary Cards - Compact Box Style -->
+                  <div class="visit-summary">
+                    <h2>Visit Type Summary</h2>
+                    <div class="visit-summary-container">
+                        <div class="visit-card">
+                            <div class="visit-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <h6>Total Visits</h6>
+                            <div class="count">{{ total_visits|default:0 }}</div>
+                            <div class="visit-amount">
+                                <i class="fas fa-rupee-sign"></i> {{ appointment_totals.total|default:0|floatformat:2 }}
+                            </div>
+                        </div>
+                        
+                        <div class="visit-card">
+                            <div class="visit-icon">
+                                <i class="fas fa-stethoscope"></i>
+                            </div>
+                            <h6>Consultation</h6>
+                            <div class="count">{{ consultation_count|default:0 }}</div>
+                            <div class="visit-amount">
+                                <i class="fas fa-rupee-sign"></i> {{ consultation_fee|default:0|floatformat:2 }}
+                            </div>
+                        </div>
+                        
+                        <div class="visit-card">
+                            <div class="visit-icon">
+                                <i class="fas fa-sync-alt"></i>
+                            </div>
+                            <h6>Followup</h6>
+                            <div class="count">{{ followup_count|default:0 }}</div>
+                            <div class="visit-amount">
+                                <i class="fas fa-rupee-sign"></i> {{ followup_fee|default:0|floatformat:2 }}
+                            </div>
+                        </div>
+                        
+                        <div class="visit-card">
+                            <div class="visit-icon">
+                                <i class="fas fa-redo"></i>
+                            </div>
+                            <h6>Revisit</h6>
+                            <div class="count">{{ revisit_count|default:0 }}</div>
+                            <div class="visit-amount">
+                                <i class="fas fa-rupee-sign"></i> {{ revisit_fee|default:0|floatformat:2 }}
+                            </div>
+                        </div>
+                        
+                        <div class="visit-card">
+                            <div class="visit-icon">
+                                <i class="fab fa-whatsapp"></i>
+                            </div>
+                            <h6>Whatsapp</h6>
+                            <div class="count">{{ whatsapp_count|default:0 }}</div>
+                            <div class="visit-amount">
+                                <i class="fas fa-rupee-sign"></i> {{ whatsapp_fee|default:0|floatformat:2 }}
+                            </div>
+                        </div>
+                        
+                        <div class="visit-card">
+                            <div class="visit-icon">
+                                <i class="fas fa-medkit"></i>
+                            </div>
+                            <h6>Camp</h6>
+                            <div class="count">{{ camp_count|default:0 }}</div>
+                            <div class="visit-amount">
+                                <i class="fas fa-rupee-sign"></i> {{ camp_fee|default:0|floatformat:2 }}
+                            </div>
+                        </div>
+                        
+                        <div class="visit-card">
+                            <div class="visit-icon">
+                                <i class="fas fa-heartbeat"></i>
+                            </div>
+                            <h6>Treatment</h6>
+                            <div class="count">{{ treatment_count|default:0 }}</div>
+                            <div class="visit-amount">
+                                <i class="fas fa-rupee-sign"></i> {{ treatment_fee|default:0|floatformat:2 }}
+                            </div>
+                        </div>
+
+                        <!-- Zoho Online Consultation -->
+                        <div class="visit-card">
+                            <div class="visit-icon">
+                                <i class="fas fa-video"></i>
+                            </div>
+                            <h6>Zoho Online Consultation</h6>
+                            <div class="count">{{ zoho_online_consultation_count|default:0 }}</div>
+                            <div class="visit-amount">
+                                <i class="fas fa-rupee-sign"></i> {{ zoho_online_consultation_fee|default:0|floatformat:2 }}
+                            </div>
+                        </div>
+
+                        <!-- Zoho Online Revisit -->
+                        <div class="visit-card">
+                            <div class="visit-icon">
+                                <i class="fas fa-video-slash"></i>
+                            </div>
+                            <h6>Zoho Online Revisit</h6>
+                            <div class="count">{{ zoho_online_revisit_count|default:0 }}</div>
+                            <div class="visit-amount">
+                                <i class="fas fa-rupee-sign"></i> {{ zoho_online_revisit_fee|default:0|floatformat:2 }}
+                            </div>
+                        </div>
+
+                        <!-- WhatsApp Revisit -->
+                        <div class="visit-card">
+                            <div class="visit-icon">
+                                <i class="fab fa-whatsapp"></i>
+                            </div>
+                            <h6>WhatsApp Revisit</h6>
+                            <div class="count">{{ whatsapp_revisit_count|default:0 }}</div>
+                            <div class="visit-amount">
+                                <i class="fas fa-rupee-sign"></i> {{ whatsapp_revisit_fee|default:0|floatformat:2 }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                  <hr>
+
+                  <h2>Appointment Transactions</h2>
+                  <div class="summary-row">
+                    <div class="summary-box cash">
+                      <h4>Cash</h4>
+                      <span>₹ {{ appointment_totals.cash|default:0|floatformat:2 }}</span>
+                    </div>
+
+                    <div class="summary-box gpay">
+                      <h4>GPay</h4>
+                      <span>₹ {{ appointment_totals.gpay|default:0|floatformat:2 }}</span>
+                    </div>
+
+                    <div class="summary-box card">
+                      <h4>Card</h4>
+                      <span>₹ {{ appointment_totals.card|default:0|floatformat:2 }}</span>
+                    </div>
+
+                    <div class="summary-box total">
+                      <h4>Total</h4>
+                      <span>₹ {{ appointment_totals.total|default:0|floatformat:2 }}</span>
+                    </div>
+                  </div>
+
+                  <table class="table table-bordered table-striped" id="appointmentTable" style="width:100%">
+                    <thead>
+                      <tr>
+                        {% if is_superadmin %}<th>Branch</th>{% endif %}
+                        <th>Invoice</th>
+                        <th>Patient</th>
+                        <th>Visit Type</th>
+                        <th>Payment Mode</th>
+                        <th>Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for a in appointment_page %}
+                      <tr>
+                        {% if is_superadmin %}<td>{{ a.branch.Branch_Name }}</td>{% endif %}
+                        <td>{{ a.treatmentInvoicenumber }}</td>
+                        <td>{{ a.patientname }}</td>
+                        <td>
+                          {% if a.appointment_status %}
+                          <span class="badge 
+                            {% if a.appointment_status|lower == 'consultation' %}bg-info
+                            {% elif a.appointment_status|lower == 'followup' %}bg-success
+                            {% elif a.appointment_status|lower == 'revisit' %}bg-primary
+                            {% elif a.appointment_status|lower == 'whatsapp' %}bg-secondary
+                            {% elif a.appointment_status|lower == 'whatsapp revisit' %}bg-secondary
+                            {% elif a.appointment_status|lower == 'zoho online consultation' %}bg-info
+                            {% elif a.appointment_status|lower == 'zoho online revisit' %}bg-info
+                            {% elif a.appointment_status|lower == 'camp' %}bg-warning
+                            {% elif a.appointment_status|lower == 'treatment' %}bg-danger
+                            {% else %}bg-dark{% endif %}">
+                            {{ a.appointment_status }}
+                          </span>
+                          {% else %}
+                          —
+                          {% endif %}
+                        </td>
+                        <td>{{ a.payementmode }}</td>
+                        <td>₹ {{ a.total|floatformat:2 }}</td>
+                      </tr>
+                      {% empty %}
+                      <tr>
+                        <td colspan="{% if is_superadmin %}6{% else %}5{% endif %}" class="text-center text-muted">
+                          No Appointment Transactions
+                        </td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+
+                  <hr>
+
+                  <h2>Pharmacy Transactions</h2>
+                  <div class="summary-row">
+                    <div class="summary-box cash">
+                      <h4>Cash</h4>
+                      <span>₹ {{ pharmacy_totals.cash|default:0|floatformat:2 }}</span>
+                    </div>
+
+                    <div class="summary-box gpay">
+                      <h4>GPay</h4>
+                      <span>₹ {{ pharmacy_totals.gpay|default:0|floatformat:2 }}</span>
+                    </div>
+
+                    <div class="summary-box card">
+                      <h4>Card</h4>
+                      <span>₹ {{ pharmacy_totals.card|default:0|floatformat:2 }}</span>
+                    </div>
+
+                    <div class="summary-box total">
+                      <h4>Total</h4>
+                      <span>₹ {{ pharmacy_totals.total|default:0|floatformat:2 }}</span>
+                    </div>
+                  </div>
+
+                  <table id="pharmacyTable" class="table table-bordered table-striped" style="width:100%">
+                    <thead>
+                      <tr>
+                        {% if is_superadmin %}<th>Branch</th>{% endif %}
+                        <th>Invoice</th>
+                        <th>Patient</th>
+                        <th>Cash</th>
+                        <th>GPay</th>
+                        <th>Card</th>
+                        <th>Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for p in pharmacy_page %}
+                      <tr>
+                        {% if is_superadmin %}<td>{{ p.branch.Branch_Name }}</td>{% endif %}
+                        <td>{{ p.Invoicenumber }}</td>
+                        <td>{{ p.patientname }}</td>
+                        <td>₹ {{ p.cash_amount|floatformat:2 }}</td>
+                        <td>₹ {{ p.gpay_amount|floatformat:2 }}</td>
+                        <td>₹ {{ p.card_amount|floatformat:2 }}</td>
+                        <td>₹ {{ p.total|floatformat:2 }}</td>
+                      </tr>
+                      {% empty %}
+                      <tr>
+                        <td colspan="{% if is_superadmin %}7{% else %}6{% endif %}" class="text-center text-muted">
+                          No Pharmacy Transactions
+                        </td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+
+                  <div class="text-center mt-3">
+                    <p class="lead">
+                      <strong>Pharmacy Summary:</strong>
+                      Cash: ₹ {{ pharmacy_totals.cash|default:0|floatformat:2 }} |
+                      GPay: ₹ {{ pharmacy_totals.gpay|default:0|floatformat:2 }} |
+                      Card: ₹ {{ pharmacy_totals.card|default:0|floatformat:2 }} |
+                      <strong class="text-primary">Total: ₹ {{ pharmacy_totals.total|default:0|floatformat:2 }}</strong>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<!-- DataTables JS -->
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script>
+  $(document).ready(function () {
+    // Initialize appointment table
+    $('#appointmentTable').DataTable({
+      responsive: true,
+      paging: true,
+      lengthChange: true,
+      autoWidth: false,
+      ordering: true,
+      searching: true,
+      pageLength: 10,
+      dom: 'Bfrtip',
+      buttons: [
+        {
+          extend: 'copy',
+          exportOptions: {
+            columns: ':visible'
+          }
+        },
+        {
+          extend: 'csv',
+          exportOptions: {
+            columns: ':visible'
+          }
+        },
+        {
+          extend: 'excel',
+          exportOptions: {
+            columns: ':visible'
+          },
+          title: 'Appointment Transactions'
+        },
+        {
+          extend: 'pdf',
+          exportOptions: {
+            columns: ':visible'
+          },
+          title: 'Appointment Transactions'
+        },
+        {
+          extend: 'print',
+          exportOptions: {
+            columns: ':visible'
+          },
+          title: 'Appointment Transactions'
+        },
+        'colvis'
+      ]
+    });
+
+    // Initialize pharmacy table
+    $('#pharmacyTable').DataTable({
+      responsive: true,
+      paging: true,
+      lengthChange: true,
+      autoWidth: false,
+      ordering: true,
+      searching: true,
+      pageLength: 10,
+      dom: 'Bfrtip',
+      buttons: [
+        {
+          extend: 'copy',
+          exportOptions: {
+            columns: ':visible'
+          }
+        },
+        {
+          extend: 'csv',
+          exportOptions: {
+            columns: ':visible'
+          }
+        },
+        {
+          extend: 'excel',
+          exportOptions: {
+            columns: ':visible'
+          },
+          title: 'Pharmacy Transactions'
+        },
+        {
+          extend: 'pdf',
+          exportOptions: {
+            columns: ':visible'
+          },
+          title: 'Pharmacy Transactions'
+        },
+        {
+          extend: 'print',
+          exportOptions: {
+            columns: ':visible'
+          },
+          title: 'Pharmacy Transactions'
+        },
+        'colvis'
+      ]
+    });
+  });
+</script>
+
+{% endblock %}

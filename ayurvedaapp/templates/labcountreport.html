@@ -1,0 +1,990 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<style>
+    /* ───────────────────────────────────────────────
+       Lab Count Report — Modern & Clean Design
+    ──────────────────────────────────────────────── */
+
+    .report-header {
+        background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
+        color: white;
+        padding: 1.8rem 2rem;
+        border-radius: 10px 10px 0 0;
+        margin-bottom: 0;
+    }
+
+    .report-header h1 {
+        margin: 0;
+        font-weight: 600;
+        font-size: 1.85rem;
+    }
+
+    .doctor-meta {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 0 0 10px 10px;
+        padding: 1.25rem 2rem;
+        margin-bottom: 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .doctor-name {
+        font-size: 1.4rem;
+        font-weight: 600;
+        color: #0f766e;
+    }
+
+    .period {
+        color: #475569;
+        font-size: 0.95rem;
+    }
+
+    .filter-card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        margin-bottom: 2rem;
+        overflow: hidden;
+    }
+
+    .filter-card .card-header {
+        background: #ccfbf1;
+        border-bottom: 1px solid #99f6e4;
+        padding: 1rem 1.5rem;
+        font-weight: 600;
+        color: #0f766e;
+    }
+
+    .form-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.2rem;
+        padding: 1.5rem;
+        align-items: flex-end;
+    }
+
+    .form-group {
+        flex: 1;
+        min-width: 180px;
+    }
+
+    .form-group label {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: #334155;
+        margin-bottom: 0.4rem;
+        display: block;
+    }
+
+    .readonly-field {
+        background-color: #f8fafc;
+        color: #64748b;
+        cursor: not-allowed;
+    }
+
+    /* Summary Grid Styles */
+    .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 0.9rem;
+        margin: 1.6rem 0;
+    }
+
+    .summary-card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 3px 14px rgba(0,0,0,0.06);
+        overflow: hidden;
+        transition: transform 0.18s ease, box-shadow 0.18s ease;
+        text-align: center;
+        padding: 1.1rem 0.9rem;
+        position: relative;
+    }
+
+    .summary-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.09);
+    }
+
+    .summary-card .icon {
+        font-size: 1.6rem;
+        margin-bottom: 0.6rem;
+        opacity: 0.8;
+    }
+
+    .summary-card .title {
+        font-size: 0.84rem;
+        font-weight: 600;
+        color: #475569;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        margin-bottom: 0.45rem;
+    }
+
+    .summary-card .value {
+        font-size: 1.65rem;
+        font-weight: 700;
+        color: #1e293b;
+        line-height: 1.1;
+    }
+
+    /* Lab group specific colors */
+    .labgroup-hematology { border-top: 5px solid #ef4444; }
+    .labgroup-biochemistry { border-top: 5px solid #3b82f6; }
+    .labgroup-microbiology { border-top: 5px solid #10b981; }
+    .labgroup-serology { border-top: 5px solid #8b5cf6; }
+    .labgroup-immunology { border-top: 5px solid #f59e0b; }
+    .labgroup-hormones { border-top: 5px solid #ec4899; }
+    .labgroup-urine { border-top: 5px solid #6366f1; }
+    .labgroup-stool { border-top: 5px solid #84cc16; }
+    .labgroup-other { border-top: 5px solid #64748b; }
+
+    .type-total {
+        border-top: 5px solid #0f766e;
+        background: #f0fdfa;
+    }
+
+    /* Statistics Grid Styles */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.25rem;
+        margin: 2rem 0;
+    }
+
+    .stats-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.4rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+        border-left: 5px solid #0f766e;
+    }
+
+    .stats-card h3 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #0f766e;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .test-item {
+        padding: 0.5rem 0;
+        border-bottom: 1px dashed #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .test-item:last-child {
+        border-bottom: none;
+    }
+
+    .test-name {
+        font-size: 0.9rem;
+        color: #475569;
+        flex-grow: 1;
+    }
+
+    .test-count {
+        font-weight: 600;
+        color: #0f766e;
+        background: #ccfbf1;
+        padding: 0.2rem 0.6rem;
+        border-radius: 999px;
+        font-size: 0.85rem;
+        min-width: 40px;
+        text-align: center;
+    }
+
+    .doctor-item {
+        display: flex;
+        align-items: center;
+        padding: 0.7rem 0;
+        border-bottom: 1px dashed #e2e8f0;
+    }
+
+    .doctor-item:last-child {
+        border-bottom: none;
+    }
+
+    .doctor-rank {
+        background: #0f766e;
+        color: white;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-right: 0.75rem;
+    }
+
+    .doctor-info {
+        flex-grow: 1;
+    }
+
+    .doctor-name-small {
+        font-weight: 500;
+        color: #1e293b;
+        font-size: 0.95rem;
+    }
+
+    /* UPDATED: Branch Breakdown Styles */
+    .branch-breakdown-container {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+        overflow: hidden;
+        margin: 2rem 0;
+    }
+
+    .branch-breakdown-header {
+        background: linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%);
+        border-bottom: 1px solid #99f6e4;
+        padding: 1.25rem 1.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .branch-breakdown-header h3 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #0f766e;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .branch-breakdown-header h3 i {
+        font-size: 1.1rem;
+    }
+
+    .branch-total-summary {
+        background: #0f766e;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 999px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .branch-breakdown-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1rem;
+        padding: 1.5rem;
+    }
+
+    .branch-card {
+        background: #f8fafc;
+        border-radius: 8px;
+        padding: 1.25rem;
+        border: 1px solid #e2e8f0;
+        transition: all 0.2s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .branch-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        border-color: #14b8a6;
+    }
+
+    .branch-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: linear-gradient(to bottom, #0f766e, #14b8a6);
+    }
+
+    .branch-name {
+        font-weight: 600;
+        color: #1e293b;
+        font-size: 1rem;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .branch-name i {
+        color: #0f766e;
+        font-size: 0.9rem;
+    }
+
+    .branch-stats {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 1rem;
+        padding-top: 0.75rem;
+        border-top: 1px dashed #e2e8f0;
+    }
+
+    .branch-test-count {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #0f766e;
+        line-height: 1;
+    }
+
+    .branch-percentage {
+        background: #dcfce7;
+        color: #166534;
+        padding: 0.25rem 0.75rem;
+        border-radius: 999px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .branch-percentage.down {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .branch-progress {
+        margin-top: 0.75rem;
+    }
+
+    .branch-progress-bar {
+        height: 6px;
+        background: #e2e8f0;
+        border-radius: 3px;
+        overflow: hidden;
+    }
+
+    .branch-progress-fill {
+        height: 100%;
+        background: linear-gradient(to right, #0f766e, #14b8a6);
+        border-radius: 3px;
+        transition: width 1s ease;
+    }
+
+    /* Single branch view for mobile */
+    .branch-single-view {
+        display: none;
+        padding: 1.5rem;
+    }
+
+    .branch-single-card {
+        background: #f8fafc;
+        border-radius: 8px;
+        padding: 1.5rem;
+        border: 1px solid #e2e8f0;
+        margin-bottom: 1rem;
+    }
+
+    /* Table Section Styles */
+    .table-section {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+        overflow: hidden;
+        margin-top: 2rem;
+    }
+
+    .table-section h2 {
+        margin: 0;
+        padding: 1.25rem 1.75rem;
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+        font-size: 1.25rem;
+        color: #1e293b;
+    }
+
+    /* Empty State Styles */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: #f8fafc;
+        border-radius: 10px;
+        margin: 2rem 0;
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        color: #cbd5e1;
+        margin-bottom: 1.5rem;
+    }
+
+    .empty-state h3 {
+        color: #475569;
+        margin-bottom: 0.75rem;
+    }
+
+    .empty-state p {
+        color: #64748b;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    /* Print optimizations */
+    @media print {
+        .filter-card, .btn, .dataTables_wrapper .dt-buttons {
+            display: none !important;
+        }
+        .doctor-meta, .summary-grid, .stats-grid {
+            page-break-inside: avoid;
+        }
+        .summary-card, .stats-card {
+            box-shadow: none;
+            border: 1px solid #ccc;
+        }
+        .report-header {
+            background: #f1f5f9 !important;
+            color: black !important;
+        }
+    }
+
+    /* Responsive Styles */
+    @media (max-width: 768px) {
+        .form-row { flex-direction: column; gap: 1rem; }
+        .summary-grid, .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        .doctor-meta {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        /* UPDATED: Branch breakdown responsive */
+        .branch-breakdown-grid {
+            display: none;
+        }
+        
+        .branch-single-view {
+            display: block;
+        }
+        
+        .branch-breakdown-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+    }
+    
+    @media (min-width: 769px) {
+        .branch-single-view {
+            display: none;
+        }
+    }
+</style>
+
+<div class="content-wrapper">
+    <section class="content">
+
+        <!-- Header Section -->
+        <div class="report-header">
+            <h1><i class="fas fa-flask mr-2"></i> Laboratory Test Count Report</h1>
+        </div>
+
+        <!-- Doctor & Period Info Section -->
+        <div class="doctor-meta">
+            <div>
+                <div class="doctor-name">
+                    <i class="fas fa-user-md mr-2"></i> {{ doctor_name }}
+                </div>
+                <div class="period mt-1">
+                    <i class="far fa-calendar-alt mr-2"></i>
+                    {% if has_filters %}
+                        {{ start_date|date:"d M Y" }} — {{ end_date|date:"d M Y" }}
+                    {% else %}
+                        Select date range to view report
+                    {% endif %}
+                </div>
+            </div>
+            {% if has_filters and total_lab_tests > 0 %}
+                <div class="text-right">
+                    <span class="badge badge-success px-3 py-2" style="background-color: #0f766e;">
+                        <i class="fas fa-flask mr-2"></i> Total Tests: {{ total_lab_tests|default:0 }}
+                    </span>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Filter Form Section -->
+        <div class="filter-card">
+            <div class="card-header">
+                <i class="fas fa-filter mr-2"></i> Filter Report
+            </div>
+            <form method="get" class="filter-form">
+                <div class="form-row">
+                    <!-- Branch Selection -->
+                    {% if is_superadmin %}
+                        <div class="form-group">
+                            <label>Branch</label>
+                            <select name="branch" id="branchSelect"
+                                    class="form-control select2"
+                                    onchange="updateDoctors()">
+                                <option value="">Select Branch</option>
+                                {% for branch in branches %}
+                                    <option value="{{ branch.id }}"
+                                        {% if branch.id|stringformat:"i" == selected_branch_id %}selected{% endif %}>
+                                        {{ branch.Branch_Name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    {% else %}
+                        <div class="form-group">
+                            <label>Branch</label>
+                            <input type="text" class="form-control readonly-field"
+                                   value="{{ staff.Branch_Name.Branch_Name }}" readonly>
+                            <input type="hidden" name="branch" value="{{ staff_branch_id }}">
+                        </div>
+                    {% endif %}
+
+                    <!-- Doctor Selection -->
+                    {% if is_doctor %}
+                        <div class="form-group">
+                            <label>Doctor</label>
+                            <input type="text" class="form-control readonly-field"
+                                   value="{{ staff.Staff.Staff_firstname }} {{ staff.Staff.Staff_lastname }}"
+                                   readonly>
+                            <input type="hidden" name="doctor" value="{{ staff_details_id }}">
+                        </div>
+                    {% else %}
+                        <div class="form-group">
+                            <label>Doctor</label>
+                            <select name="doctor" id="doctorSelect" class="form-control select2">
+                                <option value="">All Doctors</option>
+                                {% for doctor in current_branch_doctors %}
+                                    <option value="{{ doctor.id }}"
+                                        {% if doctor.id|stringformat:"i" == selected_doctor_id %}selected{% endif %}>
+                                        {{ doctor.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    {% endif %}
+
+                    <!-- Date Range Selection -->
+                    <div class="form-group">
+                        <label>From Date</label>
+                        <input type="date" name="start_date" class="form-control"
+                               value="{{ start_date|date:'Y-m-d' }}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>To Date</label>
+                        <input type="date" name="end_date" class="form-control"
+                               value="{{ end_date|date:'Y-m-d' }}" required>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="form-group">
+                        <label style="visibility:hidden;">.</label>
+                        <button type="submit" class="btn btn-success btn-block"
+                                style="background-color:#0f766e;">
+                            <i class="fas fa-chart-bar mr-2"></i> Generate Report
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Main Content Area -->
+        {% if not has_filters %}
+            <!-- Empty State - Initial Load -->
+            <div class="empty-state">
+                <i class="fas fa-flask"></i>
+                <h3>Welcome to Lab Count Report</h3>
+                <p>Please select filters above to generate your report. Choose a date range and optionally select a branch and doctor to view detailed lab test statistics.</p>
+            </div>
+
+        {% elif total_lab_tests == 0 %}
+            <!-- Empty State - No Data Found -->
+            <div class="empty-state">
+                <i class="fas fa-search"></i>
+                <h3>No Lab Tests Found</h3>
+                <p>No laboratory test requisitions were found for the selected criteria. Please try adjusting your filters (date range, branch, or doctor).</p>
+            </div>
+
+        {% else %}
+            <!-- Data Display Section -->
+            
+            <!-- Summary Statistics Grid -->
+            <div class="summary-grid">
+                <div class="summary-card type-total">
+                    <div class="icon"><i class="fas fa-flask"></i></div>
+                    <div class="title">Total Tests</div>
+                    <div class="value">{{ total_lab_tests|default:0 }}</div>
+                </div>
+
+                {% for group_name, group_data in group_details.items %}
+                    <div class="summary-card labgroup-{{ group_name|lower|slice:":15" }}">
+                        <div class="icon"><i class="fas fa-vial"></i></div>
+                        <div class="title">{{ group_name|truncatechars:20 }}</div>
+                        <div class="value">{{ group_data.total }}</div>
+                        <div style="font-size: 0.75rem; color: #64748b; margin-top: 0.3rem;">
+                            {{ group_data.tests|length }} test types
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Detailed Statistics Grid -->
+            <div class="stats-grid">
+                <!-- Top Tests Card -->
+                {% if top_tests %}
+                    <div class="stats-card">
+                        <h3><i class="fas fa-medal mr-2"></i> Top 10 Tests</h3>
+                        <div style="max-height: 250px; overflow-y: auto;">
+                            {% for test_name, test_data in top_tests %}
+                                <div class="test-item">
+                                    <div class="test-name">
+                                        <span class="badge badge-light mr-2" style="background-color: #f0fdfa; color: #0f766e; font-size: 0.7rem;">
+                                            {{ test_data.group|truncatechars:15 }}
+                                        </span>
+                                        {{ test_name|truncatechars:30 }}
+                                    </div>
+                                    <span class="test-count">{{ test_data.count }}</span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Doctor-wise Breakdown Card -->
+                {% if doctor_breakdown %}
+                    <div class="stats-card">
+                        <h3><i class="fas fa-user-md mr-2"></i> Doctor-wise Breakdown</h3>
+                        <div style="max-height: 250px; overflow-y: auto;">
+                            {% for doctor in doctor_breakdown %}
+                                <div class="doctor-item">
+                                    <div class="doctor-rank">{{ forloop.counter }}</div>
+                                    <div class="doctor-info">
+                                        <div class="doctor-name-small">{{ doctor.name|truncatechars:25 }}</div>
+                                        <div style="font-size: 0.8rem; color: #64748b;">
+                                            {{ doctor.count }} tests • {{ doctor.tests|length }} types
+                                        </div>
+                                    </div>
+                                    <span class="test-count">{{ doctor.count }}</span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- UPDATED: Branch-wise Breakdown Section -->
+            {% if branch_breakdown %}
+                <div class="branch-breakdown-container">
+                    <div class="branch-breakdown-header">
+                        <h3><i class="fas fa-building mr-2"></i> Branch-wise Lab Test Count</h3>
+                        <div class="branch-total-summary">
+                            <i class="fas fa-flask mr-1"></i>
+                            {{ branch_breakdown|length }} Branches
+                        </div>
+                    </div>
+                    
+                    <!-- Desktop Grid View -->
+                    <div class="branch-breakdown-grid">
+                        {% for row in branch_breakdown %}
+                            {% with total_tests=total_lab_tests|default:1 %}
+                                {% widthratio row.total_test_count total_tests 100 as percentage %}
+                                <div class="branch-card">
+                                    <div class="branch-name">
+                                        <i class="fas fa-hospital"></i>
+                                        {{ row.branch_name|truncatechars:30 }}
+                                    </div>
+                                    <div class="branch-stats">
+                                        <div>
+                                            <div class="branch-test-count">{{ row.total_test_count }}</div>
+                                            <div style="font-size: 0.8rem; color: #64748b; margin-top: 0.25rem;">
+                                                tests
+                                            </div>
+                                        </div>
+                                        <div class="branch-percentage {% if percentage|floatformat:0|add:0 < 5 %}down{% endif %}">
+                                            <i class="fas fa-{% if percentage|floatformat:0|add:0 >= 5 %}chart-line{% else %}chart-bar{% endif %}"></i>
+                                            {{ percentage|floatformat:1 }}%
+                                        </div>
+                                    </div>
+                                    <div class="branch-progress">
+                                        <div class="branch-progress-bar">
+                                            <div class="branch-progress-fill" style="width: {{ percentage }}%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endwith %}
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Mobile Single View -->
+                    <div class="branch-single-view">
+                        {% for row in branch_breakdown %}
+                            {% with total_tests=total_lab_tests|default:1 %}
+                                {% widthratio row.total_test_count total_tests 100 as percentage %}
+                                <div class="branch-single-card">
+                                    <div class="branch-name">
+                                        <i class="fas fa-hospital"></i>
+                                        {{ row.branch_name }}
+                                    </div>
+                                    <div class="branch-stats">
+                                        <div>
+                                            <div class="branch-test-count">{{ row.total_test_count }}</div>
+                                            <div style="font-size: 0.8rem; color: #64748b; margin-top: 0.25rem;">
+                                                tests
+                                            </div>
+                                        </div>
+                                        <div class="branch-percentage {% if percentage|floatformat:0|add:0 < 5 %}down{% endif %}">
+                                            <i class="fas fa-{% if percentage|floatformat:0|add:0 >= 5 %}chart-line{% else %}chart-bar{% endif %}"></i>
+                                            {{ percentage|floatformat:1 }}%
+                                        </div>
+                                    </div>
+                                    <div class="branch-progress">
+                                        <div class="branch-progress-bar">
+                                            <div class="branch-progress-fill" style="width: {{ percentage }}%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endwith %}
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Detailed Data Table Section -->
+            <div class="table-section">
+                <h2><i class="fas fa-list-alt mr-2"></i> Detailed Lab Test Requisitions</h2>
+                <div class="p-3">
+                    <table id="labTestTable" class="table table-bordered table-hover table-striped">
+                        <thead class="bg-light">
+                            <tr>
+                                {% if is_superadmin %}<th>Branch</th>{% endif %}
+                                <th>Date</th>
+                                <th>Patient</th>
+                                <th>MR Number</th>
+                                <th>Test Group</th>
+                                <th>Test Name</th>
+                                <th>Requested By</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for req in lab_requisitions %}
+                                <tr>
+                                    {% if is_superadmin %}
+                                        <td>
+                                            {% if req.patient and req.patient.Branch_Name %}
+                                                {{ req.patient.Branch_Name.Branch_Name|truncatechars:20 }}
+                                            {% elif req.case_history and req.case_history.patient and req.case_history.patient.Branch_Name %}
+                                                {{ req.case_history.patient.Branch_Name.Branch_Name|truncatechars:20 }}
+                                            {% else %}
+                                                —
+                                            {% endif %}
+                                        </td>
+                                    {% endif %}
+                                    <td>{{ req.created_at|date:"d-M-Y" }}</td>
+                                    <td>
+                                        {% if req.patient %}
+                                            {{ req.patient.Patient_Name|truncatechars:20 }}
+                                        {% elif req.case_history and req.case_history.patient %}
+                                            {{ req.case_history.patient.Patient_Name|truncatechars:20 }}
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if req.patient %}
+                                            {{ req.patient.Medical_Record_Number|default:"—" }}
+                                        {% elif req.case_history and req.case_history.patient %}
+                                            {{ req.case_history.patient.Medical_Record_Number|default:"—" }}
+                                        {% else %}
+                                            —
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if req.labtestchild.group %}
+                                            <span class="badge" style="background-color: #ccfbf1; color: #0f766e;">
+                                                {{ req.labtestchild.group.groupname|truncatechars:20 }}
+                                            </span>
+                                        {% else %}
+                                            <span class="badge badge-secondary">Uncategorized</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ req.labtestchild.testname|truncatechars:30 }}</td>
+                                    <td>
+                                        {% if req.handledbystaff %}
+                                            <span class="badge badge-info">
+                                                {{ req.handledbystaff.Staff_firstname }} {{ req.handledbystaff.Staff_lastname|make_list|first }}.
+                                            </span>
+                                        {% else %}
+                                            <span class="badge badge-secondary">System</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-success">Requested</span>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot class="bg-light font-weight-bold">
+                            <tr>
+                                {% if is_superadmin %}
+                                    <th colspan="7" class="text-right">Total Requisitions:</th>
+                                {% else %}
+                                    <th colspan="6" class="text-right">Total Requisitions:</th>
+                                {% endif %}
+                                <th>{{ total_lab_tests|default:0 }}</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        {% endif %}
+
+    </section>
+</div>
+
+<!-- JavaScript Section -->
+<script>
+    // Document Ready Function
+    $(document).ready(function() {
+        // Initialize DataTable if data exists
+        {% if has_filters and total_lab_tests > 0 %}
+            $('#labTestTable').DataTable({
+                responsive: true,
+                pageLength: 10,
+                lengthMenu: [10, 15, 25, 50, 100],
+                dom: 'Blfrtip',
+                buttons: ['copy', 'csv', 'excel', 'pdf', 'print', 'colvis'],
+                order: [[ {% if is_superadmin %}1{% else %}0{% endif %}, 'desc' ]],
+                language: {
+                    emptyTable: "No lab test requisitions found for the selected criteria",
+                    search: "Search:",
+                    lengthMenu: "Show _MENU_ entries",
+                    info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                    paginate: {
+                        first: "First",
+                        last: "Last",
+                        next: "Next",
+                        previous: "Previous"
+                    }
+                }
+            });
+        {% endif %}
+
+        // Initialize Select2 for dropdowns
+        {% if is_superadmin or not is_doctor %}
+            $('.select2').select2({
+                placeholder: "Select...",
+                allowClear: true,
+                width: '100%',
+                theme: 'bootstrap4'
+            });
+        {% endif %}
+
+        // Set minimum date for "To Date" based on "From Date"
+        $('input[name="start_date"]').on('change', function() {
+            var startDate = $(this).val();
+            $('input[name="end_date"]').attr('min', startDate);
+        });
+
+        // Initialize min date for end date
+        var startDateVal = $('input[name="start_date"]').val();
+        if (startDateVal) {
+            $('input[name="end_date"]').attr('min', startDateVal);
+        }
+        
+        // Animate progress bars on load
+        setTimeout(function() {
+            $('.branch-progress-fill').each(function() {
+                var currentWidth = $(this).width();
+                var targetWidth = $(this).parent().width() * (parseInt($(this).css('width')) / 100);
+                $(this).css('width', '0');
+                $(this).animate({width: targetWidth + 'px'}, 800);
+            });
+        }, 300);
+    });
+
+    // Branch-Doctor Dependency Logic (for superadmin)
+    {% if is_superadmin %}
+        var doctorsByBranch = JSON.parse('{{ doctors_by_branch_json|escapejs }}');
+
+        function updateDoctors() {
+            var branchId = document.getElementById('branchSelect').value;
+            var doctorSelect = document.getElementById('doctorSelect');
+            var selectedDoctorId = '{{ selected_doctor_id|default:"" }}';
+
+            doctorSelect.innerHTML = '<option value="">All Doctors</option>';
+
+            if (branchId && doctorsByBranch[branchId]) {
+                // Show doctors from selected branch
+                doctorsByBranch[branchId].forEach(function(doc) {
+                    var option = new Option(doc.name, doc.id, false, doc.id == selectedDoctorId);
+                    doctorSelect.add(option);
+                });
+            } else if (!branchId) {
+                // Show all doctors from all branches (if no branch selected)
+                var allDoctorsMap = {};
+                
+                Object.values(doctorsByBranch).forEach(function(doctorList) {
+                    doctorList.forEach(function(doc) {
+                        if (!allDoctorsMap[doc.id]) {
+                            allDoctorsMap[doc.id] = doc;
+                        }
+                    });
+                });
+
+                Object.values(allDoctorsMap).forEach(function(doc) {
+                    var option = new Option(doc.name, doc.id, false, doc.id == selectedDoctorId);
+                    doctorSelect.add(option);
+                });
+            }
+
+            // Refresh Select2
+            $(doctorSelect).trigger('change');
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateDoctors();
+        });
+    {% endif %}
+
+    // Form validation
+    document.querySelector('.filter-form').addEventListener('submit', function(e) {
+        var startDate = document.querySelector('input[name="start_date"]').value;
+        var endDate = document.querySelector('input[name="end_date"]').value;
+        
+        if (!startDate || !endDate) {
+            e.preventDefault();
+            alert('Please select both start and end dates.');
+            return false;
+        }
+        
+        if (new Date(startDate) > new Date(endDate)) {
+            e.preventDefault();
+            alert('End date cannot be earlier than start date.');
+            return false;
+        }
+    });
+</script>
+
+{% endblock content %}

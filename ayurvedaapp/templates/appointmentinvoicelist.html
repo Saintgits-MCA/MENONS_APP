@@ -1,0 +1,347 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="content-wrapper">
+  <!-- Page Header -->
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1 class="text-primary fw-bold">Consultation & Appointment Invoice Report</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item active">Consultation Report</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 📅 Filter Form -->
+  <section class="content">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card card-primary shadow-sm">
+          <div class="card-header">
+            <h3 class="card-title">Filter Report by Date</h3>
+          </div>
+          <form method="POST" action="{% url 'appointment_invlist' %}">
+            {% csrf_token %}
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-6">
+                  <label class="fw-bold">Start Date:</label>
+                  <input type="date" class="form-control" name="start_date" value="{{ sdate|date:'Y-m-d' }}" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="fw-bold">End Date:</label>
+                  <input type="date" class="form-control" name="end_date" value="{{ edate|date:'Y-m-d' }}" required>
+                </div>
+              </div>
+            </div>
+            <div class="card-footer text-center">
+              <button type="submit" class="btn btn-primary px-4">
+                <i class="fas fa-filter me-2"></i>Apply Filter
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 📊 Summary Cards -->
+  <section class="content">
+    <div class="container-fluid">
+      <div class="row text-center">
+
+        <div class="col-md-3 mb-3">
+          <div class="card shadow-sm border-primary">
+            <div class="card-body">
+              <h6 class="text-muted mb-1">Total Visits</h6>
+              <h3 class="fw-bold text-primary">{{ total_visits|default:0 }}</h3>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+          <div class="card shadow-sm border-info">
+            <div class="card-body">
+              <h6 class="text-muted mb-1">Active Invoice Amount (₹)</h6>
+              <h3 class="fw-bold text-info">{{ appointment_total|default:0|floatformat:2 }}</h3>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+          <div class="card shadow-sm border-danger">
+            <div class="card-body">
+              <h6 class="text-muted mb-1">Cancelled Invoices</h6>
+              <h3 class="fw-bold text-danger">{{ cancelled_count|default:0 }}</h3>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+          <div class="card shadow-sm border-warning">
+            <div class="card-body">
+              <h6 class="text-muted mb-1">Cancelled Total (₹)</h6>
+              <h3 class="fw-bold text-warning">{{ cancelled_total|default:0|floatformat:2 }}</h3>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Visit Type Summary Cards Row 1 -->
+      <div class="row text-center">
+        <div class="col-md-2 mb-3">
+          <div class="card shadow-sm border-info">
+            <div class="card-body">
+              <h6 class="text-muted">Consultation</h6>
+              <h3 class="fw-bold text-info">{{ consultation_count|default:0 }}</h3>
+              <!-- <small class="text-muted">₹ {{ consultation_fee|default:0|floatformat:2 }}</small> -->
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-2 mb-3">
+          <div class="card shadow-sm border-success">
+            <div class="card-body">
+              <h6 class="text-muted">Followup</h6>
+              <h3 class="fw-bold text-success">{{ followup_count|default:0 }}</h3>
+              <!-- <small class="text-muted">₹ {{ followup_fee|default:0|floatformat:2 }}</small> -->
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-2 mb-3">
+          <div class="card shadow-sm border-primary">
+            <div class="card-body">
+              <h6 class="text-muted">Revisit</h6>
+              <h3 class="fw-bold text-primary">{{ revisit_count|default:0 }}</h3>
+              <!-- <small class="text-muted">₹ {{ revisit_fee|default:0|floatformat:2 }}</small> -->
+            </div>
+          </div>
+        </div>
+
+        {% comment %} <div class="col-md-2 mb-3">
+          <div class="card shadow-sm border-secondary">
+            <div class="card-body">
+              <h6 class="text-muted">Whatsapp</h6>
+              <h3 class="fw-bold text-secondary">{{ whatsapp_count|default:0 }}</h3>
+              <!-- <small class="text-muted">₹ {{ whatsapp_fee|default:0|floatformat:2 }}</small> -->
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-2 mb-3">
+          <div class="card shadow-sm border-warning">
+            <div class="card-body">
+              <h6 class="text-muted">Camp</h6>
+              <h3 class="fw-bold text-warning">{{ camp_count|default:0 }}</h3>
+              <!-- <small class="text-muted">₹ {{ camp_fee|default:0|floatformat:2 }}</small> -->
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-2 mb-3">
+          <div class="card shadow-sm border-danger">
+            <div class="card-body">
+              <h6 class="text-muted">Treatment</h6>
+              <h3 class="fw-bold text-danger">{{ treatment_count|default:0 }}</h3>
+              <!-- <small class="text-muted">₹ {{ treatment_fee|default:0|floatformat:2 }}</small> -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Visit Type Summary Cards Row 2 (Additional Types) -->
+      <div class="row text-center">
+        <div class="col-md-2 mb-3">
+          <div class="card shadow-sm border-info">
+            <div class="card-body">
+              <h6 class="text-muted">Zoho Online Consultation</h6>
+              <h3 class="fw-bold text-info">{{ zoho_online_consultation_count|default:0 }}</h3>
+              <!-- <small class="text-muted">₹ {{ zoho_online_consultation_fee|default:0|floatformat:2 }}</small> -->
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-2 mb-3">
+          <div class="card shadow-sm border-primary">
+            <div class="card-body">
+              <h6 class="text-muted">Zoho Online Revisit</h6>
+              <h3 class="fw-bold text-primary">{{ zoho_online_revisit_count|default:0 }}</h3>
+              <!-- <small class="text-muted">₹ {{ zoho_online_revisit_fee|default:0|floatformat:2 }}</small> -->
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-2 mb-3">
+          <div class="card shadow-sm border-secondary">
+            <div class="card-body">
+              <h6 class="text-muted">WhatsApp Revisit</h6>
+              <h3 class="fw-bold text-secondary">{{ whatsapp_revisit_count|default:0 }}</h3>
+              <!-- <small class="text-muted">₹ {{ whatsapp_revisit_fee|default:0|floatformat:2 }}</small> -->
+            </div>
+          </div>
+        </div> {% endcomment %}
+
+        {% if other_count > 0 %}
+        <div class="col-md-2 mb-3">
+          <div class="card shadow-sm border-dark">
+            <div class="card-body">
+              <h6 class="text-muted">Deleted Appointments</h6>
+              <h3 class="fw-bold text-dark">{{ other_count|default:0 }}</h3>
+              <!-- <small class="text-muted">₹ {{ other_fee|default:0|floatformat:2 }}</small> -->
+            </div>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Payment Mode Summary -->
+      <div class="row text-center mt-3">
+        <div class="col-md-3 mb-3">
+          <div class="card shadow-sm border-success">
+            <div class="card-body">
+              <h6 class="text-muted">Cash</h6>
+              <h4 class="fw-bold text-success">₹ {{ cash_total|default:0|floatformat:2 }}</h4>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+          <div class="card shadow-sm border-info">
+            <div class="card-body">
+              <h6 class="text-muted">GPay / UPI</h6>
+              <h4 class="fw-bold text-info">₹ {{ gpay_total|default:0|floatformat:2 }}</h4>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+          <div class="card shadow-sm border-warning">
+            <div class="card-body">
+              <h6 class="text-muted">Card</h6>
+              <h4 class="fw-bold text-warning">₹ {{ card_total|default:0|floatformat:2 }}</h4>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+          <div class="card shadow-sm border-primary" style="background-color: #007bff; color: white;">
+            <div class="card-body">
+              <h6 class="text-white">Total Collection</h6>
+              <h4 class="fw-bold text-white">₹ {{ appointment_total|default:0|floatformat:2 }}</h4>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- 📋 Appointment Invoice Table -->
+  <section class="content">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">Appointment Invoices</h2>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table id="example1" class="table table-bordered table-striped">
+                  <thead class="bg-primary text-white">
+                    <tr>
+                      <th>SL No</th>
+                      <th>Invoice No</th>
+                      <th>Patient Name</th>
+                      <th>Visit Type</th>
+                      <th>Phone</th>
+                      <th>Payment Mode</th>
+                      <th>Total Amount (₹)</th>
+                      <th>Date</th>
+                      <th>Status</th>
+                      <th>Branch</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% if inv %}
+                      {% for i in inv %}
+                      <tr {% if i.cancelstatus %}style="background-color:#ffe5e5;"{% endif %}>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ i.treatmentInvoicenumber|default:"—" }}</td>
+                        <td>{{ i.patientname|default:"—" }}</td>
+                        <td>
+                          {% if i.appointment_status %}
+                            <span class="badge 
+                              {% if i.appointment_status|lower == 'consultation' %}bg-info
+                              {% elif i.appointment_status|lower == 'followup' %}bg-success
+                              {% elif i.appointment_status|lower == 'revisit' %}bg-primary
+                              {% elif i.appointment_status|lower == 'whatsapp' %}bg-secondary
+                              {% elif i.appointment_status|lower == 'camp' %}bg-warning
+                              {% elif i.appointment_status|lower == 'treatment' %}bg-danger
+                              {% elif i.appointment_status|lower == 'zoho online consultation' %}bg-info
+                              {% elif i.appointment_status|lower == 'zoho online revisit' %}bg-primary
+                              {% elif i.appointment_status|lower == 'whatsapp revisit' %}bg-secondary
+                              {% else %}bg-dark{% endif %}
+                            ">
+                              {{ i.appointment_status }}
+                            </span>
+                          {% else %}
+                            <span class="badge bg-secondary">—</span>
+                          {% endif %}
+                        </td>
+                        <td>{{ i.patientphno|default:"—" }}</td>
+                        <td>{{ i.payementmode|default:"—" }}</td>
+                        <td class="fw-bold">₹ {{ i.total|default:0|floatformat:2 }}</td>
+                        <td>{{ i.currentdate|date:"d-m-Y" }}</td>
+                        <td>
+                          {% if i.cancelstatus %}
+                            <span class="badge bg-danger">Cancelled</span>
+                          {% else %}
+                            <span class="badge bg-success">Active</span>
+                          {% endif %}
+                        </td>
+                        <td>{{ i.branch.Branch_Name|default:"—" }}</td>
+                        <td>
+                          <a href="{% url 'appointment_invview' %}?ids={{ i.id }}" class="btn btn-sm btn-info">
+                            <i class="fas fa-eye"></i> View
+                          </a>
+                          {% if staff_design_id == 9 %}
+                            {% if not i.cancelstatus %}
+                              <a href="{% url 'cancel_appointment_invoice' %}?ids={{ i.id }}" 
+                                 class="btn btn-sm btn-danger"
+                                 onclick="return confirm('Are you sure you want to cancel this invoice?');">
+                                 <i class="fas fa-times-circle"></i> Cancel
+                              </a>
+                            {% endif %}
+                          {% endif %}
+                        </td>
+                      </tr>
+                      {% endfor %}
+                    {% else %}
+                    <tr>
+                      <td colspan="11" class="text-muted text-center py-4">No invoices found for this date range.</td>
+                    </tr>
+                    {% endif %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+
+
+{% endblock %}

@@ -1,0 +1,251 @@
+
+
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invoice</title>
+  <style>
+     p{
+      font-size: 14px;
+    }
+    .footer {
+   
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    padding: 10px;
+  }
+    /* Custom styles */
+    .invoice-header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .details-container {
+      display: flex;
+      justify-content: space-between;
+    }
+    .patient-details,
+    .bill-details {
+      flex: 0 0 48%;
+    }
+    .clearfix::after {
+      content: "";
+      clear: both;
+      display: table;
+    }
+    .footer {
+   
+    left: 0;
+    width: 100%;
+    text-align: center;
+    padding: 10px;
+  }
+    @media print {
+      @page {
+        pagesize:A5;
+       
+        margin: 4px; 
+    }
+        .table-bordered {
+          width: 100%;
+            border: 1px solid #000; /* Add border to all table cells */
+            border-collapse: collapse; /* Collapse borders into a single border */
+            margin: auto; /* Center the table horizontally */
+        }
+        .table-bordered th,
+        .table-bordered td {
+            border: 1px solid #000; /* Add border to table header and data cells */
+            padding: 8px; /* Add padding to table cells */
+        }
+        .text-right {
+            text-align: right; /* Align content to the right */
+        }
+       
+        .text-center
+        {
+          text-align: center;
+        }
+        .footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    padding: 10px;
+  }
+  p{
+      font-size: 14px;
+    }
+  /* .page-break {
+        page-break-after: always; 
+      } */
+
+    }
+  </style>
+</head>
+<body>
+
+<div class="content-wrapper">
+  <!-- Content Header (Page header) -->
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Invoice</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="#">Home
+              
+            </a></li>
+            <li class="breadcrumb-item active">Invoice</li>
+          </ol>
+        </div>
+      </div>
+    </div><!-- /.container-fluid -->
+  </section>
+
+  <section class="content">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-12"  >
+        
+          <!-- Main content -->
+          <div class="invoice p-3 mb-3">
+            <div class="container" id="invoice">
+              <div class="row">
+                <div class="col">
+                 
+                </div>
+              </div>
+              <!-- Inside the content block -->
+              <div class="row clearfix">
+                <div class="col-md-12">
+                  <div class="details-container">
+                   
+                    <div class="bill-details">
+                      <p>Invoice Number:
+                      {{ lsinvoice.Invoicenumber }}</p>
+                      <p>Date: {{ lsinvoice.currentdate }}</p>
+                   
+                      <!-- Bill details here -->
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-12">
+                  <table class="table table-bordered">
+                    <thead>
+                      <tr>
+                        <th scope="col">SL No</th>
+                        <th scope="col">Particulars</th>
+                        <th>Hsn Code</th>
+                        <th scope="col">Mfg</th>
+                        <th scope="col">Batch</th>
+                        <th scope="col"> Expiry</th>
+                        <th scope="col">Qty</th>
+                        <th scope="col">Rate</th>
+                        <th scope="col">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                    
+                      
+                          {% for item in chinvoice %}
+                           
+                            <tr>
+                              <td>{{ forloop.counter }}</td>
+                              <td>{{ item.particulars }}-{{ item.unt }}</td>
+                              {% if item.hsncode == "null" %}
+                                <td></td>
+                              {% else %}
+                                <td>{{ item.hsncode }}</td>
+                              {% endif %}
+                              <td>{{ item.mfg }}</td>
+                              <td>{{ item.batchno }}</td>
+                              <td>{{ item.expirydate }}</td>
+                              <td>{{ item.quantity }}</td>
+                              <td>{{ item.amount }}</td>
+                              <td>{{ item.sutotal }}</td>
+                            </tr>
+                           
+                          {% endfor %}
+                       
+                    
+                   
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-6"><div class="text-left">
+                  <div>
+                    <p>Prepared By:{{staffn.Staff.Staff_firstname}} </p>
+                  </div>
+                  
+                </div></div>
+                <div class="col-md-6">
+                  <div class="text-right">
+                    <p>Subtotal:₹ {{ lsinvoice.subtotal }}</p>
+                    <p>Discount:₹ {{ lsinvoice.discount }}</p>
+                  
+                    <p>Tax:₹{{ lsinvoice.tax }}</p>
+                    <!-- <p>Shipping:₹{{ lsinvoice.shipping }}</p> -->
+                    {% if lsinvoice.consultationfee %}
+      <p>Consultation fee: ₹{{ lsinvoice.consultationfee }}</p>
+    {% endif %}
+
+    <!-- Check if consultation fee is null and consultation cum registration fee is provided -->
+    {% if not lsinvoice.consultationfee and lsinvoice.consultationfeecumregfee %}
+      <p>Consultation Cum Registration Fee: ₹{{ lsinvoice.consultationfeecumregfee }}</p>
+    {% endif %}
+
+    <!-- Check if both consultation fee and consultation cum registration fee are null -->
+    {% if not lsinvoice.consultationfee and not lsinvoice.consultationfeecumregfee %}
+      <p></p>
+    {% endif %}
+              
+                    <p><strong>Total Amount:₹ {{ lsinvoice.total }}</strong> </p>
+                  </div>
+                </div>
+              </div>
+<!-- Restock button will only be displayed if the status of the invoice is true -->
+{% if lsinvoice.restockstatus %}
+  <div class="text-right">
+    <form action="{% url 'restock_itemsfrompharmacy' lsinvoice.id %}" method="post">
+      {% csrf_token %}
+      <input type="submit" value="Ready to restock all items" class="btn btn-primary">
+    </form>
+  </div>
+{% endif %}
+
+
+              <!-- Table and other content here -->
+            </div>
+           
+          </div>
+          
+        </div>
+     
+      </div>
+    </div>
+  </section>
+</div>
+
+
+{% endblock %}
+
+
+
+
+
+
+

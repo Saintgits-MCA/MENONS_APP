@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<style>
+    .card-header-custom {
+        background-color: #00796b !important;
+        color: white !important;
+    }
+</style>
+
+<div class="content-wrapper">
+
+    <section class="content-header mb-3">
+        <h4 class="fw-bold">Edit Invoice Details</h4>
+    </section>
+
+    <section class="content">
+        <div class="card card-primary shadow-sm" style="max-width: 600px;">
+            <div class="card-header card-header-custom">
+                <h5 class="card-title mb-0">Invoice #{{ inv.treatmentInvoicenumber }}</h5>
+            </div>
+            <div class="card-body">
+
+                <form method="POST">
+                    {% csrf_token %}
+
+                    <!-- Patient Information -->
+                    <div class="mb-4">
+                        <h6 class="fw-semibold text-primary mb-2">
+                            <i class="fas fa-user me-2"></i>Patient Information
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>Name:</strong> {{ inv.patientname }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>MR No:</strong> {{ inv.Mrno.Medical_Record_Number }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>Date:</strong> {{ inv.currentdate }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>Current Status:</strong> 
+                                    <span class="badge 
+                                        {% if appointment.status == 'Consultation' %}bg-info
+                                        {% elif appointment.status == 'Followup' %}bg-success
+                                        {% elif appointment.status == 'Revisit' %}bg-primary
+                                        {% elif appointment.status == 'Whatsapp' %}bg-secondary
+                                        {% elif appointment.status == 'Camp' %}bg-warning
+                                        {% elif appointment.status == 'Treatment' %}bg-danger
+                                        {% else %}bg-secondary{% endif %}">
+                                        {{ appointment.status|default:"Not set" }}
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <!-- Status -->
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-tag me-2"></i>Appointment Status
+                        </label>
+                        <select name="status" class="form-control" required>
+                            <option value="">Select Status</option>
+                            <option value="Consultation" 
+                                {% if appointment.status == 'Consultation' %}selected{% endif %}>
+                                Consultation
+                            </option>
+                            <option value="Followup" 
+                                {% if appointment.status == 'Followup' %}selected{% endif %}>
+                                Followup
+                            </option>
+                            <option value="Revisit" 
+                                {% if appointment.status == 'Revisit' %}selected{% endif %}>
+                                Revisit
+                            </option>
+                            <option value="Whatsapp" 
+                                {% if appointment.status == 'Whatsapp' %}selected{% endif %}>
+                                Whatsapp
+                            </option>
+                            <option value="Camp" 
+                                {% if appointment.status == 'Camp' %}selected{% endif %}>
+                                Camp
+                            </option>
+                            <option value="Treatment" 
+                                {% if appointment.status == 'Treatment' %}selected{% endif %}>
+                                Treatment
+                            </option>
+                        </select>
+                        <small class="text-muted">
+                            Update the appointment status. This will also update the appointment record.
+                        </small>
+                    </div>
+
+                    <!-- Payment Mode -->
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-credit-card me-2"></i>Payment Mode
+                        </label>
+                        <select name="payementmode" class="form-control" required>
+                            <option value="Cash" {% if inv.payementmode == 'Cash' %}selected{% endif %}>Cash</option>
+                            <option value="GPay" {% if inv.payementmode == 'GPay' %}selected{% endif %}>GPay</option>
+                            <option value="Card" {% if inv.payementmode == 'Card' %}selected{% endif %}>Card</option>
+                        </select>
+                        {% if not is_superadmin %}
+                            <small class="text-muted">
+                                Payment mode can be changed by all staff members.
+                            </small>
+                        {% endif %}
+                    </div>
+
+                    <!-- Amount -->
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-rupee-sign me-2"></i>Amount (₹)
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text">₹</span>
+                            <input type="number"
+                                   step="0.01"
+                                   min="0"
+                                   name="cash_amount"
+                                   value="{{ inv.total }}"
+                                   class="form-control"
+                                   {% if not is_superadmin %}readonly{% endif %}
+                                   required>
+                        </div>
+                        {% if is_superadmin %}
+                            <small class="text-muted">
+                                As a superadmin, you can edit the amount.
+                            </small>
+                        {% else %}
+                            <small class="text-muted text-danger">
+                                Only superadmin can edit the amount.
+                            </small>
+                        {% endif %}
+                    </div>
+
+                    <!-- Invoice Summary -->
+                    <div class="card border-info mb-4">
+                        <div class="card-header bg-info text-white py-2">
+                            <h6 class="mb-0"><i class="fas fa-file-invoice me-2"></i>Invoice Summary</h6>
+                        </div>
+                        <div class="card-body p-3">
+                            <div class="row">
+                                <div class="col-6">
+                                    <p class="mb-1"><strong>Invoice No:</strong></p>
+                                    <p class="mb-1"><strong>Current Amount:</strong></p>
+                                    <p class="mb-1"><strong>Payment Mode:</strong></p>
+                                </div>
+                                <div class="col-6 text-end">
+                                    <p class="mb-1">{{ inv.treatmentInvoicenumber }}</p>
+                                    <p class="mb-1">₹{{ inv.total }}</p>
+                                    <p class="mb-1">
+                                        <span class="badge 
+                                            {% if inv.payementmode == 'Cash' %}bg-success
+                                            {% elif inv.payementmode == 'GPay' %}bg-primary
+                                            {% else %}bg-info{% endif %}">
+                                            {{ inv.payementmode }}
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <input type="hidden" name="invoice_id" value="{{ inv.id }}">
+
+                    <!-- Actions -->
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <a href="{% url 'appinvedit' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'appointmentinvoice' %}?invoice_id={{ inv.id }}" 
+                               class="btn btn-info" target="_blank">
+                                <i class="fas fa-print me-2"></i>View Invoice
+                            </a>
+                            &nbsp;
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Update Details
+                            </button>
+                        </div>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </section>
+
+</div>
+
+{% endblock %}

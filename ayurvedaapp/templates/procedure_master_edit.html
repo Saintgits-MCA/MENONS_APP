@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="content-wrapper">
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h5><i class="fas fa-edit"></i> Edit Procedure</h5>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="{% url 'procedure_master_list' %}">Procedures</a></li>
+            <li class="breadcrumb-item active">Edit Procedure</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="content">
+    <div class="row">
+      <div class="col-md-8">
+        <div class="card card-primary">
+          <div class="card-header">
+            <h3 class="card-title">Edit Procedure - {{ procedure.name }}</h3>
+          </div>
+          
+          <form method="POST" action="{% url 'procedure_master_edit' %}?ids={{ procedure.id }}">
+            {% csrf_token %}
+            
+            <div class="card-body">
+              {% if messages %}
+                {% for message in messages %}
+                  <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                  </div>
+                {% endfor %}
+              {% endif %}
+
+              <div class="form-group">
+                <label for="name">Procedure / Service Name <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="name" name="name" 
+                       value="{{ procedure.name }}" required>
+              </div>
+
+              <div class="form-group">
+                <label for="rate">Rate (₹)</label>
+                <input type="number" step="0.01" class="form-control" id="rate" name="rate" 
+                       value="{{ procedure.rate }}" placeholder="0.00">
+                <small class="form-text text-muted">Enter 0 if rate is variable</small>
+              </div>
+
+              <div class="form-group">
+                <label for="description">Description / Note</label>
+                <textarea class="form-control" id="description" name="description" rows="3">{{ procedure.description }}</textarea>
+              </div>
+            </div>
+
+            <div class="card-footer">
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Update Procedure
+              </button>
+              <a href="{% url 'procedure_master_list' %}" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Cancel
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+{% endblock %}

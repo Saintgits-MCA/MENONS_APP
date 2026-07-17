@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Daily Vitals Details</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item">
+                {% if vitalmngadd == '1' %} 
+                  <a href="{% url 'opvitals' %}?menumanagement_id={{ idmngmnt }}">Add</a>
+                {%endif %}
+              </li>
+            <li class="breadcrumb-item active">Daily Treatment </li>
+            </ol>
+          </div>
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-12">
+           
+            <!-- /.card -->
+
+            <div class="card">
+           <div class="scroll">
+              <!-- /.card-header -->
+           
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <form method="POST" action="{% url 'opvitalstable' %}?menumanagement_id={{ idmngmnt }}" id="formSubmit">
+                                {% csrf_token %}
+                          <div class="form-group">
+                            <label for="exampleInputPincode">MR Number</label>
+                            <select class="form-control" name="mrnum" id="mrDropdown">
+                              <option selected>Select</option>
+                              {% for i in mrnoobj %}
+                                <option value="{{ i.id }}">{{ i.Medical_Record_Number }}</option>
+                              {% endfor %}
+                            </select>
+                          </div>
+                          <div >
+                            {% if messages %}
+                              {% for message in messages %}
+                                <p style="color:green;">{{ message }}</p>
+                              {% endfor %}
+                            {% endif %}
+                            <button type="submit" class="btn btn-primary">Submit</button>
+                          </div>
+                        </form>
+                </div>
+             </div>
+                <table id="example1" class="table table-bordered table-striped">
+                  <thead>
+                   
+                <tr>
+                    <th>SL No</th>
+                    <th> Date</th>
+                    <th>Mrno</th>
+                    <th>Name</th>
+                    <th>Test/Particular</th>
+                    <th>Value</th>
+                    <th>Normal Value</th>
+                    <th>Prepared By Staff</th>
+                    <!-- <th>Action</th> -->
+                  </tr>
+                  </thead>
+                  <tbody>
+  {% for i in dailyreportforopobj %}
+                  <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{i.currentdate}}</td>
+                    <td>{{i.Mrno.Medical_Record_Number}}</td>
+                    <td>{{i.Mrno.Patient_Name}}</td>
+                    <td>{{i.particular}}</td>
+                    <td>{{i.value}}</td>
+                    <td>{{i.normal_value}}</td>
+                    <td>{{i.preparedby.Staff.Staff_firstname}}</td>
+                    <!-- <td>
+                      <a href="{% url 'enquiryedit'%}?ids={{i.id}}"><i class="nav-icon " style="width:20px"><img src="{% static 'assets/dist/img/icons/edit.svg'%}"  class=" img-squre "  style="width:20px"></i></a>
+                 
+                      <a href="{% url 'delenquiry'%}?ids={{i.id}}"><i class="nav-icon " style="width:20px"><img src="{% static 'assets/dist/img/icons/delete.svg'%}"  class=" img-squre "  style="width:20px"></i></a>
+                    </td> -->
+                  </tr>
+                  
+
+  {% endfor %}
+                  </tbody>
+                 
+                </table>
+              </div>
+            </div>
+              <!-- /.card-body -->
+            </div>
+            <!-- /.card -->
+          </div>
+          <!-- /.col -->
+        </div>
+        <!-- /.row -->
+      </div>
+      <!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+  </div>
+  <script>
+    document.getElementById('formSubmit').addEventListener('submit', function(event) {
+      var mrnum = document.getElementById('mrDropdown').value;
+      if (!mrnum || mrnum === 'Select') {
+        alert('Please select a MR Number.');
+        event.preventDefault();
+      }
+    });
+  </script>
+
+  {% endblock %}

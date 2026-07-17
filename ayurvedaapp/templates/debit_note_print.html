@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Debit Note - {{ debit_note.debit_note_number }}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8f9fa;
+            color: #333;
+            padding: 20px;
+            margin: 0;
+        }
+        .invoice-card {
+            max-width: 500px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 28px;
+            border-radius: 6px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .header-section {
+            border: 1px solid #ccc;
+            padding: 14px;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+        }
+        .header-text {
+            flex: 1;
+            text-align: center;
+            font-size: 12px;
+            color: #333;
+            line-height: 1.7;
+        }
+        .header-text strong {
+            color: #0000FF;
+            font-size: 13px;
+            text-transform: uppercase;
+        }
+        .title {
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 16px;
+            color: #1a202c;
+        }
+        .details-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            gap: 10px;
+        }
+        .details-box {
+            flex: 1;
+            border: 1px solid #000;
+            padding: 10px;
+            font-size: 12px;
+            line-height: 1.8;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 16px;
+            font-size: 11px;
+        }
+        table th, table td {
+            border: 1px solid #000;
+            padding: 7px 8px;
+            text-align: left;
+        }
+        table th {
+            font-weight: bold;
+        }
+        .totals-section {
+            text-align: right;
+            font-size: 12px;
+            margin-bottom: 16px;
+            line-height: 2.2;
+            padding-right: 8px;
+        }
+        .footer-text {
+            font-size: 12px;
+            margin-bottom: 30px;
+            line-height: 1.8;
+        }
+        .btn-print {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #009688;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .btn-back {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #546e7a;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .btn-back:hover {
+            background-color: #37474f;
+            color: white;
+        }
+        .btn-print:hover {
+            background-color: #00796b;
+        }
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        @media print {
+            body {
+                background: #fff;
+                padding: 0;
+            }
+            .invoice-card {
+                box-shadow: none;
+                border: none;
+                padding: 0;
+                max-width: 500px;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="invoice-card">
+    <div class="header-section">
+        <div style="flex: 0 0 80px; text-align: center;">
+            {% if hospital_details and hospital_details.Logo %}
+                <img src="{{ hospital_details.Logo.url }}" alt="Logo" style="width: 80px; height: 60px;">
+            {% else %}
+                <span style="font-size: 10px; color: #666;">KANNANMALIL LOGO</span>
+            {% endif %}
+        </div>
+        <div class="header-text">
+            <strong>{{ hospital_details.Name}}</strong><br>
+            {{ hospital_details.Address }}<br>
+        </div>
+    </div>
+
+    <div class="title">INVENTORY DEBIT NOTE</div>
+
+    <div class="details-container">
+        <div class="details-box">
+            <strong>Supplier Details:</strong><br>
+            {{ debit_note.supplier.shopname|default:"N/A" }}<br>
+            Contact: {{ debit_note.supplier.contactnumber|default:"" }}<br>
+            {{ debit_note.supplier.address|default:"" }}
+        </div>
+        <div class="details-box">
+            <strong>Debit Note Details:</strong><br>
+            Debit Note No: {{ debit_note.debit_note_number }}<br>
+            Date: {{ debit_note.debit_note_date|date:"F j, Y" }}
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Sl.No</th>
+                <th width="150px">Particulars</th>
+                <th>Remarks</th>
+                <th><small class="fst-normal">Qty Ret.</small></th>
+                <th>Rate (₹)</th>
+                <th>Tax (%)</th>
+                <th>Before Tax (₹)</th>
+                <th>Tax Amount (₹)</th>
+                <th>Total (₹)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ item.medicine_name }}</td>
+                <td>{{item.remarks}}</td>
+                <td>{{ item.return_qty }}</td>
+                <td>{{ item.mrp }}</td>
+                <td>{{ item.tax_percentage }}</td>
+                <td>{{ item.before_tax_amount }}</td>
+                <td>{{ item.tax_amount }}</td>
+                <td>{{ item.total_amount }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="totals-section">
+        Subtotal: ₹{{ debit_note.total_before_tax }}<br>
+        Tax: ₹{{ debit_note.total_tax_amount }}<br>
+        <strong>Total Debit: ₹{{ debit_note.grand_total }}</strong>
+    </div>
+
+    <div class="footer-text">
+        <p><strong>Reason:</strong> {{ debit_note.remarks|default:"Return of items" }}</p>
+        <p>This is a system-generated debit note and does not require a signature.</p>
+        <p>For billing queries, contact:</p>
+    </div>
+
+    <div class="action-buttons no-print">
+        {% if source == 'list' %}
+            <a href="{% url 'debit_note_list' %}" class="btn-back">&#8592; Back to List</a>
+        {% else %}
+            <a href="{% url 'debit_note_create' %}" class="btn-back">&#8592; Back to Create Debit Note</a>
+        {% endif %}
+        <button onclick="window.print()" class="btn-print">Print Debit Note</button>
+    </div>
+</div>
+
+</body>
+</html>

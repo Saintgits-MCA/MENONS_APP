@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="content-wrapper">
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6"><h1>Edit Treatment Room Booking</h1></div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item">
+              <a href="{% url 'treatmentroombookingtable' %}?menumanagement_id={{ idmngmnt }}">Back</a>
+            </li>
+            <li class="breadcrumb-item active">Edit Booking</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="content">
+    <div class="card card-primary">
+      <div class="card-header"><h3 class="card-title">Edit Booking Form</h3></div>
+      <form method="POST" action="{% url 'treatmenteditroombooking' %}?menumanagement_id={{ idmngmnt }}">
+        {% csrf_token %}
+        <div class="card-body">
+          {% if messages %}
+            {% for message in messages %}
+              <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
+                <strong>
+                  {% if message.tags == 'success' %}✅ Success!
+                  {% elif message.tags == 'error' %}❌ Error!
+                  {% elif message.tags == 'warning' %}⚠️ Warning!
+                  {% elif message.tags == 'info' %}ℹ️ Note:
+                  {% endif %}
+                </strong>
+                {{ message }}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+            {% endfor %}
+          {% endif %}
+          <div class="row">
+            <!-- LEFT COLUMN -->
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="mrDropdown">Selected MR Number/Patient</label>
+                <select class="form-control" name="mrnum" id="mrDropdown" required>
+                  <option disabled value="">Select</option>
+                  <option value="{{ booking.patientid.id }}" selected>
+                    {{ booking.patientid.Medical_Record_Number }} - {{ booking.patientid.Patient_Name }}
+                  </option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="exampleInputAddress">Patient Details</label>
+                  <input type="hidden" id="exampleInputAddress" class="form-control" 
+                       name="bookingid" value="{{ booking.id}}">
+             
+                <input type="text" id="exampleInputAddress" class="form-control" readonly
+                       value="{{ booking.patientid.Medical_Record_Number }} - {{ booking.patientid.Patient_Name }} ({{ booking.patientid.contactno }})">
+              </div>
+
+              <div class="form-group">
+                <label for="treatmntroom">Select Treatment Room</label>
+                <select class="form-control" name="treatmntroom" required>
+                  <option value="">-- Select Room --</option>
+                  {% for room in rooms %}
+                    <option value="{{ room.id }}" {% if room.id == booking.treatmntroom.id %}selected{% endif %}>
+                      Floor {{ room.Floorno }} - Room {{ room.Roomno }}
+                    </option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+
+            <!-- RIGHT COLUMN -->
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="handledBy">Handled B(Doctor/Nurse){{booking.handledystaff.id}}</label>
+                <select name="handlingatsff" class="form-control" required>
+                  <option disabled value="">-- Select --</option>
+                  {% for doctor in doctor_staff %}
+                    <option value="{{ doctor.id }}" {% if doctor.id == booking.handledystaff.id %}selected{% endif %}>
+                      {{ doctor.Staff.Staff_firstname }} {{ doctor.Staff.Staff_lastname }}
+                    </option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="bookingdate">Booking Date</label>
+                <input type="date" class="form-control" name="bookingdate"
+                       value="{{ booking.bookingdate|date:'Y-m-d' }}" required>
+              </div>
+
+              <div class="form-group">
+                <label for="bookingstarttime">Start Time</label>
+                <input type="time" class="form-control" name="bookingstarttime"
+                       value="{{ booking.bookingstarttime|time:'H:i' }}" required>
+              </div>
+
+              <div class="form-group">
+                <label for="bookingendtime">End Time</label>
+                <input type="time" class="form-control" name="bookingendtime"
+                       value="{{ booking.bookingendtime|time:'H:i' }}" required>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-footer">
+          <button type="submit" class="btn btn-primary">Update Booking</button>
+        </div>
+      </form>
+    </div>
+  </section>
+</div>
+
+{% endblock %}

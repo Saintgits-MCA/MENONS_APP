@@ -1,0 +1,564 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="content-wrapper">
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Insert Case History</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="{% url 'case_history_list' %}">View All</a></li>
+            <li class="breadcrumb-item active">Insert Case History</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="content">
+    <div class="card card-primary">
+      <div class="card-header">
+        <h3 class="card-title">Patient Case History Form</h3>
+      </div>
+      <div class="card-body">
+    <form method="POST"  enctype="multipart/form-data"id="caseHistoryForm">
+        {% csrf_token %}
+        
+        <!-- Case History Section -->
+        <div class="mb-3">
+            <label for="chief_complaint" class="form-label">Chief Complaint</label>
+            <textarea class="form-control" id="chief_complaint" name="chief_complaint" rows="3">{{ case_history.chief_complaint }}</textarea>
+        </div>
+        <div class="mb-3">
+            <label for="final_diagnosis" class="form-label">Final Diagnosis</label>
+            <textarea class="form-control" id="final_diagnosis" name="final_diagnosis" rows="3">{{ case_history.final_diagnosis }}</textarea>
+        </div>
+        <div class="mb-3">
+            <label for="test_needed" class="form-label">Tests Needed</label>
+            <input type="text" class="form-control" id="test_needed" name="testneeded" value="{{ case_history.test_needed }}">
+            <input type="hidden" class="form-control" id="pt_id" name="pt_id" value="{{ case_history_id }}">
+        </div>
+        <div class="mb-3">
+            <label for="follow_up_date" class="form-label">Follow-Up Date</label>
+            <input type="date" class="form-control" id="follow_up_date" name="follow_up_date" value="{{ case_history.follow_up_date|date:'Y-m-d' }}">
+        </div>
+        <!-- Personal Information Section -->
+        {% if personal_info %}
+        <h3>Personal Information</h3>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label for="age" class="form-label">Age</label>
+                    <input type="number" class="form-control" id="age" name="age" value="{{ personal_info.age }}">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label for="weight" class="form-label">Weight (kg)</label>
+                    <input type="number" step="0.1" class="form-control" id="weight" name="weight" value="{{ personal_info.weight }}">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label for="height" class="form-label">Height (cm)</label>
+                    <input type="number" class="form-control" id="height" name="height" value="{{ personal_info.height }}">
+                </div>
+            </div>
+        </div>
+        {%else%}
+        <h3>Personal Information</h3>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label for="age" class="form-label">Age</label>
+                    <input type="number" class="form-control" id="age" name="age" value="{{ personal_info.age }}">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label for="weight" class="form-label">Weight (kg)</label>
+                    <input type="number" step="0.1" class="form-control" id="weight" name="weight" value="{{ personal_info.weight }}">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label for="height" class="form-label">Height (cm)</label>
+                    <input type="number" class="form-control" id="height" name="height" value="{{ personal_info.height }}">
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        <div class="card mb-4 shadow">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-pills"></i> <strong>Prescriptions</strong>
+            </div>
+            <div class="card-body">
+                {% if prescriptions %}
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead class="bg-light">
+                            <tr>
+                                <th>Medicine Name</th>
+                                <th>Count</th>
+                                <th>Dosage</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for prescription in prescriptions %}
+
+                            <tr id="prescription_{{ prescription.id }}">
+                                <td> <input type="text" class="form-control" id="medicine_name_{{ prescription.id }}" name="medicine_name_{{ prescription.id }}" value="{{ prescription.medicine_name }}">
+                                </td>
+                                <td><input type="number" class="form-control" id="count_{{ prescription.id }}" name="count_{{ prescription.id }}" value="{{ prescription.count }}">
+                                </td>
+                                <td><input type="text" class="form-control" id="dosage_{{ prescription.id }}" name="dosage_{{ prescription.id }}" value="{{ prescription.dosage }}">
+                                </td>
+                                <td>  <button type="button" class="btn btn-danger mt-2" onclick="removePrescription('{{ prescription.id }}')">Remove</button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <button type="button" class="btn btn-success mb-3" id="add-prescription">Add New Prescription</button>
+                <div id="prescriptions-container"></div>
+                {% else %}
+                <p class="text-muted">No prescriptions found.</p>
+                {% endif %}
+            </div>
+        </div>
+       
+        <h3>Follow-Ups</h3>
+        {% for follow_up in follow_ups %}
+      
+        <div class="mb-3">
+            <label for="followup_note_{{ follow_up.id }}" class="form-label">Follow-Up Notes({{ follow_up.created_at }})</label>
+            <textarea class="form-control" id="followup_note_{{ follow_up.id }}" name="followup_note_{{ follow_up.id }}" rows="3">{{ follow_up.notes }}</textarea>
+        </div>
+        <hr>
+        {% endfor %}
+
+        <!-- Reports Upload Section -->
+        <h3>Upload Reports</h3>
+        <div id="reports-container">
+            {% for report in reports %}
+              <div class="mb-3" id="report_{{ report.id }}">
+                  <label class="form-label">Uploaded Report</label>
+                  <div class="mb-2">
+                      <a href="{{ report.file.url }}" target="_blank">{{report.file.name}}</a>
+                      <button type="button" class="btn btn-danger" onclick="removeReport('{{report.id}}')">Remove</button>
+                  </div>
+              </div>
+            {% endfor %}
+            <!--  -->
+              
+        </div>
+    <!-- Treatment Details Section -->
+<div class="card mb-4 shadow">
+    <div class="card-header bg-primary text-white">
+        <i class="fas fa-stethoscope"></i> <strong>Treatment Details</strong>
+    </div>
+    <div class="card-body">
+        {% for assigned_date, treatments in grouped_treatments.items %}
+        <div class="card shadow mb-3">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">Assigned Date: {{ assigned_date }}</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead class="bg-light">
+                            <tr>
+                                <th>Treatment Name</th>
+                                <th>Treatment Date</th>
+                                <th>Time</th>
+                                <th>Handled By</th>
+                                <th>Given By</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for treatment in treatments %}
+                            <tr id="treatment_{{ treatment.id }}">
+                                <td>
+                                    <input type="text" class="form-control" name="treatment_name_{{ treatment.id }}" 
+                                           value="{{ treatment.tratmntid.Treatment_name }}">
+                                </td>
+                                <td>
+                                    <input type="date" class="form-control" name="treatment_date_{{ treatment.id }}" 
+                                           value="{{ treatment.treatment_date|date:'Y-m-d' }}">
+                                </td>
+                                <td>
+                                    <input type="time" class="form-control" name="treatment_time_{{ treatment.id }}" 
+                                           value="{{ treatment.treatmenttime }}">
+                                </td>
+                                <td>{{ treatment.get_handled_by_names }}</td>
+                                <td>{{ treatment.get_given_by_names }}</td>
+                                <td>
+                                    <button type="button" class="btn btn-danger mt-2 remove-treatment" data-treatment-id="{{ treatment.id }}">
+                                        <i class="fas fa-trash"></i> Remove
+                                    </button>
+                                </td>
+                            </tr>
+                            {% empty %}
+                                <tr><td colspan="6" class="text-center">No treatments available.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <p class="text-center">No treatments assigned.</p>
+    {% endfor %}
+    
+        
+    </div>
+</div>
+ <!-- Treatment Selection Section -->
+ <h5 class="mt-4">Add New Treatment Details</h5>
+<div class="row">
+    <div class="col-md-8">
+        <div class="form-group">
+            <label for="treatmentSearch">Search Treatment</label>
+            <input type="text" id="treatmentSearch" class="form-control" placeholder="Type Treatment Name">
+        </div>
+    </div>
+    <div class="col-md-4 mt-4">
+        <button type="button" id="searchTreatmentBtn" class="btn btn-primary" data-toggle="modal" data-target="#treatmentModal">Search</button>
+    </div>
+</div>
+<!-- Selected Treatments Display -->
+<div class="table-responsive mt-3">
+    <table class="table table-bordered" id="selectedTreatmentTable">
+        <thead>
+            <tr>
+              <th>Treatment Name</th>
+              <th>Time</th>
+              <th>Date</th>
+              <th>Handled By Staff</th>
+              <th>Handled By Assistant</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="selectedTreatmentBody">
+            <!-- Selected treatments will be added here dynamically -->
+        </tbody>
+    </table>
+</div>
+
+<!-- Hidden input to store selected treatments -->
+<input type="hidden" name="selected_treatments" id="selectedTreatmentsInput">
+<!-- Treatment Search Modal -->
+<div class="modal fade" id="treatmentModal" tabindex="-1" role="dialog" aria-labelledby="treatmentModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="treatmentModalLabel">Search Treatment</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <!-- DataTable for treatment search results -->
+        <table id="treatmentResultsTable" class="display table table-bordered">
+          <thead>
+            <tr>
+              <th>Select</th>
+              <th>Treatment Name</th>
+              <th>Rate</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Results will be dynamically added here -->
+          </tbody>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-success" id="addSelectedTreatments">Add Selected</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+         
+        <!-- Submit Button -->
+        <button type="submit" class="btn btn-primary">Update Case History</button>
+        <a href="{% url 'case_history_list' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+
+    </div>
+  </div>
+</section>
+
+<script>
+    let prescriptionCounter = 1;
+    document.getElementById('add-prescription').addEventListener('click', () => {
+        const container = document.getElementById('prescriptions-container');
+        const newPrescription = `
+            <div class="mb-3" id="new_prescription_${prescriptionCounter}">
+                <label class="form-label">Medicine Name</label>
+                <input type="text" class="form-control" name="new_medicine_name_${prescriptionCounter}">
+                <label class="form-label">Count</label>
+                <input type="number" class="form-control" name="new_count_${prescriptionCounter}">
+                 <label class="form-label">Dosage</label>
+                 <select class="form-control" name="med_dosage_${prescriptionCounter}">
+                                  <option>OD</option>
+                                  <option>BD</option>
+                                  <option>TD</option>
+                                  <option>Other</option>
+                              </select>
+                <button type="button" class="btn btn-danger mt-2" onclick="removeElement('new_prescription_${prescriptionCounter}')">Remove</button>
+            </div>
+            <hr>
+        `;
+        container.insertAdjacentHTML('beforeend', newPrescription);
+        prescriptionCounter++;
+    });
+    function removePrescription(prescriptionId) {
+        const prescriptionElement = document.getElementById(`prescription_${prescriptionId}`);
+        if (prescriptionElement) {
+            prescriptionElement.remove();
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'remove_prescription_ids[]';
+            input.value = prescriptionId;
+            document.querySelector('form').appendChild(input);
+        }
+    }
+    function removeReport(reportId) {
+        const reportElement = document.getElementById(`report_${reportId}`);
+        if (reportElement) {
+            reportElement.remove();
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'remove_report_ids[]';
+            input.value = reportId;
+            document.querySelector('form').appendChild(input);
+        }
+    }
+
+    function removeElement(elementId) {
+        const element = document.getElementById(elementId);
+        if (element) element.remove();
+    }
+</script>
+<script>
+    $(document).ready(function() {
+        let selectedTreatments = [];
+        // Initialize DataTable for treatment search
+        let table = $('#treatmentResultsTable').DataTable({
+            paging: true,
+            searching: true,
+            info: true,
+            lengthChange: true,
+            pageLength: 10,
+        });
+        // Treatment search via AJAX
+        $('#searchTreatmentBtn').on('click', function() {
+            let query = $('#treatmentSearch').val().trim();
+            if (query === '') {
+                alert('Please enter a treatment name.');
+                return;
+            }
+            // Clear previous table data
+            table.clear().draw();
+            fetch(`/search_treatmentcasehistory?query=${query}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not OK');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.length > 0) {
+                        data.forEach(item => {
+                            let checkbox = `<input type="checkbox" class="treatment-checkbox" 
+                                            data-id="${item.id}" 
+                                            data-name="${item.Treatment_name}" 
+                                            data-rate="${item.Rate}" 
+                                            data-description="${item.Description}">`;
+  
+                            table.row.add([
+                                checkbox, // Checkbox for selection
+                                item.Treatment_name,
+                                item.Rate,
+                                item.Description || 'N/A',
+                            ]).draw(false);
+                        });
+  
+                        // Show modal
+                        $('#treatmentModal').modal('show');
+                    } else {
+                        alert('No treatments found.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error fetching treatment data.');
+                });
+        });
+  
+        // Add selected treatments to the table
+        $('#addSelectedTreatments').on('click', function() {
+            $('.treatment-checkbox:checked').each(function() {
+                let id = $(this).data('id');
+                let name = $(this).data('name');
+  
+                // Check if treatment already exists
+                if (!selectedTreatments.some(treatment => treatment.id === id)) {
+                    selectedTreatments.push({ id, name });
+  
+                    let row = `<tr data-id="${id}">
+                                    <td><input type="text" class="form-control" name="treatment_name[]" value="${name}" readonly></td>
+                                    <td><input type="time" class="form-control treatment_time" name="treatment_time[]" required></td>
+                                    <td><input type="date" class="form-control treatment_date" name="treatment_date[]" required></td>
+                                    <td>
+                                        
+         {% for staff in stffdt %}
+              <div class="form-check">
+                  <input class="form-check-input handled-checkbox" type="checkbox" 
+                      name="handled_by[{{ treatment.id }}][]" value="{{ staff.id }}">
+                  <label class="form-check-label">
+                      {{ staff.Staff.Staff_firstname }} {{ staff.Staff.Staff_lastname }}
+                  </label>
+              </div>
+          {% endfor %}
+      
+                                    </td>
+                                    <td>  {% for staff in stffdt %}
+              <div class="form-check">
+                  <input class="form-check-input given-checkbox" type="checkbox" 
+                      name="given_by[{{ treatment.id }}][]" value="{{ staff.id }}">
+                  <label class="form-check-label">
+                      {{ staff.Staff.Staff_firstname }} {{ staff.Staff.Staff_lastname }}
+                  </label>
+              </div>
+          {% endfor %}</td>
+                                    <td><button type="button" class="btn btn-danger btn-sm remove-treatment">Remove</button></td>
+                               </tr>`;
+                    $('#selectedTreatmentBody').append(row);
+                }
+            });
+  
+            // Update hidden input for form submission
+            $('#selectedTreatmentsInput').val(JSON.stringify(selectedTreatments));
+  
+            // Close modal & fix "dull page" issue
+            $('#treatmentModal').modal('hide');
+            $('.modal-backdrop').remove(); // Fix dark overlay issue
+            $('body').removeClass('modal-open'); // Restore scrolling
+        });
+  
+        // Remove selected treatment from the list
+        $('#selectedTreatmentBody').on('click', '.remove-treatment', function() {
+            let row = $(this).closest('tr');
+            let id = row.data('id');
+  
+            // Remove from array
+            selectedTreatments = selectedTreatments.filter(treatment => treatment.id !== id);
+  
+            // Update hidden input
+            $('#selectedTreatmentsInput').val(JSON.stringify(selectedTreatments));
+  
+            // Remove from table
+            row.remove();
+        });
+     
+  
+    });
+  </script>
+  <script>
+    document.getElementById('caseHistoryForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    let formData = new FormData(this);
+
+    // Collect selected treatments
+    let collectedTreatments = [];
+    $('#selectedTreatmentBody tr').each(function() {
+        let treatment_id = $(this).data('id');
+        let treatment_time = $(this).find('.treatment_time').val();
+        let treatment_date = $(this).find('.treatment_date').val();
+        
+        let handled_by = [];
+        $(this).find('.handled-checkbox:checked').each(function() {
+            handled_by.push($(this).val());
+        });
+
+        let given_by = [];
+        $(this).find('.given-checkbox:checked').each(function() {
+            given_by.push($(this).val());
+        });
+
+        collectedTreatments.push({
+            id: treatment_id,
+            treatment_time: treatment_time,
+            treatment_date: treatment_date,
+            handled_by: handled_by,
+            given_by: given_by
+        });
+    });
+
+    formData.append("selected_treatments", JSON.stringify(collectedTreatments));
+
+    let patientid = $('#pt_id').val();
+    fetch(`/edit_case_history/?ids=${patientid}`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Case history edited successfully.');
+            window.location.href = "/case-history/";
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An unexpected error occurred. Check the console for details.');
+    });
+});
+
+  </script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll('.remove-treatment').forEach(button => {
+        button.addEventListener('click', function () {
+            let treatmentId = this.getAttribute("data-treatment-id");
+            if (!confirm("Are you sure you want to remove this treatment?")) return;
+
+            fetch(`/remove_treatment/${treatmentId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ deletedstatus: true })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById(`treatment_${treatmentId}`).remove(); // Hide the row after marking as deleted
+                } else {
+                    alert('Failed to remove treatment. Please try again.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred. Check the console for details.');
+            });
+        });
+    });
+});
+
+  </script>
+{% endblock %}

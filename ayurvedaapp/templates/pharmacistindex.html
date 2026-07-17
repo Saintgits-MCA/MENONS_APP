@@ -1,0 +1,249 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<style>
+  #roomscroll{
+    height: 100px;
+    width: 450px;
+    overflow:scroll;
+  }
+</style>
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper" >
+    <!-- Content Header (Page header) -->
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1 class="m-0">Dashboard</h1>
+          </div><!-- /.col -->
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="{% url 'home'%}">Home</a></li>
+              <li class="breadcrumb-item active">Dashboard </li>
+            </ol>
+          </div><!-- /.col -->
+        </div><!-- /.row -->
+      </div><!-- /.container-fluid -->
+    </div>
+    <!-- /.content-header -->
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <!-- Small boxes (Stat box) -->
+        <div class="row">
+         
+          <!-- ./col -->
+          <div class="col-lg-3 col-6">
+           
+            <div class="small-box " style=" background-color: green;">
+              <div class="inner">
+                <h3 style="color: white;">{{patient_count}}<sup style="font-size: 20px"></sup></h3>
+
+                <p style="color: white;">Patients</p>
+              </div>
+              <div class="icon">
+                <i class="ion ion-stats-bars"></i>
+              </div>
+              <a href="{% url 'patientdetailtable'%}?menumanagement_id={{ ptdtmngview }}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+            </div>
+          </div>
+         
+          <div class="col-lg-3 col-6">
+            <div class="small-box bg-danger">
+              <div class="inner">
+                <h3 style="color: white;">{{expiring_medicines_count}}<sup style="font-size: 20px"></sup></h3>
+  
+                <p style="color: white;">Expiring Within 6 Months</p>
+              </div>
+              <div class="icon">
+                <i class="ion ion-stats-bars"></i>
+              </div>
+              <a href="{% url 'expiredmedicine'%}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+             </div>
+          </div>
+        </div>
+        <div class="row">
+          
+        </div>
+         
+          <!-- ./col -->
+        
+        <!-- /.row -->
+        <!-- Main row -->
+      
+        <!-- /.row (main row) -->
+      </div><!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+  </div>
+
+ 
+<script src="{% static 'assets/calender/main.js' %}"></script>
+
+<script>
+  function converterDataParaDjangoFormat(data) {
+      const dataJS = new Date(data);
+      const ano = dataJS.getFullYear();
+      const mes = (dataJS.getMonth() + 1).toString().padStart(2,'0');
+      const dia = dataJS.getDate().toString().padStart(2, '0');
+      const hora = dataJS.getHours().toString().padStart(2, '0');
+      const minuto = dataJS.getMinutes().toString().padStart(2, '0');
+      const segundo = dataJS.getSeconds().toString().padStart(2, '0');
+      const formatoDjango = `${ano}-${mes}-${dia} ${hora}:${minuto}:${segundo}`;
+      return formatoDjango;
+      var selectedroom = $("#selectedroom option:selected").val();
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+  var calendarEl = document.getElementById('calendar');
+  var calendar = new FullCalendar.Calendar(calendarEl, {
+    // Your calendar configuration
+     eventClick: function(info) {
+
+            // Extract start date of the event
+           var startDate = info.event.start;
+            // Increment the start date by one day
+            var nextDay = new Date(startDate);
+            nextDay.setDate(nextDay.getDate() + 1);
+            // Format the start date as required (e.g., YYYY-MM-DD)
+            var formattedStartDate = nextDay.toISOString().split('T')[0];
+            // Redirect to the booking table page with the start date as a URL parameter
+            window.location.href = '/booking_table/' + formattedStartDate;
+        }
+
+  });
+  calendar.render();
+  $('#selectedroom').on('change', function() {
+    var selectedRoomId = $(this).val();
+    
+    // Clear existing events from the calendar
+    calendar.removeAllEvents();
+    
+    // Make an AJAX request to fetch booking ranges for the selected room
+    $.ajax({
+        url: '/get_booking_dates/',
+        method: 'GET',
+        data: { room_id: selectedRoomId },
+        success: function(response) {
+            if (calendar && calendar.addEvent) {
+                var bookingRanges = response.booking_ranges;
+                var ptdt=response.patientname;
+
+                bookingRanges.forEach(function(bookingRange) {
+                    var bookingStartDate = new Date(bookingRange.start_date);
+                    var bookingEndDate = new Date(bookingRange.end_date);
+                    
+                    // Increment end date by one day to include it in the range
+                    bookingEndDate.setDate(bookingEndDate.getDate() + 1);
+
+                        var title = 'Booked by ' + bookingRange.patient_name + ', Ph: ' + bookingRange.patient_phno;
+
+                    var event = {
+                         title: title,
+                        start: bookingStartDate.toISOString().split('T')[0], // Convert to ISO string and extract date part
+                        end: bookingEndDate.toISOString().split('T')[0], // Convert to ISO string and extract date part
+                        rendering: 'background', // Specify that it's a background event
+                        backgroundColor: 'green'
+                    };
+                    // Add event to the calendar
+                    calendar.addEvent(event);
+                });
+            } else {
+                console.error('Calendar instance or addEvent method is not available.');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error fetching booking ranges:', error);
+        }
+    });
+});
+
+
+
+
+});
+
+//     $(document).ready(function() {
+//     $('#selectedroom').change(function() {
+//         var room_id = $(this).val();
+//         $.ajax({
+//             url: '/get-booking-dates/',
+//             data: {
+//                 'room_id': room_id
+//             },
+//             dataType: 'json',
+//             success: function(response) {
+//                 var booking_dates = response.booking_dates;
+//                 console.log(booking_dates);
+//             },
+//             error: function(xhr, errmsg, err) {
+//                 console.log(xhr.status + ": " + xhr.responseText);
+//             }
+//         });
+//     });
+// });
+
+
+
+
+
+
+
+// function updateCalendar(bookedDates) {
+    
+//     // Add events for booked dates
+//     bookedDates.forEach(function(date) {
+//         calendar.addEvent({
+//             start: date.start, // Booking start date
+//             end: date.end,     // Booking end date
+//             rendering: 'background', // Render as background
+//             backgroundColor: 'green' // Background color for booked dates
+//         });
+//     });
+// }
+
+
+ 
+    const closeBtn1 = document.getElementById('modalClose1');
+    const closeBtn2 = document.getElementById('modalClose2');
+    const closeBtn3 = document.getElementById('modalDetailClose');
+    closeBtn1.addEventListener('click',()=>{
+      const eventModal = document.getElementById('eventModal')
+      eventModal.style.display = 'none';
+    });
+    closeBtn2.addEventListener('click',()=>{
+      const eventModal = document.getElementById('eventModal')
+      eventModal.style.display = 'none';
+    });
+    closeBtn3.addEventListener('click',()=>{
+      const eventModal = document.getElementById('detailModal')
+      eventModal.style.display = 'none';
+    });
+    function formatDateTime(dateTime) {
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', timeZoneName: 'short' };
+      const dataFormatada = new Date(dateTime).toLocaleDateString('pt-BR', options);
+      return dataFormatada;
+    };
+//   $(document).ready(function() {
+//     $.ajax({
+//         url: '/check_discharge_and_availability/',
+//         type: 'GET',
+//         success: function(response) {
+//             // Handle the response and update the UI
+//             console.log(response.c);
+//             // Implement logic to display the information on the frontend
+//         },
+//         error: function(error) {
+//             console.error('Error:', error);
+//         }
+//     });
+// });  
+</script>
+
+<!-- Include jQuery -->
+
+ {% endblock %}
+
+ 

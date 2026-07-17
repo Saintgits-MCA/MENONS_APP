@@ -1,0 +1,344 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+  <style>
+   .invoice-container {
+    background: #fff;
+    padding: 15px;
+    max-width: 700px;
+    margin: 20px auto;
+    box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+  }
+    h2 {
+      text-align: center;
+      margin: 10px 0;
+    }
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .box {
+      width: 48%;
+      border: 1px solid #000;
+      padding: 10px;
+      font-size: 14px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    table, th, td {
+      border: 1px solid black;
+    }
+    th, td {
+      padding: 8px;
+      text-align: left;
+    }
+    .total {
+      text-align: right;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .amount-words {
+      font-weight: bold;
+    }
+    .top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-bottom: 20px;
+  }
+  .logo img {
+    width: 100px;
+  }
+  .header-center {
+    flex: 1;
+    text-align: center;
+    font-size: 14px;
+  }
+  .header-center h6{
+    margin: 0;
+    font-size: 16px;
+    color:green;
+  }
+  .emergency-box {
+    background-color: red;
+    color: white;
+    font-weight: bold;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+  
+  @media print {
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .header-center h6{
+    margin: 0;
+    font-size: 16px;
+    color:green;
+  }
+  .print-btn {
+    display: none !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 15mm;
+  }
+
+  .invoice-container {
+    box-shadow: none !important;
+    margin: 0 auto !important;
+    width: 100% !important;
+    padding: 0 !important;
+  }
+
+  .top-row, .info-row, .total, .footer {
+    page-break-inside: avoid;
+  }
+
+  .print-page-break {
+    page-break-before: always;
+  }
+}
+
+</style>
+
+<div id="invoice" class="invoice-container">
+ 
+<div class="top-row">
+  {% for i in objhospt %}
+  <!-- Logo Left -->
+  <div class="logo">
+    <img src="{{ i.Logo.url }}" alt="{{ i.Name }} Logo">
+  </div>
+
+  <!-- Centered Hospital Info -->
+ 
+  <div class="header-center">
+    <h6>{{ i.Name }}</h6>
+    <div>{{ i.Address }}</div>
+    <div>Phone: {{ i.Contact_no }} | Email: {{ i.Email }}|| GST NO: {{ i.GST }}</div>
+   
+  </div>
+ 
+  <!-- Emergency Box -->
+  <div class="emergency-box">
+    EMERGENCY ☎  {{ i.Contact_no }} 
+  </div>
+   {% endfor %}
+</div>
+
+  <!-- Title -->
+  <h2>INPATIENT BILL</h2>
+
+  <!-- Patient and Bill Info -->
+  <div class="info-row">
+    <div class="box">
+      <strong>Patient Details:</strong><br>
+      {{bill.ip_admission.MR_Number.Patient_Name }}<br>
+      Contact Number:{{ bill.ip_admission.contactnumber }}<br>
+  
+         {{ bill.ip_admission.MR_Number.Medical_Record_Number }}
+    </div>
+    <div class="box">
+      <strong>Bill Details:</strong><br>
+      IP No:{{ bill.ip_admission.id}}<br>
+     
+      Bill No: RCR4879<br>
+      Bill Date: {{ bill.billing_date }}<br>
+      Admission: {{ bill.ipptno.Current_Date}}<br>
+      Discharge: {{ bill.discharge.discharged_date}}
+    </div>
+  </div>
+
+  {% if medicine_details.exists %}
+  <h4>Medicine Details</h4>
+  <table>
+    <thead>
+      <tr>
+        <th>Medicine</th>
+     
+        <th>Count</th>
+        <th>Rate</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for med in medicine_details %}
+      <tr>
+        <td>{{ med.medicinename }}</td>
+     
+        <td>{{ med.count }}</td>
+        <td>{{ med.rate_per_medicine }}</td>
+        <td>{{ med.totalmedicine }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {%endif%}
+  {% if treatment_details.exists %}
+  <h4>Treatment Details</h4>
+  <table>
+    <thead>
+      <tr>
+        <th>Treatment</th>
+        <th>Count</th>
+        <th>Rate</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for treat in treatment_details %}
+      <tr>
+        <td>{{ treat.tratmntid.Treatment_name }}</td>
+        <td>{{ treat.treatmentcount }}</td>
+        <td>{{ treat.rate_per_treatment }}</td>
+        <td>{{ treat.total_treatmentrate }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {%endif%}
+  {% if room_details.exists %}
+  <h4>Room Details</h4>
+  <table>
+    <thead>
+      <tr>
+        <th>Room</th>
+        <th>No. of Days</th>
+        <th>Rate/Day</th>
+        <th>Total Rent</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for room in room_details %}
+      <tr>
+        <td>
+            {% if room.room.wardorroom == "ward" %}
+              Ward: {{ room.room.Blockno }} - Bed {{ room.room.wardbedno }}
+            {% else %}
+              Room: {{ room.room.Roomno }} ({{ room.room.Room_type }})
+            {% endif %}
+          </td>
+        <td>{{ room.no_of_days }}</td>
+        <td>{{ room.rate_per_day }}</td>
+        <td>{{ room.total_rent }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+  {% if  other_expenses_details.exists %}
+  <h4>Other Services</h4>
+  <table>
+    <thead>
+      <tr>
+        <th>Service</th>
+        <th>Details</th>
+        <th>Charges</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for other in other_expenses_details %}
+      <tr>
+        <td>{{ other.service }}</td>
+        <td>{{ other.details }}</td>
+        <td>{{ other.charges }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {%endif%}
+        
+  <!-- Charges Table -->
+  <table class="print-page-break">
+    <thead>
+      <tr>
+        <th>Service Name</th>
+        <th>Amount (Rs.)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Treatment Amount</td>
+        <td>{{ bill.treatment_charges }}</td>
+      </tr>
+      <tr>
+        <td>Medicine Amount</td>
+        <td>{{ bill.medicine_charges }}</td>
+      </tr>
+      <tr>
+        <td>Room Rent</td>
+        <td>{{ bill.room_charges }}</td>
+      </tr>
+      <tr>
+        <td>Food Charges</td>
+        <td>{{ bill.food_expenses}}</td>
+      </tr>
+      <tr>
+        <td>Other Expenses</td>
+        <td>{{ bill.other_expenses}}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Total Amount -->
+  <div class="total">
+    <p><strong>Subtotal:</strong>{{ bill.subtotal }}</p>
+    <p><strong>Tax:</strong>{{ bill.tax }}</p>
+    <p><strong>Discount:</strong>{{ bill.discount }}</p>Total Amount:{{ bill.total_amount }}</div>
+
+  <!-- Amount in Words -->
+  <div class="amount-words">In Words: {{ amount_in_words }}</div>
+
+  <p>This is a computer-generated statement and requires no signature.</p>
+  <p>This receipt is valid for an employer or insurer, who is contractually obligated to reimburse the medical expenses.</p>
+
+  <div class="footer">
+    <p>For billing and general queries, please mail:  {% for i in objhospt %}<a href="mailto:{{ i.Email }}">{{ i.Email }}</a>
+        {%endfor%}</p>
+  </div>
+ 
+  
+  <!-- Print Button -->
+  <div class="print-btn">
+    <button onclick="printInvoice()" class="btn btn-primary">Print Invoice</button>
+  </div>
+</div>
+
+<script>
+    function printInvoice() {
+        // Get the HTML content of the invoice div
+        var invoiceContent = document.getElementById('invoice').outerHTML;
+  
+        // Get the internal CSS styles from the parent document
+        var styles = Array.from(document.querySelectorAll('style'))
+            .map(style => style.innerHTML)
+            .join('\n');
+  
+        // Open a new window
+        var printWindow = window.open('', '_blank');
+        
+        // Set the HTML content of the new window along with the internal CSS styles
+        printWindow.document.write('<html><head><title>Invoice</title><style>' + styles + '</style></head><body>' + invoiceContent + '</body></html>');
+        printWindow.document.close();
+  
+        // Print the new window
+        printWindow.print();
+        
+    }
+  </script>
+  {% endblock %}

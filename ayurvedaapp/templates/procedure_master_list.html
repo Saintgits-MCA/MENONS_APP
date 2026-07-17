@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="content-wrapper">
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h5><i class="fas fa-procedures"></i> Procedure / Operational Master</h5>
+        </div>
+        <div class="col-sm-6">
+          <a href="{% url 'procedure_master_add' %}" class="btn btn-sm btn-primary float-sm-right">
+            <i class="fas fa-plus"></i> Add Procedure
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="content">
+    <div class="card">
+      <div class="card-body table-responsive">
+        <table id="example1" class="table table-bordered table-striped">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Procedure / Service</th>
+              <th>Rate (₹)</th>
+              <th>Branch</th>
+              <th>Created By</th>
+              <th>Created Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for procedure in procedures %}
+            <tr>
+              <td>{{ forloop.counter }}</td>
+              <td>{{ procedure.name }}</td>
+              <td class="text-right">
+                {% if procedure.rate > 0 %}
+                  ₹ {{ procedure.rate|floatformat:2 }}
+                {% else %}
+                  <span class="text-muted">Variable</span>
+                {% endif %}
+              </td>
+              <td>{{ procedure.branch_id.Branch_Name|truncatechars:50|default:"-" }}</td>
+              <td>{{ procedure.created_by|default:"-" }}</td>
+              <td>{{ procedure.created_date|date:"d-m-Y H:i" }}</td>
+              <td>
+                <a href="{% url 'procedure_master_edit' %}?ids={{ procedure.id }}" class="btn btn-sm btn-primary" title="Edit">
+                  <i class="fas fa-edit"></i>
+                </a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="7" class="text-center">No procedures added yet. Click "Add Procedure" to get started.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</div>
+
+
+{% endblock %}

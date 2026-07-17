@@ -1,0 +1,97 @@
+ <div class="row">
+      <div class="col-md-12">
+<section class="ac-container">
+   
+        <div class="row">
+          <div class="col-md-12">
+
+          <input id="ac-1" name="accordion-1" type="radio"  >
+          <label for="ac-1">Preliminary Data{{addoccurancebd}}</label>
+
+          <article class="ac-large">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                            	
+                                <div class="form-group">
+                                <label for="exampleInputFirstName">MR Number</label>
+
+                                <select class="form-control" name="mrnumber">
+                        <option selected>Select</option>
+                                       
+<div class="form-group">{% for i in objprelim %}
+                                <label for="exampleInputManagerName">Place</label>
+                                <input type="text" class="form-control" id="exampleInputEmail" name="place" placeholder="Enter Place" value="{{ i.Place}}" >
+                              </div>
+                             
+                     
+                      <option value="{{i.id}}" {% if i.id == objviewpatientch.MR_Number_id %}selected{% endif %}>{{i.MR_Number_id}}</option>
+                      </select>
+                              </div>
+                               <div class="form-group">
+                                <label for="exampleInputaddress">Address</label>
+                                <textarea class="form-control" rows="4" cols="5" name="address">
+                                {{ i.Address }}
+                              </textarea>
+                              </div>
+                              <div class="form-group">
+                                <label for="exampleInputage">Age</label>
+                                <input type="textArea" class="form-control" id="exampleInputAge" name="age" placeholder="Enter Age" value="{{i.Age}}">
+                              
+                              </div>
+                              
+                              <div class="form-group">
+                    <label for="exampleInputgender">Gender</label>
+                    <br>
+                    <input type="radio"value="Male" name="gender" id="exampleInputStatus" >
+                    <label for="exampleInputManagerName">Male</label>
+                    <input type="radio"value="Female"id="exampleInputStatus" name="gender" >
+                    <label for="exampleInputManagerName">Female</label>
+                    <input type="radio"value="Others"id="exampleInputStatus" name="gender" >
+                    <label for="exampleInputManagerName">Others</label>
+
+                  </div>
+                              
+                            
+                             
+                             
+                            </div>
+                        </div>
+                      </div>
+                          <!-- /.card-body -->
+                       
+                        <div class="col-md-6">
+                          <div class="card">
+                         
+                         
+                            <div class="card-body">
+                               <div class="form-group">
+                                <label for="exampleInputemail">Maritial Status</label>
+                                <input type="text" class="form-control" id="exampleInputExperience" name="marritalstatus" placeholder="Enter Maritial Status" value="{{ objviewpatientch.Marital_status }}">
+                              </div>
+                                <div class="form-group">
+                                <label for="exampleInputManagerName">Place</label>
+                                <input type="text" class="form-control" id="exampleInputEmail" name="place" placeholder="Enter Place" value="{{ i.Place}}" >
+                              </div>
+                               <div class="form-group">
+                                <label for="exampleInputFile">Phone Number</label>
+                                <div class="input-group">
+                                  <input type="text" class="form-control" id="exampleInputContactNo" name="phonenum" placeholder="Enter Phone Number" value="{{ i.Phone_number }}">
+                                </div>
+                              </div>
+                              <div class="form-group">
+                                <label for="exampleInputContactNo">Occupation</label>
+                                                <input type="text" class="form-control" id="exampleInputContactNo" name="occupation" placeholder="Enter Occupation" value="{{ i.Phone_number }}">
+                                
+                              </div>
+                              
+                          {% endfor %}
+                            </div>
+                          </div>
+                      </div>
+                    </div>
+          </article>
+       
+                  </div>
+                </div>

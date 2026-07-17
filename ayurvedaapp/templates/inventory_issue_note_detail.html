@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="content-wrapper">
+    <!-- Content Header -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Inventory Issue Note</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'inventory_issue_note_list' %}?menumanagement_id={{ idmngmnt }}">GIN List</a>
+                        </li>
+                        <li class="breadcrumb-item active">GIN Details - {{ gin.gin_number }}</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+        <div class="row">
+            <!-- GIN Header Details -->
+            <div class="col-md-12">
+                <div class="card card-info">
+                    <div class="card-header">
+                        <h3 class="card-title">Goods Issue Note Details</h3>
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                <!-- <i class="fas fa-minus"></i> -->
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <strong>GIN Number:</strong> {{ gin.gin_number }}
+                            </div>
+                            <div class="col-md-3">
+                                <strong>Date:</strong> {{ gin.gin_date|date:'Y-m-d' }}
+                            </div>
+                            <div class="col-md-3">
+                                <strong>Branch:</strong> {{ gin.branch.Branch_Name|default:'' }}
+                            </div>
+                            <div class="col-md-3">
+                                <strong>Status:</strong>
+                                {% if gin.status == 'issued' %}
+                                    <span class="badge badge-success">Issued</span>
+                                {% elif gin.status == 'draft' %}
+                                    <span class="badge badge-warning">Draft</span>
+                                {% elif gin.status == 'cancelled' %}
+                                    <span class="badge badge-danger">Cancelled</span>
+                                {% else %}
+                                    <span class="badge badge-secondary">{{ gin.status }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-md-3">
+                                <strong>Department:</strong> {{ gin.department.Department_Name|default:'' }}
+                            </div>
+                            <div class="col-md-3">
+                                <strong>Staff:</strong>
+                                {% if gin.staff %}
+                                    {{ gin.staff.Staff_firstname }} {{ gin.staff.Staff_lastname }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </div>
+                            <div class="col-md-3">
+                                <strong>Reference No:</strong> {{ gin.reference_no|default:'-' }}
+                            </div>
+                            <div class="col-md-3">
+                                <strong>Created By:</strong>
+                                {% if gin.created_by %}
+                                    {{ gin.created_by.Staff.Staff_firstname }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-md-12">
+                                <strong>Remarks:</strong> {{ gin.remarks|default:'-' }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Items Table -->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Issue Items</h3>
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                <!-- <i class="fas fa-minus"></i> -->
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Item Name</th>
+                                        <th>Company</th>
+                                        <th>Supplier</th>
+                                        <th>Batch No</th>
+                                        <th>Qty</th>
+                                        <th>Unit</th>
+                                        <th class="d-none">Rate</th>
+                                        <th class="d-none">Tax %</th>
+                                        <th class="d-none">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in items %}
+                                    <tr>
+                                        <td>{{ forloop.counter }}</td>
+                                        <td>{{ item.item_name.itemnm }}</td>
+                                        <td>{{ item.company.Comapany_name|default:'-' }}</td>
+                                        <td>{{ item.supplier.shopname|default:'-' }}</td>
+                                        <td>{{ item.batch_no }}</td>
+                                        <td>{{ item.quantity }}</td>
+                                        <td>{{ item.unit.unitname|default:'-' }}</td>
+                                        <td class="d-none">{{ item.rate|floatformat:2 }}</td>
+                                        <td class="d-none">{{ item.tax_percentage|floatformat:2 }}</td>
+                                        <td class="d-none">{{ item.total_amount|floatformat:2 }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="10" class="text-center text-muted">No items found.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <a href="{% url 'inventory_issue_note_list' %}?menumanagement_id={{ idmngmnt }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to List
+                        </a>
+                        <a href="{% url 'inventory_issue_note_print' %}?id={{ gin.id }}&menumanagement_id={{ idmngmnt }}" class="btn btn-primary" target="_blank">
+                            <i class="fas fa-print"></i> Print GIN
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+
+
+{% endblock %}

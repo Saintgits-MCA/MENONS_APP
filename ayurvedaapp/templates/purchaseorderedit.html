@@ -1,0 +1,419 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="content-wrapper">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Edit Purchase Order</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'purchaseorderlist' %}?menumanagement_id={{ idmngmnt }}">Purchase Orders</a>
+                        </li>
+                        <li class="breadcrumb-item active">Edit Order</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content">
+        <form method="POST" action="{% url 'purchaseorderedit' %}?menumanagement_id={{ idmngmnt }}&order_id={{ purchase_order.id }}">
+            {% csrf_token %}
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label>Purchase Order Number</label>
+                                <input type="text" class="form-control" name="prchno" 
+                                       value="{{ purchase_order.putrchaseorderno }}" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label>Supplier Name</label>
+                                <select class="form-control" name="spname" id="spname" required>
+                                    <option value="">Select</option>
+                                    {% for supplier in objsp %}
+                                        <option value="{{ supplier.id }}" 
+                                            {% if purchase_order.suppliernm.id == supplier.id %}selected{% endif %}>
+                                            {{ supplier.shopname }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Supplier Contact Number</label>
+                                <input type="text" class="form-control" name="cno" 
+                                       id="cno" value="{% for child_item in purchase_items|slice:':1' %}{{ child_item.suppliercontactnumber }}{% endfor %}">
+                            </div>
+                            <div class="form-group">
+                                <label>Supplier Address</label>
+                                <textarea class="form-control" id="addres" rows="3"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label>Order Date</label>
+                                <input type="text" class="form-control" name="mdate" 
+                                       value="{{ purchase_order.orderdate|date:'d-m-Y' }}" id="orderdate">
+                            </div>
+                            <div class="form-group">
+                                <label>Branch</label>
+                                <input type="text" class="form-control" 
+                                       value="{{ purchase_order.branch.Branch_Name|default:'N/A' }}" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label>Prepared By</label>
+                                <input type="text" class="form-control" 
+                                       value="{{ purchase_order.preparedby.Staff.Staff_firstname|default:'N/A' }}" readonly>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Order Items</h3>
+                            <div class="card-tools">
+                                <button type="button" name="add" id="add" class="btn btn-success btn-sm">
+                                    <i class="fas fa-plus"></i> Add Item
+                                </button>
+                                <button type="button" name="remove" id="remove" class="btn btn-danger btn-sm">
+                                    <i class="fas fa-trash"></i> Remove Selected
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body" id="outer">
+                            {% if purchase_items %}
+                                {% for child_item in purchase_items %}
+                                <div class="addr" id="item_{{ forloop.counter }}">
+                                    <div class="form-group row">
+                                        <div class="col-md-1">
+                                            <div class="card-body">
+                                                <div class="form-group">
+                                                    <input type="checkbox" class="item-checkbox">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="card-body">
+                                                <div class="form-group">
+                                                    <label>Item</label>
+                                                    <select name="item_code[]" class="form-control item-select" required>
+                                                        <option value="">Select Item</option>
+                                                        {% for medicine in item %}
+                                                            <option value="{{ medicine.id }}" 
+                                                                {% if child_item.itemname.id == medicine.id %}selected{% endif %}>
+                                                                {{ medicine.itemnm }}
+                                                            </option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="card-body">
+                                                <div class="form-group">
+                                                    <label> Company</label>
+                                                    <select name="medcom[]" class="form-control medcom-select" required>
+                                                        <option value="">Select Company</option>
+                                                        {% for company in comp %}
+                                                            <option value="{{ company.id }}"
+                                                                {% if child_item.itemcompany.id == company.id %}selected{% endif %}>
+                                                                {{ company.Comapany_name }}
+                                                            </option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <div class="card-body">
+                                                <div class="form-group">
+                                                    <label>Unit</label>
+                                                    <select name="Unit[]" class="form-control unit-select" required>
+                                                        <option value="">Select Unit</option>
+                                                        {% for u in unit %}
+                                                            <option value="{{ u.id }}"
+                                                                {% if child_item.itemunit.id == u.id %}selected{% endif %}>
+                                                                {{ u.unitname }}
+                                                            </option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <div class="card-body">
+                                                <div class="form-group">
+                                                    <label>Quantity</label>
+                                                    <input type="text" class="form-control common" 
+                                                           name="Quantity[]" value="{{ child_item.itemquantity }}" required>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-1">
+                                            <div class="card-body">
+                                                <div class="form-group">
+                                                    <button type="button" class="btn btn-danger btn-sm remove-item">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <!-- Empty row template -->
+                                <div class="addr">
+                                    <div class="form-group row">
+                                        <div class="col-md-1">
+                                            <div class="card-body">
+                                                <div class="form-group">
+                                                    <input type="checkbox" class="item-checkbox">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="card-body">
+                                                <div class="form-group">
+                                                    <label>Item</label>
+                                                    <select name="item_code[]" class="form-control item-select" required>
+                                                        <option value="">Select Item</option>
+                                                        {% for medicine in item %}
+                                                            <option value="{{ medicine.id }}">{{ medicine.itemnm }}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="card-body">
+                                                <div class="form-group">
+                                                    <label>Medicine Company</label>
+                                                    <select name="medcom[]" class="form-control medcom-select" required>
+                                                        <option value="">Select Company</option>
+                                                        {% for company in comp %}
+                                                            <option value="{{ company.id }}">{{ company.Comapany_name }}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <div class="card-body">
+                                                <div class="form-group">
+                                                    <label>Unit</label>
+                                                    <select name="Unit[]" class="form-control unit-select" required>
+                                                        <option value="">Select Unit</option>
+                                                        {% for u in unit %}
+                                                            <option value="{{ u.id }}">{{ u.unitname }}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <div class="card-body">
+                                                <div class="form-group">
+                                                    <label>Quantity</label>
+                                                    <input type="text" class="form-control common" 
+                                                           name="Quantity[]" required>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-1">
+                                            <div class="card-body">
+                                                <div class="form-group">
+                                                    <button type="button" class="btn btn-danger btn-sm remove-item">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-primary">Update Order</button>
+                        <a href="{% url 'purchaseorderview' %}?menumanagement_id={{ idmngmnt }}&order_id={{ purchase_order.id }}" 
+                           class="btn btn-secondary">Cancel</a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </section>
+</div>
+
+<script>
+    $(document).ready(function() {
+        // Set current date if order date is empty
+        var orderDateField = document.getElementById("orderdate");
+        if (!orderDateField.value) {
+            var currentDate = new Date();
+            var day = currentDate.getDate();
+            var month = currentDate.getMonth() + 1;
+            var year = currentDate.getFullYear();
+            var formattedDate = (day < 10 ? '0' : '') + day + '-' + (month < 10 ? '0' : '') + month + '-' + year;
+            orderDateField.value = formattedDate;
+        }
+
+        // Add new item row
+        $("#add").click(function(e) {
+            e.preventDefault();
+            // Get the first address div and clone it
+            var firstAddr = $(".addr").first();
+            var newRow = firstAddr.clone();
+            
+            // Clear all input values
+            newRow.find('input[type="text"]').val('');
+            newRow.find('select').val('');
+            newRow.find('.item-select').val('');
+            newRow.find('.medcom-select').val('');
+            newRow.find('.unit-select').val('');
+            newRow.find('.common').val('');
+            newRow.find('.item-checkbox').prop('checked', false);
+            
+            // Remove data attributes from new row
+            newRow.removeAttr('data-medicine-id data-unit-id data-company-id');
+            
+            // Append to outer container
+            $("#outer").append(newRow);
+        });
+
+        // Remove single item
+        $(document).on('click', '.remove-item', function() {
+            var addrDiv = $(this).closest('.addr');
+            if ($(".addr").length > 1) {
+                addrDiv.remove();
+            } else {
+                addrDiv.find('input[type="text"]').val('');
+                addrDiv.find('select').val('');
+                addrDiv.find('.item-checkbox').prop('checked', false);
+                alert("Cannot remove the last item row. You can clear the values instead.");
+            }
+        });
+
+        // Remove selected items
+        $("#remove").click(function(e) {
+            e.preventDefault();
+            var checkedBoxes = $(".item-checkbox:checked");
+            if (checkedBoxes.length === 0) {
+                alert("Please select items to remove");
+                return;
+            }
+            
+            if ($(".addr").length > checkedBoxes.length) {
+                checkedBoxes.each(function() {
+                    $(this).closest('.addr').remove();
+                });
+            } else {
+                alert("Cannot remove all items. At least one item is required.");
+            }
+        });
+
+        // Load supplier details
+        $('#spname').change(function() {
+            var spnameid = $(this).val();
+            if (spnameid) {
+                $.ajax({
+                    url: '/get_supplierdetails/',
+                    type: 'GET',
+                    data: { spnameid: spnameid },
+                    success: function(response) {
+                        $('#cno').val(response.cno || '');
+                        $('#addres').val(response.address || '');
+                    },
+                    error: function(xhr, status, error) {
+                        console.error(xhr.responseText);
+                    }
+                });
+            }
+        });
+
+        // Trigger supplier details on page load if supplier is selected
+        if ($('#spname').val()) {
+            $('#spname').trigger('change');
+        }
+
+        // For NEW rows only - load units and companies when medicine changes
+        $(document).on('change', '.item-select', function() {
+            var itemId = $(this).val();
+            var $addr = $(this).closest('.addr');
+            var unitSelect = $addr.find('.unit-select');
+            var comSelect = $addr.find('.medcom-select');
+            
+            // Check if this is a new row (no data attributes with values)
+            var hasExistingUnit = $addr.find('.unit-select option:selected').val();
+            var hasExistingCompany = $addr.find('.medcom-select option:selected').val();
+            
+            // If this row already has selected values, don't override them
+            if (hasExistingUnit && hasExistingCompany) {
+                return;
+            }
+            
+            if (itemId) {
+                // Fetch units
+                $.ajax({
+                    url: '/get_units/',
+                    method: 'GET',
+                    data: { item_id: itemId },
+                    async: false,
+                    success: function(response) {
+                        unitSelect.empty().append('<option value="">Select Unit</option>');
+                        if (response && response.length > 0) {
+                            $.each(response, function(index, unit) {
+                                unitSelect.append('<option value="' + unit.id + '">' + unit.unitname + '</option>');
+                            });
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error fetching units:', error);
+                        unitSelect.empty().append('<option value="">Error loading units</option>');
+                    }
+                });
+                
+                // Fetch companies
+                $.ajax({
+                    url: '/get_company_for_medicine/',
+                    method: 'GET',
+                    data: { item_id: itemId },
+                    async: false,
+                    success: function(response) {
+                        comSelect.empty().append('<option value="">Select Company</option>');
+                        if (response.companies && response.companies.length > 0) {
+                            $.each(response.companies, function(index, company) {
+                                comSelect.append('<option value="' + company.Comapany_name_id + '">' + company.Comapany_name__Comapany_name + '</option>');
+                            });
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error fetching Company:', error);
+                        comSelect.empty().append('<option value="">Error loading companies</option>');
+                    }
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}

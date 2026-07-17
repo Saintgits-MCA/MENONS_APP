@@ -1,0 +1,344 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="container my-5 custom-container">
+  <div class="card border-0 shadow-lg rounded-3">
+    <div class="card-header bg-gradient bg-primary text-white py-4">
+      <h2 class="mb-0 fw-bold"><i class="fas fa-history me-2"></i> Daily Transactions</h2>
+    </div>
+    <div class="card-body p-5">
+      <!-- Dropdown for selecting section -->
+      <div class="mb-4">
+        <label for="sectionSelect" class="form-label fw-semibold fs-5">Select Transaction Type</label>
+        <select id="sectionSelect" class="form-select w-50 border-3 p-3 fs-5" onchange="toggleSection()">
+          <option value="pharmacy">Pharmacy</option>
+          <option value="treatment">Treatment</option>
+          <option value="appointment">Appointment</option>
+        </select>
+      </div>
+
+      <!-- Filter Form -->
+      <form method="get" class="mb-5">
+        <div class="row g-4 align-items-end">
+          <div class="col-md">
+            <label for="branch" class="form-label fw-semibold fs-5">Branch</label>
+            {% if st == "6" %}
+              <!-- Superadmin: can choose any branch -->
+              <select name="branch" id="branch" class="form-select border-3 p-3 fs-5">
+                <option value="All" {% if branch == "All" %}selected{% endif %}>All Branches</option>
+                {% for branch_obj in branches %}
+                  <option value="{{ branch_obj.id }}" {% if branch == branch_obj.id|stringformat:"s" %}selected{% endif %}>
+                    {{ branch_obj.Branch_Name }}
+                  </option>
+                {% endfor %}
+              </select>
+            {% else %}
+              <!-- Normal staff: fixed branch -->
+              {% for branch_obj in branches %}
+                <input type="hidden" name="branch" value="{{ branch_obj.id }}">
+                <input type="text" class="form-control border-3 p-3 fs-5" value="{{ branch_obj.Branch_Name }}" readonly>
+              {% endfor %}
+            {% endif %}
+          </div>
+
+          <div class="col-md">
+            <label for="from_date" class="form-label fw-semibold fs-5">From Date</label>
+            <input type="date" name="from_date" id="from_date" class="form-control border-3 p-3 fs-5" value="{{ from_date }}">
+          </div>
+          <div class="col-md">
+            <label for="to_date" class="form-label fw-semibold fs-5">To Date</label>
+            <input type="date" name="to_date" id="to_date" class="form-control border-3 p-3 fs-5" value="{{ to_date }}">
+          </div>
+          <div class="col-md">
+            <label for="payment_mode" class="form-label fw-semibold fs-5">Payment Mode</label>
+            <select name="payment_mode" id="payment_mode" class="form-select border-3 p-3 fs-5">
+              <option value="All" {% if payment_mode == "All" %}selected{% endif %}>All</option>
+              <option value="Cash" {% if payment_mode == "Cash" %}selected{% endif %}>Cash</option>
+              <option value="Card" {% if payment_mode == "Card" %}selected{% endif %}>Card</option>
+              <option value="Gpay" {% if payment_mode == "Gpay" %}selected{% endif %}>Gpay</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100 fw-semibold p-3 fs-5">
+              <i class="fas fa-filter me-2"></i>Filter
+            </button>
+          </div>
+          <div class="col-md-2">
+            <a href="{% url 'transactiondash' %}" class="btn btn-secondary w-100 fw-semibold p-3 fs-5">
+              <i class="fas fa-redo me-2"></i>Reset
+            </a>
+          </div>
+        </div>
+      </form>
+      <br>
+      
+      <!-- Pharmacy Table -->
+      <div id="pharmacy-section" class="table-section">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h4 class="fw-semibold text-primary mb-0 fs-4">
+            <i class="fas fa-pills me-2"></i>Pharmacy Transactions
+          </h4>
+          {% if payment_mode == "All" %}
+            <div class="total-display bg-light p-3 rounded-3 border">
+              <h5 class="mb-0 fw-bold text-dark">Total: ₹ {{ pharmacy_total|floatformat:2 }}</h5>
+            </div>
+          {% elif payment_mode == "Cash" %}
+            <div class="total-display bg-light p-3 rounded-3 border">
+              <h5 class="mb-0 fw-bold text-dark">Cash Total: ₹ {{ pharmacy_cash_total|floatformat:2 }}</h5>
+            </div>
+          {% elif payment_mode == "Card" %}
+            <div class="total-display bg-light p-3 rounded-3 border">
+              <h5 class="mb-0 fw-bold text-dark">Card Total: ₹ {{ pharmacy_card_total|floatformat:2 }}</h5>
+            </div>
+          {% elif payment_mode == "Gpay" %}
+            <div class="total-display bg-light p-3 rounded-3 border">
+              <h5 class="mb-0 fw-bold text-dark">Gpay Total: ₹ {{ pharmacy_gpay_total|floatformat:2 }}</h5>
+            </div>
+          {% endif %}
+        </div>
+        <div class="table-responsive">
+          <div id="pharmacyTableButtons" class="mb-3"></div>
+          <table id="pharmacyTable" class="table table-hover table-bordered align-middle fs-5">
+            <thead class="table-dark">
+              <tr>
+                <th scope="col">Invoice No</th>
+                <th scope="col">Patient</th>
+                <th scope="col">Branch</th>
+                <th scope="col">
+                  {% if payment_mode == "Cash" %}Cash Amount
+                  {% elif payment_mode == "Gpay" %}Gpay Amount
+                  {% elif payment_mode == "Card" %}Card Amount
+                  {% else %}Total{% endif %}
+                </th>
+                <th scope="col">Date</th>
+                <th scope="col">Payment Mode</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in enhanced_pharmacy_invoices %}
+              {% with inv=item.invoice %}
+              <tr>
+                <td>{{ inv.Invoicenumber }}</td>
+                <td>{{ inv.patientname }}</td>
+                <td>{{ inv.branch.Branch_Name }}</td>
+                <td>₹ {{ item.display_total|floatformat:2 }}</td>
+                <td>{{ inv.currentdate }}</td>
+                <td>{{ inv.payementmode }}</td>
+              </tr>
+              {% endwith %}
+              {% empty %}
+              <tr>
+                <td colspan="6" class="text-center text-muted py-4 fs-5">
+                  No transactions available
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Treatment Table -->
+      <div id="treatment-section" class="table-section" style="display: none;">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h4 class="fw-semibold text-primary mb-0 fs-4">
+            <i class="fas fa-stethoscope me-2"></i>Treatment Transactions
+          </h4>
+          {% if payment_mode == "All" %}
+            <div class="total-display bg-light p-3 rounded-3 border">
+              <h5 class="mb-0 fw-bold text-dark">Total: ₹ {{ treatment_total|floatformat:2 }}</h5>
+            </div>
+          {% elif payment_mode == "Cash" %}
+            <div class="total-display bg-light p-3 rounded-3 border">
+              <h5 class="mb-0 fw-bold text-dark">Cash Total: ₹ {{ treatment_cash_total|floatformat:2 }}</h5>
+            </div>
+          {% elif payment_mode == "Card" %}
+            <div class="total-display bg-light p-3 rounded-3 border">
+              <h5 class="mb-0 fw-bold text-dark">Card Total: ₹ {{ treatment_card_total|floatformat:2 }}</h5>
+            </div>
+          {% elif payment_mode == "Gpay" %}
+            <div class="total-display bg-light p-3 rounded-3 border">
+              <h5 class="mb-0 fw-bold text-dark">Gpay Total: ₹ {{ treatment_gpay_total|floatformat:2 }}</h5>
+            </div>
+          {% endif %}
+        </div>
+        <div class="table-responsive">
+          <div id="treatmentTableButtons" class="mb-3"></div>
+          <table id="treatmentTable" class="table table-hover table-bordered align-middle fs-5">
+            <thead class="table-dark">
+              <tr>
+                <th scope="col">Invoice No</th>
+                <th scope="col">Patient</th>
+                <th scope="col">Branch</th>
+                <th scope="col">Total</th>
+                <th scope="col">Date</th>
+                <th scope="col">Payment Mode</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in enhanced_treatment_invoices %}
+              {% with inv=item.invoice %}
+              <tr>
+                <td>{{ inv.treatmentInvoicenumber }}</td>
+                <td>{{ inv.patientname }}</td>
+                <td>{{ inv.branch.Branch_Name }}</td>
+                <td>₹ {{ item.display_total|floatformat:2 }}</td>
+                <td>{{ inv.currentdate }}</td>
+                <td>{{ inv.paymentmode }}</td>
+              </tr>
+              {% endwith %}
+              {% empty %}
+              <tr>
+                <td colspan="6" class="text-center text-muted py-4 fs-5">No transactions available</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Appointment Table -->
+      <div id="appointment-section" class="table-section" style="display: none;">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h4 class="fw-semibold text-primary mb-0 fs-4">
+            <i class="fas fa-calendar-check me-2"></i>Appointment Transactions
+          </h4>
+          {% if payment_mode == "All" %}
+            <div class="total-display bg-light p-3 rounded-3 border">
+              <h5 class="mb-0 fw-bold text-dark">Total: ₹ {{ appointment_total|floatformat:2 }}</h5>
+            </div>
+          {% elif payment_mode == "Cash" %}
+            <div class="total-display bg-light p-3 rounded-3 border">
+              <h5 class="mb-0 fw-bold text-dark">Cash Total: ₹ {{ appointment_cash_total|floatformat:2 }}</h5>
+            </div>
+          {% elif payment_mode == "Card" %}
+            <div class="total-display bg-light p-3 rounded-3 border">
+              <h5 class="mb-0 fw-bold text-dark">Card Total: ₹ {{ appointment_card_total|floatformat:2 }}</h5>
+            </div>
+          {% elif payment_mode == "Gpay" %}
+            <div class="total-display bg-light p-3 rounded-3 border">
+              <h5 class="mb-0 fw-bold text-dark">Gpay Total: ₹ {{ appointment_gpay_total|floatformat:2 }}</h5>
+            </div>
+          {% endif %}
+        </div>
+        <div class="table-responsive">
+          <div id="appointmentTableButtons" class="mb-3"></div>
+          <table id="appointmentTable" class="table table-hover table-bordered align-middle fs-5">
+            <thead class="table-dark">
+              <tr>
+                <th scope="col">Token No</th>
+                <th scope="col">Patient</th>
+                <th scope="col">Branch</th>
+                <th scope="col">Fee</th>
+                <th scope="col">Date</th>
+                <th scope="col">Payment Mode</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for ap in appointments %}
+              <tr>
+                <td>{{ ap.InvoiceNo }}</td>
+                <td>{{ ap.Patient }}</td>
+                <td>{{ ap.Branch }}</td>
+                <td>₹ {{ ap.Fee|floatformat:2 }}</td>
+                <td>{{ ap.Date }}</td>
+                <td>{{ ap.PaymentMode }}</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="6" class="text-center text-muted py-4 fs-5">No appointments available</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Make container wider */
+.custom-container {
+  max-width: 65% !important;
+}
+
+/* Treatment and Appointment tables full width */
+#treatmentTable,
+#appointmentTable {
+  width: 100% !important;
+  table-layout: fixed;
+}
+
+/* Example: Appointment column widths */
+#appointmentTable th:nth-child(1),
+#appointmentTable td:nth-child(1) { width: 10%; }
+#appointmentTable th:nth-child(2),
+#appointmentTable td:nth-child(2) { width: 20%; }
+#appointmentTable th:nth-child(3),
+#appointmentTable td:nth-child(3) { width: 25%; }
+#appointmentTable th:nth-child(4),
+#appointmentTable td:nth-child(4) { width: 15%; }
+#appointmentTable th:nth-child(5),
+#appointmentTable td:nth-child(5) { width: 10%; }
+#appointmentTable th:nth-child(6),
+#appointmentTable td:nth-child(6) { width: 10%; }
+
+.total-display {
+  min-width: 200px;
+  text-align: center;
+}
+
+/* Payment breakdown styling */
+.payment-breakdown {
+  font-size: 0.9em;
+  line-height: 1.2;
+}
+</style>
+
+{% block extra_js %}
+<script>
+function toggleSection() {
+  const select = document.getElementById('sectionSelect');
+  const sections = ['pharmacy', 'treatment', 'appointment'];
+  
+  sections.forEach(section => {
+    const element = document.getElementById(`${section}-section`);
+    element.style.display = select.value === section ? 'block' : 'none';
+  });
+}
+
+// Show pharmacy section by default on page load
+document.addEventListener('DOMContentLoaded', () => {
+  toggleSection();
+  
+  // Initialize DataTables
+  $('#pharmacyTable').DataTable({
+    "responsive": true, 
+    "lengthChange": true, 
+    "autoWidth": true,
+    "dom": 'Bfrtip',
+    "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
+  }).buttons().container().appendTo('#pharmacyTableButtons');
+  
+  $('#treatmentTable').DataTable({
+    "responsive": true, 
+    "lengthChange": true, 
+    "autoWidth": true,
+    "dom": 'Bfrtip',
+    "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
+  }).buttons().container().appendTo('#treatmentTableButtons');
+  
+  $('#appointmentTable').DataTable({
+    "responsive": true, 
+    "lengthChange": true, 
+    "autoWidth": true,
+    "dom": 'Bfrtip',
+    "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
+  }).buttons().container().appendTo('#appointmentTableButtons');
+});
+</script>
+{% endblock %}
+
+{% endblock %}

@@ -1,0 +1,794 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<style>
+:root {
+  --primary-color: #4a6cf7;
+  --secondary-color: #6f42c1;
+  --success-color: #2831a7;
+  --warning-color: #ffc107;
+  --danger-color: #dc3545;
+  --light-bg: #f8f9fa;
+  --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  --border-radius: 12px;
+}
+
+body {
+  background-color: #f5f7fb;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.content-wrapper {
+  background-color: transparent;
+  padding: 20px;
+}
+
+/* Enhanced Header */
+.content-header {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: white;
+  border-radius: var(--border-radius);
+  padding: 25px 25px 15px 25px;
+  margin-bottom: 25px;
+  box-shadow: var(--card-shadow);
+}
+
+.content-header h1 {
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+.content-header .breadcrumb {
+  background: transparent;
+  padding: 0;
+  margin-bottom: 0;
+}
+
+.content-header .breadcrumb-item {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.content-header .breadcrumb-item a {
+  color: white;
+  text-decoration: none;
+}
+
+.content-header .breadcrumb-item.active {
+  color: white;
+  font-weight: 500;
+}
+
+/* Search Card */
+.card-primary {
+  border: none;
+  border-radius: var(--border-radius);
+  box-shadow: var(--card-shadow);
+  margin-bottom: 25px;
+}
+
+.card-primary .card-header {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: white;
+  border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
+  padding: 15px 25px;
+  font-weight: 700;
+  font-size: 1.1rem;
+  border-bottom: none;
+}
+
+.card-primary .card-header h3 {
+  margin: 0;
+  font-weight: 700;
+}
+
+.card-primary .card-body {
+  padding: 25px;
+}
+
+.form-group label {
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 8px;
+}
+
+.form-control {
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  padding: 10px 15px;
+  height: 45px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.form-control:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 0.2rem rgba(74, 108, 247, 0.25);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  border: none;
+  border-radius: 8px;
+  padding: 10px 25px;
+  font-weight: 600;
+  font-size: 1rem;
+  height: 45px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(74, 108, 247, 0.2);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(74, 108, 247, 0.3);
+}
+
+/* Results Card */
+.card.bg-success {
+  border: none;
+  border-radius: var(--border-radius);
+  box-shadow: var(--card-shadow);
+  overflow: hidden;
+}
+
+.card.bg-success .card-header {
+  background: linear-gradient(135deg, #28a745, #20c997);
+  color: white;
+  padding: 15px 25px;
+  border-bottom: none;
+}
+
+.card.bg-success .card-header h3 {
+  margin: 0;
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+
+.card.bg-success .card-header .fas {
+  font-size: 1.1rem;
+}
+
+.card.bg-success .card-body {
+  padding: 0;
+}
+
+/* Enhanced Table */
+.table-bordered {
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.table-bordered thead th {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: white;
+  border: none;
+  padding: 15px;
+  font-weight: 700;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.table-bordered tbody td {
+  padding: 12px 15px;
+  border-bottom: 1px solid #f0f0f0;
+  vertical-align: middle;
+}
+
+.table-bordered tbody tr {
+  transition: all 0.3s ease;
+}
+
+.table-bordered tbody tr:hover {
+  background-color: rgba(74, 108, 247, 0.05);
+  transform: translateX(5px);
+}
+
+/* Action Button */
+.btn-group .btn-info {
+  background: linear-gradient(135deg, #17a2b8, #138496);
+  border: none;
+  border-radius: 6px;
+  padding: 8px 15px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(23, 162, 184, 0.2);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  text-decoration: none;
+}
+
+.btn-group .btn-info:hover {
+  background: linear-gradient(135deg, #138496, #117a8b);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(23, 162, 184, 0.3);
+  color: white;
+}
+
+/* Empty State */
+.dataTables_empty {
+  padding: 40px 0 !important;
+  text-align: center;
+  color: #6c757d;
+}
+
+.dataTables_empty:before {
+  content: "👤";
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 10px;
+  opacity: 0.6;
+}
+
+/* Modal Enhancements */
+.modal-content {
+  border-radius: var(--border-radius);
+  border: none;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header.bg-primary {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)) !important;
+  color: white;
+  border-radius: var(--border-radius) var(--border-radius) 0 0;
+  padding: 20px 25px;
+  border-bottom: none;
+}
+
+.modal-header.bg-primary .close {
+  color: white;
+  opacity: 0.8;
+  font-size: 1.5rem;
+  transition: opacity 0.3s ease;
+}
+
+.modal-header.bg-primary .close:hover {
+  opacity: 1;
+}
+
+.modal-body {
+  padding: 25px;
+}
+
+/* Search Results Table */
+.display.table-bordered {
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.display.table-bordered thead th {
+  background: var(--light-bg);
+  color: #333;
+  font-weight: 700;
+  padding: 12px 15px;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.display.table-bordered tbody td {
+  padding: 10px 15px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+/* Select Button */
+.select-patient-btn {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  border: none;
+  border-radius: 6px;
+  padding: 8px 15px;
+  color: white;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.select-patient-btn:hover {
+  background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  color: white;
+}
+
+/* DataTable Customizations */
+.dataTables_wrapper {
+  padding: 20px;
+}
+
+.dataTables_length,
+.dataTables_filter,
+.dataTables_info,
+.dataTables_paginate {
+  padding: 15px 25px;
+  color: #666;
+}
+
+.dataTables_paginate .paginate_button {
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin: 0 3px;
+  color: #555;
+  transition: all 0.3s ease;
+}
+
+.dataTables_paginate .paginate_button:hover {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.dataTables_paginate .paginate_button.current {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: white;
+  border-color: var(--primary-color);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .content-wrapper {
+    padding: 15px;
+  }
+  
+  .content-header {
+    padding: 20px;
+  }
+  
+  .card-primary .card-body {
+    padding: 20px;
+  }
+  
+  .card.bg-success .card-body {
+    padding: 0 15px;
+  }
+  
+  .table-bordered thead th,
+  .table-bordered tbody td {
+    padding: 10px;
+    font-size: 0.9rem;
+  }
+  
+  .btn-group .btn-info {
+    padding: 6px 10px;
+    font-size: 0.85rem;
+  }
+  
+  .modal-body {
+    padding: 15px;
+  }
+}
+
+@media (max-width: 576px) {
+  .content-header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .card-primary .card-header h3 {
+    font-size: 1rem;
+  }
+  
+  .btn-primary {
+    width: 100%;
+  }
+  
+  .table-bordered {
+    font-size: 0.85rem;
+  }
+}
+
+/* Loading Animation */
+.loading-spinner {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.8);
+  z-index: 9999;
+  justify-content: center;
+  align-items: center;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid #f3f3f3;
+  border-top: 5px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Toast Notifications */
+.toast-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: var(--success-color);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  z-index: 10000;
+  animation: slideIn 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.toast-notification.error {
+  background: var(--danger-color);
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+</style>
+
+<div class="content-wrapper">
+  <!-- Enhanced Header -->
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1><i class="fas fa-history mr-2"></i>Patient History Search</h1>
+          <p class="mb-0 opacity-75" style="font-size: 0.9rem;">Search and access patient medical records and visit history</p>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="{% url 'index' %}">Home</a></li>
+            <li class="breadcrumb-item active">Case History</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Search Section -->
+  <section class="content">
+    <div class="card card-primary">
+      <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-search mr-2"></i>Search Patient</h3>
+      </div>
+      <div class="card-body">
+        <div class="row align-items-end">
+          <div class="col-md-8">
+            <div class="form-group mb-0">
+              <label for="mrSearch" class="form-label">MR Number / Phone No / Name</label>
+              <div class="input-group">
+                <div class="input-group-prepend">
+                  <span class="input-group-text bg-light border-right-0">
+                    <i class="fas fa-user-injured"></i>
+                  </span>
+                </div>
+                <input type="text" 
+                       id="mrSearch" 
+                       class="form-control border-left-0" 
+                       placeholder="Enter MR number, phone, or patient name">
+              </div>
+              <!-- <small class="form-text text-muted">Enter any detail to search patient records</small> -->
+            </div>
+          </div>
+          <div class="col-md-4">
+            <button id="searchBtn" class="btn btn-primary w-100">
+              <i class="fas fa-search mr-2"></i> Search Patient
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results Table -->
+    <div class="card mt-3">
+     <div class="card-header" style="background: linear-gradient(135deg,  #2831a7, #9062e6);">
+        <h3 class="card-title text-white">
+          <i class="fas fa-list mr-2"></i> Patients List
+        </h3>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table id="resultsTable" class="table table-bordered table-striped mb-0">
+            <thead class="bg-primary text-white">
+              <tr>
+                <th><i class="fas fa-id-card mr-1"></i> MR Number</th>
+                <th><i class="fas fa-user mr-1"></i> Patient Name</th>
+                <th><i class="fas fa-phone mr-1"></i> Phone No</th>
+                <th><i class="fas fa-home mr-1"></i> Address</th>
+                <th><i class="fas fa-cogs mr-1"></i> Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Data will be inserted dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Loading Spinner -->
+<div class="loading-spinner" id="loadingSpinner">
+  <div class="spinner"></div>
+</div>
+
+<!-- Modal for displaying search results with DataTable -->
+<div class="modal fade" id="searchModal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="searchModalLabel">
+          <i class="fas fa-search mr-2"></i> Search Results
+        </h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body p-0">
+        <div class="table-responsive">
+          <table id="searchResultsTable" class="display table table-hover mb-0">
+            <thead class="thead-light">
+              <tr>
+                <th>MR Number</th>
+                <th>Patient Name</th>
+                <th>Address</th>
+                <th>Contact No</th>
+                <th class="text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Results will be appended here -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+          <i class="fas fa-times mr-1"></i> Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+$(document).ready(function() {
+  // Show loading spinner
+  function showLoading() {
+    $('#loadingSpinner').css('display', 'flex');
+  }
+
+  // Hide loading spinner
+  function hideLoading() {
+    $('#loadingSpinner').hide();
+  }
+
+  // Show toast notification
+  function showToast(message, type = 'success') {
+    const toastClass = type === 'error' ? 'toast-notification error' : 'toast-notification';
+    const icon = type === 'error' ? 'fas fa-exclamation-triangle' : 'fas fa-check-circle';
+    
+    const toast = $(`
+      <div class="${toastClass}">
+        <i class="${icon}"></i>
+        <span>${message}</span>
+      </div>
+    `);
+    
+    $('body').append(toast);
+    
+    setTimeout(() => {
+      toast.fadeOut(300, function() {
+        $(this).remove();
+      });
+    }, 3000);
+  }
+
+  // Initialize DataTable for main results table
+  let table = $('#resultsTable').DataTable({
+    paging: true,
+    searching: false,
+    info: true,
+    lengthChange: false,
+    pageLength: 10,
+    ordering: false,
+    language: {
+      emptyTable: '<div class="text-center py-5"><i class="fas fa-users fa-3x mb-3 text-muted"></i><h5>No patients found</h5><p class="text-muted">Search for patients using the search bar above</p></div>',
+      zeroRecords: '<div class="text-center py-5"><i class="fas fa-users fa-3x mb-3 text-muted"></i><h5>No patients found</h5><p class="text-muted">Search for patients using the search bar above</p></div>',
+      info: "Showing _START_ to _END_ of _TOTAL_ patients",
+      infoEmpty: "No patients available",
+      infoFiltered: "",
+      paginate: {
+        previous: '<i class="fas fa-chevron-left"></i>',
+        next: '<i class="fas fa-chevron-right"></i>'
+      }
+    },
+    columns: [
+      { data: 'mr_number' },
+      { data: 'patient_name' },
+      { data: 'phone' },
+      { data: 'address' },
+      { 
+        data: 'action',
+        className: 'text-center'
+      }
+    ],
+    drawCallback: function(settings) {
+      const api = this.api();
+      const rowCount = api.rows().count();
+      
+      // Update header badge
+      const badge = $('<span>').addClass('badge badge-light ml-2').text(rowCount + ' patients');
+      $('.card-header .card-title').find('.badge').remove();
+      $('.card-header .card-title').append(badge);
+    }
+  });
+
+  // Function to add patient to results table
+  function addPatientToResultsTable(patientData) {
+    const viewUrl = `/casehistory_view/?ids=${patientData.id}`;
+    
+    // Create action button with eye icon for viewing history
+    const actionBtn = `
+      <div class="btn-group">
+        <a href="${viewUrl}" class="btn btn-info btn-sm" title="View Complete Medical History">
+          <i class="fas fa-eye mr-1"></i> View History
+        </a>
+      </div>
+    `;
+    
+    const rowData = {
+      'mr_number': patientData.Medical_Record_Number || patientData.id,
+      'patient_name': patientData.Patient_Name,
+      'phone': patientData.contactno || 'N/A',
+      'address': patientData.address || 'N/A',
+      'action': actionBtn
+    };
+    
+    // Add new patient at the TOP (LIFO order)
+    const currentData = table.rows().data().toArray();
+    table.clear();
+    table.row.add(rowData);
+    currentData.forEach(data => {
+      table.row.add(data);
+    });
+    table.draw(false);
+    
+    // Show success toast
+    showToast(`Added ${patientData.Patient_Name} to patient list`);
+  }
+
+  // Search button handler
+  $('#searchBtn').on('click', function() {
+    let query = $('#mrSearch').val().trim();
+
+    if (query === '') {
+      $('#mrSearch').addClass('is-invalid');
+      showToast('Please enter a search term', 'error');
+      return;
+    }
+    
+    // Remove error state
+    $('#mrSearch').removeClass('is-invalid');
+    
+    // Clear the main table on new search
+    table.clear().draw();
+
+    // Initialize modal DataTable
+    let modalTable = $('#searchResultsTable').DataTable({
+      paging: true,
+      searching: true,
+      info: true,
+      lengthChange: true,
+      pageLength: 10,
+      destroy: true,
+      language: {
+        emptyTable: '<div class="text-center py-5"><i class="fas fa-search fa-3x mb-3 text-muted"></i><h5>No results found</h5><p class="text-muted">Try a different search term</p></div>',
+        zeroRecords: '<div class="text-center py-5"><i class="fas fa-search fa-3x mb-3 text-muted"></i><h5>No results found</h5><p class="text-muted">Try a different search term</p></div>',
+        info: "Showing _START_ to _END_ of _TOTAL_ records",
+        infoEmpty: "No records available",
+        infoFiltered: "",
+        paginate: {
+          previous: '<i class="fas fa-chevron-left"></i>',
+          next: '<i class="fas fa-chevron-right"></i>'
+        }
+      }
+    });
+
+    modalTable.clear().draw();
+
+    // Show loading
+    showLoading();
+    const searchBtn = $(this);
+    const originalText = searchBtn.html();
+    searchBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-2"></i> Searching...');
+
+    fetch('/search_mrno?query=' + encodeURIComponent(query))
+      .then(function(response) {
+        hideLoading();
+        return response.json();
+      })
+      .then(function(data) {
+        if (data.length > 0) {
+          data.forEach(item => {
+            // Action button for modal - just "Select"
+            let actionBtn = `<button class="btn btn-primary btn-sm select-patient-btn" 
+                                data-id="${item.id}" 
+                                data-name="${item.Patient_Name}" 
+                                data-mrno="${item.Medical_Record_Number || 'N/A'}" 
+                                data-contact="${item.contactno || 'N/A'}"
+                                data-address="${item.address || 'N/A'}">
+                              <i class="fas fa-plus mr-1"></i> Select
+                            </button>`;
+
+            modalTable.row.add([
+              item.Medical_Record_Number || 'N/A',
+              item.Patient_Name,
+              item.address || 'N/A',
+              item.contactno || 'N/A',
+              '<div class="text-center">' + actionBtn + '</div>'
+            ]).draw(false);
+          });
+
+          // Show the modal
+          $('#searchModal').modal('show');
+          showToast(`Found ${data.length} matching patients`);
+        } else {
+          showToast('No matching patients found', 'error');
+        }
+      })
+      .catch(function(error) {
+        hideLoading();
+        console.error('Error:', error);
+        showToast('Error retrieving data. Please try again.', 'error');
+      })
+      .finally(function() {
+        // Reset button state
+        searchBtn.prop('disabled', false).html(originalText);
+      });
+  });
+
+  // Handle Enter key in search input
+  $('#mrSearch').on('keypress', function(e) {
+    if (e.which === 13) {
+      $('#searchBtn').click();
+    }
+  });
+
+  // Handle patient selection from modal
+  $(document).on('click', '.select-patient-btn', function() {
+    const patientData = {
+      id: $(this).data('id'),
+      Patient_Name: $(this).data('name'),
+      Medical_Record_Number: $(this).data('mrno'),
+      contactno: $(this).data('contact'),
+      address: $(this).data('address')
+    };
+    
+    console.log('Patient selected:', patientData);
+    
+    // Close the modal
+    $('#searchModal').modal('hide');
+    
+    // Add patient to the main results table
+    addPatientToResultsTable(patientData);
+    
+    // Clear the search input
+    $('#mrSearch').val('');
+  });
+});
+</script>
+{% endblock %}

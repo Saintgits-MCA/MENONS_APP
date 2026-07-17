@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .error-container {
+            background-color: #fff;
+            border: 1px solid #f5c6cb;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            padding: 20px;
+            text-align: center;
+        }
+        h1 {
+            color: #e0091f;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        p {
+            color: #333;
+            margin: 10px 0;
+        }
+        .error-message {
+            color: #e74c3c;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+        .back-link {
+            color: #3498db;
+            text-decoration: none;
+            border: 1px solid #3498db;
+            padding: 8px 16px;
+            border-radius: 5px;
+            display: inline-block;
+            margin-top: 20px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .back-link:hover {
+            background-color: #3498db;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <h1>System Outage</h1>
+        <p>An error occurred while processing your request:</p>
+        {% if messages %}
+            {% for message in messages %}
+                <p class="error-message">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+        <p><a href="/" class="back-link">Go back to homepage</a></p>
+    </div>
+</body>
+</html>

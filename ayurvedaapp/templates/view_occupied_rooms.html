@@ -1,0 +1,1756 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<style>
+  .room-card {
+    border-left: 4px solid #007bff;
+    transition: box-shadow 0.2s;
+  }
+  .room-card:hover {
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+  }
+  .room-card.ward-card {
+    border-left-color: #28a745;
+  }
+  .room-card .card-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+  .room-card .detail-label {
+    font-weight: 600;
+    color: #6c757d;
+    font-size: 0.85rem;
+  }
+  .room-card .detail-value {
+    font-size: 0.95rem;
+    color: #343a40;
+  }
+  .badge-ward {
+    background-color: #28a745;
+  }
+  .badge-room {
+    background-color: #007bff;
+  }
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #6c757d;
+  }
+  .empty-state i {
+    font-size: 4rem;
+    margin-bottom: 15px;
+    display: block;
+  }
+
+  /* ── Treatment Modal Redesign ── */
+  #treatmentModal .modal-dialog {
+    max-width: 820px;
+    margin: 1.2rem auto;
+  }
+  #treatmentModal .modal-content {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.18);
+    overflow: visible;
+  }
+
+  /* Header */
+  #treatmentModal .modal-header {
+    background: linear-gradient(135deg, #1a73a7 0%, #0d5f8a 100%);
+    color: #fff;
+    padding: 12px 20px;
+    border-bottom: none;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  #treatmentModal .modal-header .modal-title {
+    font-weight: 700;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    letter-spacing: 0.3px;
+  }
+  #treatmentModal .modal-header .close {
+    color: #fff;
+    opacity: 0.9;
+    font-size: 1.4rem;
+    padding: 4px 10px;
+    border-radius: 6px;
+    transition: all 0.2s;
+    text-shadow: none;
+    line-height: 1;
+    margin-left: auto;
+    position: relative;
+    z-index: 11;
+  }
+  #treatmentModal .modal-header .close:hover {
+    opacity: 1;
+    background: rgba(255,255,255,0.2);
+  }
+  #treatmentModal .modal-header .close span {
+    display: inline-block;
+    font-weight: 300;
+    font-size: 1.6rem;
+  }
+
+  /* Body */
+  #treatmentModal .modal-body {
+    max-height: 58vh;
+    overflow-y: auto;
+    overflow-x: visible;
+    padding: 18px 22px;
+    background: #f4f6f9;
+  }
+  #treatmentModal .modal-body::-webkit-scrollbar {
+    width: 6px;
+  }
+  #treatmentModal .modal-body::-webkit-scrollbar-thumb {
+    background: #c5cad3;
+    border-radius: 3px;
+  }
+
+  /* Footer */
+  #treatmentModal .modal-footer {
+    background: #fff;
+    border-top: 1px solid #e9ecef;
+    padding: 10px 20px;
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
+  /* Cards */
+  #treatmentModal .modal-body .card {
+    border: 1px solid #e2e7ef;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    margin-bottom: 14px;
+    background: #fff;
+    transition: box-shadow 0.2s;
+  }
+  #treatmentModal .modal-body .card:last-child {
+    margin-bottom: 0;
+  }
+  #treatmentModal .modal-body .card:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.07);
+  }
+  #treatmentModal .modal-body .card-header {
+    background: linear-gradient(135deg, #f0f4f8 0%, #e8edf2 100%);
+    border-bottom: 1px solid #e2e7ef;
+    border-radius: 10px 10px 0 0 !important;
+    padding: 10px 16px;
+  }
+  #treatmentModal .modal-body .card-body {
+    padding: 14px 16px;
+  }
+
+  /* Section Heading */
+  #treatmentModal .section-heading {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1a3a5c;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  #treatmentModal .section-heading i {
+    color: #1a73a7;
+    font-size: 1rem;
+  }
+
+  /* Patient Info */
+  #treatmentModal .info-label {
+    font-weight: 600;
+    color: #6b7a8d;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+    display: block;
+  }
+  #treatmentModal .info-value {
+    font-size: 0.95rem;
+    color: #212529;
+    font-weight: 600;
+    display: block;
+  }
+  #treatmentModal .patient-info-box {
+    background: #f8fafc;
+    border: 1px solid #e2e7ef;
+    border-radius: 8px;
+    padding: 10px 14px;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+  }
+  #treatmentModal .patient-info-box .info-value {
+    font-size: 0.93rem;
+    margin: 0;
+  }
+
+  /* Form Controls */
+  #treatmentModal .form-label {
+    font-weight: 600;
+    color: #4a5568;
+    font-size: 0.82rem;
+    margin-bottom: 5px;
+  }
+  #treatmentModal .form-control {
+    border-radius: 8px;
+    border: 1px solid #d1d9e6;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    height: auto;
+  }
+  #treatmentModal .form-control:focus {
+    border-color: #1a73a7;
+    box-shadow: 0 0 0 3px rgba(26,115,167,0.12);
+  }
+  #treatmentModal .form-control-sm {
+    padding: 6px 10px;
+    font-size: 0.85rem;
+  }
+
+  /* Prescription Row */
+  #treatmentModal .prescription-row {
+    border: 1px solid #e2e7ef !important;
+    border-radius: 10px !important;
+    padding: 16px !important;
+    margin-bottom: 14px !important;
+    background: #fafbfc !important;
+    transition: box-shadow 0.2s, border-color 0.2s;
+  }
+  #treatmentModal .prescription-row:hover {
+    border-color: #b8c9db !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+  }
+
+  /* Diet Timing Buttons */
+  #treatmentModal .diet-timing-btn {
+    border-radius: 6px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 5px 12px;
+    transition: all 0.2s;
+  }
+
+  /* Timing Input */
+  #treatmentModal .timing-input {
+    width: 70px;
+    text-align: center;
+    font-size: 0.9rem;
+    padding: 6px;
+    border-radius: 6px;
+  }
+  #treatmentModal .timing-input::placeholder {
+    color: #6c757d;
+    opacity: 0.7;
+  }
+  #treatmentModal .x-small {
+    font-size: 0.7rem;
+  }
+
+  /* Treatment Table */
+  #treatmentModal #modalTreatmentForm .table {
+    border-radius: 8px;
+    overflow: visible;
+  }
+  #treatmentModal #modalTreatmentForm td {
+    overflow: visible;
+  }
+  #treatmentModal .treatment-row-entry {
+    border: 1px solid #e2e7ef !important;
+    border-radius: 8px !important;
+    transition: box-shadow 0.2s;
+  }
+  #treatmentModal .treatment-row-entry:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+
+  /* Buttons */
+  #treatmentModal .btn-hrms-primary {
+    background: linear-gradient(135deg, #1a73a7 0%, #0d5f8a 100%);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    padding: 8px 20px;
+    font-size: 0.88rem;
+    transition: all 0.2s;
+    box-shadow: 0 2px 6px rgba(26,115,167,0.25);
+  }
+  #treatmentModal .btn-hrms-primary:hover {
+    background: linear-gradient(135deg, #15608f 0%, #0a4d72 100%);
+    box-shadow: 0 4px 12px rgba(26,115,167,0.35);
+    transform: translateY(-1px);
+    color: #fff;
+  }
+  #treatmentModal .btn-hrms-secondary {
+    background: #e9ecef;
+    color: #495057;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    font-weight: 600;
+    padding: 8px 20px;
+    font-size: 0.88rem;
+    transition: all 0.2s;
+  }
+  #treatmentModal .btn-hrms-secondary:hover {
+    background: #dee2e6;
+    color: #212529;
+  }
+  #treatmentModal .btn-hrms-success {
+    background: linear-gradient(135deg, #28a745 0%, #1e8e3a 100%);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    padding: 8px 18px;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+  }
+  #treatmentModal .btn-hrms-success:hover {
+    background: linear-gradient(135deg, #218838 0%, #177a31 100%);
+    transform: translateY(-1px);
+    color: #fff;
+  }
+  #treatmentModal .btn-hrms-danger {
+    background: #fff;
+    color: #dc3545;
+    border: 1px solid #f5c6cb;
+    border-radius: 8px;
+    font-weight: 600;
+    padding: 5px 12px;
+    font-size: 0.8rem;
+    transition: all 0.2s;
+  }
+  #treatmentModal .btn-hrms-danger:hover {
+    background: #dc3545;
+    color: #fff;
+    border-color: #dc3545;
+  }
+  #treatmentModal .btn-close-modal {
+    background: #e9ecef;
+    color: #495057;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    font-weight: 600;
+    padding: 8px 20px;
+    transition: all 0.2s;
+  }
+  #treatmentModal .btn-close-modal:hover {
+    background: #dee2e6;
+    color: #212529;
+  }
+
+  /* Existing Tables */
+  #treatmentModal .existing-table-wrap {
+    max-height: 220px;
+    overflow-y: auto;
+    border-radius: 8px;
+    border: 1px solid #e2e7ef;
+  }
+  #treatmentModal .existing-table-wrap::-webkit-scrollbar {
+    width: 5px;
+  }
+  #treatmentModal .existing-table-wrap::-webkit-scrollbar-thumb {
+    background: #c5cad3;
+    border-radius: 3px;
+  }
+  #treatmentModal .existing-table-wrap .table {
+    margin-bottom: 0;
+    font-size: 0.85rem;
+  }
+  #treatmentModal .existing-table-wrap .table thead th {
+    background: #f0f4f8;
+    font-weight: 700;
+    color: #1a3a5c;
+    border-bottom: 2px solid #dee2e6;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  /* Loading */
+  #treatmentModal .loading-overlay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    color: #6c757d;
+  }
+  #treatmentModal .loading-overlay .spinner-border {
+    width: 3rem;
+    height: 3rem;
+    color: #1a73a7 !important;
+    margin-bottom: 16px;
+  }
+
+  /* Responsive */
+  @media (max-width: 991px) {
+    #treatmentModal .modal-dialog {
+      max-width: 92%;
+      margin: 0.8rem auto;
+    }
+    #treatmentModal .modal-body {
+      padding: 14px 14px;
+      max-height: 55vh;
+    }
+  }
+  @media (max-width: 575px) {
+    #treatmentModal .modal-dialog {
+      max-width: 98%;
+      margin: 0.4rem;
+    }
+    #treatmentModal .modal-header {
+      padding: 14px 16px;
+    }
+    #treatmentModal .modal-body {
+      padding: 12px 10px;
+      max-height: 52vh;
+    }
+    #treatmentModal .modal-footer {
+      padding: 12px 16px;
+      flex-wrap: wrap;
+    }
+    #treatmentModal .modal-footer .btn {
+      flex: 1 1 auto;
+      min-width: 120px;
+    }
+    #treatmentModal .patient-info-box {
+      padding: 8px 10px;
+    }
+  }
+</style>
+
+<div class="content-wrapper">
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>IP Quick View</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="{% url 'ippatient' %}?menumanagement_id={{ request.GET.menumanagement_id }}">IP Patient</a></li>
+            <li class="breadcrumb-item active">IP Quick View</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="content">
+    <div class="container-fluid">
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+
+      {% if occupied_rooms %}
+        <div class="row">
+          {% for room in occupied_rooms %}
+            <div class="col-lg-4 col-md-6 col-sm-12 mb-4">
+              <div class="card room-card {% if room.accommodation_type == 'Ward' %}ward-card{% endif %}">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="card-title mb-0">
+                      {% if room.accommodation_type == 'Ward' %}
+                        <i class="fas fa-bed text-success mr-1"></i> Ward
+                      {% else %}
+                        <i class="fas fa-door-open text-primary mr-1"></i> Room
+                      {% endif %}
+                    </span>
+                    <span class="badge {% if room.accommodation_type == 'Ward' %}badge-ward{% else %}badge-room{% endif %} text-white">
+                      {{ room.accommodation_type }}
+                    </span>
+                  </div>
+                  <hr class="my-2">
+                  <div class="row mb-2">
+                    <div class="col-6">
+                      <span class="detail-label">Ward Name</span><br>
+                      <span class="detail-value">{{ room.ward_name }}</span>
+                    </div>
+                    <div class="col-6">
+                      <span class="detail-label">Ward Number</span><br>
+                      <span class="detail-value">{{ room.ward_number }}</span>
+                    </div>
+                  </div>
+                  <div class="row mb-2">
+                    <div class="col-12">
+                      <span class="detail-label">Room / Bed</span><br>
+                      <span class="detail-value">{{ room.room_name }}</span>
+                    </div>
+                  </div>
+                  <hr class="my-2">
+                  <div class="row mb-1">
+                    <div class="col-12">
+                      <span class="detail-label">Patient Name</span><br>
+                      <span class="detail-value"><i class="fas fa-user mr-1"></i> {{ room.patient_name }}</span>
+                    </div>
+                  </div>
+                  <div class="row mb-1">
+                    <div class="col-12">
+                      <span class="detail-label">MR Number</span><br>
+                      <span class="detail-value"><i class="fas fa-id-card mr-1"></i> {{ room.patient_mrno }}</span>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-12">
+                      <span class="detail-label">Phone Number</span><br>
+                      <span class="detail-value"><i class="fas fa-phone mr-1"></i> {{ room.patient_phone }}</span>
+                    </div>
+                  </div>
+                  <hr class="my-2">
+                  <div class="row">
+                    <div class="col-12 text-right">
+                      <button type="button" class="btn btn-sm btn-outline-info treatment-btn"
+                        data-booking-id="{{ room.booking_id }}"
+                        data-ipno-id="{{ room.ipno_id }}"
+                        data-patient-name="{{ room.patient_name }}"
+                        data-ward-name="{{ room.ward_name }}"
+                        data-ward-number="{{ room.ward_number }}"
+                        data-room-name="{{ room.room_name }}"
+                        data-accommodation-type="{{ room.accommodation_type }}">
+                        <i class="fas fa-notes-medical mr-1"></i> Treatment
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="card">
+          <div class="card-body">
+            <div class="empty-state">
+              <i class="fas fa-bed"></i>
+              <h4>No occupied wards or rooms found.</h4>
+              <p>All wards and rooms are currently available.</p>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </section>
+</div>
+
+<!-- Treatment Modal -->
+<div class="modal fade" id="treatmentModal" tabindex="-1" role="dialog" aria-labelledby="treatmentModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl" role="document">
+    <div class="modal-content">
+
+      <!-- ── Header ── -->
+      <div class="modal-header">
+        <h5 class="modal-title" id="treatmentModalLabel">
+          <i class="fas fa-notes-medical"></i>
+          <span>Patient Treatment Details</span>
+        </h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+
+      <!-- ── Body ── -->
+      <div class="modal-body">
+
+        <!-- Loading Spinner -->
+        <div id="treatmentLoading" class="loading-overlay">
+          <div class="spinner-border" role="status">
+            <span class="sr-only">Loading...</span>
+          </div>
+          <p class="mt-2 text-muted">Loading treatment details...</p>
+        </div>
+
+        <div id="treatmentContent" style="display:none;">
+
+          <!-- Patient Information Card -->
+          <div class="card">
+            <div class="card-header">
+              <h6 class="section-heading"><i class="fas fa-user-injured"></i> Patient Information</h6>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-lg-4 col-md-6 mb-3">
+                  <span class="info-label">Patient Name</span>
+                  <div class="patient-info-box">
+                    <span class="info-value" id="modalPatientName">-</span>
+                  </div>
+                </div>
+                <div class="col-lg-4 col-md-6 mb-3">
+                  <span class="info-label">Ward Name</span>
+                  <div class="patient-info-box">
+                    <span class="info-value" id="modalWardName">-</span>
+                  </div>
+                </div>
+                <div class="col-lg-4 col-md-6 mb-3">
+                  <span class="info-label">Ward Number</span>
+                  <div class="patient-info-box">
+                    <span class="info-value" id="modalWardNumber">-</span>
+                  </div>
+                </div>
+                <div class="col-lg-4 col-md-6 mb-3">
+                  <span class="info-label">Room Name</span>
+                  <div class="patient-info-box">
+                    <span class="info-value" id="modalRoomName">-</span>
+                  </div>
+                </div>
+                <div class="col-lg-4 col-md-6 mb-3">
+                  <span class="info-label">Accommodation Type</span>
+                  <div class="patient-info-box">
+                    <span class="info-value" id="modalAccommodationType">-</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Prescription Medicines Card -->
+          <div class="card">
+            <div class="card-header">
+              <h6 class="section-heading"><i class="fas fa-pills"></i> Add Prescription</h6>
+            </div>
+            <div class="card-body">
+              <form id="modalPrescriptionForm">
+                {% csrf_token %}
+                <div id="modal-prescription-body">
+                  <div class="prescription-row">
+                    <div class="row g-2 align-items-end">
+                      <div class="col-12">
+                        <div class="row g-2 align-items-end">
+                          <div class="col-12 position-relative">
+                            <label class="form-label">Medicine</label>
+                            <input type="text" name="medicine[]" class="form-control medicine-input" placeholder="Search medicines..." autocomplete="off">
+                            <div class="autocomplete-list list-group position-absolute w-100" style="z-index:1050; display:none;"></div>
+                            <input type="hidden" name="medicine_id[]" class="medicine-id">
+                            <input type="hidden" name="stock_id[]" class="stock-id">
+                            <div class="stock-status-container mt-1" style="display: none;">
+                              <span class="stock-status-badge badge"></span>
+                              <small class="stock-quantity-text ml-1"></small>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-12 mt-3">
+                        <div class="row g-3 align-items-end">
+                          <div class="col-12">
+                            <div class="row g-4 align-items-end">
+                              <div class="col-md-2 col-lg-2">
+                                <label class="form-label">Days</label>
+                                <input type="number" name="days[]" min="1" value="1" class="form-control form-control-sm text-center">
+                              </div>
+                              <div class="col-md-2 col-lg-2">
+                                <label class="form-label">Qty</label>
+                                <input type="number" name="qty[]" min="1" value="1" class="form-control form-control-sm text-center">
+                              </div>
+                              <div class="col-md-8 col-lg-8">
+                                <label class="form-label">Timing</label>
+                                <div class="row g-3">
+                                  <div class="col-4 text-center">
+                                    <input type="text" name="morning[]" class="form-control timing-input text-center" value="0" placeholder="0">
+                                    <small class="text-muted x-small">Morning</small>
+                                  </div>
+                                  <div class="col-4 text-center">
+                                    <input type="text" name="noon[]" class="form-control timing-input text-center" value="0" placeholder="0">
+                                    <small class="text-muted x-small">Noon</small>
+                                  </div>
+                                  <div class="col-4 text-center">
+                                    <input type="text" name="night[]" class="form-control timing-input text-center" value="0" placeholder="0">
+                                    <small class="text-muted x-small">Night</small>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-12 col-md-6 mt-3">
+                        <label class="form-label">Diet Timing</label>
+                        <input type="hidden" name="diet_timing[]" value="None" class="diet-timing-value">
+                        <div class="d-flex gap-1 flex-wrap">
+                          <button type="button" class="btn btn-outline-success btn-sm flex-fill py-1 diet-timing-btn" data-value="After Diet">After</button>
+                          &nbsp;
+                          <button type="button" class="btn btn-outline-primary btn-sm flex-fill py-1 diet-timing-btn" data-value="Before Diet">Before</button>
+                          &nbsp;
+                          <button type="button" class="btn btn-outline-secondary btn-sm flex-fill py-1 active diet-timing-btn" data-value="None">None</button>
+                        </div>
+                      </div>
+                      <div class="col-12 col-md-6 mt-3">
+                        <label class="form-label">Guidelines</label>
+                        <textarea name="guidelines[]" rows="1" class="form-control form-control-sm" placeholder="Special instructions..."></textarea>
+                      </div>
+                      <div class="col-12 text-end mt-3">
+                        <button type="button" class="btn btn-hrms-danger remove-prescription-row py-1">
+                          <i class="fas fa-trash mr-1"></i> Remove
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="text-end mt-3">
+                  <div class="d-flex flex-column flex-sm-row justify-content-end gap-2">
+                    <button type="button" id="modalAddPrescriptionRow" class="btn btn-hrms-success">
+                      <i class="fas fa-plus mr-1"></i> Add New Row
+                    </button>
+                    &nbsp;
+                    <button type="submit" class="btn btn-hrms-primary" id="modalSavePrescriptionBtn">
+                      <i class="fas fa-save mr-1"></i> Save Prescription
+                    </button>
+                  </div>
+                </div>
+              </form>
+
+              <!-- Existing Prescriptions Table -->
+              <div class="mt-4" id="existingPrescriptionsSection">
+                <h6 class="fw-bold mb-2" style="color:#1a3a5c; font-size:0.95rem;"><i class="fas fa-list-alt mr-1"></i> Existing Prescriptions</h6>
+                <div class="existing-table-wrap">
+                  <table class="table table-bordered table-sm mb-0">
+                    <thead>
+                      <tr>
+                        <th>Medicine</th>
+                        <th>Days</th>
+                        <th>Morning</th>
+                        <th>Noon</th>
+                        <th>Night</th>
+                        <th>Diet</th>
+                        {% comment %} <th class="text-center" style="width:70px;">Action</th> {% endcomment %}
+                      </tr>
+                    </thead>
+                    <tbody id="modalExistingPrescriptions">
+                      <tr>
+                        <td colspan="7" class="text-center text-muted py-2">No prescriptions found.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Treatments Card -->
+          <div class="card">
+            <div class="card-header">
+              <h6 class="section-heading"><i class="fas fa-procedures"></i> Add Treatment</h6>
+            </div>
+            <div class="card-body">
+              <form id="modalTreatmentForm">
+                {% csrf_token %}
+                <div id="modal-treatment-body">
+                  <div class="treatment-row-entry border rounded-3 p-3 mb-3 bg-light">
+                    <div class="row g-3 align-items-end">
+                      <div class="col-12 col-md-5 position-relative">
+                        <label class="form-label small mb-1 fw-semibold">Treatment</label>
+                        <input type="text" name="treatment[]" class="form-control treatment-input" placeholder="Search treatment..." autocomplete="off">
+                        <div class="autocomplete-list list-group position-absolute w-100" style="z-index:1050; display:none;"></div>
+                        <input type="hidden" name="treatment_id[]" class="treatment-id">
+                      </div>
+                      <div class="col-6 col-md-2">
+                        <label class="form-label small mb-1 fw-semibold">Count</label>
+                        <input type="number" name="count[]" min="1" value="1" class="form-control">
+                      </div>
+                      <div class="col-6 col-md-4">
+                        <label class="form-label small mb-1 fw-semibold">Date</label>
+                        <input type="date" name="date[]" class="form-control">
+                      </div>
+                      <div class="col-12 col-md-1 text-end">
+                        <button type="button" class="btn btn-hrms-danger remove-treatment-row py-1">
+                          <i class="fas fa-times"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="d-flex flex-column flex-sm-row justify-content-end gap-2 mt-3">
+                  <button type="button" id="modalAddTreatmentRow" class="btn btn-hrms-success">
+                    <i class="fas fa-plus mr-1"></i> Add Treatment
+                  </button>
+                  &nbsp;
+                  <button type="submit" class="btn btn-hrms-primary" id="modalSaveTreatmentBtn">
+                    <i class="fas fa-save mr-1"></i> Save Treatments
+                  </button>
+                </div>
+              </form>
+
+              <!-- Existing Treatments Table -->
+              <div class="mt-4" id="existingTreatmentsSection">
+                <h6 class="fw-bold mb-2" style="color:#1a3a5c; font-size:0.95rem;"><i class="fas fa-history mr-1"></i> Previous Treatments</h6>
+                <div class="existing-table-wrap">
+                  <table class="table table-striped table-sm mb-0">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Treatment</th>
+                        <th>Count</th>
+                        {% comment %} <th class="text-center" style="width:70px;">Action</th> {% endcomment %}
+                      </tr>
+                    </thead>
+                    <tbody id="modalExistingTreatments">
+                      <tr>
+                        <td colspan="4" class="text-center text-muted py-2">No treatments found.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ── Footer ── -->
+      <div class="modal-footer">
+        <button type="button" class="btn btn-close-modal" data-dismiss="modal">
+          <i class="fas fa-times mr-1"></i> Close
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div id="modalToastContainer"></div>
+
+<!-- Delete Prescription Confirmation Modal -->
+{% comment %} <div class="modal fade" id="deletePrescriptionModal" tabindex="-1" role="dialog" aria-labelledby="deletePrescriptionModalLabel" aria-hidden="true" style="z-index: 1060;">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title fw-bold" id="deletePrescriptionModalLabel">Confirm Prescription Deletion</h5>
+        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-0">Are you sure you want to delete this prescription? This action cannot be undone.</p>
+        <input type="hidden" id="delete_prescription_id">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">
+          <i class="fas fa-times-circle mr-1"></i> Cancel
+        </button>
+        <button type="button" class="btn btn-danger" id="confirmDeletePrescriptionBtn">
+          <i class="fas fa-trash mr-1"></i> Delete Prescription
+        </button>
+      </div>
+    </div>
+  </div>
+</div> {% endcomment %}
+
+<!-- Delete Treatment Confirmation Modal -->
+{% comment %} <div class="modal fade" id="deleteTreatmentModal" tabindex="-1" role="dialog" aria-labelledby="deleteTreatmentModalLabel" aria-hidden="true" style="z-index: 1060;">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title fw-bold" id="deleteTreatmentModalLabel">Confirm Treatment Deletion</h5>
+        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-0">Are you sure you want to delete this treatment? This action cannot be undone.</p>
+        <input type="hidden" id="delete_treatment_id">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">
+          <i class="fas fa-times-circle mr-1"></i> Cancel
+        </button>
+        <button type="button" class="btn btn-danger" id="confirmDeleteTreatmentBtn">
+          <i class="fas fa-trash mr-1"></i> Delete Treatment
+        </button>
+      </div>
+    </div>
+  </div>
+</div> {% endcomment %}
+
+<style>
+  /* Autocomplete Dropdown */
+  #treatmentModal .autocomplete-list {
+    max-height: 260px;
+    overflow-y: auto;
+    border: 1px solid #d1d9e6;
+    border-radius: 0 0 8px 8px;
+    background: #fff;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+  }
+  #treatmentModal .autocomplete-list .list-group-item {
+    padding: 10px 14px;
+    font-size: 0.88rem;
+    cursor: pointer;
+    border-color: #eef1f5;
+    transition: background-color 0.15s;
+  }
+  #treatmentModal .autocomplete-list .list-group-item:hover {
+    background-color: #f0f4f8;
+  }
+
+  /* Prescription Input Focus */
+  #treatmentModal .prescription-row input.form-control {
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+  }
+  #treatmentModal .prescription-row input.form-control:focus {
+    transform: scale(1.01);
+    z-index: 1;
+    position: relative;
+  }
+
+  /* Stock Status */
+  #treatmentModal .stock-status-container {
+    transition: all 0.3s ease;
+    min-height: 24px;
+  }
+  #treatmentModal .stock-status-badge {
+    font-size: 0.75rem;
+    padding: 4px 10px;
+    border-radius: 4px;
+  }
+  #treatmentModal .stock-quantity-text {
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+  #treatmentModal .stock-status-container.show {
+    animation: modalFadeInUp 0.3s ease;
+  }
+
+  /* Stock Group Headers */
+  #treatmentModal .stock-group-header {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    border-left: 4px solid;
+    font-size: 0.85rem;
+  }
+  #treatmentModal .stock-group-success {
+    border-left-color: #28a745;
+    background-color: #f0f9f0;
+  }
+  #treatmentModal .stock-group-warning {
+    border-left-color: #ffc107;
+    background-color: #fff8e1;
+  }
+  #treatmentModal .stock-group-danger {
+    border-left-color: #dc3545;
+    background-color: #fff0f0;
+  }
+  #treatmentModal .badge-sm {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+  }
+
+  /* Animation */
+  @keyframes modalFadeInUp {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes modalFadeInScale {
+    from { opacity: 0; transform: scale(0.85); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  /* Toast Notifications - Centered Card Style */
+  #modalToastContainer {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+    pointer-events: none;
+  }
+  .modal-toast-msg {
+    pointer-events: auto;
+    background: #fff;
+    border-radius: 16px;
+    padding: 32px 40px 28px;
+    text-align: center;
+    min-width: 320px;
+    max-width: 400px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+    animation: modalFadeInScale 0.3s ease;
+  }
+  .modal-toast-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 14px;
+    font-size: 1.6rem;
+  }
+  .modal-toast-error .modal-toast-icon {
+    background: #fde8ea;
+    color: #e53e3e;
+  }
+  .modal-toast-success .modal-toast-icon {
+    background: #e6f7ed;
+    color: #38a169;
+  }
+  .modal-toast-msg .modal-toast-text {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #2d3748;
+    line-height: 1.5;
+    margin: 0;
+  }
+  .modal-toast-overlay {
+    display: none;
+  }
+</style>
+
+<script>
+function modalShowPopupMessage(message, type) {
+  type = type || 'success';
+  var container = document.getElementById('modalToastContainer');
+  if (!container) return;
+
+  var overlay = document.createElement('div');
+  overlay.className = 'modal-toast-overlay';
+  container.appendChild(overlay);
+
+  var msg = document.createElement('div');
+  msg.className = 'modal-toast-msg modal-toast-' + type;
+  var iconClass = type === 'error' ? 'fas fa-times' : 'fas fa-check';
+  msg.innerHTML = '<div class="modal-toast-icon"><i class="' + iconClass + '"></i></div><p class="modal-toast-text">' + message + '</p>';
+  container.appendChild(msg);
+
+  function removeToast() {
+    if (msg.parentNode) msg.remove();
+    if (overlay.parentNode) overlay.remove();
+  }
+  overlay.addEventListener('click', removeToast);
+  setTimeout(removeToast, 3000);
+}
+
+function modalSetDietTiming(button, value) {
+  var parent = button.closest('.prescription-row');
+  parent.querySelectorAll('.diet-timing-btn').forEach(function(btn) {
+    btn.classList.remove('active', 'btn-success', 'btn-primary', 'btn-secondary');
+    btn.classList.add('btn-outline-success', 'btn-outline-primary', 'btn-outline-secondary');
+  });
+  button.classList.remove('btn-outline-success', 'btn-outline-primary', 'btn-outline-secondary');
+  button.classList.add('active');
+  if (value === 'After Diet') {
+    button.classList.add('btn-success');
+  } else if (value === 'Before Diet') {
+    button.classList.add('btn-primary');
+  } else {
+    button.classList.add('btn-secondary');
+  }
+  parent.querySelector('.diet-timing-value').value = value;
+}
+
+function modalClearStockStatus(input) {
+  var container = input.parentElement;
+  var stockStatusContainer = container.querySelector('.stock-status-container');
+  if (stockStatusContainer) {
+    stockStatusContainer.style.display = 'none';
+    stockStatusContainer.classList.remove('show');
+  }
+}
+
+function modalUpdateStockStatus(container, stockQty, medicineName) {
+  var stockStatusContainer = container.querySelector('.stock-status-container');
+  var stockStatusBadge = container.querySelector('.stock-status-badge');
+  var stockQuantityText = container.querySelector('.stock-quantity-text');
+  if (!stockStatusContainer || !stockStatusBadge || !stockQuantityText) return;
+  if (stockQty === 0) {
+    stockStatusBadge.className = 'stock-status-badge badge bg-danger';
+    stockStatusBadge.textContent = 'Out of Stock';
+    stockQuantityText.className = 'stock-quantity-text ml-1 text-danger';
+    stockQuantityText.textContent = medicineName + ' is out of stock';
+  } else if (stockQty <= 10) {
+    stockStatusBadge.className = 'stock-status-badge badge bg-warning';
+    stockStatusBadge.textContent = 'Low Stock';
+    stockQuantityText.className = 'stock-quantity-text ml-1 text-warning';
+    stockQuantityText.textContent = 'Only ' + stockQty + ' left for ' + medicineName;
+  } else {
+    stockStatusBadge.className = 'stock-status-badge badge bg-success';
+    stockStatusBadge.textContent = 'In Stock';
+    stockQuantityText.className = 'stock-quantity-text ml-1 text-success';
+    stockQuantityText.textContent = stockQty + ' available for ' + medicineName;
+  }
+  stockStatusContainer.style.display = 'flex';
+  stockStatusContainer.style.alignItems = 'center';
+  stockStatusContainer.classList.add('show');
+}
+
+function modalGroupAndSortMedicinesByStock(medicines) {
+  var sorted = medicines.slice().sort(function(a, b) {
+    return (parseInt(b.qty) || 0) - (parseInt(a.qty) || 0);
+  });
+  var groups = { inStock: [], lowStock: [], outOfStock: [] };
+  sorted.forEach(function(medicine) {
+    var stockQty = parseInt(medicine.qty) || 0;
+    if (stockQty === 0) groups.outOfStock.push(medicine);
+    else if (stockQty <= 10) groups.lowStock.push(medicine);
+    else groups.inStock.push(medicine);
+  });
+  return groups;
+}
+
+function modalCreateStockGroupHeader(title, color, count) {
+  var header = document.createElement('div');
+  header.className = 'list-group-item bg-light fw-bold stock-group-header stock-group-' + color;
+  header.innerHTML = '<div class="d-flex justify-content-between align-items-center"><div><i class="fas fa-box mr-2 text-' + color + '"></i>' + title + '</div><span class="badge bg-' + color + ' badge-sm">' + count + '</span></div>';
+  return header;
+}
+
+function modalCreateMedicineOption(item, inputElement) {
+  var option = document.createElement('div');
+  option.className = 'list-group-item list-group-item-action';
+  option.style.cursor = 'pointer';
+  var stockQty = parseInt(item.qty) || 0;
+  var stockStatus = stockQty === 0 ? 'Out of Stock' : stockQty <= 10 ? 'Low Stock' : 'In Stock';
+  var stockColor = stockQty === 0 ? 'danger' : stockQty <= 10 ? 'warning' : 'success';
+  var stockTextColor = stockQty === 0 ? 'text-danger' : stockQty <= 10 ? 'text-warning' : 'text-success';
+  option.innerHTML = '<div class="d-flex justify-content-between align-items-center"><div class="flex-grow-1"><div class="fw-semibold">' + item.name + '</div><small class="text-muted">' + (item.brand || 'Generic') + '</small></div><div class="text-end ml-2"><span class="badge bg-' + stockColor + ' badge-sm">' + stockStatus + '</span><small class="d-block ' + stockTextColor + ' fw-semibold">Qty: ' + stockQty + '</small></div></div>';
+  option.addEventListener('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    inputElement.value = item.name;
+    var medicineIdInput = inputElement.nextElementSibling.nextElementSibling;
+    var stockIdInput = inputElement.nextElementSibling.nextElementSibling.nextElementSibling;
+    if (medicineIdInput) medicineIdInput.value = item.id;
+    if (stockIdInput) stockIdInput.value = item.stockid;
+    modalUpdateStockStatus(inputElement.parentElement, stockQty, item.name);
+    var autocompleteList = inputElement.nextElementSibling;
+    autocompleteList.style.display = 'none';
+    autocompleteList.innerHTML = '';
+  });
+  return option;
+}
+
+function modalPopulateAutocompleteList(autocompleteList, groupedMedicines, inputElement) {
+  var totalCount = (groupedMedicines.inStock ? groupedMedicines.inStock.length : 0) +
+                   (groupedMedicines.lowStock ? groupedMedicines.lowStock.length : 0) +
+                   (groupedMedicines.outOfStock ? groupedMedicines.outOfStock.length : 0);
+  var countHeader = document.createElement('div');
+  countHeader.className = 'list-group-item bg-light small fw-bold';
+  countHeader.innerHTML = '<i class="fas fa-list mr-2"></i>Available Medicines (' + totalCount + ')';
+  countHeader.style.position = 'sticky';
+  countHeader.style.top = '0';
+  countHeader.style.zIndex = '1';
+  autocompleteList.appendChild(countHeader);
+  if (groupedMedicines.inStock && groupedMedicines.inStock.length > 0) {
+    autocompleteList.appendChild(modalCreateStockGroupHeader('In Stock', 'success', groupedMedicines.inStock.length));
+    groupedMedicines.inStock.forEach(function(item) {
+      autocompleteList.appendChild(modalCreateMedicineOption(item, inputElement));
+    });
+  }
+  if (groupedMedicines.lowStock && groupedMedicines.lowStock.length > 0) {
+    autocompleteList.appendChild(modalCreateStockGroupHeader('Low Stock', 'warning', groupedMedicines.lowStock.length));
+    groupedMedicines.lowStock.forEach(function(item) {
+      autocompleteList.appendChild(modalCreateMedicineOption(item, inputElement));
+    });
+  }
+  if (groupedMedicines.outOfStock && groupedMedicines.outOfStock.length > 0) {
+    autocompleteList.appendChild(modalCreateStockGroupHeader('Out of Stock', 'danger', groupedMedicines.outOfStock.length));
+    groupedMedicines.outOfStock.forEach(function(item) {
+      autocompleteList.appendChild(modalCreateMedicineOption(item, inputElement));
+    });
+  }
+  var footer = document.createElement('div');
+  footer.className = 'list-group-item bg-light small text-muted';
+  footer.innerHTML = '<i class="fas fa-info-circle mr-1"></i>Click on a medicine to select it';
+  autocompleteList.appendChild(footer);
+}
+
+function modalFetchAllMedicines(inputElement) {
+  var autocompleteList = inputElement.nextElementSibling;
+  if (!autocompleteList) return;
+  autocompleteList.innerHTML = '<div class="list-group-item text-center text-muted"><i class="fas fa-spinner fa-spin mr-2"></i>Loading medicines...</div>';
+  autocompleteList.style.display = 'block';
+  fetch('/medicine-search/?q=')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      autocompleteList.innerHTML = '';
+      if (data.length === 0) {
+        autocompleteList.innerHTML = '<div class="list-group-item text-center text-muted">No medicines available</div>';
+        return;
+      }
+      var groupedMedicines = modalGroupAndSortMedicinesByStock(data);
+      modalPopulateAutocompleteList(autocompleteList, groupedMedicines, inputElement);
+    })
+    .catch(function(error) {
+      autocompleteList.innerHTML = '<div class="list-group-item text-center text-muted">Error loading medicines</div>';
+    });
+}
+
+function modalInitMedicineAutocomplete(input) {
+  var timeout = null;
+  input.addEventListener('focus', function() {
+    if (this.value.trim() === '') modalFetchAllMedicines(this);
+  });
+  input.addEventListener('click', function() {
+    if (this.value.trim() === '') modalFetchAllMedicines(this);
+  });
+  input.addEventListener('input', function() {
+    clearTimeout(timeout);
+    var self = this;
+    timeout = setTimeout(function() {
+      var query = self.value.trim();
+      var autocompleteList = self.nextElementSibling;
+      var stockStatusContainer = self.parentElement.querySelector('.stock-status-container');
+      if (stockStatusContainer) stockStatusContainer.style.display = 'none';
+      if (query.length === 0) { modalFetchAllMedicines(self); return; }
+      if (query.length < 2) {
+        if (autocompleteList) { autocompleteList.style.display = 'none'; autocompleteList.innerHTML = ''; }
+        return;
+      }
+      fetch('/medicine-search/?q=' + encodeURIComponent(query))
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (!autocompleteList) return;
+          autocompleteList.innerHTML = '';
+          if (data.length === 0) { autocompleteList.style.display = 'none'; return; }
+          var groupedMedicines = modalGroupAndSortMedicinesByStock(data);
+          modalPopulateAutocompleteList(autocompleteList, groupedMedicines, self);
+          autocompleteList.style.display = 'block';
+        })
+        .catch(function() { if (autocompleteList) autocompleteList.style.display = 'none'; });
+    }, 300);
+  });
+}
+
+function modalInitTreatmentAutocomplete(input) {
+  var timeout = null;
+  input.addEventListener('input', function() {
+    clearTimeout(timeout);
+    var self = this;
+    timeout = setTimeout(function() {
+      var query = self.value.trim();
+      var autocompleteList = self.nextElementSibling;
+      if (query.length < 2) {
+        if (autocompleteList) { autocompleteList.style.display = 'none'; autocompleteList.innerHTML = ''; }
+        return;
+      }
+      fetch('/search_treatments/?q=' + encodeURIComponent(query))
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (!autocompleteList) return;
+          autocompleteList.innerHTML = '';
+          if (data.results && data.results.length === 0) { autocompleteList.style.display = 'none'; return; }
+          (data.results || []).forEach(function(t) {
+            var option = document.createElement('div');
+            option.className = 'list-group-item list-group-item-action';
+            option.textContent = t.name;
+            option.dataset.id = t.id;
+            option.addEventListener('click', function() {
+              self.value = this.textContent;
+              var treatmentIdInput = self.closest('.treatment-row-entry').querySelector('.treatment-id');
+              if (treatmentIdInput) treatmentIdInput.value = this.dataset.id;
+              if (autocompleteList) { autocompleteList.style.display = 'none'; autocompleteList.innerHTML = ''; }
+            });
+            autocompleteList.appendChild(option);
+          });
+          autocompleteList.style.display = 'block';
+        })
+        .catch(function() { if (autocompleteList) autocompleteList.style.display = 'none'; }
+      );
+    }, 300);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  var csrfToken = '{{ csrf_token }}';
+  var formActionURL_prescription = "{% url 'create_casehistoryprescription' %}";
+  var formActionURL_treatment = "{% url 'save_casehistorytreatmentsplan' %}";
+  var isSubmittingPrescription = false;
+  var isSubmittingTreatment = false;
+
+  // Initialize autocomplete on existing inputs
+  document.querySelectorAll('#modalPrescriptionForm .medicine-input').forEach(modalInitMedicineAutocomplete);
+  document.querySelectorAll('#modalTreatmentForm .treatment-input').forEach(modalInitTreatmentAutocomplete);
+
+  // Set default date on treatment date inputs
+  document.querySelectorAll('#modalTreatmentForm input[name="date[]"]').forEach(function(input) {
+    input.value = new Date().toISOString().split('T')[0];
+  });
+
+  // Initialize diet timing buttons
+  document.querySelectorAll('#modalPrescriptionForm .diet-timing-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      modalSetDietTiming(this, this.getAttribute('data-value'));
+    });
+  });
+
+  // Add prescription row
+  document.getElementById('modalAddPrescriptionRow').addEventListener('click', function() {
+    var container = document.getElementById('modal-prescription-body');
+    var firstRow = container.querySelector('.prescription-row');
+    var clone = firstRow.cloneNode(true);
+    clone.querySelectorAll('input, textarea').forEach(function(el) {
+      if (el.name && (el.name.includes('morning') || el.name.includes('noon') || el.name.includes('night'))) {
+        el.value = '0';
+      } else if (el.name && (el.name.includes('days') || el.name.includes('qty'))) {
+        el.value = '1';
+      } else if (el.type !== 'hidden') {
+        el.value = '';
+      }
+    });
+    var stockStatusContainer = clone.querySelector('.stock-status-container');
+    if (stockStatusContainer) stockStatusContainer.style.display = 'none';
+    clone.querySelector('.diet-timing-value').value = 'None';
+    clone.querySelectorAll('.diet-timing-btn').forEach(function(b) {
+      b.classList.remove('active', 'btn-success', 'btn-primary', 'btn-secondary');
+      b.classList.add('btn-outline-success', 'btn-outline-primary', 'btn-outline-secondary');
+    });
+    var noneBtn = clone.querySelector('.diet-timing-btn[data-value="None"]');
+    if (noneBtn) { noneBtn.classList.add('active', 'btn-secondary'); noneBtn.classList.remove('btn-outline-secondary'); }
+    container.appendChild(clone);
+    var newMedInput = clone.querySelector('.medicine-input');
+    if (newMedInput) {
+      modalInitMedicineAutocomplete(newMedInput);
+      newMedInput.addEventListener('input', function() {
+        if (this.value.trim() === '') modalClearStockStatus(this);
+      });
+    }
+    clone.querySelectorAll('.diet-timing-btn').forEach(function(b) {
+      b.addEventListener('click', function() { modalSetDietTiming(this, this.getAttribute('data-value')); });
+    });
+  });
+
+  // Remove prescription row
+  document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('remove-prescription-row') || e.target.closest('.remove-prescription-row')) {
+      var row = e.target.closest('.prescription-row');
+      if (row) {
+        var rows = document.querySelectorAll('#modal-prescription-body .prescription-row');
+        if (rows.length > 1) row.remove();
+        else modalShowPopupMessage('At least one prescription entry must remain.', 'error');
+      }
+    }
+  });
+
+  // Check if at least one valid prescription or treatment exists
+  function modalHasAtLeastOneEntry() {
+    var hasPrescription = false;
+    document.querySelectorAll('#modal-prescription-body .prescription-row').forEach(function(row) {
+      if (row.querySelector('.medicine-id') && row.querySelector('.medicine-id').value) hasPrescription = true;
+    });
+    var hasTreatment = false;
+    document.querySelectorAll('#modal-treatment-body .treatment-row-entry').forEach(function(row) {
+      if (row.querySelector('.treatment-id') && row.querySelector('.treatment-id').value) hasTreatment = true;
+    });
+    return hasPrescription || hasTreatment;
+  }
+
+  // Prescription form submit
+  document.getElementById('modalPrescriptionForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    if (isSubmittingPrescription) return;
+    if (!modalHasAtLeastOneEntry()) {
+      modalShowPopupMessage('Please add at least one Prescription Medicine or one Treatment before saving.', 'error');
+      return;
+    }
+    isSubmittingPrescription = true;
+    var submitBtn = document.getElementById('modalSavePrescriptionBtn');
+    var originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-hourglass-half mr-1"></i> Saving...';
+    submitBtn.disabled = true;
+    var formData = new FormData(this);
+    $.ajax({
+      url: formActionURL_prescription,
+      type: 'POST',
+      data: formData,
+      processData: false,
+      contentType: false,
+      headers: { 'X-CSRFToken': csrfToken, 'X-Requested-With': 'XMLHttpRequest' },
+      success: function(data) {
+        isSubmittingPrescription = false;
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+        if (data && data.success === true) {
+          if (Array.isArray(data.prescriptions)) {
+            var tbody = document.getElementById('modalExistingPrescriptions');
+            var noRow = tbody.querySelector('.text-muted');
+            if (noRow) noRow.closest('tr').remove();
+            data.prescriptions.forEach(function(p) {
+              var newRow = document.createElement('tr');
+              newRow.innerHTML = '<td>' + (p.medicine_name || '') + '</td><td>' + (p.noofdays || '') + '</td><td>' + (p.moringtime || '') + '</td><td>' + (p.noontime || '') + '</td><td>' + (p.nighttime || '') + '</td><td>' + (p.beforeorafterdiet || '') + '</td>';
+              tbody.insertBefore(newRow, tbody.firstChild);
+            });
+          }
+          modalShowPopupMessage(data.message || 'Prescription saved successfully!', 'success');
+          resetModalPrescriptionForm();
+        } else {
+          var errorMsg = data && data.error ? data.error : 'An unexpected error occurred.';
+          modalShowPopupMessage('Error: ' + errorMsg, 'error');
+        }
+      },
+      error: function(xhr, status, error) {
+        isSubmittingPrescription = false;
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+        modalShowPopupMessage('An error occurred while saving prescription.', 'error');
+      }
+    });
+  });
+
+  function resetModalPrescriptionForm() {
+    var form = document.getElementById('modalPrescriptionForm');
+    var container = document.getElementById('modal-prescription-body');
+    var rows = container.querySelectorAll('.prescription-row');
+    rows.forEach(function(row, index) {
+      if (index > 0) row.remove();
+      else {
+        row.querySelectorAll('input:not([type="hidden"]), textarea').forEach(function(el) {
+          if (el.name && (el.name.includes('morning') || el.name.includes('noon') || el.name.includes('night'))) el.value = '0';
+          else if (el.name && (el.name.includes('days') || el.name.includes('qty'))) el.value = '1';
+          else el.value = '';
+        });
+        var medicineInput = row.querySelector('.medicine-input');
+        if (medicineInput) modalClearStockStatus(medicineInput);
+        var dietTimingValue = row.querySelector('.diet-timing-value');
+        if (dietTimingValue) dietTimingValue.value = 'None';
+        row.querySelectorAll('.diet-timing-btn').forEach(function(btn) {
+          btn.classList.remove('active', 'btn-success', 'btn-primary', 'btn-secondary');
+          btn.classList.add('btn-outline-success', 'btn-outline-primary', 'btn-outline-secondary');
+        });
+        var noneBtn = row.querySelector('.diet-timing-btn[data-value="None"]');
+        if (noneBtn) { noneBtn.classList.add('active', 'btn-secondary'); noneBtn.classList.remove('btn-outline-secondary'); }
+      }
+    });
+  }
+
+  // Add treatment row
+  document.getElementById('modalAddTreatmentRow').addEventListener('click', function() {
+    var container = document.getElementById('modal-treatment-body');
+    var newRow = document.createElement('div');
+    newRow.className = 'treatment-row-entry border rounded-3 p-3 mb-3 bg-light';
+    newRow.innerHTML = '<div class="row g-3 align-items-end"><div class="col-12 col-md-5 position-relative"><label class="form-label small mb-1 fw-semibold">Treatment</label><input type="text" name="treatment[]" class="form-control treatment-input" placeholder="Search treatment..." autocomplete="off"><div class="autocomplete-list list-group position-absolute w-100" style="z-index:1050; display:none;"></div><input type="hidden" name="treatment_id[]" class="treatment-id"></div><div class="col-6 col-md-2"><label class="form-label small mb-1 fw-semibold">Count</label><input type="number" name="count[]" min="1" value="1" class="form-control"></div><div class="col-6 col-md-4"><label class="form-label small mb-1 fw-semibold">Date</label><input type="date" name="date[]" class="form-control" value="' + new Date().toISOString().split('T')[0] + '"></div><div class="col-12 col-md-1 text-end"><button type="button" class="btn btn-hrms-danger remove-treatment-row py-1"><i class="fas fa-times"></i></button></div></div>';
+    container.appendChild(newRow);
+    var newInput = newRow.querySelector('.treatment-input');
+    if (newInput) modalInitTreatmentAutocomplete(newInput);
+  });
+
+  // Remove treatment row
+  document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('remove-treatment-row') || e.target.closest('.remove-treatment-row')) {
+      var row = e.target.closest('.treatment-row-entry');
+      if (row) {
+        var rows = document.querySelectorAll('#modal-treatment-body .treatment-row-entry');
+        if (rows.length > 1) row.remove();
+        else modalShowPopupMessage('At least one treatment entry must remain.', 'error');
+      }
+    }
+  });
+
+  // Treatment form submit
+  document.getElementById('modalTreatmentForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    if (isSubmittingTreatment) return;
+    if (!modalHasAtLeastOneEntry()) {
+      modalShowPopupMessage('Please add at least one Prescription Medicine or one Treatment before saving.', 'error');
+      return;
+    }
+    var treatmentRows = document.querySelectorAll('#modal-treatment-body .treatment-row-entry');
+    var hasValid = false;
+    treatmentRows.forEach(function(row) {
+      if (row.querySelector('.treatment-id').value) hasValid = true;
+    });
+    if (!hasValid) {
+      modalShowPopupMessage('Please add at least one treatment', 'error');
+      return;
+    }
+    isSubmittingTreatment = true;
+    var submitBtn = document.getElementById('modalSaveTreatmentBtn');
+    var originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-hourglass-half mr-1"></i> Saving...';
+    submitBtn.disabled = true;
+    var formData = new FormData(this);
+    $.ajax({
+      url: formActionURL_treatment,
+      type: 'POST',
+      data: formData,
+      processData: false,
+      contentType: false,
+      headers: { 'X-CSRFToken': csrfToken, 'X-Requested-With': 'XMLHttpRequest' },
+      success: function(data) {
+        isSubmittingTreatment = false;
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+        if (data.success) {
+          modalShowPopupMessage('Treatment plan saved successfully!', 'success');
+          if (data.treatments && data.treatments.length > 0) {
+            var tbody = document.getElementById('modalExistingTreatments');
+            var noRow = tbody.querySelector('.text-muted');
+            if (noRow) noRow.closest('tr').remove();
+            data.treatments.forEach(function(t) {
+              var newRow = document.createElement('tr');
+              newRow.innerHTML = '<td>' + (t.date || '') + '</td><td>' + (t.treatment || '') + '</td><td>' + (t.count || '') + '</td>';
+              tbody.insertBefore(newRow, tbody.firstChild);
+            });
+          }
+          resetModalTreatmentForm();
+        } else {
+          modalShowPopupMessage('Error saving treatment plan: ' + data.error, 'error');
+        }
+      },
+      error: function(xhr, status, error) {
+        isSubmittingTreatment = false;
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+        modalShowPopupMessage('Error saving treatment plan', 'error');
+      }
+    });
+  });
+
+  function resetModalTreatmentForm() {
+    var container = document.getElementById('modal-treatment-body');
+    var rows = container.querySelectorAll('.treatment-row-entry');
+    rows.forEach(function(row, index) {
+      if (index > 0) row.remove();
+      else {
+        var treatmentInput = row.querySelector('.treatment-input');
+        if (treatmentInput) treatmentInput.value = '';
+        var treatmentId = row.querySelector('.treatment-id');
+        if (treatmentId) treatmentId.value = '';
+        var countInput = row.querySelector('input[name="count[]"]');
+        if (countInput) countInput.value = '1';
+        var dateInput = row.querySelector('input[name="date[]"]');
+        if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+      }
+    });
+  }
+
+  // Open treatment modal on button click
+  $(document).on('click', '.treatment-btn', function() {
+    var btn = $(this);
+    var bookingId = btn.data('booking-id');
+    var ipnoId = btn.data('ipno-id');
+    var patientName = btn.data('patient-name');
+    var wardName = btn.data('ward-name');
+    var wardNumber = btn.data('ward-number');
+    var roomName = btn.data('room-name');
+    var accommodationType = btn.data('accommodation-type');
+
+    console.log('Treatment button clicked:', { bookingId, ipnoId, patientName, wardName, wardNumber, roomName, accommodationType });
+
+    $('#modalPatientName').text(patientName || '-');
+    $('#modalWardName').text(wardName || '-');
+    $('#modalWardNumber').text(wardNumber || '-');
+    $('#modalRoomName').text(roomName || '-');
+    $('#modalAccommodationType').text(accommodationType || '-');
+
+    $('#treatmentLoading').show();
+    $('#treatmentContent').hide();
+    resetModalPrescriptionForm();
+    resetModalTreatmentForm();
+    $('#modalExistingPrescriptions').html('<tr><td colspan="7" class="text-center text-muted py-2">Loading prescriptions...</td></tr>');
+    $('#modalExistingTreatments').html('<tr><td colspan="4" class="text-center text-muted py-2">Loading treatments...</td></tr>');
+
+    $('#treatmentModal').modal('show');
+
+    $.ajax({
+      url: "{% url 'get_treatment_details' %}",
+      type: "GET",
+      data: { booking_id: bookingId, ipno_id: ipnoId },
+      dataType: "json",
+      headers: { "X-CSRFToken": csrfToken },
+      success: function(data) {
+        console.log('get_treatment_details response:', data);
+        if (data.patient_info) {
+          $('#modalPatientName').text(data.patient_info.patient_name || patientName || '-');
+          $('#modalWardName').text(data.patient_info.ward_name || wardName || '-');
+          $('#modalWardNumber').text(data.patient_info.ward_number || wardNumber || '-');
+          $('#modalRoomName').text(data.patient_info.room_name || roomName || '-');
+          $('#modalAccommodationType').text(data.patient_info.accommodation_type || accommodationType || '-');
+        }
+
+        if (data.prescriptions && data.prescriptions.length > 0) {
+          var tbody = document.getElementById('modalExistingPrescriptions');
+          tbody.innerHTML = '';
+          data.prescriptions.forEach(function(p) {
+            var row = document.createElement('tr');
+            row.innerHTML = '<td>' + (p.medicine_name || '') + '</td><td>' + (p.noofdays || '') + '</td><td>' + (p.moringtime || '') + '</td><td>' + (p.noontime || '') + '</td><td>' + (p.nighttime || '') + '</td><td>' + (p.beforeorafterdiet || '') + '</td>';
+            tbody.appendChild(row);
+          });
+        } else {
+          $('#modalExistingPrescriptions').html('<tr><td colspan="7" class="text-center text-muted py-2">No prescriptions found.</td></tr>');
+        }
+
+        if (data.treatments && data.treatments.length > 0) {
+          var tbody2 = document.getElementById('modalExistingTreatments');
+          tbody2.innerHTML = '';
+          data.treatments.forEach(function(t) {
+            var row = document.createElement('tr');
+            row.innerHTML = '<td>' + (t.date || '') + '</td><td>' + (t.treatment_name || '') + '</td><td>' + (t.count || '') + '</td>';
+            tbody2.appendChild(row);
+          });
+        } else {
+          $('#modalExistingTreatments').html('<tr><td colspan="4" class="text-center text-muted py-2">No treatments found.</td></tr>');
+        }
+
+        $('#treatmentLoading').hide();
+        $('#treatmentContent').show();
+      },
+      error: function(xhr, status, error) {
+        console.error('get_treatment_details error:', status, error, xhr.responseText);
+        $('#treatmentLoading').hide();
+        $('#treatmentContent').show();
+        $('#modalExistingPrescriptions').html('<tr><td colspan="7" class="text-center text-danger py-2">Failed to load prescriptions</td></tr>');
+        $('#modalExistingTreatments').html('<tr><td colspan="4" class="text-center text-danger py-2">Failed to load treatments</td></tr>');
+      }
+    });
+  });
+
+  // Delete prescription
+  var currentPrescriptionRow = null;
+  $(document).on('click', '.delete-prescription-btn', function() {
+    var btn = $(this);
+    var prescriptionId = btn.data('id');
+    if (!prescriptionId) return;
+    $('#delete_prescription_id').val(prescriptionId);
+    currentPrescriptionRow = btn.closest('tr');
+    $('#deletePrescriptionModal').modal('show');
+  });
+
+  $('#confirmDeletePrescriptionBtn').on('click', function() {
+    var prescriptionId = $('#delete_prescription_id').val();
+    if (!prescriptionId) return;
+    var btn = $(this);
+    btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Deleting...');
+
+    $.ajax({
+      url: '/delete_prescription/?prescription_id=' + prescriptionId,
+      type: 'DELETE',
+      headers: { 'X-CSRFToken': csrfToken, 'X-Requested-With': 'XMLHttpRequest' },
+      success: function(data) {
+        btn.prop('disabled', false).html('<i class="fas fa-trash mr-1"></i> Delete Prescription');
+        $('#deletePrescriptionModal').modal('hide');
+        if (data.success) {
+          if (currentPrescriptionRow) {
+            currentPrescriptionRow.fadeOut(300, function() { $(this).remove(); });
+          }
+          modalShowPopupMessage('Prescription deleted successfully!', 'success');
+        } else {
+          modalShowPopupMessage('Error: ' + (data.error || 'Delete failed'), 'error');
+        }
+      },
+      error: function(xhr, status, error) {
+        btn.prop('disabled', false).html('<i class="fas fa-trash mr-1"></i> Delete Prescription');
+        $('#deletePrescriptionModal').modal('hide');
+        modalShowPopupMessage('Error deleting prescription', 'error');
+      }
+    });
+  });
+
+  // Delete treatment
+  var currentTreatmentRow = null;
+  $(document).on('click', '.delete-treatment-btn', function() {
+    var btn = $(this);
+    var treatmentId = btn.data('id');
+    if (!treatmentId) return;
+    $('#delete_treatment_id').val(treatmentId);
+    currentTreatmentRow = btn.closest('tr');
+    $('#deleteTreatmentModal').modal('show');
+  });
+
+  $('#confirmDeleteTreatmentBtn').on('click', function() {
+    var treatmentId = $('#delete_treatment_id').val();
+    if (!treatmentId) return;
+    var btn = $(this);
+    btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Deleting...');
+
+    $.ajax({
+      url: '/delete_treatment_plan/?treatment_id=' + treatmentId,
+      type: 'DELETE',
+      headers: { 'X-CSRFToken': csrfToken, 'X-Requested-With': 'XMLHttpRequest' },
+      success: function(data) {
+        btn.prop('disabled', false).html('<i class="fas fa-trash mr-1"></i> Delete Treatment');
+        $('#deleteTreatmentModal').modal('hide');
+        if (data.success) {
+          if (currentTreatmentRow) {
+            currentTreatmentRow.fadeOut(300, function() { $(this).remove(); });
+          }
+          modalShowPopupMessage('Treatment deleted successfully!', 'success');
+        } else {
+          modalShowPopupMessage('Error: ' + (data.error || 'Delete failed'), 'error');
+        }
+      },
+      error: function(xhr, status, error) {
+        btn.prop('disabled', false).html('<i class="fas fa-trash mr-1"></i> Delete Treatment');
+        $('#deleteTreatmentModal').modal('hide');
+        modalShowPopupMessage('Error deleting treatment', 'error');
+      }
+    });
+  });
+
+  // Close autocomplete on outside click
+  document.addEventListener('click', function(e) {
+    document.querySelectorAll('#treatmentModal .autocomplete-list').forEach(function(list) {
+      if (!list.contains(e.target) && list.previousElementSibling && !list.previousElementSibling.contains(e.target)) {
+        list.style.display = 'none';
+      }
+    });
+  });
+
+  // Fix aria-hidden/focus accessibility issue
+  // Bootstrap sets aria-hidden on the modal when closing, but if a child retains
+  // focus, assistive tech users lose track. We intercept the close and ensure
+  // focus is moved before Bootstrap applies aria-hidden.
+  var treatmentModalEl = document.getElementById('treatmentModal');
+  if (treatmentModalEl) {
+    var blurAllInsideModal = function() {
+      var focusable = treatmentModalEl.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+      focusable.forEach(function(el) {
+        try { el.blur(); } catch(e) {}
+      });
+      // Also blur document.activeElement if it's inside the modal
+      var active = document.activeElement;
+      if (active && treatmentModalEl.contains(active)) {
+        try { active.blur(); } catch(e) {}
+      }
+      // Move focus to body
+      try { document.body.focus(); } catch(e) {}
+    };
+
+    // 1) Blur on mousedown of close button - fires before click that triggers modal hide
+    treatmentModalEl.addEventListener('mousedown', function(e) {
+      var t = e.target;
+      if (t.classList && (t.classList.contains('close') || t.classList.contains('btn-close-modal'))) {
+        blurAllInsideModal();
+      }
+    });
+
+    // 2) Blur on hide event as backup
+    treatmentModalEl.addEventListener('hide.bs.modal', function() {
+      blurAllInsideModal();
+    });
+
+    // 3) Use MutationObserver to catch aria-hidden being set
+    var observer = new MutationObserver(function(mutations) {
+      mutations.forEach(function(mutation) {
+        if (mutation.attributeName === 'aria-hidden' && treatmentModalEl.getAttribute('aria-hidden') === 'true') {
+          blurAllInsideModal();
+        }
+        if (mutation.attributeName === 'style' && treatmentModalEl.style.display === 'none') {
+          blurAllInsideModal();
+        }
+      });
+    });
+    observer.observe(treatmentModalEl, { attributes: true, attributeFilter: ['aria-hidden', 'style'] });
+  }
+});
+</script>
+{% endblock %}

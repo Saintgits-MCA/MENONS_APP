@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Trash Enquiry Details</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item">
+                {%if enqobjmngadd == '1'%}<a href="{% url 'enquirydetails' %}?menumanagement_id={{ idmngmnt }}">Add</a>
+              {%endif%}</li>
+              <li class="breadcrumb-item active"> Enquiry </li>
+            </ol>
+          </div>
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+     
+            <!-- /.card -->
+
+            <div class="card">
+           <div class="scroll">
+              <!-- /.card-header -->
+              <div class="card-body">
+                <table id="example1" class="table table-bordered table-striped">
+                    <thead>
+                    <tr>
+                        <th>SL No</th>
+                        <th>Enquiry Date</th>
+                        <th>Name</th>
+                        <th>Age</th>
+                        <th>Phone Number</th>
+                        <th>Complaint</th>
+                        <th>Status</th>
+                        <th>Deleted Date</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+    <tbody>
+      {% for enquiry in trashed_enquiries %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ enquiry.currentdate }}</td>
+          <td>{{ enquiry.name }}</td>
+          <td>{{ enquiry.age }}</td>
+          <td>{{ enquiry.Phone_number }}</td>
+          <td>{{ enquiry.complaint }}</td>
+          <td>{{ enquiry.status }}</td>
+          <td>{{ enquiry.deleted_date }}</td>
+          <td>
+            <a href="{% url 'restore_enquiry' enquiry.id %}" class="btn btn-success">Restore</a>
+            <a href="{% url 'permanent_delete_enquiry' enquiry.id %}" class="btn btn-danger"
+            onclick="return confirm('Are you sure you want to permanently delete this enquiry?');">Delete Permanently</a>
+      </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+</div>
+  <!-- /.card-body -->
+</div>
+
+<!-- /.col -->
+
+<!-- /.row -->
+</div>
+<!-- /.container-fluid -->
+</section>
+<!-- /.content -->
+
+{% endblock %}

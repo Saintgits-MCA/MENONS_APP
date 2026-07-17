@@ -1,0 +1,1270 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<style>
+  :root {
+    --bg: #f6f8fb;
+    --card: #ffffff;
+    --text: #1f2a37;
+    --muted: #6b7280;
+    --brand: #2fbac6;
+    --tab: #8bd08a;
+    --accent: #3b82f6;
+    --ok: #22c55e;
+    --danger: #ef4444;
+    --shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 15px/1.45 system-ui, sans-serif; color: var(--text); background: var(--bg); }
+  .content-wrapper { background: #f3f6fb; padding: 20px; }
+  .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+  .page-header h1 { font-size: 22px; font-weight: 800; color: #1f2937; }
+  .patient-details { background: #fff; border-radius: 14px; padding: 16px 20px; margin-bottom: 20px; box-shadow: var(--shadow); display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px 24px; }
+  .patient-details .label { font-weight: 700; color: #6b7280; }
+  .patient-details .value { color: #1f2937; font-weight: 600; }
+  .tabs { display: flex; gap: 12px; flex-wrap: wrap; margin: 20px 0 12px; }
+  .tab { padding: 10px 16px; border-radius: 12px; border: none; cursor: pointer; background: var(--tab); color: #0f172a; font-weight: 700; min-width: 128px; box-shadow: var(--shadow); }
+  .tab.active { background: var(--brand); color: #fff; }
+  .underline { height: 4px; background: var(--accent); border-radius: 999px; margin-bottom: 16px; }
+  table { width: 100%; border-collapse: separate; border-spacing: 0 10px; }
+  thead th { text-align: left; font-size: 13px; font-weight: 700; color: #374151; padding: 8px 10px; }
+  tbody tr { background: #f8fafc; border-radius: 12px; box-shadow: var(--shadow); }
+  tbody td { padding: 10px 12px; }
+  .remove-row { cursor: pointer; }
+  .print-btn { margin: 15px 0; padding: 10px 24px; background: #059669; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 15px; }
+  .print-recent-btn { margin: 15px 5px; padding: 10px 24px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 15px; }
+  .print-buttons-container { display: flex; justify-content: flex-end; gap: 10px; margin: 20px 0; }
+  .view-normal-btn { margin-left: 5px; padding: 5px 10px; font-size: 12px; }
+  .test-input-container { display: flex; align-items: center; }
+  .test-input-container input { flex: 1; }
+  .normal-value-info { font-size: 11px; color: #6c757d; margin-top: 3px; }
+  .normal-value-highlight { background-color: #e7f5ff !important; border-left: 3px solid #0d6efd !important; }
+  .age-display { color: #6b7280; font-size: 0.9em; margin-left: 5px; }
+  
+  /* Invoice selection section - initially hidden */
+  .invoice-selection-section {
+    margin: 15px 0;
+    padding: 15px;
+    background: #e8f4f8;
+    border-radius: 10px;
+    border: 1px solid #b8daff;
+  }
+  
+</style>
+
+<div class="content-wrapper">
+        <a href="{%url 'view_lab_results'%}" class="text-decoration-none btn btn-primary float-right" target="_blank" rel="noopener noreferrer">Results</a>
+
+  <section class="content-header">
+    <div class="page-header">
+      <h1>Patient Lab Results</h1>
+    </div>
+  </section>
+
+  <!-- Search -->
+  <div class="search-wrapper mb-3">
+    <div class="search-box d-flex gap-2">
+      <input type="text" id="mrSearch" class="form-control" placeholder="Type MR Number, Name, or Phone">
+      <button id="searchBtn" class="btn btn-primary">Search</button>
+    </div>
+  </div>
+
+  <!-- Patient Info Card -->
+  <div class="card p-3">
+    <div class="patient-details">
+      <div class="field"><span class="label">MR No:</span> <span class="value" id="mrDropdown"></span></div>
+      <div class="field"><span class="label">Name:</span> <span class="value" id="ptname"></span></div>
+      <div class="field"><span class="label">Gender:</span> <span class="value" id="ptgender"></span></div>
+      <div class="field"><span class="label">Age:</span> <span class="value" id="ptage"></span></div>
+      <div class="field"><span class="label">Address:</span> <span class="value" id="ptaddress"></span></div>
+      <div class="field"><span class="label">Phone:</span> <span class="value" id="ptphno"></span></div>
+    </div>
+
+    <!-- Invoice Selection Section -->
+    <div class="invoice-selection-section" id="invoiceSelectionSection">
+      <div class="row">
+        <div class="col-md-8">
+          <div class="form-group">
+            <label><strong>Select Pending Invoice for Result Entry:</strong></label>
+            <select id="pendingInvoiceSelect" class="form-control">
+              <option value="">-- Select an invoice without results --</option>
+            </select>
+            <small class="text-muted">Only invoices without lab results are shown</small>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="form-group">
+            <label>&nbsp;</label>
+            <button type="button" id="loadInvoiceItemsBtn" class="btn btn-primary form-control">
+              Load Invoice Items
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="labresults">Lab Result</button>
+    </div>
+    <div class="underline"></div>
+
+    <!-- Lab Results Entry -->
+    <div id="labresults" class="tab-content active">
+      <h5>Lab Results Entry</h5>
+      <form id="labResultForm" method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" name="labptid" id="labptid">
+        <input type="hidden" name="patient_age" id="patientAge">
+        <input type="hidden" name="invoice_id" id="invoice_id">
+        <table class="table table-bordered">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Lab Test</th>
+              <th>Result Value</th>
+              <th>Normal Value</th>
+              <th>Result</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="labresult-body">
+            <tr class="labresult-row">
+              <td><input type="date" name="labtestdate[]" class="form-control date-field"></td>
+              <td>
+                <div class="test-input-container">
+                  <input type="text" name="labtest[]" class="form-control labtest-input" placeholder="Search lab test..." autocomplete="off">
+                  <button type="button" class="btn btn-sm btn-info view-normal-btn" style="display: none;" data-toggle="tooltip" title="View Normal Values">
+                    <i class="fas fa-info-circle"></i>
+                  </button>
+                  <div class="autocomplete-list list-group position-absolute w-100" style="z-index:1000; display:none;"></div>
+                  <input type="hidden" name="labtest_id[]" class="labtest-id">
+                </div>
+                <div class="normal-value-info"></div>
+              </td>
+              <td><input type="text" name="result_value[]" class="form-control result-input"></td>
+              <td>
+                <input type="text" name="normal_value[]" class="form-control normal-value-input">
+                <div class="normal-value-suggestion" style="font-size: 11px; color: #28a745; display: none;"></div>
+              </td>
+              <td>
+                <select  name="result[]" class="form-control result-status-select" required>
+                <option value="">Choose</option>
+                <option value="Low">Low</option>
+                <option value="Normal">Normal</option>
+                <option value="High">High</option>
+                <option value="Positive">Positive</option>
+                <option value="Negative">Negative</option>
+                <option value="Responsive">Responsive</option>
+                <option value="Not Responsive">Not Responsive</option>
+                </select>
+              </td>
+              <td style="display: none;"><input type="file" name="report_file[]" accept="application/pdf" class="form-control"></td>
+              <td><button type="button" class="btn btn-sm btn-danger remove-row">Remove</button></td>
+            </tr>
+          </tbody>
+        </table>
+        <button type="button" id="addLabResultRow" class="btn btn-success d-none">Add Row</button>
+        <button type="submit" class="btn btn-primary">Save Lab Results</button>
+      </form>
+
+      <hr>
+      <h5>Previous Lab Results</h5>
+      
+      <div class="print-buttons-container">
+        <button class="print-btn d-none" id="printLabReport" style="display:none;">
+          Print Full History (A4)
+        </button>
+      </div>
+
+      <table id="labResultTable" class="table table-striped">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Test</th>
+            <th>Result</th>
+            <th>Normal</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Search Modal -->
+  <div class="modal fade" id="searchModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title">Search Results</h5>
+          <button type="button" class="close" data-dismiss="modal"><span>×</span></button>
+        </div>
+        <div class="modal-body">
+          <table id="searchResultsTable" class="display table table-bordered">
+            <thead>
+              <tr>
+                <th>MR Number</th>
+                <th>Patient Name</th>
+                <th>Age</th>
+                <th>Gender</th>
+                <th>Address</th>
+                <th>Contact No</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Normal Values Modal -->
+  <div class="modal fade" id="normalValuesModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header bg-info text-white">
+          <h5 class="modal-title">Normal Values for: <span id="modalTestName"></span></h5>
+          <button type="button" class="close" data-dismiss="modal"><span>×</span></button>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-info mb-3">
+            <strong>Patient Info:</strong> 
+            Gender: <span id="patientGenderInModal"></span> | 
+            Age: <span id="patientAgeInModal"></span> years
+          </div>
+          
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <div class="input-group">
+                <div class="input-group-prepend">
+                  <span class="input-group-text">Gender</span>
+                </div>
+                <select id="filterGender" class="form-control">
+                  <option value="">All</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Both">Both</option>
+                  <option value="Newborn">Newborn</option>
+                  <option value="Infant">Infant</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="input-group">
+                <div class="input-group-prepend">
+                  <span class="input-group-text">Age</span>
+                </div>
+                <input type="number" step="0.1" id="filterAge" class="form-control" placeholder="Age (years)" value="">
+              </div>
+            </div>
+          </div>
+          
+          <div class="alert alert-info" id="noNormalValues" style="display:none;">
+            No normal values defined for this test.
+          </div>
+          
+          <div class="alert alert-warning" id="ageSpecificValues" style="display:none;">
+            <i class="fas fa-info-circle"></i> Showing normal values specific to patient's age and gender
+          </div>
+          
+          <table class="table table-bordered table-hover" id="normalValuesTable">
+            <thead class="thead-light">
+              <tr>
+                <th>Gender</th>
+                <th>Age Range</th>
+                <th>Normal Range</th>
+                <th>Unit</th>
+                <th>Match</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="normalValuesBody"></tbody>
+          </table>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style class="print-styles">
+  @media print {
+    @page { size: A4; margin: 15mm; }
+    body { font-family: Arial, sans-serif; font-size: 12px; margin: 0; padding: 0; background: #fff; }
+    .invoice-header-img, .invoice-footer-img { width: 100%; max-width: 600px; height: auto; margin: 0 auto; display: block; }
+    .report-container { page-break-inside: avoid; margin: 20px 0; }
+    table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 11px; }
+    th, td { border: 1px solid #000; padding: 6px; text-align: left; }
+    th { background-color: #f0f0f0; font-weight: bold; }
+    .patient-info { margin: 15px 0; padding: 10px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; }
+    .watermark { display: none; }
+    .print-btn, .print-recent-btn, .invoice-selection-section { display: none !important; }
+  }
+</style>
+
+<script>
+// Global variables
+const today = new Date().toISOString().split('T')[0];
+const patientData = { id: null, name: "", mrno: "", gender: "", age: "", phone: "", address: "" };
+let allLabResults = [];
+let recentSavedResults = [];
+let currentTestId = null;
+let currentTestName = null;
+let currentRowElement = null;
+
+// Helper Functions
+function escapeHtml(text) {
+    if (!text) return "";
+    return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+}
+
+function getResultStatus(resultValue, normalValue) {
+    if (!resultValue || !normalValue) return '-';
+    const resultMatch = resultValue.match(/[-+]?\d*\.?\d+/);
+    const normalMatch = normalValue.match(/[-+]?\d*\.?\d+/g);
+    if (!resultMatch || !normalMatch || normalMatch.length < 2) return '-';
+    const resultNum = parseFloat(resultMatch[0]);
+    const minNormal = parseFloat(normalMatch[0]);
+    const maxNormal = parseFloat(normalMatch[1] || normalMatch[0]);
+    if (isNaN(resultNum) || isNaN(minNormal) || isNaN(maxNormal)) return '-';
+    if (resultNum > maxNormal) return 'High';
+    if (resultNum < minNormal) return 'Low';
+    return 'Normal';
+}
+
+function fillTable(selector, rows, fields) {
+    const tbody = $(selector + " tbody");
+    tbody.empty();
+    if (!rows.length) {
+        console.log(fields.length+1);
+        tbody.append(`<tr><td colspan="${fields.length+1}">No records found</td></tr>`);
+        return;
+    }
+    rows.forEach(r => {
+        let tr = "<tr>";
+        fields.forEach(f => {
+            if (f === "date" && r[f]) {
+                tr += `<td>${new Date(r[f]).toLocaleDateString('en-GB')}</td>`;
+            } else {
+                tr += `<td>${r[f] || "-"}</td>`;
+            }
+        });
+        const status = getResultStatus(r.result_value, r.normal_value);
+        const statusClass = status === 'High' ? 'text-danger' : (status === 'Normal' ? 'text-success' : 'text-secondary');
+        tr += `<td><span class="${statusClass} font-weight-bold">${status === 'High' ? 'High' : (status === 'Normal' ? 'Normal' : '-')}</span></td>`;
+        tr += "</tr>";
+        tbody.append(tr);
+    });
+}
+
+function loadNormalValues(testId, testName, rowElement) {
+    currentTestId = testId;
+    currentTestName = testName;
+    currentRowElement = rowElement;
+    
+    // Get filter values from modal
+    const gender = $("#filterGender").val() || patientData.gender;
+    const age = $("#filterAge").val() || patientData.age;
+    
+    // Update patient info in modal
+    $("#patientGenderInModal").text(patientData.gender || 'Not specified');
+    $("#patientAgeInModal").text(patientData.age || 'Not specified');
+    $("#modalTestName").text(testName);
+
+    if (patientData.age) {
+        $('#filterAge').val(patientData.age);
+    }
+    if (patientData.gender) {
+        $("#filterGender").val(patientData.gender);
+    }
+    
+    // Show loading state
+    const tbody = $("#normalValuesBody");
+    tbody.html('<tr><td colspan="6" class="text-center">Loading normal values...</td></tr>');
+    
+    $.ajax({
+        url: "{% url 'get_test_normal_values' %}",
+        data: { 
+            test_id: testId, 
+            gender: gender, 
+            age: age 
+        },
+        success: function(response) {
+            $("#modalTestName").text(response.test_name);
+            const tbody = $("#normalValuesBody");
+            tbody.empty();
+            
+            if (response.normal_values && response.normal_values.length > 0) {
+                $("#noNormalValues").hide();
+                $("#normalValuesTable").show();
+                
+                // Check if we have age/gender specific values
+                let hasAgeSpecific = false;
+                let hasGenderSpecific = false;
+                
+                response.normal_values.forEach(nv => {
+                    // Check age specificity
+                    if (nv.age_range !== "Any" && patientData.age) {
+                        const ageNum = parseFloat(patientData.age);
+                        const ageParts = nv.age_range.split(' - ');
+                        if (ageParts.length === 2) {
+                            const minAge = parseFloat(ageParts[0]);
+                            const maxAge = parseFloat(ageParts[1]);
+                            if (!isNaN(minAge) && !isNaN(maxAge) && ageNum >= minAge && ageNum <= maxAge) {
+                                hasAgeSpecific = true;
+                            }
+                        }
+                    }
+                    // Check gender specificity
+                    if (nv.gender === patientData.gender || nv.gender === 'Both') {
+                        hasGenderSpecific = true;
+                    }
+                });
+                
+                // Show age/gender specific info
+                if (hasAgeSpecific || hasGenderSpecific) {
+                    let msg = [];
+                    if (hasAgeSpecific) msg.push('age-specific');
+                    if (hasGenderSpecific) msg.push('gender-specific');
+                    $("#ageSpecificValues").show().find('i').parent().html(
+                        `<i class="fas fa-info-circle"></i> Showing ${msg.join(' and ')} normal values`
+                    );
+                } else {
+                    $("#ageSpecificValues").hide();
+                }
+                
+                response.normal_values.forEach(nv => {
+                    const ageRange = nv.age_range === "Any" ? "Any Age" : nv.age_range + " years";
+                    const normalRange = `${nv.min_value} - ${nv.max_value}`;
+                    const unit = nv.unit ? nv.unit : '';
+                    
+                    // Determine match status
+                    let matchStatus = '';
+                    let matchClass = '';
+                    
+                    if (patientData.age && patientData.gender) {
+                        const ageNum = parseFloat(patientData.age);
+                        const isGenderMatch = nv.gender === patientData.gender || nv.gender === 'Both' || nv.gender === 'Any';
+                        let isAgeMatch = false;
+                        
+                        if (nv.age_range === "Any") {
+                            isAgeMatch = true;
+                        } else {
+                            const ageParts = nv.age_range.split(' - ');
+                            if (ageParts.length === 2) {
+                                const minAge = parseFloat(ageParts[0]);
+                                const maxAge = parseFloat(ageParts[1]);
+                                if (!isNaN(minAge) && !isNaN(maxAge) && ageNum >= minAge && ageNum <= maxAge) {
+                                    isAgeMatch = true;
+                                }
+                            }
+                        }
+                        
+                        if (isGenderMatch && isAgeMatch) {
+                            matchStatus = 'Perfect Match';
+                            matchClass = 'badge badge-success';
+                        } else if (isGenderMatch) {
+                            matchStatus = 'Gender Match';
+                            matchClass = 'badge badge-info';
+                        } else if (isAgeMatch) {
+                            matchStatus = 'Age Match';
+                            matchClass = 'badge badge-warning';
+                        }
+                    }
+                    
+                    tbody.append(`<tr class="normal-value-row" 
+                        data-min="${nv.min_value}" 
+                        data-max="${nv.max_value}" 
+                        data-unit="${unit}">
+                        <td>${nv.gender}</td>
+                        <td>${ageRange}</td>
+                        <td>${normalRange}</td>
+                        <td>${unit}</td>
+                        <td><span class="${matchClass}">${matchStatus}</span></td>
+                        <td><button class="btn btn-sm btn-success use-normal-btn">Use This</button></td>
+                    </tr>`);
+                });
+            } else {
+                $("#noNormalValues").show();
+                $("#normalValuesTable").hide();
+                $("#ageSpecificValues").hide();
+            }
+            
+            $("#normalValuesModal").modal('show');
+        },
+        error: function() {
+            const tbody = $("#normalValuesBody");
+            tbody.html('<tr><td colspan="6" class="text-center text-danger">Failed to load normal values</td></tr>');
+        }
+    });
+}
+
+// Filter by Gender
+$("#filterGender").on('change', function() {
+    if (currentTestId) {
+        // Get current age value
+        const age = $("#filterAge").val() || patientData.age;
+        const gender = $(this).val() || patientData.gender;
+        
+        // Reload normal values with filters
+        $.ajax({
+            url: "{% url 'get_test_normal_values' %}",
+            data: { 
+                test_id: currentTestId, 
+                gender: gender, 
+                age: age 
+            },
+            success: function(response) {
+                const tbody = $("#normalValuesBody");
+                tbody.empty();
+                
+                if (response.normal_values && response.normal_values.length > 0) {
+                    $("#noNormalValues").hide();
+                    $("#normalValuesTable").show();
+                    
+                    response.normal_values.forEach(nv => {
+                        const ageRange = nv.age_range === "Any" ? "Any Age" : nv.age_range + " years";
+                        const normalRange = `${nv.min_value} - ${nv.max_value}`;
+                        const unit = nv.unit ? nv.unit : '';
+                        
+                        let matchStatus = '';
+                        let matchClass = '';
+                        
+                        if (patientData.age && patientData.gender) {
+                            const ageNum = parseFloat(patientData.age);
+                            const isGenderMatch = nv.gender === patientData.gender || nv.gender === 'Both' || nv.gender === 'Any';
+                            let isAgeMatch = false;
+                            
+                            if (nv.age_range === "Any") {
+                                isAgeMatch = true;
+                            } else {
+                                const ageParts = nv.age_range.split(' - ');
+                                if (ageParts.length === 2) {
+                                    const minAge = parseFloat(ageParts[0]);
+                                    const maxAge = parseFloat(ageParts[1]);
+                                    if (!isNaN(minAge) && !isNaN(maxAge) && ageNum >= minAge && ageNum <= maxAge) {
+                                        isAgeMatch = true;
+                                    }
+                                }
+                            }
+                            
+                            if (isGenderMatch && isAgeMatch) {
+                                matchStatus = 'Perfect Match';
+                                matchClass = 'badge badge-success';
+                            } else if (isGenderMatch) {
+                                matchStatus = 'Gender Match';
+                                matchClass = 'badge badge-info';
+                            } else if (isAgeMatch) {
+                                matchStatus = 'Age Match';
+                                matchClass = 'badge badge-warning';
+                            }
+                        }
+                        
+                        tbody.append(`<tr class="normal-value-row" 
+                            data-min="${nv.min_value}" 
+                            data-max="${nv.max_value}" 
+                            data-unit="${unit}">
+                            <td>${nv.gender}</td>
+                            <td>${ageRange}</td>
+                            <td>${normalRange}</td>
+                            <td>${unit}</td>
+                            <td><span class="${matchClass}">${matchStatus}</span></td>
+                            <td><button class="btn btn-sm btn-success use-normal-btn">Use This</button></td>
+                        </tr>`);
+                    });
+                } else {
+                    $("#noNormalValues").show();
+                    $("#normalValuesTable").hide();
+                }
+            }
+        });
+    }
+});
+
+// Filter by Age
+$("#filterAge").on('input', function() {
+    // Debounce the age filter
+    clearTimeout(window.ageFilterTimeout);
+    window.ageFilterTimeout = setTimeout(function() {
+        if (currentTestId) {
+            const age = $("#filterAge").val() || patientData.age;
+            const gender = $("#filterGender").val() || patientData.gender;
+            
+            $.ajax({
+                url: "{% url 'get_test_normal_values' %}",
+                data: { 
+                    test_id: currentTestId, 
+                    gender: gender, 
+                    age: age 
+                },
+                success: function(response) {
+                    const tbody = $("#normalValuesBody");
+                    tbody.empty();
+                    
+                    if (response.normal_values && response.normal_values.length > 0) {
+                        $("#noNormalValues").hide();
+                        $("#normalValuesTable").show();
+                        
+                        response.normal_values.forEach(nv => {
+                            const ageRange = nv.age_range === "Any" ? "Any Age" : nv.age_range + " years";
+                            const normalRange = `${nv.min_value} - ${nv.max_value}`;
+                            const unit = nv.unit ? nv.unit : '';
+                            
+                            let matchStatus = '';
+                            let matchClass = '';
+                            
+                            if (patientData.age && patientData.gender) {
+                                const ageNum = parseFloat(patientData.age);
+                                const isGenderMatch = nv.gender === patientData.gender || nv.gender === 'Both' || nv.gender === 'Any';
+                                let isAgeMatch = false;
+                                
+                                if (nv.age_range === "Any") {
+                                    isAgeMatch = true;
+                                } else {
+                                    const ageParts = nv.age_range.split(' - ');
+                                    if (ageParts.length === 2) {
+                                        const minAge = parseFloat(ageParts[0]);
+                                        const maxAge = parseFloat(ageParts[1]);
+                                        if (!isNaN(minAge) && !isNaN(maxAge) && ageNum >= minAge && ageNum <= maxAge) {
+                                            isAgeMatch = true;
+                                        }
+                                    }
+                                }
+                                
+                                if (isGenderMatch && isAgeMatch) {
+                                    matchStatus = 'Perfect Match';
+                                    matchClass = 'badge badge-success';
+                                } else if (isGenderMatch) {
+                                    matchStatus = 'Gender Match';
+                                    matchClass = 'badge badge-info';
+                                } else if (isAgeMatch) {
+                                    matchStatus = 'Age Match';
+                                    matchClass = 'badge badge-warning';
+                                }
+                            }
+                            
+                            tbody.append(`<tr class="normal-value-row" 
+                                data-min="${nv.min_value}" 
+                                data-max="${nv.max_value}" 
+                                data-unit="${unit}">
+                                <td>${nv.gender}</td>
+                                <td>${ageRange}</td>
+                                <td>${normalRange}</td>
+                                <td>${unit}</td>
+                                <td><span class="${matchClass}">${matchStatus}</span></td>
+                                <td><button class="btn btn-sm btn-success use-normal-btn">Use This</button></td>
+                            </tr>`);
+                        });
+                    } else {
+                        $("#noNormalValues").show();
+                        $("#normalValuesTable").hide();
+                    }
+                }
+            });
+        }
+    }, 500);
+});
+
+
+function autoSuggestNormalValue(testId, patientGender, patientAge, rowElement) {
+    if (!testId || !patientGender) return;
+    $.ajax({
+        url: "{% url 'get_test_normal_values' %}",
+        data: { test_id: testId, gender: patientGender, age: patientAge },
+        success: function(response) {
+            if (response.normal_values && response.normal_values.length > 0) {
+                let bestMatch = response.normal_values[0];
+                const normalValue = `${bestMatch.min_value} - ${bestMatch.max_value}`;
+                const unit = bestMatch.unit ? ` ${bestMatch.unit}` : '';
+                const normalInput = rowElement.find('.normal-value-input');
+                if (!normalInput.val()) {
+                    normalInput.val(normalValue + unit);
+                }
+                const suggestionDiv = rowElement.find('.normal-value-suggestion');
+                suggestionDiv.text(`Suggested: ${normalValue}${unit}`).show();
+            }
+        }
+    });
+}
+
+// ========== INVOICE SELECTION FUNCTIONS ==========
+
+// Function to load pending invoices dropdown - THIS IS THE KEY FUNCTION
+function loadPendingInvoices(patientId) {
+    console.log("loadPendingInvoices called for patient:", patientId);
+    
+    if (!patientId || patientId === 'null' || patientId === 'undefined' || patientId === '') {
+        console.log("No valid patient ID");
+        $('#pendingInvoiceSelect').empty().append('<option value="">-- Select an invoice --</option>');
+        return;
+    }
+    
+    // Show loading in dropdown
+    $('#pendingInvoiceSelect').empty().append('<option value="">No Invoices Found yet...</option>');
+    
+    $.ajax({
+        url: "{% url 'get_pending_invoices' %}",
+        method: "GET",
+        data: { patient_id: patientId },
+        success: function(response) {
+            console.log("Pending invoices response:", response);
+            
+            if (response.success && response.invoices && response.invoices.length > 0) {
+                const select = $('#pendingInvoiceSelect');
+                select.empty();
+                select.append('<option value="">-- Select an invoice without results --</option>');
+                
+                response.invoices.forEach(function(invoice) {
+                    select.append(`<option value="${invoice.id}" data-invoiceno="${invoice.invoiceno}">
+                        ${invoice.invoiceno} - ${invoice.date}
+                    </option>`);
+                });
+                
+                // Show the invoice selection section
+                console.log("Invoice section shown");
+            } else {
+                console.log("No pending invoices found");
+                loadDefaultPendingTests(patientId);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error("Error loading pending invoices:", error);
+            $('#invoiceSelectionSection').removeClass('show').hide();
+            loadDefaultPendingTests(patientId);
+        }
+    });
+}
+
+// Function to load default pending tests (without invoice selection)
+function loadDefaultPendingTests(patientId) {
+    const todayDate = new Date().toISOString().split('T')[0];
+    $.ajax({
+        url: "{% url 'get_pending_invoice_results' %}",
+        method: "GET",
+        data: { patient_id: patientId },
+        success: function(tests) {
+            const tbody = $("#labresult-body");
+            tbody.empty();
+            if (!tests || tests.length === 0) {
+                tbody.html(`<tr><td colspan='7'>No pending lab tests found. Select an invoice from dropdown if available.</td></tr>`);
+                return;
+            }
+            if (tests[0] && tests[0].invoice_id) {
+                $("#invoice_id").val(tests[0].invoice_id);
+            }
+            
+            // ✅ Use the same grouping logic
+            const groupedItems = {};
+            const individualItems = [];
+            
+            tests.forEach(function(t) {
+                if (t.is_group_item && t.group_name) {
+                    if (!groupedItems[t.group_name]) {
+                        groupedItems[t.group_name] = [];
+                    }
+                    groupedItems[t.group_name].push(t);
+                } else {
+                    individualItems.push(t);
+                }
+            });
+            
+            // Add individual items
+            individualItems.forEach(function(t) {
+                addResultRow(t, todayDate, tbody);
+            });
+            
+            // Add grouped items with header
+            Object.keys(groupedItems).forEach(function(groupName) {
+                const groupTests = groupedItems[groupName];
+                
+                const headerRow = $('<tr class="group-header-row" style="background-color: #e8f4f8;">');
+                headerRow.append(`<td colspan="6" style="font-weight: bold; color: #00796b; padding: 8px 12px;">
+                    <i class="fas fa-folder-open mr-2"></i> Group: ${escapeHtml(groupName)} (${groupTests.length} tests)
+                </td>`);
+                tbody.append(headerRow);
+                
+                groupTests.forEach(function(t) {
+                    addResultRow(t, todayDate, tbody);
+                });
+            });
+        },
+        error: function() {
+            $("#labresult-body").html(`<tr><td colspan='6'>Error loading pending tests</td></tr>`);
+        }
+    });
+}
+
+// Function to load invoice items using selected invoice
+function loadInvoiceItems() {
+    const invoiceId = $('#pendingInvoiceSelect').val();
+    const patientId = $("#labptid").val();
+    
+    if (!invoiceId) {
+        alert("Please select an invoice");
+        return;
+    }
+    if (!patientId) {
+        alert("Patient not selected");
+        return;
+    }
+    
+    const selectedOption = $('#pendingInvoiceSelect option:selected');
+    const invoiceNo = selectedOption.data('invoiceno');
+    const loadBtn = $('#loadInvoiceItemsBtn');
+    const originalText = loadBtn.text();
+    loadBtn.prop('disabled', true).text('Loading...');
+    
+    $.ajax({
+        url: "{% url 'get_pending_invoice_results' %}",
+        method: "GET",
+        data: { patient_id: patientId, invoice_id: invoiceId },
+        success: function(response) {
+            if (response && response.length > 0) {
+                if (response[0] && response[0].invoice_id) {
+                    $("#invoice_id").val(response[0].invoice_id);
+                }
+                updateLabResultForm(response, invoiceNo);
+                alert(`Loaded ${response.length} test(s) from invoice ${invoiceNo}`);
+            } else {
+                alert("No pending tests found in this invoice. All tests may have results already.");
+            }
+        },
+        error: function() {
+            alert("Failed to load invoice items.");
+        },
+        complete: function() {
+            loadBtn.prop('disabled', false).text(originalText);
+        }
+    });
+}
+
+// Function to update form with invoice items
+function updateLabResultForm(items, invoiceNo) {
+    const tbody = $("#labresult-body");
+    tbody.empty();
+    const todayDate = new Date().toISOString().split('T')[0];
+    
+    // ✅ Group items by group_name for better display
+    const groupedItems = {};
+    const individualItems = [];
+    
+    items.forEach(function(item) {
+        if (item.is_group_item && item.group_name) {
+            if (!groupedItems[item.group_name]) {
+                groupedItems[item.group_name] = [];
+            }
+            groupedItems[item.group_name].push(item);
+        } else {
+            individualItems.push(item);
+        }
+    });
+    
+    // ✅ Add individual items first
+    individualItems.forEach(function(item) {
+        addResultRow(item, todayDate, tbody);
+    });
+    
+    // ✅ Add grouped items with header
+    Object.keys(groupedItems).forEach(function(groupName) {
+        const groupTests = groupedItems[groupName];
+        
+        // Add group header row
+        const headerRow = $('<tr class="group-header-row" style="background-color: #e8f4f8;">');
+        headerRow.append(`<td colspan="6" style="font-weight: bold; color: #00796b; padding: 8px 12px;">
+            <i class="fas fa-folder-open mr-2"></i> Group: ${escapeHtml(groupName)} (${groupTests.length} tests)
+        </td>`);
+        tbody.append(headerRow);
+        
+        // Add each test in the group
+        groupTests.forEach(function(item) {
+            addResultRow(item, todayDate, tbody);
+        });
+    });
+    
+    // Show invoice info
+    const invoiceInfo = $('<div class="alert alert-info mt-2">').html(
+        `<i class="fas fa-info-circle"></i> Loaded tests from invoice: <strong>${invoiceNo}</strong>` +
+        (Object.keys(groupedItems).length > 0 ? ` | ${Object.keys(groupedItems).length} group(s) loaded` : '')
+    ).insertAfter(tbody);
+    
+    setTimeout(function() { invoiceInfo.fadeOut(function() { $(this).remove(); }); }, 5000);
+}
+
+// Helper function to add a result row
+function addResultRow(item, date, tbody) {
+    var row = $('<tr class="labresult-row">');
+    row.append(`<td><input type="date" name="labtestdate[]" class="form-control date-field" value="${date}"></td>`);
+    row.append(`<td><div class="test-input-container">
+        <input type="hidden" name="labtest_id[]" value="${item.test_id}">
+        <input type="text" class="form-control" value="${escapeHtml(item.test_name)}" readonly>
+        <button type="button" class="btn btn-sm btn-info view-normal-btn" data-test-id="${item.test_id}" data-test-name="${escapeHtml(item.test_name)}">
+            <i class="fas fa-info-circle"></i>
+        </button></div>
+        <div class="normal-value-info"></div></td>`);
+    row.append(`<td><input type="text" name="result_value[]" class="form-control result-input" placeholder="Enter result"></td>`);
+    const normalValue = item.normal_value || '';
+    row.append(`<td><input type="text" name="normal_value[]" class="form-control normal-value-input" value="${escapeHtml(normalValue)}">
+        <div class="normal-value-suggestion" style="font-size: 11px; color: #28a745; display: none;"></div></td>`);
+    // Add Result dropdown column
+    row.append(`<td>
+        <select name="result[]" class="form-control result-status-select" required>
+            <option value="">Choose</option>
+            <option value="Low">Low</option>
+            <option value="Normal">Normal</option>
+            <option value="High">High</option>
+            <option value="Positive">Positive</option>
+            <option value="Negative">Negative</option>
+            <option value="Responsive">Responsive</option>
+            <option value="Not Responsive">Not Responsive</option>
+        </select>
+    </td>`);
+    row.append('<td style="display: none;"><input type="file" name="report_file[]" accept="application/pdf" class="form-control"></td>');
+    row.append(`<td><button type="button" class="btn btn-sm btn-danger remove-row">Remove</button></td>`);
+    tbody.append(row);
+    
+    if (patientData.gender && !normalValue) {
+        autoSuggestNormalValue(item.test_id, patientData.gender, patientData.age, row);
+    }
+}
+
+function loadPatientHistoryAndPending(patientId) {
+    const todayDate = new Date().toISOString().split('T')[0];
+    if (!patientId || patientId === 'null' || patientId === 'undefined') {
+        $("#labresult-body").html("<tr><td colspan='6'>Please select a patient first</td></tr>");
+        return;
+    }
+    
+    $("#invoice_id").val('');
+    
+    // Load pending tests
+    $.ajax({
+        url: "/get_pending_invoice_results/",
+        method: "GET",
+        data: { patient_id: patientId },
+        success: function(tests) {
+            const tbody = $("#labresult-body");
+            tbody.empty();
+            if (!tests || tests.length === 0) {
+                tbody.html("<tr><td colspan='6'>No pending lab tests found. Select an invoice from dropdown if available.</td></tr>");
+                return;
+            }
+            if (tests[0] && tests[0].invoice_id) {
+                $("#invoice_id").val(tests[0].invoice_id);
+            }
+            
+            // ✅ Group items
+            const groupedItems = {};
+            const individualItems = [];
+            
+            tests.forEach(function(t) {
+                if (t.is_group_item && t.group_name) {
+                    if (!groupedItems[t.group_name]) {
+                        groupedItems[t.group_name] = [];
+                    }
+                    groupedItems[t.group_name].push(t);
+                } else {
+                    individualItems.push(t);
+                }
+            });
+            
+            individualItems.forEach(function(t) {
+                addResultRow(t, todayDate, tbody);
+            });
+            
+            Object.keys(groupedItems).forEach(function(groupName) {
+                const groupTests = groupedItems[groupName];
+                
+                const headerRow = $('<tr class="group-header-row" style="background-color: #e8f4f8;">');
+                headerRow.append(`<td colspan="6" style="font-weight: bold; color: #00796b; padding: 8px 12px;">
+                    <i class="fas fa-folder-open mr-2"></i> Group: ${escapeHtml(groupName)} (${groupTests.length} tests)
+                </td>`);
+                tbody.append(headerRow);
+                
+                groupTests.forEach(function(t) {
+                    addResultRow(t, todayDate, tbody);
+                });
+            });
+        },
+        error: function() {
+            $("#labresult-body").html("<tr><td colspan='6'>Error loading pending tests</td></tr>");
+        }
+    });
+
+    // Load previous history
+    $.ajax({
+        url: "/get_patient_full_history/",
+        data: { mrno: patientId },
+        success: function(res) {
+            if (res.history && res.history.labresults) {
+                allLabResults = res.history.labresults.map(r => ({
+                    date: r.date,
+                    test: r.labtest ? r.labtest.testname : (r.test || "Unknown"),
+                    result_value: r.result_value,
+                    normal_value: r.normal_value,
+                }));
+            } else {
+                allLabResults = res.history ? res.history.labresults || [] : [];
+            }
+            fillTable("#labResultTable", allLabResults, ["date", "test", "result_value", "normal_value"]);
+            $("#printLabReport").toggle(allLabResults.length > 0);
+        }
+    });
+}
+
+function printLabResults(results, title) {
+    const printWin = window.open("", "_blank");
+    const today = new Date().toLocaleDateString('en-GB');
+    let tableRows = "";
+    results.forEach(r => {
+        const dateStr = r.date ? new Date(r.date).toLocaleDateString('en-GB') : "-";
+        const status = getResultStatus(r.result_value, r.normal_value);
+        const statusDisplay = status === 'High' ? '<span style="color: #dc2626; font-weight: bold;">High</span>' : (status === 'Normal' ? '<span style="color: #059669; font-weight: bold;">Normal</span>' : '-');
+        tableRows += `<tr><td>${dateStr}</td><td>${escapeHtml(r.test || "-")}</td><td>${escapeHtml(r.result_value || "-")}</td><td>${escapeHtml(r.normal_value || "-")}</td><td>${statusDisplay}</td></tr>`;
+    });
+    
+    const printHTML = `<!DOCTYPE html><html><head><title>Lab Report</title><style>
+        @page { size: A4; margin: 15mm; }
+        body { font-family: Arial, sans-serif; font-size: 12px; margin: 0; padding: 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { border: 1px solid #000; padding: 6px; text-align: left; }
+        th { background: #f0f0f0; }
+        .patient-info { margin: 15px 0; padding: 10px; background: #f8f9fa; border: 1px solid #ddd; }
+    </style></head><body>
+    <h2 style="text-align:center;">${escapeHtml(title)}</h2>
+    <div class="patient-info"><strong>Patient:</strong> ${escapeHtml(patientData.name)} | <strong>MR No:</strong> ${escapeHtml(patientData.mrno)} | <strong>Gender:</strong> ${escapeHtml(patientData.gender)} | <strong>Age:</strong> ${escapeHtml(patientData.age)}</div>
+    <table><thead><tr><th>Date</th><th>Test</th><th>Result</th><th>Normal</th><th>Status</th></tr></thead><tbody>${tableRows}</tbody></table>
+    <p style="text-align:center; margin-top:30px;">Generated on: ${today}</p></body></html>`;
+    
+    printWin.document.open();
+    printWin.document.write(printHTML);
+    printWin.document.close();
+    setTimeout(() => { printWin.print(); setTimeout(() => printWin.close(), 1000); }, 500);
+}
+
+// ========== DOCUMENT READY ==========
+$(document).ready(function () {
+    console.log("Document ready - initializing");
+    
+    $("input[name='labtestdate[]']").val(today);
+    
+    let searchTable = $("#searchResultsTable").DataTable({
+        pageLength: 10,
+        lengthMenu: [[5, 10, 25, 50], [5, 10, 25, 50]],
+        order: [[0, 'asc']]
+    });
+
+    // Search Patient
+    $("#searchBtn").on("click", function () {
+        const query = $("#mrSearch").val().trim();
+        if (!query) return alert("Enter MR Number, Name, or Phone");
+        fetch(`/search_mrno?query=${query}`)
+            .then(r => r.json())
+            .then(data => {
+                searchTable.clear().draw();
+                if (data.error) return alert("Error: " + data.error);
+                data.forEach(item => {
+                    searchTable.row.add([
+                        item.Medical_Record_Number,
+                        item.Patient_Name,
+                        item.Age || "N/A",
+                        item.Gender,
+                        item.address || "N/A",
+                        item.contactno,
+                        `<button class="btn btn-sm btn-primary select-btn"
+                           data-id="${item.id}" data-name="${item.Patient_Name}"
+                           data-mrno="${item.Medical_Record_Number}" data-contact="${item.contactno}"
+                           data-gender="${item.Gender}" data-age="${item.Age || ''}"
+                           data-address="${item.address || 'N/A'}">Select</button>`
+                    ]).draw();
+                });
+                $("#searchModal").modal("show");
+            })
+            .catch(error => { console.error("Search error:", error); alert("Search failed."); });
+    });
+
+    // ========== SELECT PATIENT - THIS IS WHERE THE INVOICE SECTION APPEARS ==========
+    $("#searchResultsTable").on("click", ".select-btn", function () {
+        console.log("Select button clicked");
+        
+        const b = $(this);
+        patientData.id = b.data("id");
+        patientData.name = b.data("name");
+        patientData.mrno = b.data("mrno");
+        patientData.phone = b.data("contact");
+        patientData.gender = b.data("gender");
+        patientData.age = b.data("age");
+        patientData.address = b.data("address");
+
+        console.log("Patient selected:", patientData);
+
+        $("#labptid").val(patientData.id);
+        $("#patientAge").val(patientData.age);
+        $("#mrDropdown").text(patientData.mrno);
+        $("#ptname").text(patientData.name);
+        $("#ptphno").text(patientData.phone);
+        $("#ptgender").text(patientData.gender);
+        $("#ptage").text(patientData.age || "N/A");
+        $("#ptaddress").text(patientData.address);
+        $("input[name='labtestdate[]']").val(today);
+
+        recentSavedResults = [];
+        
+        // 🔥 CRITICAL: Call loadPendingInvoices to show invoice dropdown
+        console.log("Calling loadPendingInvoices with ID:", patientData.id);
+        loadPendingInvoices(patientData.id);
+        
+        // Also load history
+        loadPatientHistoryAndPending(patientData.id);
+        
+        $("#searchModal").modal("hide");
+    });
+
+    // Load Invoice Items Button
+    $("#loadInvoiceItemsBtn").on("click", function() {
+        console.log("Load Invoice Items button clicked");
+        loadInvoiceItems();
+    });
+
+    // Add Row
+    $("#addLabResultRow").click(function () {
+        let row = $(".labresult-row:first").clone();
+        row.find("input").not("[type=hidden]").val("");
+        row.find(".labtest-id").val("");
+        row.find(".view-normal-btn").hide();
+        row.find(".normal-value-info").empty();
+        row.find(".normal-value-suggestion").hide().empty();
+        $("#labresult-body").append(row);
+        row.find("input[name='labtestdate[]']").val(today);
+    });
+
+    // Remove Row
+    $("#labresult-body").on("click", ".remove-row", function () {
+        if ($("#labresult-body .labresult-row").length > 1) $(this).closest("tr").remove();
+    });
+
+    // Save Lab Results
+    $("#labResultForm").submit(function (e) {
+        e.preventDefault();
+        if (!$("#labptid").val()) return alert("Select patient first!");
+        let formData = new FormData();
+        let hasValidData = false;
+        $("#labresult-body .labresult-row").each(function (index) {
+            const labtestId = $(this).find("input[name='labtest_id[]']").val();
+            const resultValue = $(this).find("input[name='result_value[]']").val();
+            if (labtestId && labtestId.trim() !== "" && resultValue && resultValue.trim() !== "") {
+                hasValidData = true;
+                formData.append("labtestdate[]", $(this).find("input[name='labtestdate[]']").val() || "");
+                formData.append("labtest_id[]", labtestId);
+                formData.append("labtest[]", $(this).find("input[name='labtest[]']").val() || "");
+                formData.append("result[]",$(this).find("select[name='result[]']").val() || "");
+                formData.append("result_value[]", resultValue);
+                formData.append("normal_value[]", $(this).find("input[name='normal_value[]']").val() || "");
+                const fileInput = $(this).find("input[type='file']")[0];
+                formData.append("report_file[]", fileInput && fileInput.files.length > 0 ? fileInput.files[0] : "");
+            }
+        });
+        if (!hasValidData) return alert("Please enter at least one lab test result value.");
+        formData.append("labptid", $("#labptid").val());
+        formData.append("patient_age", patientData.age || "");
+        formData.append("invoice_id", $("#invoice_id").val() || "");
+        formData.append("csrfmiddlewaretoken", $("input[name=csrfmiddlewaretoken]").val());
+        
+        const submitBtn = $(this).find('button[type="submit"]');
+        const originalText = submitBtn.text();
+        submitBtn.prop('disabled', true).text('Saving...');
+        
+        $.ajax({
+            url: "{% url 'save_lab_results' %}",
+            type: "POST",
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (res) {
+                if (res.success) {
+                    alert("Lab results saved successfully!");
+                    recentSavedResults = res.labresults || [];
+                    $("#printLabReport").hide();
+                    loadPatientHistoryAndPending($("#labptid").val());
+                    $("#labresult-body").empty();
+                    $("#labresult-body").append(`
+                        <tr class="labresult-row">
+                            <td><input type="date" name="labtestdate[]" class="form-control" value="${today}"></td>
+                            <td><div class="test-input-container"><input type="text" name="labtest[]" class="form-control labtest-input" placeholder="Search lab test...">
+                            <button type="button" class="btn btn-sm btn-info view-normal-btn" style="display: none;"><i class="fas fa-info-circle"></i></button>
+                            <input type="hidden" name="labtest_id[]" class="labtest-id"></div><div class="normal-value-info"></div></td>
+                            <td><input type="text" name="result_value[]" class="form-control result-input"></td>
+                            <td><input type="text" name="normal_value[]" class="form-control normal-value-input">
+                             <td>
+                <select  name="result[]" class="form-control result-status-select" required>
+                <option value="">Choose</option>
+                <option value="Low">Low</option>
+                <option value="Normal">Normal</option>
+                <option value="High">High</option>
+                <option value="Positive">Positive</option>
+                <option value="Negative">Negative</option>
+                <option value="Responsive">Responsive</option>
+                <option value="Not Responsive">Not Responsive</option>
+                </select>
+              </td>
+                            <div class="normal-value-suggestion" style="font-size: 11px; color: #28a745; display: none;"></div></td>
+                            <td style="display: none;"><input type="file" name="report_file[]" accept="application/pdf" class="form-control"></td>
+                            <td><button type="button" class="btn btn-sm btn-danger remove-row">Remove</button></td>
+                        </tr>
+                    `);
+                } else {
+                    alert("Error: " + (res.error || "Unknown error"));
+                }
+            },
+            error: function (xhr) { alert("Save failed: " + xhr.statusText); },
+            complete: function() { submitBtn.prop('disabled', false).text(originalText); }
+        });
+    });
+
+    // Autocomplete Lab Test
+    $(document).on("input", ".labtest-input", function () {
+        const input = $(this);
+        const query = input.val().trim();
+        const list = input.siblings(".autocomplete-list");
+        const hidden = input.siblings(".labtest-id");
+        const viewBtn = input.siblings(".view-normal-btn");
+        if (query.length < 2) { list.hide().empty(); viewBtn.hide(); return; }
+        $.get("{% url 'search_labtests' %}", { term: query }, function (data) {
+            list.empty().show();
+            data.forEach(item => {
+                $("<button>").addClass("list-group-item list-group-item-action").text(item.label).on("click", function () {
+                    input.val(item.value);
+                    hidden.val(item.id);
+                    list.hide();
+                    viewBtn.show().data({ 'test-id': item.id, 'test-name': item.value });
+                    if (patientData.gender) autoSuggestNormalValue(item.id, patientData.gender, patientData.age, input.closest('.labresult-row'));
+                }).appendTo(list);
+            });
+        });
+    });
+
+    $(document).on('click', function(e) { if (!$(e.target).closest('.test-input-container').length) $('.autocomplete-list').hide(); });
+    $(document).on("click", ".view-normal-btn", function () { loadNormalValues($(this).data('test-id'), $(this).data('test-name'), $(this).closest('.labresult-row')); });
+    $(document).on("click", ".use-normal-btn", function () {
+        const row = $(this).closest('tr');
+        const minVal = row.data('min'), maxVal = row.data('max'), unit = row.data('unit');
+        if (minVal && maxVal && currentRowElement) {
+            currentRowElement.find('.normal-value-input').val(`${minVal} - ${maxVal}` + (unit ? ` ${unit}` : ''));
+            $("#normalValuesModal").modal('hide');
+        }
+    });
+    
+    $("#printLabReport").on("click", function () { if (allLabResults.length) printLabResults(allLabResults, "Lab Results"); });
+    
+    $("#mrSearch").on("keypress", function(e) { if (e.which === 13) $("#searchBtn").click(); });
+    
+    $("#printLabReport").hide();
+    $('[data-toggle="tooltip"]').tooltip();
+    
+    console.log("Document ready completed");
+});
+</script>
+{% endblock %}

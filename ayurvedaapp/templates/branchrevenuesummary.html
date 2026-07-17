@@ -1,0 +1,589 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block content %}
+
+<style>
+  /* ===== Primary Color Theme: #109383 ===== */
+  :root {
+    --primary-color: #109383;
+    --primary-dark: #0d7a6b;
+    --primary-light: #14b8a6;
+    --primary-bg: rgba(16, 147, 131, 0.1);
+    --primary-bg-hover: rgba(16, 147, 131, 0.15);
+    
+    --success-color: #22c55e;
+    --warning-color: #f59e0b;
+    --info-color: #3b82f6;
+    
+    --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    --card-hover-shadow: 0 15px 30px -5px rgba(16, 147, 131, 0.2);
+    --transition: all 0.2s ease;
+  }
+
+  .content-wrapper {
+    background: #f8f9fc;
+    min-height: 100vh;
+  }
+
+  /* ===== Page Header ===== */
+  .page-header {
+    background: var(--primary-color);
+    color: white;
+    padding: 1.5rem 2rem;
+    border-radius: 0 0 1rem 1rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--card-shadow);
+  }
+
+  .page-header h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .page-header h1 i {
+    font-size: 1.5rem;
+  }
+
+  /* ===== Filter Section ===== */
+  .filter-card {
+    background: white;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--card-shadow);
+    border: none;
+    border-top: 4px solid var(--primary-color);
+  }
+
+  .filter-card .form-label {
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .filter-card .form-control {
+    border-radius: 0.5rem;
+    border: 2px solid #e9ecef;
+    padding: 0.6rem 1rem;
+    transition: var(--transition);
+  }
+
+  .filter-card .form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px var(--primary-bg);
+  }
+
+  .filter-card .btn-primary {
+    background: var(--primary-color);
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.6rem 1.5rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: var(--transition);
+  }
+
+  .filter-card .btn-primary:hover {
+    background: var(--primary-dark);
+    box-shadow: 0 10px 20px rgba(16, 147, 131, 0.3);
+  }
+
+  /* ===== Summary Cards ===== */
+  .summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+  }
+
+  .summary-card {
+    background: white;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: var(--card-shadow);
+    transition: var(--transition);
+    border: none;
+    border-top: 4px solid var(--primary-color);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .summary-card:hover {
+    box-shadow: var(--card-hover-shadow);
+    transform: translateY(-3px);
+  }
+
+  .summary-card .card-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    background: var(--primary-bg);
+    color: var(--primary-color);
+    transition: var(--transition);
+  }
+
+  .summary-card .card-label {
+    font-size: 0.9rem;
+    color: #6c757d;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+  }
+
+  /* ===== AMOUNT TEXT - CRISP & NORMAL ===== */
+  .summary-card .card-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin: 0;
+    /* Crisp text rendering */
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .summary-card .card-currency {
+    font-size: 1rem;
+    color: #6c757d;
+    font-weight: 400;
+  }
+
+  /* Category-specific accent colors (subtle) */
+  .summary-card.inventory .card-icon { background: rgba(245, 158, 11, 0.15); color: var(--warning-color); }
+  .summary-card.pharmacy .card-icon { background: rgba(34, 197, 94, 0.15); color: var(--success-color); }
+  .summary-card.appointment .card-icon { background: rgba(59, 130, 246, 0.15); color: var(--info-color); }
+
+  /* ===== Status-Specific Card Styling ===== */
+  .summary-card.status-card {
+    border-top-color: var(--primary-color);
+  }
+
+  .summary-card.status-card .card-icon {
+    background: var(--primary-bg);
+    color: var(--primary-color);
+  }
+
+  /* Optional: Add subtle color variations based on status name */
+  .summary-card.status-card[data-status*="consult"] .card-icon,
+  .summary-card.status-card[data-status*="new"] .card-icon,
+  .summary-card.status-card[data-status*="initial"] .card-icon {
+    background: rgba(59, 130, 246, 0.15);
+    color: var(--info-color);
+  }
+
+  .summary-card.status-card[data-status*="follow"] .card-icon,
+  .summary-card.status-card[data-status*="review"] .card-icon,
+  .summary-card.status-card[data-status*="pending"] .card-icon {
+    background: rgba(245, 158, 11, 0.15);
+    color: var(--warning-color);
+  }
+
+  .summary-card.status-card[data-status*="complete"] .card-icon,
+  .summary-card.status-card[data-status*="done"] .card-icon,
+  .summary-card.status-card[data-status*="closed"] .card-icon {
+    background: rgba(34, 197, 94, 0.15);
+    color: var(--success-color);
+  }
+
+  .summary-card.status-card[data-status*="cancel"] .card-icon,
+  .summary-card.status-card[data-status*="no"] .card-icon {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+  }
+
+  /* Hover effect for status cards */
+  .summary-card.status-card:hover .card-icon {
+    transform: scale(1.1);
+  }
+
+  /* ===== Table Section ===== */
+  .table-section {
+    background: white;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: var(--card-shadow);
+    border: none;
+    border-top: 4px solid var(--primary-color);
+  }
+
+  .section-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #e9ecef;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .section-title i {
+    color: var(--primary-color);
+  }
+
+  .table-responsive {
+    border-radius: 0.75rem;
+    overflow: hidden;
+  }
+
+  .table {
+    min-width: 1500px !important;
+    margin-bottom: 0;
+  }
+
+  .table thead th {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    color: #495057;
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 1rem 0.75rem;
+    border-bottom: 2px solid #dee2e6;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .table tbody td {
+    padding: 1rem 0.75rem;
+    vertical-align: middle;
+    font-size: 0.95rem;
+    color: #495057;
+    border-bottom: 1px solid #e9ecef;
+  }
+
+  .table tbody tr:hover {
+    background: var(--primary-bg-hover);
+  }
+
+  .table tbody tr:hover td:first-child {
+    color: var(--primary-color);
+    font-weight: 600;
+  }
+
+  .table td:first-child,
+  .table th:first-child {
+    position: sticky;
+    left: 0;
+    background: white;
+    z-index: 5;
+    font-weight: 600;
+    color: #2d3748;
+    border-right: 2px solid #e9ecef;
+  }
+
+  .table thead th:first-child {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    z-index: 15;
+  }
+
+  /* ===== TABLE FOOTER - PRIMARY COLOR ===== */
+  .table tfoot th {
+    background: var(--primary-color);
+    color: white;
+    font-weight: 700;
+    font-size: 1rem;
+    padding: 1rem 0.75rem;
+    border-top: 3px solid rgba(255,255,255,0.3);
+  }
+
+  .table tfoot th:first-child {
+    background: var(--primary-color);
+    z-index: 15;
+  }
+
+  .table tfoot th:hover {
+    background: var(--primary-dark);
+  }
+
+  /* ===== AMOUNT CELLS - CRISP & NORMAL ===== */
+  .amount-cell {
+    font-weight: 600;
+    color: #2d3748;
+    /* Crisp text rendering */
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .amount-cell.total {
+    color: var(--primary-color);
+    font-weight: 700;
+  }
+
+  /* ===== Empty State ===== */
+  .empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #6c757d;
+  }
+
+  .empty-state i {
+    font-size: 3rem;
+    color: #dee2e6;
+    margin-bottom: 1rem;
+  }
+
+  .empty-state p {
+    font-size: 1.1rem;
+    margin: 0;
+  }
+
+  /* ===== Responsive Adjustments ===== */
+  @media (max-width: 991px) {
+    .page-header h1 {
+      font-size: 1.5rem;
+    }
+    
+    .summary-card .card-value {
+      font-size: 1.5rem;
+    }
+    
+    .filter-card .btn-primary {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+  @media (max-width: 767px) {
+    .page-header {
+      padding: 1rem 1.5rem;
+    }
+    
+    .filter-card,
+    .table-section {
+      padding: 1rem;
+      border-radius: 0.75rem;
+    }
+    
+    .summary-cards {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* ===== Print Styles ===== */
+  @media print {
+    .filter-card,
+    .main-sidebar,
+    .main-header {
+      display: none !important;
+    }
+    
+    .content-wrapper {
+      background: white;
+    }
+    
+    .summary-card,
+    .table-section {
+      box-shadow: none;
+      border: 1px solid #dee2e6;
+      border-top-color: var(--primary-color);
+    }
+    
+    .table td:first-child,
+    .table th:first-child {
+      position: static;
+    }
+    
+    .table tfoot th {
+      background: var(--primary-color) !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+  }
+
+  /* ===== Utility Classes ===== */
+  .text-primary { color: var(--primary-color) !important; }
+  .bg-primary-light { background: var(--primary-bg) !important; }
+  .border-primary { border-color: var(--primary-color) !important; }
+</style>
+
+<div class="content-wrapper">
+  <!-- Page Header -->
+  <div class="page-header">
+    <h1><i class="fas fa-chart-line"></i> Revenue Dashboard</h1>
+  </div>
+
+  <section class="content">
+    <div class="container-fluid">
+      
+      <!-- Filter Section -->
+      <div class="filter-card">
+        <form method="get" class="row g-3 align-items-end justify-content-center">
+          <div class="col-md-3 col-sm-6">
+            <label class="form-label"><i class="far fa-calendar-alt me-1"></i>Start Date</label>
+            <input type="date" name="start_date" class="form-control"
+                   value="{{ start_date|date:'Y-m-d' }}">
+          </div>
+
+          <div class="col-md-3 col-sm-6">
+            <label class="form-label"><i class="far fa-calendar-alt me-1"></i>End Date</label>
+            <input type="date" name="end_date" class="form-control"
+                   value="{{ end_date|date:'Y-m-d' }}">
+          </div>
+
+          <div class="col-md-2 col-sm-6">
+            <button type="submit" class="btn btn-primary w-100">
+              <i class="fas fa-filter"></i> Apply Filter
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Summary Cards -->
+      <div class="summary-cards">
+        <!-- Total Revenue (Grand Total) -->
+        <div class="summary-card">
+          <div class="card-icon">
+            <i class="fas fa-coins"></i>
+          </div>
+          <div class="card-label">Total Revenue</div>
+          <div class="card-value">
+            <span class="card-currency">₹</span>
+            {{ appointment_total|add:pharmacy_total|add:inventory_total|floatformat:2 }}
+          </div>
+        </div>
+
+        <!-- Dynamic Status Cards (Loop through available statuses) -->
+        {% for status in statuses %}
+        <div class="summary-card status-card" data-status="{{ status|slugify }}">
+          <div class="card-icon">
+            <i class="fas fa-stethoscope"></i>
+          </div>
+          <div class="card-label">{{ status }}</div>
+          <div class="card-value">
+            <span class="card-currency">₹</span>
+            {{ branch_revenue|map_status_total:status|floatformat:2 }}
+          </div>
+        </div>
+        {% endfor %}
+
+        <!-- Millet/Inventory -->
+        <!-- <div class="summary-card inventory">
+          <div class="card-icon">
+            <i class="fas fa-seedling"></i>
+          </div>
+          <div class="card-label">Millet Revenue</div>
+          <div class="card-value">
+            <span class="card-currency">₹</span>
+            {{ inventory_total|floatformat:2 }}
+          </div>
+        </div> -->
+
+        <!-- Pharmacy -->
+        <div class="summary-card pharmacy">
+          <div class="card-icon">
+            <i class="fas fa-prescription-bottle-alt"></i>
+          </div>
+          <div class="card-label">Inventory Revenue</div>
+          <div class="card-value">
+            <span class="card-currency">₹</span>
+            {{ pharmacy_total|floatformat:2 }}
+          </div>
+        </div>
+
+        <!-- Appointments (All Statuses Combined) -->
+        <!-- <div class="summary-card appointment">
+          <div class="card-icon">
+            <i class="fas fa-user-injured"></i>
+          </div>
+          <div class="card-label">Appointment Revenue</div>
+          <div class="card-value">
+            <span class="card-currency">₹</span>
+            {{ appointment_total|floatformat:2 }}
+          </div>
+        </div> -->
+      </div>
+
+      <!-- Branch Revenue Table -->
+      <div class="table-section">
+        <h2 class="section-title">
+          <i class="fas fa-building"></i>
+          Branch Revenue Summary 
+          <small class="text-muted fs-6 fw-normal ms-2">
+            ({{ start_date }} to {{ end_date }})
+          </small>
+        </h2>
+
+        <div class="table-responsive">
+          <table id="example1" class="table table-bordered table-striped table-hover">
+            <thead>
+              <tr>
+                <th><i class="fas fa-store me-1"></i>Branch</th>
+                {% for status in statuses %}
+                  <th>{{ status }}</th>
+                {% endfor %}
+                <!-- <th><i class="fas fa-seedling me-1"></i>Millet</th> -->
+                <th><i class="fas fa-prescription-bottle me-1"></i>Inventory</th>
+                <th><i class="fas fa-calculator me-1"></i>Total</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {% for branch in branch_revenue %}
+              <tr>
+                <td><strong>{{ branch.name }}</strong></td>
+                {% for status in statuses %}
+                  <td class="amount-cell">
+                    ₹ {{ branch.statuses|get_item:status|default:0|floatformat:2 }}
+                  </td>
+                {% endfor %}
+                <!-- <td class="amount-cell">₹ {{ branch.inventory_total|floatformat:2 }}</td> -->
+                <td class="amount-cell">₹ {{ branch.pharmacy_total|floatformat:2 }}</td>
+                <td class="amount-cell total">
+                  <strong>₹ {{ branch.total|floatformat:2 }}</strong>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="{{ statuses|length|add:4 }}">
+                  <div class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <p>No revenue data available for the selected period.</p>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+
+            <tfoot class="table-secondary">
+              <tr>
+                <th class="text-light"><i class="fas fa-chart-pie me-1 text-light"></i>Grand Total</th>
+                {% for status in statuses %}
+                  <th>
+                    ₹ {{ branch_revenue|map_status_total:status|floatformat:2 }}
+                  </th>
+                {% endfor %}
+                <!-- <th>₹ {{ inventory_total|floatformat:2 }}</th> -->
+                <th>₹ {{ pharmacy_total|floatformat:2 }}</th>
+                <th>
+                  ₹ {{ appointment_total|add:pharmacy_total|add:inventory_total|floatformat:2 }}
+                </th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </section>
+</div>
+
+{% endblock %}

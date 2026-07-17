@@ -1,0 +1,500 @@
+{% extends 'base.html' %} {% load static %} {% block content %}
+
+<style>
+  .custom-legend {
+    border: 2px solid #000;
+    background: #fff;
+    padding: 10px 14px;
+    min-width: 160px;
+    font-size: 12px;
+    font-weight: 500;
+    box-shadow: 1px 1px 0px #000;
+    border-radius: 4px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 4px;
+    padding: 2px 0;
+  }
+
+  .legend-item:last-child {
+    margin-bottom: 0;
+  }
+
+  .legend-color {
+    width: 12px;
+    height: 12px;
+    margin-right: 8px;
+    display: inline-block;
+    flex-shrink: 0;
+    border: 1px solid #000;
+  }
+
+  .legend-text {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+  }
+  
+  .legend-value {
+    font-weight: 600;
+  }
+
+  #billChart {
+    background: linear-gradient(to bottom, #52d88a, #d6f3df);
+    border: 1px solid #ccc;
+    padding: 12px;
+    border-radius: 4px;
+  }
+  
+  .chart-wrapper {
+    position: relative;
+    height: 200px;
+    width: 100%;
+  }
+  
+  .table-sm {
+    font-size: 12px;
+  }
+  
+  .table-sm th, .table-sm td {
+    padding: 5px 10px;
+  }
+  
+  .card-body {
+    padding: 1.25rem;
+  }
+  
+  .chart-section {
+    margin-top: 0.5rem;
+  }
+  
+  .doctor-name {
+    font-size: 14px;
+    margin-bottom: 0.75rem;
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border-left: 3px solid #007bff;
+    border-radius: 2px;
+  }
+</style>
+
+<div class="content-wrapper">
+  <!-- Header -->
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Doctor Wise Bill Analysis</h1>
+        </div>
+        <div class="col-sm-6 text-right">
+          <button type="button" class="btn btn-primary btn-sm" onclick="printFullReport()">
+            <i class="fas fa-print"></i> Print Full Report
+          </button>
+        </div>
+      </div>
+
+      <!-- Filter -->
+      <div class="card">
+        <div class="card-body">
+          <form method="GET" action="" id="filterForm">
+            <div class="row">
+              <div class="col-md-3">
+                <div class="form-group">
+                  <label>From Date</label>
+                  <input type="date" class="form-control" name="from_date" value="{{ from_date }}" id="fromDate">
+                </div>
+              </div>
+
+              <div class="col-md-3">
+                <div class="form-group">
+                  <label>To Date</label>
+                  <input type="date" class="form-control" name="to_date" value="{{ to_date }}" id="toDate">
+                </div>
+              </div>
+
+              <div class="col-md-3">
+                <div class="form-group">
+                  <label>Doctor</label>
+                  <select class="form-control" name="doctor" id="doctorFilter">
+                    <option value="">All Doctors</option>
+                    {% for doctor in doctors %}
+                    <option value="{{ doctor.id }}" {% if selected_doctor == doctor.id|stringformat:"s" %}selected{% endif %}>
+                      {{ doctor.name }}
+                    </option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+
+              <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary btn-block">
+                  <i class="fas fa-search"></i> Search
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Content -->
+  <section class="content">
+    <div class="container-fluid">
+      <div class="card">
+        <div class="card-body">
+          <!-- Doctor Name -->
+          <div class="doctor-name">
+            <strong>Doctor Name :</strong> {{ selected_doctor_name }}
+            <span class="float-right text-muted" style="font-weight: normal; font-size: 12px;">
+              Period: {{ from_date|date:"d-M-Y" }} to {{ to_date|date:"d-M-Y" }}
+            </span>
+          </div>
+
+          <!-- Summary Table -->
+          <div class="row">
+            <div class="col-md-4">
+              <table class="table table-bordered table-sm">
+                <thead class="thead-light">
+                  <tr>
+                    <th>Bill Name</th>
+                    <th class="text-right">Gross Amount</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {% for bill_type, amount in bill_types.items %}
+                  <tr>
+                    <td>{{ bill_type }}</td>
+                    <td class="text-right">₹ {{ amount|floatformat:2 }}</td>
+                  </tr>
+                  {% empty %}
+                  <tr>
+                    <td colspan="2" class="text-center text-muted">No bills found</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+
+                <tfoot class="font-weight-bold">
+                  <tr>
+                    <td>Total</td>
+                    <td class="text-right">₹ {{ total_amount|floatformat:2 }}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+
+          <!-- Chart + Legend -->
+          <div class="row mt-3 chart-section">
+            <!-- Chart -->
+            <div class="col-md-8">
+              <div class="chart-wrapper">
+                <canvas id="billChart"></canvas>
+              </div>
+            </div>
+
+            <!-- Legend -->
+            <div class="col-md-4">
+              <div class="custom-legend">
+                {% for bill_type, amount in bill_types.items %}
+                <div class="legend-item">
+                  <span class="legend-color" style="background-color: {{ forloop.counter0|divisibleby:2|yesno:'#dc3545,#28a745' }};"></span>
+                  <span class="legend-text">
+                    <span>{{ bill_type }}</span>
+                    <span class="legend-value">₹{{ amount|floatformat:0 }}</span>
+                  </span>
+                </div>
+                {% empty %}
+                <div class="text-center text-muted">No data available</div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Bill Details Table -->
+          <div class="row mt-4">
+            <div class="col-12">
+              <h6 class="font-weight-bold">Bill Details</h6>
+              <div class="table-responsive">
+                <table class="table table-bordered table-striped table-sm">
+                  <thead>
+                    <tr>
+                      <th>Sl.No</th>
+                      <th>Bill Number</th>
+                      <th>Bill Type</th>
+                      <th>Patient Name</th>
+                      <th class="text-right">Amount</th>
+                      <th>Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% if bill_details %}
+                      {% for bill in bill_details %}
+                      <tr>
+                        <td>{{ forloop.counter0|add:bill_details.start_index }}</td>
+                        <td>{{ bill.bill_number }}</td>
+                        <td>{{ bill.bill_type }}</td>
+                        <td>{{ bill.patient_name }}</td>
+                        <td class="text-right">₹ {{ bill.amount|floatformat:2 }}</td>
+                        <td>{{ bill.date|date:"d/m/Y" }}</td>
+                      </tr>
+                      {% endfor %}
+                    {% else %}
+                      <tr>
+                        <td colspan="6" class="text-center text-muted">No bill details found</td>
+                      </tr>
+                    {% endif %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pagination -->
+          <div class="row mt-3">
+            <div class="col-sm-12 col-md-5">
+              <div class="dataTables_info">
+                Showing {{ bill_details.start_index }} to {{ bill_details.end_index }} of {{ bill_details.paginator.count }} entries
+              </div>
+            </div>
+            <div class="col-sm-12 col-md-7">
+              <ul class="pagination justify-content-end">
+                {% if bill_details.has_previous %}
+                  <li class="page-item">
+                    <a class="page-link" href="?page=1{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}{% if selected_doctor %}&doctor={{ selected_doctor }}{% endif %}">
+                      <i class="fas fa-angle-double-left"></i>
+                    </a>
+                  </li>
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ bill_details.previous_page_number }}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}{% if selected_doctor %}&doctor={{ selected_doctor }}{% endif %}">
+                      <i class="fas fa-angle-left"></i>
+                    </a>
+                  </li>
+                {% endif %}
+
+                {% for num in bill_details.paginator.page_range %}
+                  {% if bill_details.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                  {% elif num > bill_details.number|add:'-3' and num < bill_details.number|add:'3' %}
+                    <li class="page-item">
+                      <a class="page-link" href="?page={{ num }}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}{% if selected_doctor %}&doctor={{ selected_doctor }}{% endif %}">
+                        {{ num }}
+                      </a>
+                    </li>
+                  {% endif %}
+                {% endfor %}
+
+                {% if bill_details.has_next %}
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ bill_details.next_page_number }}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}{% if selected_doctor %}&doctor={{ selected_doctor }}{% endif %}">
+                      <i class="fas fa-angle-right"></i>
+                    </a>
+                  </li>
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ bill_details.paginator.num_pages }}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}{% if selected_doctor %}&doctor={{ selected_doctor }}{% endif %}">
+                      <i class="fas fa-angle-double-right"></i>
+                    </a>
+                  </li>
+                {% endif %}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Hidden Print Area -->
+<div id="printArea" style="display: none; padding: 20px; min-height: 100vh; position: relative;">
+  <!-- Hospital Header -->
+  {% if hospital %}
+  <div style="text-align: center; margin-bottom: 20px;">
+    <h2 style="margin: 0; font-weight: bold; font-size: 20px;">{{ hospital.Name }}</h2>
+    <p style="margin: 0; font-size: 14px;">{{ hospital.Address }}</p>
+    {% if hospital.GST and hospital.GST|lower != "none" %}
+    <p style="margin: 0; font-size: 14px;"><strong>TIN:</strong> {{ hospital.GST }}</p>
+    {% endif %}
+    <h4 style="margin: 10px 0; font-size: 18px;">Doctor Wise Bill Analysis</h4>
+    <p style="margin: 0; font-size: 14px;">
+      <strong>Doctor:</strong> {{ selected_doctor_name }} |
+      <strong>Period:</strong> {{ from_date|date:"d-M-Y" }} To {{ to_date|date:"d-M-Y" }}
+    </p>
+    <hr style="border: 1px solid #000; margin: 10px 0;">
+  </div>
+  {% endif %}
+
+  <!-- Full Table for Print -->
+  <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+    <thead>
+      <tr style="background-color: #000; color: #fff;">
+        <th style="border: 1px solid #000; padding: 4px;">Sl.No</th>
+        <th style="border: 1px solid #000; padding: 4px;">Bill Number</th>
+        <th style="border: 1px solid #000; padding: 4px;">Bill Type</th>
+        <th style="border: 1px solid #000; padding: 4px;">Patient Name</th>
+        <th style="border: 1px solid #000; padding: 4px; text-align: right;">Amount</th>
+        <th style="border: 1px solid #000; padding: 4px;">Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% if bill_details %}
+        {% for bill in bill_details %}
+        <tr>
+          <td style="border: 1px solid #000; padding: 3px;">{{ forloop.counter0|add:bill_details.start_index }}</td>
+          <td style="border: 1px solid #000; padding: 3px;">{{ bill.bill_number }}</td>
+          <td style="border: 1px solid #000; padding: 3px;">{{ bill.bill_type }}</td>
+          <td style="border: 1px solid #000; padding: 3px;">{{ bill.patient_name }}</td>
+          <td style="border: 1px solid #000; padding: 3px; text-align: right;">₹ {{ bill.amount|floatformat:2 }}</td>
+          <td style="border: 1px solid #000; padding: 3px;">{{ bill.date|date:"d/m/Y" }}</td>
+        </tr>
+        {% endfor %}
+      {% endif %}
+    </tbody>
+    <tfoot>
+      <tr style="background-color: #ddd; font-weight: bold;">
+        <td colspan="4" style="border: 1px solid #000; padding: 4px;">Total</td>
+        <td style="border: 1px solid #000; padding: 4px; text-align: right;">₹ {{ total_amount|floatformat:2 }}</td>
+        <td style="border: 1px solid #000; padding: 4px;"></td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <div style="position: absolute; bottom: 0; left: 0; right: 0; text-align: center; font-size: 11px; color: #666; padding: 10px 0;">
+    <hr style="border: 1px solid #ddd; margin: 10px 0;">
+    <p style="margin: 0;"><strong>*** This is a computer generated report ***</strong></p>
+    <p style="margin: 0;">Generated on: {% now "d/m/Y H:i:s" %}</p>
+  </div>
+</div>
+
+<!-- Chart JS -->
+<script>
+  const ctx = document.getElementById("billChart");
+
+  // Get data from Django context
+  const chartLabels = {{ chart_labels|safe }};
+  const chartData = {{ chart_data|safe }};
+  const chartColors = {{ chart_colors|safe }};
+
+  new Chart(ctx, {
+    type: "bar",
+
+    data: {
+      labels: chartLabels,
+      datasets: [
+        {
+          label: "Gross Amount",
+          data: chartData,
+          backgroundColor: chartColors,
+          borderColor: "#000",
+          borderWidth: 1.5,
+          borderRadius: 2,
+          barPercentage: 0.35,
+          categoryPercentage: 0.6,
+        },
+      ],
+    },
+
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+
+      plugins: {
+        legend: {
+          display: false,
+        },
+        
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return '₹' + context.parsed.y.toLocaleString();
+            }
+          }
+        }
+      },
+
+      scales: {
+        y: {
+          beginAtZero: true,
+
+          ticks: {
+            stepSize: 100,
+            font: {
+              size: 10,
+              weight: '500',
+            },
+            callback: function(value) {
+              return '₹' + value;
+            }
+          },
+          
+          grid: {
+            color: "rgba(0,0,0,0.08)",
+            drawBorder: true,
+          },
+        },
+        
+        x: {
+          ticks: {
+            font: {
+              size: 10,
+              weight: '500',
+            },
+          },
+          
+          grid: {
+            display: false,
+          },
+        },
+      },
+      
+      layout: {
+        padding: {
+          top: 10,
+          bottom: 5,
+          left: 5,
+          right: 15,
+        },
+      },
+    },
+  });
+
+  function resetFilters() {
+    document.getElementById('fromDate').value = '';
+    document.getElementById('toDate').value = '';
+    document.getElementById('doctorFilter').value = '';
+    document.getElementById('filterForm').submit();
+  }
+
+  function printFullReport() {
+    var printContent = document.getElementById('printArea').innerHTML;
+    var printWindow = window.open('', '_blank', 'width=1000,height=800');
+    printWindow.document.write('<html><head><title>Doctor Wise Bill Analysis Report</title>');
+    printWindow.document.write('<style>');
+    printWindow.document.write('body { padding: 20px; font-family: Arial, sans-serif; margin: 0; padding: 0; }');
+    printWindow.document.write('.print-container { padding: 20px; min-height: 100vh; position: relative; }');
+    printWindow.document.write('table { width: 100%; border-collapse: collapse; font-size: 11px; }');
+    printWindow.document.write('th, td { border: 1px solid #000; padding: 4px; }');
+    printWindow.document.write('th { background-color: #000; color: #fff; }');
+    printWindow.document.write('@page { size: A4; margin: 12mm; }');
+    printWindow.document.write('@media print { body { margin: 0; padding: 0; } }');
+    printWindow.document.write('.footer-print { position: absolute; bottom: 0; left: 0; right: 0; text-align: center; font-size: 10px; color: #666; padding: 10px 0; }');
+    printWindow.document.write('</style>');
+    printWindow.document.write('</head><body>');
+    printWindow.document.write('<div class="print-container">');
+    printWindow.document.write(printContent);
+    printWindow.document.write('</div>');
+    printWindow.document.write('</body></html>');
+    printWindow.document.close();
+    
+    setTimeout(function() {
+      printWindow.print();
+      printWindow.close();
+    }, 500);
+  }
+</script>
+
+{% endblock %}

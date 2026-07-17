@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<style>
+     .container {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    .record-item {
+        background: #e3f2fd;
+        padding: 10px;
+        margin: 5px 0;
+        border-radius: 5px;
+    }
+</style>
+<div class="content-wrapper">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h2 class="text-center">In-Patient Daily Treatment Details</h2>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'ipdttable' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Patient List
+                            </a>
+                        </li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <section class="content">
+        <div class="container mt-4">
+            <div class="profile d-flex align-items-center border-bottom pb-3">
+                <div class="ms-3">
+                    <h4>{{ patient.Patient_Name }}</h4>
+                    <p>Age: {{ patient.Age }} | Patient ID: {{ patient.Medical_Record_Number }}</p>
+                    <p>Admitted: {{ admission.Current_Date }} </p>
+                </div>
+            </div>
+            
+            <div class="mt-3">
+                <h5>Daily Health Records</h5>
+                {% for date, record in daily_records.items %}
+                <div class="record-item">
+                    <p><strong>Date:</strong> {{ date }}</p>
+                    <p><strong>Medicine Taken:</strong> {{ record.medicine|join:", " }}</p>
+                    {% for treatment in record.treatment %}
+                        <p><strong>Treatment:</strong> {{ treatment.name }}</p>
+                        <p><strong>Time:</strong> {{ treatment.time }}</p>
+                        <p><strong>Handled By:</strong> {{ treatment.handled_by }}</p>
+                        <p><strong>Given By:</strong> {{ treatment.given_by }}</p>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+            </div>
+            <div class="mt-3">
+                <h5>Contact Medical Staff</h5>
+                <p><strong>Doctor:</strong> {{ admission.admitteddoctor.Staff.Staff_firstname }} </p>
+                <p><strong>Nurse:</strong> {{ admission.admitteddepartmnt.nurse_name }} </p>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

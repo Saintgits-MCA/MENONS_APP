@@ -1,0 +1,221 @@
+{% extends 'base.html' %} {% load static %} {% block content %}
+
+<div class="content-wrapper">
+  <!-- Page Header -->
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Doctor Wise Admission Register</h1>
+        </div>
+      </div>
+
+      <!-- Filter Card -->
+      <div class="card mb-0">
+        <div class="card-body">
+          <form method="GET" action="" id="filterForm">
+            <div class="row">
+              <div class="col-lg-2 col-md-4">
+                <div class="form-group">
+                  <label>From Date</label>
+                  <input type="date" class="form-control" name="from_date" value="{{ from_date }}" id="fromDate">
+                </div>
+              </div>
+
+              <div class="col-lg-2 col-md-4">
+                <div class="form-group">
+                  <label>To Date</label>
+                  <input type="date" class="form-control" name="to_date" value="{{ to_date }}" id="toDate">
+                </div>
+              </div>
+
+              <div class="col-lg-2 col-md-4">
+                <div class="form-group">
+                  <label>Doctor Name</label>
+                  <select class="form-control" name="doctor" id="doctorFilter">
+                    <option value="">All Doctors</option>
+                    {% for doctor in doctors %}
+                    <option value="{{ doctor.id }}" {% if doctor_id == doctor.id|stringformat:"s" %}selected{% endif %}>
+                      {{ doctor.name }}
+                    </option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+
+              <div class="col-lg-2 col-md-4">
+                <div class="form-group">
+                  <label>Status</label>
+                  <select class="form-control" name="status" id="statusFilter">
+                    <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Patients</option>
+                    <option value="admitted" {% if status_filter == 'admitted' %}selected{% endif %}>Admitted</option>
+                    <option value="discharged" {% if status_filter == 'discharged' %}selected{% endif %}>Discharged</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="col-lg-2 col-md-6">
+                <div class="form-group">
+                  <label>&nbsp;</label>
+                  <button type="submit" class="btn btn-primary btn-block">
+                    <i class="fas fa-search"></i> Search
+                  </button>
+                </div>
+              </div>
+
+              <div class="col-lg-2 col-md-6">
+                <div class="form-group">
+                  <label>&nbsp;</label>
+                  <button type="button" class="btn btn-secondary btn-block" onclick="resetFilters()">
+                    <i class="fas fa-undo"></i> Reset
+                  </button>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Summary Cards -->
+  <section class="content">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-lg-4 col-6">
+          <div class="small-box bg-info">
+            <div class="inner">
+              <h3>{{ total_count }}</h3>
+              <p>Total Admissions</p>
+            </div>
+            <div class="icon">
+              <i class="fas fa-hospital-user"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-4 col-6">
+          <div class="small-box bg-success">
+            <div class="inner">
+              <h3>{{ admitted_count }}</h3>
+              <p>Currently Admitted</p>
+            </div>
+            <div class="icon">
+              <i class="fas fa-user-check"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-4 col-6">
+          <div class="small-box bg-danger">
+            <div class="inner">
+              <h3>{{ discharged_count }}</h3>
+              <p>Discharged</p>
+            </div>
+            <div class="icon">
+              <i class="fas fa-user-times"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content -->
+  <section class="content">
+    <div class="container-fluid">
+      <div class="card card-primary">
+        <div class="card-body">
+          <!-- Report Header -->
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <h5 class="mb-0 font-weight-bold">Doctor Wise Admission Register</h5>
+              <small class="text-muted">
+                Period: {% if from_date and to_date %}
+                  {{ from_date|date:"d-M-Y" }} to {{ to_date|date:"d-M-Y" }}
+                {% elif from_date %}
+                  From {{ from_date|date:"d-M-Y" }}
+                {% elif to_date %}
+                  To {{ to_date|date:"d-M-Y" }}
+                {% else %}
+                  All Dates
+                {% endif %}
+                {% if status_filter == 'admitted' %} | <span class="text-success">Admitted Only</span>{% endif %}
+                {% if status_filter == 'discharged' %} | <span class="text-danger">Discharged Only</span>{% endif %}
+              </small>
+            </div>
+            <div class="col-md-6 text-right">
+              <span class="badge badge-primary">Total: {{ total_count }}</span>
+              <span class="badge badge-success ml-1">Admitted: {{ admitted_count }}</span>
+              <span class="badge badge-danger ml-1">Discharged: {{ discharged_count }}</span>
+            </div>
+          </div>
+
+          <table id="example1" class="table table-bordered table-striped" style="width: 100%">
+            <thead>
+              <tr>
+                <th>Sl.No</th>
+                <th>Date</th>
+                <th>IP Number</th>
+                <th>Doctor Name</th>
+                <th>Patient Details</th>
+                <th>Age / Sex / Time</th>
+                <th>Room</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {% if admission_data %}
+                {% for item in admission_data %}
+                <tr>
+                  <td>{{ item.sl_no }}</td>
+                  <td>{{ item.date|date:"d/m/Y" }}</td>
+                  <td>{{ item.ip_number }}</td>
+                  <td>{{ item.doctor }}</td>
+                  <td>
+                    <strong>{{ item.patient_name }}</strong><br />
+                    {{ item.address }}
+                  </td>
+                  <td>{{ item.gender }} / {{ item.age }} Y<br />{{ item.time }}</td>
+                  <td>{{ item.room }}</td>
+                  <td>
+                    <span class="badge {% if item.status == 'Admitted' %}badge-success{% else %}badge-danger{% endif %}">
+                      {{ item.status }}
+                    </span>
+                  </td>
+                </tr>
+                {% endfor %}
+              {% else %}
+                <tr>
+                  <td colspan="8" class="text-center text-muted py-3">
+                    No admission records found for the selected period
+                  </td>
+                </tr>
+              {% endif %}
+            </tbody>
+
+            <tfoot>
+              <tr class="font-weight-bold">
+                <td colspan="7" class="text-right">Grand Total Admissions</td>
+                <td>{{ total_count }}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+function resetFilters() {
+  document.getElementById('fromDate').value = '';
+  document.getElementById('toDate').value = '';
+  document.getElementById('doctorFilter').value = '';
+  document.getElementById('statusFilter').value = 'all';
+  document.getElementById('filterForm').submit();
+}
+</script>
+
+{% endblock %}

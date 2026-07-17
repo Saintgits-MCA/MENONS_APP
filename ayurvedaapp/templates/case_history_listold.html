@@ -1,0 +1,378 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="content-wrapper">
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>All Case History Details</h1>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Search Form Section -->
+  <section class="content">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card card-primary">
+          <div class="card-header">
+            <h3 class="card-title">Search Patient</h3>
+          </div>
+          <form method="POST" action="{% url 'case_history_list' %}">
+            {% csrf_token %}
+            <div class="card-body">
+              <div class="form-group">
+                <label for="mrSearch">MR Number / Phone No / Name:</label>
+                <input type="text" id="mrSearch" name="query" class="form-control" placeholder="Enter MR Number, Name, or Phone No">
+              </div>
+            </div>
+            <div class="card-footer">
+              <button type="submit" class="btn btn-primary">Search</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Display Case Histories Section -->
+  <section class="content">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Case History List</h3>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <a href="{% url 'addcasehistory' %}" class="btn btn-primary btn-sm" style="float: right;">Add Case History</a>
+
+              </div>
+              {% if case_histories_no_followup %}
+                <h4>Case Histories </h4>
+                <table id="example1" class="table table-bordered table-striped">
+                  <thead>
+                    <tr>
+                      <th>Patient</th>
+                      <th>Complaint</th>
+                      <th>Final Diagnosis</th>
+                      <th>Tests Needed</th>
+                      <th>Prescriptions</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for item in case_histories_no_followup %}
+                      <tr>
+                        <td>{{ item.case_history.patient.Patient_Name }}</td>
+                        <td>{{ item.case_history.chief_complaint }}</td>
+                        <td>{{ item.case_history.final_diagnosis }}</td>
+                        <td>{{ item.test_needed|default:"N/A" }}</td>
+                        <td>
+                          {% if item.prescriptions %}
+                            <ul>
+                              {% for prescription in item.prescriptions %}
+                                <li>{{ prescription.medicine_name }} - {{ prescription.dosage }}</li>
+                              {% endfor %}
+                            </ul>
+                          {% else %}
+                            No prescriptions
+                          {% endif %}
+                        </td>
+                        <td>
+                          <a href="{% url 'view_case_history'%}?ids={{item.case_history.pk}}" class="btn btn-info btn-sm" title="View Case History">View</a>
+                          <button class="btn btn-primary follow-up-btn" data-case-id="{{ item.case_history.pk }}" data-complaint="{{ item.case_history.chief_complaint }}" data-test="{{ item.case_history.test_needed }}" data-notes="{{ item.case_history.additional_notes }}" data-case-history-id="{{ item.case_history.id }}">Followup</button>
+                      </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              {% else %}
+                <p>No case histories found.</p>
+              {% endif %}
+
+              {% if case_histories_with_followup %}
+                <h4 class="mt-4">Follow-up Details</h4>
+                <table id="example1" class="table table-bordered table-striped">
+                  <thead>
+                    <tr>
+                      <th>Follow-up Date</th>
+                      <th>Complaint</th>
+                      <th>Follow up Note</th>
+                      <th>Tests Needed</th>
+                      <th>Prescriptions</th>
+                      <th>Handled By</th>
+                      <th>Reports</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for followup in case_histories_with_followup %}
+                      <tr>
+                        <td>{{ followup.follow_up_date }}</td>
+                        <td>{{ followup.complaint }}</td>
+                        <td>{{ followup.notes }}</td>
+                        <td>{{ followup.test_needed|default:"N/A" }}</td>
+                      
+                        <td>
+                          <ul>
+                            {% for prescription in followup.prescriptions %}
+                              <li>{{ prescription.medicine_name }} - {{ prescription.dosage }}</li>
+                            {% endfor %}
+                          </ul>
+                        </td>
+                        <td>{{ followup.handledbystaff.Staff_firstname}}</td>
+                        <td>
+                          {% if followup.reports %}
+                            <ul>
+                              {% for report in followup.reports %}
+                                <li><a href="{{ report.file.url }}" target="_blank">{{ report.file.name }}</a></li>
+                              {% endfor %}
+                            </ul>
+                          {% else %}
+                            No reports
+                          {% endif %}
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Follow-Up Modal -->
+<div class="modal fade" id="followUpModal" tabindex="-1" aria-labelledby="followUpModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+          <div class="modal-header">
+              <h5 class="modal-title" id="followUpModalLabel">Follow-Up Details</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+              <!-- Complaint and Progress Note -->
+              <div class="mb-3">
+                  <label for="complaint" class="form-label">Chief Complaint:</label>
+                  <input type="text" class="form-control" id="complaint" readonly>
+                  <!-- Hidden input to store case_history_id -->
+<input type="hidden" id="case_history_id">
+
+              </div>
+              <div class="mb-3">
+                  <label for="progress_note" class="form-label">Note:</label>
+                  <textarea class="form-control" id="progress_note" rows="3"></textarea>
+              </div>
+              <div class="mb-3">
+                  <label for="testneeded" class="form-label">Test Needed:</label>
+                  <input type="text" class="form-control" name="testneeded" id="testneeded" >
+              </div>
+
+              <!-- Upload Reports Section -->
+              <div class="mb-3">
+                  <div class="form-group">
+                      <label for="uploaded_file">Result Upload</label>
+                      <div class="row">
+                          <div class="col-md-3">
+                              <div class="file-loading mb-3">
+                                  <!-- Allow multiple file selection -->
+                                  <input id="singleFileUpload" type="file" class="form-control-file" accept=".jpg,.pdf,.png" multiple>
+                              </div>
+                          </div>
+                          <div class="col-md-9">
+                              <!-- List of selected files -->
+                              <ul id="file-list" class="list-unstyled mt-2"></ul>
+                          </div>
+                      </div>
+                      <!-- Hidden field to hold selected files in JavaScript -->
+                      <input type="text" name="uploaded_files" id="uploaded_files">
+                  </div>
+              </div>
+
+              <!-- Prescription Table -->
+              <h5>Prescriptions</h5>
+              <table class="table table-bordered" id="prescription_table">
+                  <thead>
+                      <tr>
+                          <th>Medicine Name</th>
+                          <th>Count</th>
+                          <th>Dosage</th>
+                          <th>Action</th>
+                      </tr>
+                  </thead>
+                  <tbody id="prescription_body">
+                      <!-- Rows will be dynamically added here -->
+                  </tbody>
+              </table>
+              <button type="button" class="btn btn-primary" id="add_medicine">Add Medicine</button>
+          </div>
+          <div class="modal-footer">
+              <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+    <button type="button" class="btn btn-success" id="save_followup">Save Follow-Up</button>
+          </div>
+      </div>
+  </div><script>
+    // Array to keep track of selected files
+    let selectedFiles = [];
+
+    // Handle the addition of files one by one
+    document.getElementById('singleFileUpload').addEventListener('change', function() {
+        const files = Array.from(this.files); // Get all selected files
+
+        files.forEach(file => {
+            // Check if the file is already in the list to avoid duplicates
+            if (!selectedFiles.some(f => f.name === file.name)) {
+                selectedFiles.push(file); // Add to selected files array
+
+                // Add the file to the UI list
+                const fileList = document.getElementById('file-list');
+                const li = document.createElement('li');
+                li.className = "list-group-item d-flex justify-content-between align-items-center";
+                li.textContent = file.name;
+
+                // Create a "View" link
+                const viewLink = document.createElement('a');
+                viewLink.href = URL.createObjectURL(file);
+                viewLink.textContent = 'View';
+                viewLink.target = '_blank'; // Open in a new tab
+                viewLink.className = "btn btn-link";
+
+                // Create a "Remove" button
+                const removeButton = document.createElement('button');
+                removeButton.textContent = 'Remove';
+                removeButton.className = "btn btn-danger btn-sm";
+                removeButton.onclick = function () {
+                    removeFile(file.name, li);
+                };
+
+                li.appendChild(viewLink);
+                li.appendChild(removeButton);
+
+                fileList.appendChild(li);
+            }
+        });
+        // Clear the input so the user can upload another file
+        this.value = '';
+    });
+    // Function to remove file from the list
+    function removeFile(fileName, listItem) {
+        // Remove the file from the selected files array
+        selectedFiles = selectedFiles.filter(file => file.name !== fileName);
+        // Remove the corresponding list item
+        listItem.remove();
+    }
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Handle Follow-Up button click
+        document.querySelectorAll('.follow-up-btn').forEach(button => {
+            button.addEventListener('click', function () {
+                const complaint = this.getAttribute('data-complaint');
+                const testNeeded = this.getAttribute('data-test');
+                const caseHistoryId = this.getAttribute('data-case-history-id'); // Get the case history ID
+                // Populate the modal fields
+                document.getElementById('complaint').value = complaint;
+                document.getElementById('progress_note').value = ''; // Clear or fetch existing note if available
+                document.getElementById('case_history_id').value = caseHistoryId; // Set the hidden field value
+                // Open the modal
+                const followUpModal = new bootstrap.Modal(document.getElementById('followUpModal'));
+                followUpModal.show();
+            });
+        });
+
+        // Add new prescription row
+        document.getElementById('add_medicine').addEventListener('click', () => {
+            const tbody = document.getElementById('prescription_body');
+            const newRow = document.createElement('tr');
+            newRow.innerHTML = `
+                <td><input type="text" class="form-control" name="medicine_name[]" required></td>
+                <td><input type="number" class="form-control" name="count[]" required></td>
+                <td>
+                    <select class="form-control" name="dosage[]">
+                        <option value="OD">OD</option>
+                        <option value="BD">BD</option>
+                        <option value="TD">TD</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </td>
+                <td><button type="button" class="btn btn-danger btn-sm remove-row">Remove</button></td>
+            `;
+            tbody.appendChild(newRow);
+        });
+
+        // Remove prescription row
+        document.getElementById('prescription_table').addEventListener('click', (e) => {
+            if (e.target.classList.contains('remove-row')) {
+                e.target.closest('tr').remove();
+            }
+        });
+    });
+
+    
+</script>
+<script>
+   document.getElementById('save_followup').addEventListener('click', function () {
+    // Create a FormData object to hold the form data
+    const formData = new FormData();
+
+    // Collect data from the modal fields
+    formData.append('case_history_id', document.getElementById('case_history_id').value); // Add the case history ID
+    formData.append('progress_note', document.getElementById('progress_note').value); // Add the progress note
+
+    // Collect prescription data
+    const prescriptions = [];
+    document.querySelectorAll('#prescription_body tr').forEach(row => {
+        const medicineName = row.querySelector('input[name="medicine_name[]"]').value;
+        const count = row.querySelector('input[name="count[]"]').value;
+        const dosage = row.querySelector('select[name="dosage[]"]').value;
+
+        prescriptions.push({
+            medicine_name: medicineName,
+            count: count,
+            dosage: dosage
+        });
+    });
+
+    formData.append('prescriptions', JSON.stringify(prescriptions)); // Add prescription data as JSON
+
+    // Handle file uploads (if any)
+    selectedFiles.forEach((file, index) => {
+        formData.append('files[]', file); // Append each file to FormData
+    });
+
+    // Send data to the server using fetch or AJAX
+    fetch('/save_followup/', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}' // Add CSRF token for Django
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Show success alert
+        alert('Follow-Up saved successfully!');
+        // window.location.href = data.redirect_url;
+        // Close the modal explicitly
+        // const followUpModal = new bootstrap.Modal(document.getElementById('followUpModal'));
+        // followUpModal.hide();  // Use bootstrap's hide method to close the modal
+
+        // Optionally, refresh the page or update the UI if needed
+        window.location.reload(); // Uncomment to reload the page after saving
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while saving the follow-up.');
+    });
+});
+
+
+</script>
+{% endblock %}

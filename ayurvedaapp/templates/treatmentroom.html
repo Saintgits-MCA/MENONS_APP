@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Treatment Room Details </h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item">
+                {%if trmntroomview == '1'%}
+                  <a href="{% url 'treatmentroomtable' %}?menumanagement_id={{ idmngmnt }}">View All</a>
+               {%endif%}</li>
+              <li class="breadcrumb-item active">Treatment Room Details</li>
+            </ol>
+          </div>
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+
+      <div class="row">
+        <div class="col-md-12">
+          <div class="card card-primary">
+            <div class="card-header">
+              <h3 class="card-title">Treatment Room Details</h3>
+
+              <div class="card-tools">
+                <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse"><!-- <i class="fas fa-minus"></i> -->
+                </button>
+              </div>
+            </div>
+            <form method="POST", action="{% url 'treatmentroom' %}?menumanagement_id={{ idmngmnt }}">
+             
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-6">
+                      <div class="card">
+                            <div class="card-body" >
+                              <div class="form-group">
+                                <label for="exampleInputBranchName">Floor Number</label>
+                                <input type="text" class="form-control" id="exampleInputFloorno" name="floornumber" placeholder="Enter Floor No" required>           
+                              </div>
+                               <div class="form-group">
+                                    <label for="exampleInputBranchName"> Room Number</label>
+                                    <input type="text" class="form-control" id="exampleInputroomrate" name="roomnumber" placeholder="Enter  Room No" required> 
+                                </div>
+
+                            </div>
+                    </div>
+                </div>
+                
+            </div>
+            <div class="card-footer">
+                {% if messages %}
+                    {% for message in messages %}
+                    <p style="color:green;">{{message}}</p> 
+                    {% endfor %}
+                {% endif %}
+        {%if trmntroomadd == '1'%}
+                  <button type="submit" class="btn btn-primary">Submit</button>
+        
+        {%endif%}
+                </div>
+              </form>
+            <!-- /.card-body -->
+          </div>
+          <!-- /.card -->
+        </div>
+     
+      </div>
+
+      
+    </section>
+    <!-- /.content -->
+  </div>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Get radio buttons
+        let wardRadio = document.getElementById("accommodationWard");
+        let roomRadio = document.getElementById("accommodationRoom");
+
+        // Get the fields to toggle
+        let roomTypeField = document.getElementById("roomTypeField");
+        let roomNoField = document.getElementById("roomNoField");
+        let bedTypeField = document.getElementById("bedTypeField");
+        let bedNoField = document.getElementById("bedNoField");
+
+        function toggleFields() {
+            if (wardRadio.checked) {
+                // Show bed type and bed number, hide room fields
+                bedTypeField.style.display = "block";
+                bedNoField.style.display = "block";
+                roomTypeField.style.display = "none";
+                roomNoField.style.display = "none";
+            } else if (roomRadio.checked) {
+                // Show room type, room number, and bed type
+                bedTypeField.style.display = "block";
+                roomTypeField.style.display = "block";
+                roomNoField.style.display = "block";
+                bedNoField.style.display = "none";
+            } else {
+                // Hide everything by default if nothing is selected
+                roomTypeField.style.display = "none";
+                roomNoField.style.display = "none";
+                bedTypeField.style.display = "none";
+                bedNoField.style.display = "none";
+            }
+        }
+
+        // Hide fields initially when the page loads
+        roomTypeField.style.display = "none";
+        roomNoField.style.display = "none";
+        bedTypeField.style.display = "none";
+        bedNoField.style.display = "none";
+
+        // Attach event listeners
+        wardRadio.addEventListener("change", toggleFields);
+        roomRadio.addEventListener("change", toggleFields);
+
+        // Run the function once in case any radio button is pre-selected
+        toggleFields();
+    });
+</script>
+
+    
+  <!-- /.content-wrapper -->
+{% endblock %}

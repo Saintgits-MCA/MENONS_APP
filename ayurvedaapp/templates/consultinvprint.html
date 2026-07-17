@@ -1,0 +1,240 @@
+
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invoice</title>
+  <style>
+    p{
+      font-size: 14px;
+    }
+    .footer {
+   
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    padding: 10px;
+  }
+    /* Custom styles */
+    .invoice-header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .details-container {
+      display: flex;
+      justify-content: space-between;
+    }
+    .patient-details,
+    .bill-details {
+      flex: 0 0 48%;
+    }
+    .clearfix::after {
+      content: "";
+      clear: both;
+      display: table;
+    }
+    .footer {
+   
+    left: 0;
+    width: 100%;
+    text-align: center;
+    padding: 10px;
+  }
+    @media print {
+      p{
+      font-size: 14px;
+    }
+      @page {
+        pagesize:A5;
+       
+        margin: 4px; 
+    }
+        .table-bordered {
+          width: 100%;
+            border: 1px solid #000; /* Add border to all table cells */
+            border-collapse: collapse; /* Collapse borders into a single border */
+            margin: auto; /* Center the table horizontally */
+        }
+        .table-bordered th,
+        .table-bordered td {
+            border: 1px solid #000; /* Add border to table header and data cells */
+            padding: 8px; /* Add padding to table cells */
+        }
+        .text-right {
+            text-align: right; /* Align content to the right */
+        }
+       
+        .text-center
+        {
+          text-align: center;
+        }
+        .footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    padding: 10px;
+  }
+  /* .page-break {
+        page-break-after: always; 
+      } */
+
+    }
+  </style>
+</head>
+<body>
+
+<div class="content-wrapper">
+  <!-- Content Header (Page header) -->
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Consultation Invoice</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="{% url 'consultinvoice' %}">Add
+              
+            </a></li>
+            <li class="breadcrumb-item active">Consultation Invoice</li>
+          </ol>
+        </div>
+      </div>
+    </div><!-- /.container-fluid -->
+  </section>
+  <section class="content">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-12"  >
+         <div class="invoice p-3 mb-3">
+            <div class="container" id="invoice">
+              <div class="row">
+                <div class="col">
+                  <div class="invoice-header">
+                    <br>
+                    {% for i in objhospt %}
+                          <h2>{{ i.Name }}</h2>
+                          <p>
+                            <input type="hidden" class="form-control" value="{{ i.id }}" name="hosptname">
+                            {{ i.Address }},
+                            Phone:{{ i.Contact_no }},
+                            Email: {{ i.Email }},
+                            GST NO: {{ i.GST }},
+                          </p>
+                        {% endfor %}
+                        <p>Composition Taxable Persons,not eligible to collect Tax on Suppliers</p>
+                  </div>
+                </div>
+              </div>
+              <!-- Inside the content block -->
+              <div class="row clearfix">
+                <div class="col-md-12">
+                  <div class="details-container">
+                    <div class="patient-details">
+                      <!-- Patient details here -->
+                      <p>Patient Name:{{ lsinvoice.patientname }}</p>
+                      <p>Patient Phone Number:{{ lsinvoice.patientphno }}</p>
+                   
+                    </div>
+                    <div class="bill-details">
+                      <p>Invoice Number:{{ lsinvoice.consltinvno }}</p>
+                      <p>Date:{{ lsinvoice.currentdate }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-12">
+                  <table class="table table-bordered">
+                    <thead>
+                      <tr>
+                        <th scope="col">Particular</th>
+                        <th scope="col">Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% if lsinvoice.consultfee %}
+                      <tr>
+                        <td>Consultation Fee</td>
+                        <td>{{ lsinvoice.consultfee }}</td>
+                      </tr>
+                      {% else %}
+                      <tr>
+                        <td>Consultation Cum Registration Fee</td>
+                        <td>{{ lsinvoice.consultfeecumregfee }}</td>
+                      </tr>
+                      {% endif %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-6">
+                    <div class="text-left">
+                        <div>
+                            <p>Prepared By: {{staffn.Staff.Staff_firstname}} </p>
+                        </div> 
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="text-right">
+                        <!-- <p>Subtotal:₹ {{ lsinvoice.subtotal }}</p> -->
+                        <p>Discount:₹ {{ lsinvoice.discount }}</p>
+                        <p>Tax:₹{{ lsinvoice.tax }}</p>
+                        <p><strong>Total Amount:₹ {{ lsinvoice.total }}</strong></p>
+                    </div>
+                </div>
+              </div>
+              <div class="text-center mt-4">
+                
+                <div class="footer">
+             
+                  <p>Thank you for choosing our hospital. We appreciate your trust in us.</p>
+                </div>
+              </div>
+             
+              <!-- Table and other content here -->
+            </div>
+           
+          </div>
+          
+        </div>
+        <button onclick="printInvoice()" class="btn btn-primary">Print Invoice</button>
+
+      </div>
+    </div>
+  </section>
+</div>
+<script>
+  function printInvoice() {
+      // Get the HTML content of the invoice div
+      var invoiceContent = document.getElementById('invoice').outerHTML;
+
+      // Get the internal CSS styles from the parent document
+      var styles = Array.from(document.querySelectorAll('style'))
+          .map(style => style.innerHTML)
+          .join('\n');
+
+      // Open a new window
+      var printWindow = window.open('', '_blank');
+      
+      // Set the HTML content of the new window along with the internal CSS styles
+      printWindow.document.write('<html><head><title>Consultation Invoice</title><style>' + styles + '</style></head><body>' + invoiceContent + '</body></html>');
+      printWindow.document.close();
+
+      // Print the new window
+      printWindow.print();
+      
+  }
+</script>
+
+
+{% endblock %}

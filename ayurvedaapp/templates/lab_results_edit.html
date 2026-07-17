@@ -1,0 +1,354 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<style>
+  :root {
+    --bg: #f6f8fb;
+    --card: #ffffff;
+    --text: #1f2a37;
+    --muted: #6b7280;
+    --brand: #2fbac6;
+    --tab: #8bd08a;
+    --accent: #3b82f6;
+    --ok: #22c55e;
+    --danger: #ef4444;
+    --shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 15px/1.45 system-ui, sans-serif; color: var(--text); background: var(--bg); }
+  .content-wrapper { background: #f3f6fb; padding: 20px; }
+  .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 10px; }
+  .page-header h1 { font-size: 22px; font-weight: 800; color: #1f2937; margin: 0; }
+  .page-header .header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  
+  .patient-details { background: #fff; border-radius: 14px; padding: 16px 20px; margin-bottom: 20px; box-shadow: var(--shadow); display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px 24px; }
+  .patient-details .label { font-weight: 700; color: #6b7280; }
+  .patient-details .value { color: #1f2937; font-weight: 600; }
+  
+  .edit-card { background: #fff; border-radius: 14px; padding: 20px; margin-bottom: 20px; box-shadow: var(--shadow); }
+  .edit-card .card-title { font-size: 16px; font-weight: 700; color: #1f2937; margin-bottom: 15px; }
+  
+  table { width: 100%; border-collapse: separate; border-spacing: 0 10px; }
+  thead th { text-align: left; font-size: 13px; font-weight: 700; color: #374151; padding: 8px 10px; background: #f1f5f9; border-radius: 8px; }
+  tbody tr { background: #f8fafc; border-radius: 12px; box-shadow: var(--shadow); transition: all 0.2s; }
+  tbody tr:hover { background: #f1f5f9; }
+  tbody td { padding: 10px 12px; vertical-align: middle; }
+  
+  .group-header { background: #e8f4f8 !important; }
+  .group-header td { font-weight: 700; color: #0d6efd; padding: 8px 12px; }
+  
+  .form-control-sm { padding: 4px 8px; font-size: 14px; border-radius: 6px; border: 1px solid #d1d5db; width: 100%; }
+  .form-control-sm:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+  .form-control-sm[readonly] { background: #f3f4f6; cursor: not-allowed; }
+  
+  .result-value-input { min-width: 120px; }
+  .result-status-select { min-width: 130px; }
+  .normal-value-display { 
+    background: #f3f4f6; 
+    padding: 4px 10px; 
+    border-radius: 4px; 
+    display: inline-block;
+    font-size: 14px;
+    color: #374151;
+    min-width: 100px;
+  }
+  
+  .status-badge { padding: 3px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; }
+  .status-Normal { background: #dcfce7; color: #166534; }
+  .status-High { background: #fee2e2; color: #991b1b; }
+  .status-Low { background: #fef3c7; color: #92400e; }
+  .status-Positive { background: #dbeafe; color: #1e40af; }
+  .status-Negative { background: #f3f4f6; color: #374151; }
+  .status-Responsive { background: #d1fae5; color: #065f46; }
+  .status-Not Responsive { background: #fecaca; color: #991b1b; }
+  
+  .btn-save-row { padding: 4px 12px; font-size: 13px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: var(--accent); color: white; }
+  .btn-save-row:hover { background: #2563eb; transform: translateY(-1px); }
+  .btn-save-row:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+  .btn-save-row.saved { background: var(--ok); }
+  
+  .action-buttons { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb; }
+  .btn-primary { background: var(--accent); color: white; border: none; padding: 8px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .btn-primary:hover { background: #2563eb; transform: translateY(-1px); }
+  .btn-secondary { background: #e5e7eb; color: var(--text); border: none; padding: 8px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; text-decoration: none; display: inline-block; }
+  .btn-secondary:hover { background: #d1d5db; transform: translateY(-1px); color: var(--text); }
+  
+  .notes-textarea { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #d1d5db; font-size: 14px; resize: vertical; }
+  .notes-textarea:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+  
+  .text-muted small { font-size: 12px; }
+  .editable-indicator { color: var(--accent); font-size: 11px; }
+  .readonly-indicator { color: var(--muted); font-size: 11px; }
+  
+  @media (max-width: 768px) {
+    .result-value-input, .result-status-select { min-width: 80px; }
+    table { font-size: 13px; }
+    thead th, tbody td { padding: 6px 8px; }
+    .patient-details { grid-template-columns: 1fr; }
+    .page-header { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+
+<div class="content-wrapper">
+  <!-- Page Header -->
+  <section class="content-header">
+    <div class="page-header">
+      <h1><i class="fas fa-edit"></i> Edit Lab Results</h1>
+      <div class="header-actions">
+        <span class="text-muted">Result #{{ result_number }}</span>
+        <a href="{% url 'view_lab_results' %}?master_id={{ result_master.id }}" class="btn-secondary" style="padding: 6px 16px; font-size: 14px;">
+          <i class="fas fa-arrow-left"></i> Back to View
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Messages -->
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{% if message.tags %}{{ message.tags }}{% else %}info{% endif %} alert-dismissible fade show">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- Patient Details -->
+  <div class="patient-details">
+    <div class="field"><span class="label">MR No:</span> <span class="value">{{ patient.Medical_Record_Number }}</span></div>
+    <div class="field"><span class="label">Name:</span> <span class="value">{{ patient.Patient_Name }}</span></div>
+    <div class="field"><span class="label">Gender:</span> <span class="value">{{ patient.Gender }}</span></div>
+    <div class="field"><span class="label">Age:</span> <span class="value">{{ patient.Age }}</span></div>
+    <div class="field"><span class="label">Phone:</span> <span class="value">{{ patient.contactno }}</span></div>
+    <div class="field"><span class="label">Invoice:</span> <span class="value">{{ invoice.invoiceno|default:"N/A" }}</span></div>
+    <div class="field"><span class="label">Completed:</span> <span class="value">{{ completed_date|date:"d-m-Y H:i" }}</span></div>
+    <div class="field"><span class="label">Total Tests:</span> <span class="value">{{ total_tests }}</span></div>
+  </div>
+
+  <!-- Edit Form -->
+  <form method="POST" action="{% url 'edit_lab_result' %}?result_id={{ result_id }}" id="editForm">
+    {% csrf_token %}
+    
+    <div class="edit-card">
+      <div class="card-title">
+        <i class="fas fa-flask"></i> Test Results
+        <span class="text-muted small ml-2">
+          <span class="editable-indicator"><i class="fas fa-pen"></i> Editable</span> | 
+          <span class="readonly-indicator"><i class="fas fa-lock"></i> Read-only</span>
+        </span>
+      </div>
+      
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th width="3%">#</th>
+              <th width="18%">Test Name</th>
+              <th width="15%">Result Value <span class="editable-indicator">*</span></th>
+              <th width="15%">Normal Value <span class="readonly-indicator">🔒</span></th>
+              <th width="15%">Status <span class="editable-indicator">*</span></th>
+              <th width="10%">Date <span class="readonly-indicator">🔒</span></th>
+              {% comment %} <th width="8%">Save</th> {% endcomment %}
+            </tr>
+          </thead>
+          <tbody>
+            {% if grouped_items %}
+              {% for group_name, items in grouped_items.items %}
+                <tr class="group-header">
+                  <td colspan="7"><i class="fas fa-folder"></i> {{ group_name }}</td>
+                </tr>
+                {% for item in items %}
+                <tr class="result-row" data-result-id="{{ item.id }}">
+                  <td>{{ forloop.counter }}</td>
+                  <td>
+                    {{ item.labtest.testname|default:"Unknown" }}
+                    <input type="hidden" name="result_id[]" value="{{ item.id }}">
+                  </td>
+                  <td>
+                    <input type="text" name="result_value[]" 
+                           class="form-control form-control-sm result-value-input" 
+                           value="{{ item.result_value|default:'' }}" 
+                           placeholder="Enter value">
+                  </td>
+                  <td>
+                    <span class="normal-value-display">{{ item.normal_value|default:"-" }}</span>
+                  </td>
+                  <td>
+                    <select name="result[]" class="form-control form-control-sm result-status-select">
+                      <option value="">Choose</option>
+                      <option value="Low" {% if item.result == 'Low' %}selected{% endif %}>Low</option>
+                      <option value="Normal" {% if item.result == 'Normal' %}selected{% endif %}>Normal</option>
+                      <option value="High" {% if item.result == 'High' %}selected{% endif %}>High</option>
+                      <option value="Positive" {% if item.result == 'Positive' %}selected{% endif %}>Positive</option>
+                      <option value="Negative" {% if item.result == 'Negative' %}selected{% endif %}>Negative</option>
+                      <option value="Responsive" {% if item.result == 'Responsive' %}selected{% endif %}>Responsive</option>
+                      <option value="Not Responsive" {% if item.result == 'Not Responsive' %}selected{% endif %}>Not Responsive</option>
+                    </select>
+                  </td>
+                  <td>
+                    <span class="normal-value-display">{{ item.labtestdate|date:"d-m-Y"|default:"-" }}</span>
+                    <input type="hidden" name="labtestdate[]" value="{{ item.labtestdate|date:'Y-m-d' }}">
+                  </td>
+                  {% comment %} <td>
+                    <button type="button" class="btn-save-row" title="Save this row">
+                      <i class="fas fa-save"></i>
+                    </button>
+                  </td> {% endcomment %}
+                </tr>
+                {% endfor %}
+              {% endfor %}
+            {% endif %}
+            
+            {% if ungrouped_items %}
+              {% for item in ungrouped_items %}
+              <tr class="result-row" data-result-id="{{ item.id }}">
+                <td>{{ forloop.counter }}</td>
+                <td>
+                  {{ item.labtest.testname|default:"Unknown" }}
+                  <input type="hidden" name="result_id[]" value="{{ item.id }}">
+                </td>
+                <td>
+                  <input type="text" name="result_value[]" 
+                         class="form-control form-control-sm result-value-input" 
+                         value="{{ item.result_value|default:'' }}" 
+                         placeholder="Enter value">
+                </td>
+                <td>
+                  <span class="normal-value-display">{{ item.normal_value|default:"-" }}</span>
+                </td>
+                <td>
+                  <select name="result[]" class="form-control form-control-sm result-status-select">
+                    <option value="">Choose</option>
+                    <option value="Low" {% if item.result == 'Low' %}selected{% endif %}>Low</option>
+                    <option value="Normal" {% if item.result == 'Normal' %}selected{% endif %}>Normal</option>
+                    <option value="High" {% if item.result == 'High' %}selected{% endif %}>High</option>
+                    <option value="Positive" {% if item.result == 'Positive' %}selected{% endif %}>Positive</option>
+                    <option value="Negative" {% if item.result == 'Negative' %}selected{% endif %}>Negative</option>
+                    <option value="Responsive" {% if item.result == 'Responsive' %}selected{% endif %}>Responsive</option>
+                    <option value="Not Responsive" {% if item.result == 'Not Responsive' %}selected{% endif %}>Not Responsive</option>
+                  </select>
+                </td>
+                <td>
+                  <span class="normal-value-display">{{ item.labtestdate|date:"d-m-Y"|default:"-" }}</span>
+                  <input type="hidden" name="labtestdate[]" value="{{ item.labtestdate|date:'Y-m-d' }}">
+                </td>
+                {% comment %} <td>
+                  <button type="button" class="btn-save-row" title="Save this row">
+                    <i class="fas fa-save"></i>
+                  </button>
+                </td> {% endcomment %}
+              </tr>
+              {% endfor %}
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+      
+      <div class="mt-2">
+        <small class="text-muted">
+          <i class="fas fa-info-circle"></i> 
+          <span class="editable-indicator">*</span> Editable fields: Result Value and Status
+        </small>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="edit-card">
+      <div class="card-title"><i class="fas fa-sticky-note"></i> Notes</div>
+      <textarea name="notes" class="notes-textarea" rows="3" placeholder="Add notes about these results...">{{ result_master.notes|default:'' }}</textarea>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+      <button type="submit" class="btn-primary" id="updateAllBtn">
+        <i class="fas fa-save"></i> Save All Changes
+      </button>
+      <a href="{% url 'view_lab_results' %}?master_id={{ result_master.id }}" class="btn-secondary">
+        <i class="fas fa-times"></i> Cancel
+      </a>
+    </div>
+  </form>
+</div>
+
+<script>
+  $(document).ready(function() {
+    // ==================== SAVE INDIVIDUAL ROW (AJAX) ====================
+    $('.btn-save-row').on('click', function() {
+      const row = $(this).closest('tr');
+      const resultId = row.data('result-id');
+      const resultValue = row.find('.result-value-input').val();
+      const status = row.find('.result-status-select').val();
+      
+      if (!resultValue) {
+        alert('Please enter a result value before saving.');
+        return;
+      }
+      
+      const btn = $(this);
+      const originalHtml = btn.html();
+      btn.html('<i class="fas fa-spinner fa-spin"></i>');
+      btn.prop('disabled', true);
+      
+      // Prepare data for both fields
+      const formData = new FormData();
+      formData.append('result_id', resultId);
+      formData.append('result_value', resultValue);
+      formData.append('result', status);
+      formData.append('csrfmiddlewaretoken', document.querySelector('input[name="csrfmiddlewaretoken"]').value);
+      
+      // Send using fetch with XMLHttpRequest header
+      fetch(window.location.href, {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          btn.html('<i class="fas fa-check"></i>');
+          btn.addClass('saved');
+          setTimeout(() => {
+            btn.html(originalHtml);
+            btn.prop('disabled', false);
+            btn.removeClass('saved');
+          }, 1500);
+        } else {
+          alert('Error: ' + data.error);
+          btn.html(originalHtml);
+          btn.prop('disabled', false);
+        }
+      })
+      .catch(error => {
+        alert('Error: ' + error);
+        btn.html(originalHtml);
+        btn.prop('disabled', false);
+      });
+    });
+
+    // ==================== ENTER KEY TO SAVE ROW ====================
+    $('.result-value-input, .result-status-select').on('keypress', function(e) {
+      if (e.which === 13) {
+        e.preventDefault();
+        const row = $(this).closest('tr');
+        const btn = row.find('.btn-save-row');
+        btn.click();
+      }
+    });
+
+    // ==================== AUTO-SAVE ON CHANGE (Optional) ====================
+    // Uncomment below to auto-save when value changes
+    /*
+    $('.result-value-input, .result-status-select').on('change', function() {
+      const row = $(this).closest('tr');
+      const btn = row.find('.btn-save-row');
+      btn.click();
+    });
+    */
+  });
+</script>
+
+{% endblock %}

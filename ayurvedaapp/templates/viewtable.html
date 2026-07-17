@@ -1,0 +1,171 @@
+{% load static %}
+<head>
+    <script src="{% static 'assets/js/jquery-3.6.0.min.js' %}"></script>
+    <script src="{% static 'assets/js/jquery-3.6.4.min.js' %}"></script>
+    <script src="{% static 'assets/js/bootstrap4.min.js' %}"></script>
+<style>
+    .container {
+        width: 90%;
+        max-width: 800px;
+        margin: 0 auto;
+        background: #ffffff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    h2 {
+        color: #2a3b59;
+        border-bottom: 2px solid #4a90e2;
+        padding-bottom: 5px;
+    }
+    .section {
+        margin-top: 20px;
+    }
+    .visit-header, .report-header {
+        font-size: 16px;
+        background-color: #e1eafc;
+        padding: 10px;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+    .visit-content, .report-content {
+        display: none;
+        padding: 10px;
+        background: #f9f9ff;
+        border: 1px solid #e1eafc;
+        border-radius: 5px;
+    }
+    .table {
+        width: 100%;
+        margin-top: 15px;
+        border-collapse: collapse;
+    }
+    .table th, .table td {
+        padding: 10px;
+        border: 1px solid #ddd;
+        text-align: left;
+    }
+    .table th {
+        background-color: #4a90e2;
+        color: #fff;
+    }
+    .uploaded-results {
+        color: #4a90e2;
+        cursor: pointer;
+        text-decoration: underline;
+    }
+    .patient-details {
+        padding: 10px;
+        background-color: #f9f9ff;
+        border: 1px solid #e1eafc;
+        border-radius: 5px;
+        margin-top: 10px;
+    }
+    .file-link {
+        color: #007BFF;
+        text-decoration: underline;
+    }
+    .ab{
+           /* Set the width of the div */
+  height: 200px;       /* Set the height of the div */
+  overflow: auto;  
+    }
+</style>
+
+<script>
+    function toggleVisitDetails(visitId) {
+        const content = document.getElementById(visitId);
+        content.style.display = content.style.display === "block" ? "none" : "block";
+    }
+
+    function toggleReportDetails(reportId) {
+        const content = document.getElementById(reportId);
+        content.style.display = content.style.display === "block" ? "none" : "block";
+    }
+</script>
+</head>
+<div class="container">
+    <!-- Patient Information Section -->
+    <div class="section">
+        <h3>Patient Information</h3>
+        <div class="patient-details">
+            <p><strong>Name:</strong> {{ patient.Patient_Name }}</p>
+            <p><strong>Age:</strong> {{ personal_info.age }}</p>
+            <p><strong>Phone Number:</strong> {{ patient.contactno }}</p>
+        </div>
+    </div>
+    <!-- Visits Section -->
+     <div class="row">
+        <div class="col-md-6">
+            <h3>Visits</h3>
+            <div class="section ab">
+               
+                {% for prescription in prescriptions %}
+                    <div class="visit-header" onclick="toggleVisitDetails('visit{{ forloop.counter }}')">
+                        Visit on {{ prescription.current_date }}
+                    </div>
+                    <div class="visit-content" id="visit{{ forloop.counter }}">
+                        <p><strong>Chief Complaint:</strong> {{ prescription.complaint }}</p>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Medicine Name</th>
+                                    <th>Count</th>
+                                    <th>Dosage</th>
+                                    <th>Direction</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for med in prescription.medications.all %}
+                                    <tr>
+                                        <td>{{med.medicinename.itemnm}}</td>
+                                         <td>{{ med.count }}</td>
+                                        <td>{{ med.dosage }}</td>
+                                        <td>{{ med.direction }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        <p><strong>Diet:</strong> {{ prescription.diet }}</p>
+                        <p><strong>Note:</strong> {{ prescription.note }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+        
+        </div>
+    
+   <div class="col-md-6">
+    <h3>Medical Reports</h3>
+<!-- Medical Reports Section -->
+<div class="section ab">
+   
+    {% for report in medical_reports %}
+        <div class="report-header" onclick="toggleReportDetails('report{{ forloop.counter }}')">
+            Report on {{ report.Current_Date }}
+        </div>
+        <div class="report-content" id="report{{ forloop.counter }}">
+            <p><strong>Drug History:</strong> {{ report.drugHistory }}</p>
+            <p><strong>History of Present Complaint:</strong> {{ report.historyofpresentcomplaint }}</p>
+            <p><strong>Final Diagnosis:</strong> {{ report.finaldiagnosis }}</p>
+            <p><strong>Tests Needed:</strong> {{ report.testneeded }}</p>
+
+            <!-- Uploaded Files Section -->
+            {% if report.files.all %}
+                <p><strong>Uploaded Files:</strong></p>
+                <ul>
+                    {% for file in report.files.all %}
+                        <li><a href="{{ file.file.url }}" target="_blank" class="file-link">{{ file.file.name }}</a></li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>No files uploaded for this report.</p>
+            {% endif %}
+        </div>
+    {% endfor %}
+</div>
+</div>
+</div>
+   </div>
+    

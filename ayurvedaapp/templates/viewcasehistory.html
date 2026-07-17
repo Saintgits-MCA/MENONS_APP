@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+
+<div class="content-wrapper">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Case History Details</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                      
+                        <li class="breadcrumb-item active">Case History</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="content">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title">Patient Case History Form{{ personal_info }}</h3>
+                    </div>
+                    <div class="container">
+                        <h2>Patient Case History</h2>
+                        
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="form-group">
+                                    <label for="mrSearch">MR Number/PhoneNo/Name</label>
+                                    <input type="text" id="mrSearch" class="form-control" placeholder="Type MR Number">
+                                </div>
+                            </div>
+                            <div class="col-md-4 mt-4">
+                                <button type="button" id="searchBtn" class="btn btn-primary">Search</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="mrDropdown">Selected MR Number/Patient</label>
+                            <select class="form-control" name="mrnum" id="mrDropdown" required>
+                                <option selected disabled value="">Select</option>
+                            </select>
+                        </div>
+                         
+                    </div>
+                    <div id="caseHistoryContainer">
+
+                    </div>
+                </div>
+            </div>
+           
+        </div>
+    </section>
+</div>
+
+<!-- Modal for displaying search results with DataTable -->
+<div class="modal fade" id="searchModal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="searchModalLabel">Search Results</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <table id="searchResultsTable" class="display table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>MR Number</th>
+                            <th>Patient Name</th>
+                            <th>Address</th>
+                            <th>Contact No</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Results will be appended here -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function() {
+    // Initialize DataTable (without data initially)
+    let table = $('#searchResultsTable').DataTable({
+        paging: true,
+        searching: true,
+        info: true,
+        lengthChange: true,
+        pageLength: 10,
+    });
+
+    $('#searchBtn').on('click', function() {
+        let query = $('#mrSearch').val();
+        if (!query.trim()) {
+            alert('Please enter a search term.');
+            return;
+        }
+
+        table.clear().draw();
+
+        fetch(`/search_mrno?query=${query}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.length > 0) {
+                    data.forEach(item => {
+                        let actionBtn = `<button class="btn btn-primary select-btn" data-id="${item.id}" 
+                                            data-name="${item.Patient_Name}" 
+                                            data-mrno="${item.Medical_Record_Number}" 
+                                            data-contact="${item.contactno}"
+                                            data-address="${item.Housename}">
+                                            Select
+                                          </button>`;
+                        table.row.add([
+                            item.Medical_Record_Number,
+                            item.Patient_Name,
+                            item.Housename || 'N/A',
+                            item.contactno,
+                            actionBtn,
+                        ]).draw(false);
+                    });
+                    $('#searchModal').modal('show');
+                } else {
+                    alert('No matching records found.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('There was an error retrieving the data. Please try again.');
+            });
+    });
+
+    $('#searchResultsTable tbody').on('click', '.select-btn', function() {
+        let id = $(this).data('id');
+        let mrno = $(this).data('mrno');
+        let name = $(this).data('name');
+        let contact = $(this).data('contact');
+        let address = $(this).data('address');
+
+        $('#mrDropdown').html(`<option value="${id}" selected>${mrno}</option>`);
+        $.ajax({
+            url: `/get_patient_history/${id}/`,
+            type: 'GET',
+            success: function(data) {
+                // Assuming `data` contains the history template part you want to display.
+                $('#caseHistoryContainer').html(data);
+            },
+            error: function(error) {
+                console.error('Error fetching patient history:', error);
+                alert('Failed to load patient history. Please try again.');
+            }
+        });
+
+        $('#searchModal').modal('hide');
+    });
+});
+
+</script>
+
+{% endblock %}

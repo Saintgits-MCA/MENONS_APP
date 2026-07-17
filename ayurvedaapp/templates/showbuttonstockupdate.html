@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<style>
+    body {
+font-family: Arial, sans-serif;
+}
+
+.tab {
+overflow: hidden;
+border-bottom: 1px solid #ccc;
+background-color: #f1f1f1;
+}
+
+.tab button {
+background-color: inherit;
+float: left;
+border: none;
+outline: none;
+cursor: pointer;
+padding: 14px 16px;
+transition: 0.3s;
+font-size: 17px;
+}
+
+.tab button:hover {
+background-color: #ddd;
+}
+
+.tab button.active {
+background-color: #ccc;
+}
+
+.tabcontent {
+display: none;
+padding: 6px 12px;
+border: 1px solid #ccc;
+border-top: none;
+}
+
+table {
+width: 100%;
+border-collapse: collapse;
+}
+
+table, th, td {
+border: 1px solid black;
+}
+
+th, td {
+padding: 8px;
+text-align: left;
+}
+
+</style>
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Daily Stock Details</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <!-- <li class="breadcrumb-item"><a href="{% url 'supplierdetails' %}">Add</a></li> -->
+              <li class="breadcrumb-item active">Daily Stock</li>
+            </ol>
+          </div>
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-12">
+            <div class="card">
+           <div class="scroll">
+   
+    <div class="tab">
+        <button class="tablinks" onclick="openTab(event, 'Tab1')">Entry Stock Report</button>
+        <button class="tablinks" onclick="openTab(event, 'Tab2')">Stock Update Report</button>
+    </div>
+
+    <div id="Tab1" class="tabcontent">
+        <h3>Stock Entry Report</h3>
+        <div class="card-body">
+            <table id="example1" class="table table-bordered table-striped">
+                <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Medicine</th>
+                    <th>Company</th>
+                    <th>Supplier</th>
+                    <th>Batch No</th>
+                    <th>Qty</th>
+                    <th>Stock Entry Staff</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for i in tr %}
+                <tr>
+                    <td>{{i.lastupdatedate}}</td>
+                    <td>{{i.itemnm.itemnm}}</td>
+                    <td>{{i.Comapany_name.Comapany_name}}</td>
+                    <td>{{i.suppliernm.shopname}}</td>
+                    <td>{{i.Batch_no}}</td>
+                    <td>{{i.qty}}</td>
+                    <td>{{i.insertedstaffid.Staff_firstname}}</td>
+                </tr>
+                {%endfor %}
+              
+            </tbody>
+        </table>
+    </div>
+
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="row">
+    <div class="col-12">
+      
+<div class="card">
+    <div class="card-body">
+    <div class="scroll">
+    <div id="Tab2" class="tabcontent">
+        <h3>Stock  Update</h3>
+        <table id="example3" class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Medicine Name</th>
+                    <th>Company Name</th>
+                    <th>Supplier</th>
+                    <th>Batch No</th>
+                    <th>Qty</th>
+                    <th>Stock Update Staff</th>
+                   
+                </tr>
+            </thead>
+            <tbody>
+                {% for i in trg %}
+                <tr>
+                    <td>{{i.lastupdatedate}}</td>
+                    <td>{{i.itemnm.itemnm}}</td>
+                    <td>{{i.Comapany_name.Comapany_name}}</td>
+                    <td>{{i.suppliernm.shopname}}</td>
+                    <td>{{i.Batch_no}}</td>
+                    <td>{{i.qty}}</td>
+                    <td>{{i.insertedstaffid.Staff_firstname}}</td>
+                   
+                </tr>
+                {%endfor %}
+            </tbody>
+        </table>
+    </div>
+    </div>
+    </div>
+    </div>
+  
+    </section>
+    </div>
+    
+
+    <script>
+        function openTab(evt, tabName) {
+    // Declare all variables
+    var i, tabcontent, tablinks;
+
+    // Get all elements with class="tabcontent" and hide them
+    tabcontent = document.getElementsByClassName("tabcontent");
+    for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style.display = "none";
+    }
+
+    // Get all elements with class="tablinks" and remove the class "active"
+    tablinks = document.getElementsByClassName("tablinks");
+    for (i = 0; i < tablinks.length; i++) {
+        tablinks[i].className = tablinks[i].className.replace(" active", "");
+    }
+
+    // Show the current tab, and add an "active" class to the button that opened the tab
+    document.getElementById(tabName).style.display = "block";
+    evt.currentTarget.className += " active";
+}
+
+// Set default tab to open
+document.addEventListener("DOMContentLoaded", function() {
+    document.querySelector('.tablinks').click();
+});
+
+    </script>
+  <!-- /.content-wrapper -->
+{% endblock %}

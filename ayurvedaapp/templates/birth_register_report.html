@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="content-wrapper">
+
+    <!-- Page Header -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Birth Register Report</h1>
+                </div>
+            </div>
+
+            <!-- Filter Card -->
+            <div class="card">
+                <div class="card-body">
+                    <form method="GET" action="{% url 'birth_register_report' %}">
+                        <div class="row">
+                            <div class="col-lg-3 col-md-6">
+                                <div class="form-group">
+                                    <label>From Date</label>
+                                    <input type="date" class="form-control" name="from_date" value="{{ from_date }}">
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6">
+                                <div class="form-group">
+                                    <label>To Date</label>
+                                    <input type="date" class="form-control" name="to_date" value="{{ to_date }}">
+                                </div>
+                            </div>
+                            <div class="col-lg-2 col-md-6">
+                                <div class="form-group">
+                                    <label>Gender</label>
+                                    <select class="form-control" name="gender">
+                                        <option value="">All</option>
+                                        <option value="Male" {% if gender == 'Male' %}selected{% endif %}>Male</option>
+                                        <option value="Female" {% if gender == 'Female' %}selected{% endif %}>Female</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-lg-2 col-md-6">
+                                <div class="form-group">
+                                    <label>&nbsp;</label>
+                                    <button type="submit" class="btn btn-primary btn-block">
+                                        <i class="fas fa-search"></i> Search
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-lg-2 col-md-6">
+                                <div class="form-group">
+                                    <label>&nbsp;</label>
+                                    <a href="{% url 'birth_register_report' %}" class="btn btn-secondary btn-block">
+                                        <i class="fas fa-undo"></i> Reset
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <section class="content">
+        <div class="container-fluid">
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="example1" class="table table-bordered table-striped table-sm" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th>SL No.</th>
+                                    <th>OP Number</th>
+                                    <th>Patient Name</th>
+                                    <th>Birth Date</th>
+                                    <th>Birth Time</th>
+                                    <th>Weight</th>
+                                    <th>Mother OP</th>
+                                    <th>Address</th>
+                                    <th>Sex</th>
+                                    <th>Area</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for record in birth_data %}
+                                <tr>
+                                    <td>{{forloop.counter}}</td>
+                                    <td>{{ record.child_op }}</td>
+                                    <td>{{ record.child_name }}</td>
+                                    <td>{{record.birth_date}}</td>
+                                    <td>{{ record.birth_time }}</td>
+                                    <td>{{ record.weight }}</td>
+                                    <td>{{ record.mother_op }}</td>
+                                    <td>{{ record.address }}</td>
+                                    <td>{{ record.gender }}</td>
+                                    <td>{{ record.area }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="8" class="text-center">No birth records found</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</div>
+
+<!-- DataTables initialization -->
+<script>
+
+</script>
+
+{% endblock %}

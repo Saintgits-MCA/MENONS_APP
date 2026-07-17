@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<style>
+  .avilable{
+    height: 300px;
+    overflow: scroll;
+  }
+</style>
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Booking Details</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item">
+                <!-- <a href="{% url 'patientadmission'%}">Add</a> -->
+              </li>
+              <li class="breadcrumb-item active">Booking Details</li>
+            </ol>
+          </div>
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-12">
+            <!-- /.card -->
+
+            <div class="card">
+              <div class="scroll">
+                <!-- /.card-header -->
+                <div class="card-body">
+                 
+                    <form method="POST", action="{% url 'indexroomavailbility' %}">
+             
+                      {% csrf_token %}
+                      <div class="row">
+                        <div  class="col-md-6">
+                          <div class="form-group">
+                            <label for="monthpicker">Select Month:</label>
+                            <input type="month" id="monthpicker" name="month" class="form-control" />
+                          </div>
+
+                      </div>
+                     
+                    </div>
+                    <div class="row">
+                       <div class="col-md-6">
+                         <button type="submit" class="btn btn-primary">Submit</button>
+                        </div>
+                    </div>
+                 
+                </form>
+                <div class="container-fluid avilable">
+               <center> <h3>Room Availability Details for Month: {{ month_name }}</h3>
+               </center>
+            
+               {% if room_booking_data %}
+              
+               <table class="table table-bordered">
+                   <thead>
+                       <tr>
+                           <th>Room Number</th>
+                           <th>Booking Count</th>
+                           <th>Bookings</th>
+                       </tr>
+                   </thead>
+                   <tbody>
+                       {% for room, data in room_booking_data.items %}
+                           <tr>
+                               <td>{{ room.Roomno }}</td>
+                               <td>{{ data.count }}</td>
+                               <td>
+                                   {% if data.bookings %}
+                                       <ul>
+                                           {% for booking in data.bookings %}
+                                               <li>
+                                                   MR No: {{ booking.mrno.Medical_Record_Number }} <br>
+                                                   Name: {{ booking.name }} <br>
+                                                   Admitted Date: {{ booking.admitted_date }} <br>
+                                                   End Date: {{ booking.end_date }}
+                                               </li>
+                                           {% endfor %}
+                                       </ul>
+                                   {% else %}
+                                       Not Booked
+                                   {% endif %}
+                               </td>
+                           </tr>
+                       {% endfor %}
+                   </tbody>
+               </table>
+           {% else %}
+               <p>No rooms or bookings found for {{ month_name }}.</p>
+           {% endif %}
+
+              </div>
+                <form method="POST", action="{% url 'bookingcancel' %}">
+                        
+                  {% csrf_token %}
+                  <table id="example1" class="table table-bordered table-striped">
+                    <thead>
+                      <tr>
+                        <th>Sl.No</th>
+                        <th>Medical Record Number</th>
+                        <th>Room Details</th>
+                      
+                        <!-- <th>Department Name</th>
+                        <th>Branch Name</th>  -->
+                        <th>Booking Start Date</th>
+                        <th>Booking End Date</th>
+                        <th>Status</th>
+                      </tr>
+                      </thead>
+                      <tbody>
+                      
+             {% for i in month_booking_details %}
+                      <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ i.mrno.Medical_Record_Number }}</td>
+                        <td>{{ i.room }}</td>
+                     
+                        <td>{{ i.admitted_date }}</td>
+                        <td>{{ i.end_date }}</td>
+                        <!-- <td>{{i.MR_No.Medical_Record_Number}}</td>
+                        <td>Room Type:{{i.Roomno.Room_type}}<br>Bed Type:{{ i.Roomno.bed_type }}<br>Room No :{{ i.Roomno.Roomno }}</td>
+        
+                  
+                      
+                        
+                        <td>{{i.MR_No.contactno}}</td>
+                        <td>{{i.Department_Name.Department_Name}}</td>
+                        <td>{{i.Branch_Name.Branch_Name}}</td>
+                        <td>{{i.Booking_Date}}</td>
+                        <td>{{i.Bookingend_Date}}</td> -->
+                        <td>
+                           <input type="hidden" name="roomid" value="{{i.Roomno_id}}"> 
+                           <input type="hidden" name="ptid" value="{{i.id}}"> 
+                           <button type="submit" class="btn btn-danger" onclick="alert('Booking cancel');">Cancel</button>
+                        </td>
+                      </tr>
+           {% endfor %}
+                    </tbody>
+                  </table>
+                  </form>
+                </div>
+              </div>
+              <!-- /.card-body -->
+            </div>
+            <!-- /.card -->
+          </div>
+          <!-- /.col -->
+        </div>
+        <!-- /.row -->
+      </div>
+      <!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+  </div>
+  <!-- /.content-wrapper -->
+{% endblock %}

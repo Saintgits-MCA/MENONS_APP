@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="content-wrapper">
+
+    <!-- Page Header -->
+    <section class="content-header">
+        <div class="container-fluid">
+
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Cancelled Bills Report</h1>
+                </div>
+            </div>
+
+            <!-- Filter Card -->
+            <div class="card">
+                <div class="card-body">
+                    <form method="GET" action="">
+                        <div class="row">
+
+                            <div class="col-lg-3 col-md-6">
+                                <div class="form-group">
+                                    <label>From Date</label>
+                                    <input type="date" class="form-control" name="from_date" value="{{ from_date|default:'' }}">
+                                </div>
+                            </div>
+
+                            <div class="col-lg-3 col-md-6">
+                                <div class="form-group">
+                                    <label>To Date</label>
+                                    <input type="date" class="form-control" name="to_date" value="{{ to_date|default:'' }}">
+                                </div>
+                            </div>
+
+                            <div class="col-lg-2 col-md-6 col-sm-12">
+                                <div class="form-group">
+                                    <label>Doctor Name</label>
+                                    <select class="form-control" name="doctor">
+                                        <option value="">All Doctors</option>
+                                        {% for doctor in doctors %}
+                                            <option value="{{ doctor.id }}" {% if doctor.id|stringformat:"s" == doctor_name %}selected{% endif %}>
+                                                {{ doctor.name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-2 col-md-6">
+                                <div class="form-group">
+                                    <label>&nbsp;</label>
+                                    <button type="submit" class="btn btn-primary btn-block">
+                                        <i class="fas fa-search mr-1"></i> Search
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-2 col-md-6">
+                                <div class="form-group">
+                                    <label>&nbsp;</label>
+                                    <a href="{% url 'cancelled_bills_report' %}" class="btn btn-secondary btn-block">
+                                        <i class="fas fa-undo mr-1"></i> Reset
+                                    </a>
+                                </div>
+                            </div>
+
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <section class="content">
+        <div class="container-fluid">
+
+            <div class="card">
+
+                <div class="card-header">
+                    <div class="row">
+                        <div class="col-md-9">
+                            <h5 class="font-weight-bold mb-0">
+                                CANCELLED BILL'S DETAILS{% if display_from_date or display_to_date %} FROM
+                    {{ display_from_date|default:"-" }} TO {{ display_to_date|default:"-" }}{% endif %}
+                            </h5>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body">
+
+                    <div class="table-responsive">
+
+                        <table
+                            id="example1"
+                            class="table table-bordered table-striped table-sm"
+                            style="width:100%;"
+                        >
+                            <thead>
+                                <tr>
+                                    <th>Sl.No</th>
+                                    <th>Bill No</th>
+                                    <th>Patient Name</th>
+                                    <th>Bill Date</th>
+                                    <th class="text-right">Original Amount</th>
+                                    <th class="text-right">Cancelled Amount</th>
+                                    <th class="text-right">Refund Amount</th>
+                                    {% comment %} <th>Status</th> {% endcomment %}
+                                    <th>Cancelled By</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                {% for invoice in invoices %}
+                                <tr>
+                                    <td>{{ invoice.sl_no }}</td>
+                                    <td>{{ invoice.bill_no }}</td>
+                                    <td>{{ invoice.patient_name }}</td>
+                                    <td>{{ invoice.bill_date|date:"d/m/Y" }}</td>
+                                    <td class="text-right">{{ invoice.original_amount|floatformat:2 }}</td>
+                                    <td class="text-right text-danger">{{ invoice.cancelled_amount|floatformat:2 }}</td>
+                                    <td class="text-right text-success">{{ invoice.refund_amount|floatformat:2 }}</td>
+                                    {% comment %} <td>
+                                        <span class="badge {{ invoice.status_badge }}">
+                                            {{ invoice.status }}
+                                        </span>
+                                    </td> {% endcomment %}
+                                    <td>{{ invoice.cancelled_by }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="9" class="text-center">No cancelled bills found.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+
+                            <tfoot>
+                                <tr>
+                                    <th ></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th  class="text-right">
+                                        Total
+                                    </th>
+                                    <th class="text-right">
+                                        {{ total_original|floatformat:2 }}
+                                    </th>
+                                    <th class="text-right text-danger">
+                                        {{ total_cancelled|floatformat:2 }}
+                                    </th>
+                                    <th class="text-right text-success">
+                                        {{ total_refund|floatformat:2 }}
+                                    </th>
+                                    <th></th>
+                                </tr>
+                            </tfoot>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    </section>
+
+</div>
+
+{% endblock %}

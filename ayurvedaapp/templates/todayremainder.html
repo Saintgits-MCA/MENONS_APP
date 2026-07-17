@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper" style="background-color: #f0f2f5;">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1 style="color: #007bff;">Follow Up Details</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+               <li class="breadcrumb-item active" style="color: #555;">Follow Up</li>
+            </ol>
+          </div>
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-12">
+
+            <div class="card card-primary">
+              <div class="card-header">
+                <h3 class="card-title">Select  Date for Follow-up</h3>
+              </div>
+
+              <form method="POST" action="{% url 'todayremaindertable' %}">
+                {% csrf_token %}
+                <div class="card-body">
+                  <div class="form-row">
+                    <div class="col-md-6 mb-3">
+                      <label for="exampleInputDate">Date</label>
+                      <input type="date" class="form-control border-primary" name="sdate" id="exampleInputDate" required>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card-footer">
+                  <button type="submit" class="btn btn-lg btn-primary">Submit</button>
+                </div>
+              </form>
+
+              <div class="card-body">
+                <h3 class="text-center text-primary">{{ current_date }} Follow-up Reminders</h3>
+                <table id="example1" class="table table-bordered table-hover">
+                  <thead class="thead-dark">
+                    <tr>
+                      <th>SL No</th>
+                      <th>Enquirer Name</th>
+                       <th>Phone Number</th>
+                      <th>Status</th>
+                      <th>Language</th>
+                      <th>Reminder Date</th>
+                      <th>Customer Feedback</th>
+                      <th>Update On</th>
+                      <th>Followed Up By</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for i in followups %}
+                      <tr class="table-light">
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ i.enqid.name }}</td>
+                         <td>{{ i.enqid.Phone_number }}</td>
+                        <td>{{ i.enqid.status }}</td>
+                        <td>{{ i.enqid.language }}</td>
+                        <td>{{ i.remainderdate }}</td>
+                        <td>{{ i.remarks }}</td>
+                        <td>{{ i.followedby.Staff_firstname }}</td>
+                        <td>{{ i.followupdate }}</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div> <!-- /.card-body -->
+            </div> <!-- /.card -->
+          </div> <!-- /.col -->
+        </div> <!-- /.row -->
+      </div> <!-- /.container-fluid -->
+    </section> <!-- /.content -->
+  </div> <!-- /.content-wrapper -->
+
+{% endblock %}

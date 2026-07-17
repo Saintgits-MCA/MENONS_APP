@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="content-wrapper">
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h5><i class="fas fa-procedures"></i> Procedure / Operational Master</h5>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="{% url 'procedure_master_list' %}">Procedures</a></li>
+            <li class="breadcrumb-item active">Add Procedure</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="content">
+    <div class="row">
+      <div class="col-md-8">
+        <div class="card card-primary">
+          <div class="card-header">
+            <h3 class="card-title">Add New Procedure / Operational Item</h3>
+          </div>
+          
+          <form method="POST" action="{% url 'procedure_master_add' %}">
+            {% csrf_token %}
+            
+            <div class="card-body">
+              {% if messages %}
+                {% for message in messages %}
+                  <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                  </div>
+                {% endfor %}
+              {% endif %}
+
+              <!-- Procedure Name -->
+              <div class="form-group">
+                <label for="name">Procedure / Service Name <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="name" name="name" 
+                       placeholder="Enter procedure name" required>
+                <small class="form-text text-muted">e.g., ECG - 12 Lead, Nebulization, X-ray Chest</small>
+              </div>
+
+              <!-- Rate -->
+              <div class="form-group">
+                <label for="rate">Rate (₹)</label>
+                <input type="number" step="0.01" class="form-control" id="rate" name="rate" 
+                       placeholder="Enter rate amount" value="0">
+                <small class="form-text text-muted">Enter the price/rate for this service (0 if variable)</small>
+              </div>
+
+              <!-- Description -->
+              <div class="form-group">
+                <label for="description">Description / Note</label>
+                <textarea class="form-control" id="description" name="description" 
+                          rows="3" placeholder="Enter description or note (optional)"></textarea>
+                <small class="form-text text-muted">Additional information about this procedure</small>
+              </div>
+
+              <!-- Hidden Fields -->
+              <input type="hidden" name="branch_id" value="{{ branch_id }}">
+            </div>
+
+            <div class="card-footer">
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Save Procedure
+              </button>
+              <a href="{% url 'procedure_master_list' %}" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Cancel
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Quick Add Suggestions -->
+      <div class="col-md-4">
+        <div class="card card-info">
+          <div class="card-header">
+            <h3 class="card-title">Quick Add Suggestions</h3>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <h6>Common Procedures:</h6>
+              <div class="row">
+                <div class="col-6">
+                  <button type="button" class="btn btn-sm btn-outline-info mb-1 quick-add" data-name="Observation Charge" data-rate="500">
+                    Observation Charge
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-info mb-1 quick-add" data-name="Nebulization" data-rate="100">
+                    Nebulization
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-info mb-1 quick-add" data-name="NST Charge" data-rate="400">
+                    NST Charge
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-info mb-1 quick-add" data-name="ECG - 12 Lead" data-rate="200">
+                    ECG - 12 Lead
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-info mb-1 quick-add" data-name="X-ray Chest" data-rate="200">
+                    X-ray Chest
+                  </button>
+                </div>
+                <div class="col-6">
+                  <button type="button" class="btn btn-sm btn-outline-info mb-1 quick-add" data-name="Nebulization with O2" data-rate="150">
+                    Nebulization with O2
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-info mb-1 quick-add" data-name="BP Check" data-rate="20">
+                    BP Check
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-info mb-1 quick-add" data-name="Injection Charge" data-rate="0">
+                    Injection Charge
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-info mb-1 quick-add" data-name="Scanning Charge" data-rate="0">
+                    Scanning Charge
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-info mb-1 quick-add" data-name="Medical Certificate" data-rate="0">
+                    Medical Certificate
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="mt-2">
+              <h6>Other Charges:</h6>
+              <div class="row">
+                <div class="col-6">
+                  <button type="button" class="btn btn-sm btn-outline-primary mb-1 quick-add" data-name="Dressing & Suturing" data-rate="0">
+                    Dressing & Suturing
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-primary mb-1 quick-add" data-name="Catheterization Charge" data-rate="0">
+                    Catheterization Charge
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-primary mb-1 quick-add" data-name="Procedures Charge" data-rate="0">
+                    Procedures Charge
+                  </button>
+                </div>
+                <div class="col-6">
+                  <button type="button" class="btn btn-sm btn-outline-primary mb-1 quick-add" data-name="Enemia Charge" data-rate="0">
+                    Enemia Charge
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-primary mb-1 quick-add" data-name="TT Charge" data-rate="0">
+                    TT Charge
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+  // Quick add functionality
+  document.querySelectorAll('.quick-add').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const name = this.getAttribute('data-name');
+      const rate = this.getAttribute('data-rate');
+      
+      document.getElementById('name').value = name;
+      document.getElementById('rate').value = rate;
+      
+      // Highlight the form
+      document.getElementById('name').focus();
+      
+      // Scroll to form
+      document.querySelector('.card-primary').scrollIntoView({ behavior: 'smooth' });
+    });
+  });
+</script>
+
+{% endblock %}

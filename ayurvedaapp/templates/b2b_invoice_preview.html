@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load math_filters %}
+
+{% block content %}
+<style>
+    .preview-container {
+        background: #fff;
+        padding: 20px;
+        margin: 20px auto;
+        max-width: 1200px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        border-radius: 8px;
+    }
+    .stock-warning {
+        background-color: #fff3cd;
+        border-left: 4px solid #ffc107;
+        padding: 10px 15px;
+        margin-bottom: 20px;
+    }
+    .stock-success {
+        background-color: #d4edda;
+        border-left: 4px solid #28a745;
+        padding: 10px 15px;
+        margin-bottom: 20px;
+    }
+    .stock-error {
+        background-color: #f8d7da;
+        border-left: 4px solid #dc3545;
+        padding: 10px 15px;
+        margin-bottom: 20px;
+    }
+    .items-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .items-table th, .items-table td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+    }
+    .items-table th {
+        background-color: #f5f5f5;
+    }
+    .stock-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: bold;
+    }
+    .stock-available {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    .stock-missing {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+    .form-actions {
+        margin-top: 20px;
+        text-align: center;
+    }
+    .btn-back, .btn-save {
+        padding: 10px 25px;
+        margin: 0 10px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    .btn-back {
+        background-color: #6c757d;
+        color: white;
+    }
+    .btn-save {
+        background-color: #00796b;
+        color: white;
+    }
+    .btn-save:disabled {
+        background-color: #ccc;
+        cursor: not-allowed;
+    }
+</style>
+
+<div class="preview-container">
+    <h2>B2B Tax Invoice Preview</h2>
+    
+    <!-- Stock Transfer Info -->
+    {% if is_stock_transfer %}
+        <div class="stock-success">
+            <strong>📦 Stock Transfer Details:</strong><br>
+            From: {{ source_branch.Branch_Name }}<br>
+            To: {{ destination_branch.Branch_Name }}
+        </div>
+    {% endif %}
+    
+    <!-- Stock Warnings -->
+    {% if stock_warnings %}
+        <div class="stock-warning">
+            <strong>⚠️ Stock Warnings:</strong><br>
+            {% for warning in stock_warnings %}
+                {{ warning }}<br>
+            {% endfor %}
+        </div>
+    {% endif %}
+    
+    <!-- Proforma Reference -->
+    <div style="margin-bottom: 20px;">
+        <strong>Proforma Reference:</strong> {{ proforma.voucher_no }}<br>
+        <strong>Proforma Date:</strong> {{ proforma.invoice_date|date:"d-m-Y" }}
+    </div>
+    
+    <!-- Items Table -->
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th>Sl</th>
+                <th>Description</th>
+                <th>Batch No</th>
+                <th>Qty</th>
+                <th>Unit</th>
+                <th>Rate (₹)</th>
+                <th>Taxable Value</th>
+                <th>GST %</th>
+                <th>CGST</th>
+                <th>SGST</th>
+                <th>Total (₹)</th>
+                {% if is_stock_transfer %}
+                    <th>Source Stock</th>
+                    <th>Destination Stock</th>
+                {% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items_data %}
+                <tr>
+                    <td>{{ item.sl_no }}</td>
+                    <td>{{ item.description }}</td>
+                    <td>{{ item.batch_info|default:"-" }}</td>
+                    <td class="text-right">{{ item.quantity|floatformat:0 }}</td>
+                    <td>{{ item.unit }}</td>
+                    <td class="text-right">₹ {{ item.rate|floatformat:2 }}</td>
+                    <td class="text-right">₹ {{ item.taxable_value|floatformat:2 }}</td>
+                    <td class="text-right">{{ item.gst_percent|floatformat:1 }}%</td>
+                    <td class="text-right">₹ {{ item.cgst|floatformat:2 }}</td>
+                    <td class="text-right">₹ {{ item.sgst|floatformat:2 }}</td>
+                    <td class="text-right">₹ {{ item.total_amount|floatformat:2 }}</td>
+                    {% if is_stock_transfer %}
+                        <td>
+                            {% if item.source_stock_exists %}
+                                <span class="stock-badge stock-available">✓ {{ item.source_stock_qty }} units</span>
+                            {% else %}
+                                <span class="stock-badge stock-missing">✗ Not found</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if item.dest_stock_exists %}
+                                <span class="stock-badge stock-available">✓ {{ item.dest_stock_qty }} → {{ item.dest_stock_qty|add:item.quantity }} units</span>
+                            {% else %}
+                                <span class="stock-badge stock-missing">✗ New stock will be created</span>
+                            {% endif %}
+                        </td>
+                    {% endif %}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <!-- Totals -->
+    <div style="margin-top: 20px; text-align: right;">
+        <p>Subtotal: <strong>₹ {{ subtotal|floatformat:2 }}</strong></p>
+        <p>CGST Total: <strong>₹ {{ cgst_total|floatformat:2 }}</strong></p>
+        <p>SGST Total: <strong>₹ {{ sgst_total|floatformat:2 }}</strong></p>
+        {% if igst_total > 0 %}
+            <p>IGST Total: <strong>₹ {{ igst_total|floatformat:2 }}</strong></p>
+        {% endif %}
+        <p style="font-size: 18px; border-top: 2px solid #000; padding-top: 10px;">
+            Grand Total: <strong>₹ {{ grand_total|floatformat:2 }}</strong>
+        </p>
+    </div>
+    
+    <!-- Form Actions -->
+    <div class="form-actions">
+        <button type="button" class="btn-back" onclick="window.location.href='{% url 'b2b_invoice_create' proforma.id %}'">Back to Edit</button>
+        {% if stock_available %}
+            <form method="POST" style="display: inline;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="save">
+                <input type="hidden" name="buyer_name" value="{{ proforma.buyer_name }}">
+                <input type="hidden" name="buyer_address" value="{{ proforma.buyer_address }}">
+                <input type="hidden" name="buyer_gstin" value="{{ proforma.buyer_gstin }}">
+                <input type="hidden" name="buyer_state" value="{{ buyer_state|default:'Kerala' }}">
+                <input type="hidden" name="buyer_state_code" value="32">
+                <input type="hidden" name="consignee_name" value="{{ proforma.buyer_name }}">
+                <input type="hidden" name="consignee_address" value="{{ proforma.buyer_address }}">
+                <input type="hidden" name="consignee_state" value="{{ buyer_state|default:'Kerala' }}">
+                <input type="hidden" name="consignee_state_code" value="32">
+                <input type="hidden" name="payment_mode" value="Cash">
+                <input type="hidden" name="dispatched_through" value="By Road">
+                <input type="hidden" name="terms_of_delivery" value="F.O.R. Destination">
+                <button type="submit" class="btn-save">Confirm & Create B2B Invoice</button>
+            </form>
+        {% else %}
+            <button class="btn-save" disabled>Cannot Create - Stock Issues</button>
+            <p style="color: #dc3545; margin-top: 10px;">
+                Please resolve stock issues before creating the invoice.
+            </p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

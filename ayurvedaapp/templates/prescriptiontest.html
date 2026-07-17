@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<link href="https://fonts.googleapis.com/css?family=Roboto:700" rel="stylesheet">
+<style type="text/css">
+  #boxes-container {
+    width: 100%;
+    display: flex;
+    margin: 10px;
+    flex-wrap: wrap;
+  }
+
+  .box {
+    background-color: white;
+    margin: 10px;
+    width: 50px;
+    height: 50px;
+    border-radius: 5px;
+    opacity: 0.5;
+  }
+</style>
+
+<div class="content-wrapper">
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Prescription </h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item active">Prescription</li>
+          </ol>
+        </div>
+      </div>
+    </div><!-- /.container-fluid -->
+  </section>
+
+ <body>
+    <div class="input-container">
+      <form id="inputForm">
+        <input type="number" id="input-box" name="quantity" min="1" max="">
+        <input id="filldetails" name="submit" type="submit" value="Add boxes">
+        
+      </form>
+    </div>
+
+    <div id="boxes-container">
+      <div id="rem"></div>
+    </div>
+  </body>
+
+  <script>
+    var form = document.getElementById('inputForm');
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault(); // stop the form submission
+
+      var input = form.querySelector('input');
+      var boxInput = input.value;
+
+      generateBoxes(boxInput);
+    });
+
+    function generateBoxes(count) {
+      var container = document.getElementById('rem');
+      container.innerHTML = ''; // Clear previous boxes
+
+      for (var i = 0; i < count; i++) {
+        var div = document.createElement('input');
+        div.className = 'box';
+        container.appendChild(div);
+      }
+    }
+
+    function clearBoxes() {
+      var container = document.getElementById('rem');
+      container.innerHTML = ''; // Clear all generated boxes
+    }
+  </script>
+</div>
+
+{% endblock %}

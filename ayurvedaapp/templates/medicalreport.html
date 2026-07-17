@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Medical History</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item">
+                            {% if dptview == '1' %}
+                            <a href="{% url 'departmenttable' %}?menumanagement_id={{ idmngmnt }}">View</a>
+                            {% endif %}
+                        </li>
+                        <li class="breadcrumb-item active">Medical History</li>
+                    </ol>
+                </div>
+            </div>
+        </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title">Medical History</h3>
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse"></button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+
+                        <form method="POST" action="{% url 'savemedicalreport' %}" enctype="multipart/form-data" id="medicalForm">
+                            {% csrf_token %}
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div class="form-group">
+                                                <label for="mrno">MR Number</label>
+                                                <input type="text" class="form-control" name="mrno" id="mrno" value="{{ mrno }}" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="drugHistory">Drug History</label>
+                                                <input type="hidden" class="form-control" name="ptid" id="ptid" value="{{ ptid }}">
+                                                <input type="text" class="form-control" name="drugHistory" id="drugHistory" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="historyofpresentcomplaint">History of Present Complaint</label>
+                                                <input type="text" class="form-control" name="historyofpresentcomplaint" id="historyofpresentcomplaint" required>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div class="form-group">
+                                                <label for="finaldiagnosis">Final Diagnosis</label>
+                                                <input type="text" class="form-control" name="finaldiagnosis" id="finaldiagnosis" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="testneeded">Test Needed</label>
+                                                <input type="text" class="form-control" name="testneeded" id="testneeded">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- File Upload Section -->
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div class="form-group">
+                                                <label for="uploaded_file">Result Upload</label>
+                                                <div class="row">
+                                                    <div class="col-md-3">
+                                                        <div class="file-loading mb-3">
+                                                            <!-- Allow multiple file selection -->
+                                                            <input id="singleFileUpload" type="file" class="form-control-file" accept=".jpg,.pdf,.png" multiple>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-9">
+                                                        <!-- List of selected files -->
+                                                        <ul id="file-list" class="list-unstyled mt-2"></ul>
+                                                    </div>
+                                                </div>
+                                                <!-- Hidden field to hold selected files in JavaScript -->
+                                                <input type="hidden" name="uploaded_files" id="uploaded_files">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="card-footer">
+                                {% if messages %}
+                                    {% for message in messages %}
+                                        <p style="color:green;">{{ message }}</p>
+                                    {% endfor %}
+                                {% endif %}
+                                <button type="submit" class="btn btn-primary">Submit</button>
+                            </div>
+                        </form>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- /.content -->
+</div>
+
+<script>
+    // Array to keep track of selected files
+    let selectedFiles = [];
+
+    // Handle the addition of files one by one
+    document.getElementById('singleFileUpload').addEventListener('change', function() {
+        const files = Array.from(this.files); // Get all selected files
+
+        files.forEach(file => {
+            // Check if the file is already in the list to avoid duplicates
+            if (!selectedFiles.some(f => f.name === file.name)) {
+                selectedFiles.push(file); // Add to selected files array
+
+                // Add the file to the UI list
+                const fileList = document.getElementById('file-list');
+                const li = document.createElement('li');
+                li.className = "list-group-item d-flex justify-content-between align-items-center";
+                li.textContent = file.name;
+
+                // Create a "View" link
+                const viewLink = document.createElement('a');
+                viewLink.href = URL.createObjectURL(file);
+                viewLink.textContent = 'View';
+                viewLink.target = '_blank'; // Open in a new tab
+                viewLink.className = "btn btn-link";
+
+                // Create a "Remove" button
+                const removeButton = document.createElement('button');
+                removeButton.textContent = 'Remove';
+                removeButton.className = "btn btn-danger btn-sm";
+                removeButton.onclick = function () {
+                    removeFile(file.name, li);
+                };
+
+                li.appendChild(viewLink);
+                li.appendChild(removeButton);
+
+                fileList.appendChild(li);
+            }
+        });
+
+        // Clear the input so the user can upload another file
+        this.value = '';
+    });
+
+    // Function to remove file from the list
+    function removeFile(fileName, listItem) {
+        // Remove the file from the selected files array
+        selectedFiles = selectedFiles.filter(file => file.name !== fileName);
+        // Remove the corresponding list item
+        listItem.remove();
+    }
+
+    // Handle form submission and attach files to the form
+    document.getElementById('medicalForm').addEventListener('submit', function(event) {
+        const formData = new FormData(this);
+
+        // Append all selected files to the formData object
+        selectedFiles.forEach(file => {
+            formData.append('uploaded_files[]', file);
+        });
+
+        // Prevent default form submission and use AJAX or fetch to handle file upload
+        event.preventDefault();
+
+        fetch('{% url "savemedicalreport" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            },
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                window.location.href = data.redirect_url;
+            } else {
+                displayErrorMessage(data.error || "An error occurred while saving the report.");
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            displayErrorMessage("Failed to submit the form. Please try again.");
+        });
+    });
+
+    // Function to display error messages in the UI
+    function displayErrorMessage(message) {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = "alert alert-danger";
+        errorDiv.textContent = message;
+        document.querySelector('.card-footer').insertBefore(errorDiv, document.querySelector('.card-footer button'));
+    }
+</script>
+
+{% endblock %}

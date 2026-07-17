@@ -1,0 +1,250 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Staff  Details </h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item">
+                {% if staffmgmntview == '1'%}
+                  <a href="{% url 'staffdetailtable'%}?menumanagement_id={{ idmngmnt }}">View All</a>
+                {%endif%}
+              </li>
+              <li class="breadcrumb-item active">Staff </li>
+            </ol>
+          </div>
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+
+      <div class="row">
+        <div class="col-md-12">
+          <div class="card card-primary">
+            <div class="card-header">
+              <h3 class="card-title">Staff Details </h3>
+
+              <div class="card-tools">
+                <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                  <!-- <i class="fas fa-minus"></i> -->
+                </button>
+              </div>
+            </div>
+             <form method="POST", enctype="multipart/form-data" action="{% url 'staffdetail'%}?menumanagement_id={{ idmngmnt }}" onsubmit="return validateForm()">
+             
+                {% csrf_token %}
+      <div class="row">
+          <div class="col-md-6">
+              <div class="card">
+             
+             
+                <div class="card-body">
+                    <div class="form-group">
+                    <label for="exampleInputFirstName">Staff First Name</label>
+                    <input type="text" class="form-control" id="exampleInputFirstName" name="firstname" placeholder="Enter  First Name" required>
+                  </div>
+                   <div class="form-group">
+                    <label>Staff Last Name</label>
+                    <input type="text" class="form-control" id="exampleInputLastName" name="lastname" placeholder="Enter  Last Name">
+                  </div>
+
+                  <div class="form-group">
+                    <label for="exampleInputManagerName">Gender</label>
+                    <br>
+                    <input type="radio"value="Male" name="gridRadios" id="exampleInputStatus" required>
+                    <label for="exampleInputManagerName">Male</label>
+                    <input type="radio"value="Female"id="exampleInputStatus" name="gridRadios" required>
+                    <label for="exampleInputManagerName">Female</label>
+                    <input type="radio"value="Others"id="exampleInputStatus" name="gridRadios" required>
+                    <label for="exampleInputManagerName">Others</label>
+
+                  </div>
+
+
+                  <div class="form-group">
+                    <label for="exampleInputHouse">Address</label>
+                  <textarea id="address" class="form-control" name="address"></textarea>
+                  </div>
+                  <div class="form-group">
+                    <label for="exampleInputManagerName">Email</label>
+                    <input type="text" class="form-control" id="exampleInputEmail" name="email" placeholder="Enter Email"  onchange="validateemail()">
+                  </div>
+                   <div class="form-group">
+                    <label >Contact No</label>
+                    <input type="text" class="form-control" id="exampleInputContactNo" name="contactnum" placeholder="Enter Contact No" >
+                  </div>
+                  <!-- <div class="form-group">
+                    <label for="exampleInputHouse">House Name</label>
+                    <input type="textArea" class="form-control" id="exampleInputAddress" name="housename" placeholder="Enter House Name" >
+                  </div>
+                  <div class="form-group">
+                    <label for="exampleInputPincode">Pincode</label>
+                      <input type="number" class="form-control" id="exampleInputPincode" name="pincode" placeholder="Enter Pincode" required>
+                  </div>
+                  -->
+                  <!-- <div class="form-group">
+                    <label for="exampleInputRegisterNo">Country</label>
+                     <select class="form-control" name="country" >
+                        <option selected disabled value="">Select</option>            
+                        {% for i in countryobj %}
+                      <option value="{{i.id}}">{{i.Country_Name}}</option>
+                                        {% endfor %}
+                      </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="exampleInputRegisterNo">State</label>
+                   <select class="form-control" name="state" >
+                        <option selected disabled value="">Select</option>
+                          {% for i in stateobj %}
+                             <option value="{{i.id}}">{{i.State_Name}}</option>
+                         {% endfor %}
+                      </select>
+                  </div> -->
+                   <!-- <div class="form-group">
+                   <label for="exampleInputRegisterNo">District</label>
+                   <select class="form-control" name="district" >
+                      <option selected disabled value="">Select</option>
+                         {% for i in districtobj %}
+                            <option value="{{i.id}}">{{i.District_name}}</option>
+                         {% endfor %}
+                      </select>
+                  </div> -->
+                  <!-- <div class="form-group">
+                    <label for="exampleInputRegisterNo">City</label>
+                    <input type="text" class="form-control"  name="city" placeholder="Enter City" >
+                  </div>  -->
+                </div>
+              </div>
+            </div>
+                <!-- /.card-body -->
+        
+              <div class="col-md-6">
+              <div class="card">
+             
+             
+                <div class="card-body">
+                   
+                  <div class="form-group">
+                    <label >Qualification/Speacialization</label>
+                    <textarea class="form-control" name="qualification">
+                      
+                    </textarea>
+                    
+                  </div>
+                   <!-- <div class="form-group">
+                    <label>Experience</label>
+                    <input type="text" class="form-control" id="exampleInputExperience" name="experience" placeholder="Enter Experience"  onchange="validateFileType()">
+                  </div> -->
+                   <!-- <label for="exampleInputFile">Certificate Upload</label>
+                    <div class="input-group">
+                      <div class="custom-file">
+                        type="file" name="inputfile" class="custom-file-input" 
+                        <input type="file" class="custom-file-input" id="exampleInputFile" name="uploadfile" required>
+                        <label class="custom-file-label" for="exampleInputFile">Choose file</label>
+                      </div>
+                      <div class="input-group-append">
+                        <span class="input-group-text" id="">Upload</span>
+                      </div>
+                    </div> -->
+                       <div class="form-group">
+                    <label for="exampleInputRegisterNo">Joining Date</label>
+                    <input type="date" class="form-control" id="exampleInputdate" name="joiningdate" >
+                  </div>
+                  <div class="form-group">
+                    <label >Pancard Number</label>
+                    <input type="text" class="form-control" id="exampleInputpancard" name="pancardnum" placeholder="Enter Pancard Number">
+                  </div>
+              
+                </div>
+              </div>
+            </div>
+          </div>
+                <div class="card-footer">
+                  {% if messages %}
+        {% for message in messages %}
+        <p style="color:green;">{{message}}</p> 
+        {% endfor %}
+        {% endif %}
+                  {%if staffmgmntadd ==  '1'%}
+                  <button type="submit" class="btn btn-primary">Submit</button>
+                  {%endif%}
+                </div>
+              </form>
+            <!-- /.card-body -->
+          </div>
+          <!-- /.card -->
+        </div>
+     
+      </div>
+
+      
+    </section>
+    <!-- /.content -->
+  </div>
+  <!-- /.content-wrapper -->
+   
+  <script>
+    function validateFileType() {
+        var fileInput = document.getElementById('fileInput');
+        var file = fileInput.files[0];
+        var allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+        var maxFileSizeKB = 30;
+        
+        if (!allowedTypes.includes(file.type)) {
+            alert('Invalid file type. Please upload a JPEG, PNG, or PDF file.');
+            fileInput.value = '';
+            return;
+        }
+        var fileSizeKB = file.size / 1024; 
+        if (fileSizeKB > maxFileSizeKB) {
+            alert('File size exceeds the maximum limit of ' + maxFileSizeKB + ' KB.');
+            fileInput.value = '';
+            return;
+        }
+    }
+   
+ 
+</script>
+ <script>
+  function validateForm() {
+      var emailInput = document.getElementById('exampleInputemail');
+      var contactNumberInput = document.getElementById('exampleInputContactNo');
+  
+      if (!validateEmail(emailInput.value)) {
+          alert('Invalid email address. Please enter a valid email.');
+          return false;
+      }
+  
+      if (!validateContactNumber(contactNumberInput.value)) {
+          alert('Invalid contact number. Please enter a valid 10-digit number.');
+          return false;
+      }
+  
+      // Additional validation or form submission logic can be added here
+  
+      return true; // Form is valid
+  }
+  
+  function validateEmail(email) {
+      var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return emailRegex.test(email);
+  }
+  
+  function validateContactNumber(contactNumber) {
+      // Assumes 10-digit contact number with optional country code
+      var contactNumberRegex = /^\+?\d{10}$/;
+      return contactNumberRegex.test(contactNumber);
+  }
+  </script>
+{% endblock %}

@@ -1,0 +1,708 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<style>
+    .section-title {
+      background-color: #f8f9fa;
+      padding: 10px;
+      font-weight: 600;
+      border-left: 5px solid #007bff;
+      margin-bottom: 15px;
+    }
+    .table th, .table td {
+      vertical-align: middle;
+    }
+    .total-row th, .total-row td {
+      font-size: 1.1rem;
+      font-weight: bold;
+    }
+  </style>
+<div class="content-wrapper">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>IP Bill</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card card-primary shadow-lg">
+                        <div class="card-header">
+                            <h3 class="card-title">Inpatient Billing Form</h3>
+                        </div>
+ <div class="card-body">
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="mrSearch">MR Number/PhoneNo/Name</label>
+                    <input type="text" id="mrSearch" class="form-control" placeholder="Type MR Number">
+                </div>
+            </div>
+            <div class="col-md-3 mt-4">
+                <button id="searchBtn" class="btn btn-primary btn-block">Search</button>
+            </div>
+        </div>
+      <!-- Patient Info -->
+      <form  method="POST" id="ipexpandedForm" action="{% url 'ipbillexpand' %}">
+        {% csrf_token %}
+      <div class="section-title">Patient Information</div>
+      <div class="row">
+        <div class="col-md-4"><strong>Patient Name: <input type="text" id="ptname"  class="form-control" ></strong> </div>
+        <div class="col-md-4"><strong>MR Number: <input type="text"  class="form-control" id="mrno"></strong> </div>
+        <div class="col-md-4 form-group form-group-sm"><strong>Gender / Age: </strong><input type="text" class="form-control d-inline-block w-25" id="gender" placeholder="Gender" style="display:inline-block;width:80px;"><input type="number" class="form-control d-inline-block w-25" id="age" placeholder="Age" style="display:inline-block;width:80px;"></div>      </div>
+      <div class="row mt-2">
+        <div class="col-md-4"><strong>Admission Date: <input type="text"  class="form-control" id="admittedate"></strong></div>
+        <div class="col-md-4"><strong>Discharge Date: <input type="text"  class="form-control" id="disdate"></strong> </div>
+        <div class="col-md-4"><strong>IP No: <input type="text"  class="form-control" id="ipno" name="ipno"></strong> </div>
+      </div><!-- Room Charges -->
+      <div class="section-title mt-4">Room Charges</div>
+          <h5>Room/Ward Accommodation History</h5>
+      <table class="table table-bordered" id="roomBreakdownTable">
+          <thead>
+              <tr>
+                  <th>Type</th>
+                  <th>Room/Ward No</th>
+                  <th>Floor</th>
+                  <th>Doctor</th>
+                  <th>Rate/Day</th>
+                  <th>Days</th>
+                  <th>Total</th>
+              </tr>
+          </thead>
+          <tbody></tbody>
+          <tfoot>
+              <tr>
+                  <td colspan="6" class="text-end font-weight-bold">Total Room Rent</td>
+                  <td><input type="text" id="roomRentTotal"class="form-control" value="0.00" name="roomRentTotal">
+                </td>
+              </tr>
+          </tfoot>
+      </table>
+      <div class="section-title mt-4">Food Charges</div>
+      <div class="row">
+        <div class="col-md-4">Total Food Amount</div>
+        <div class="col-md-4"> <input type="text"id="food-total"class="form-control" value="0.00" name="food-total">
+        </div>
+      </div>
+      <!-- Medicines -->
+      <div class="section-title mt-4">Medicines</div>
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th>Medicine</th>
+            <th>Quantity</th>
+            <th>Rate</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody id="medicine-table-body">
+          <!-- JS populates here -->
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3" class="text-end fw-bold">Total Medicines Amount ₹</td>
+            <td ><input type="text"id="medicine-cost"class="form-control" value="0.00" name="medicine-cost"></td>  </tr>
+        </tfoot>
+      </table>
+          <!-- Treatment -->
+          <div class="section-title mt-4">Treatment</div>
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th>Treatment</th>
+            <th>Quantity</th>
+            <th>Rate</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody id="treatment-table-body">
+          <!-- JS populates here -->
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3" class="text-end fw-bold">Total Treatments</td>
+            <td> <input type="text"id="treatment-total"class="form-control" value="0.00" name="treatment-total"></td>
+          </tr>
+        </tfoot>
+      </table>   
+      <!-- Other Services -->
+      <div class="section-title mt-4">Other Services</div>
+      <table class="table table-bordered" id="other-services-table">
+        <thead>
+          <tr>
+            <th>Service</th>
+            <th>Details</th>
+            <th>Charges (₹)</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>  
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="2" class="text-end fw-bold">Total Charges</td>
+            <td colspan="2"  class="fw-bold"><input type="text"id="other-services-total"class="form-control" value="0.00" name="other-services-total"> </td>
+          </tr>
+        </tfoot>
+      </table>
+      <button id="add-service" class="btn btn-primary" type="button">Add Service</button>
+
+     <!-- Summary -->
+      <div class="section-title mt-4">Bill Summary</div>
+      <table class="table table-bordered">
+        <tbody>
+          <tr><th>Total Room Charges</th><td> <input type="text"id="totalrentamount"class="form-control" value="0.00" name="totalrentamount"> </td></tr>
+          <tr><th>Total Treatment Charges</th><td> <input type="text"id="totaltreatmentamount"class="form-control" value="0.00" name="totaltreatmentamount"> </td></tr>          <tr><th>Total Medicines Amount</th><td><input type="text"id="totalmedicineamount"class="form-control" value="0.00" name="totalmedicineamount"> </td></tr>
+          <tr><th>Total Food Charges</th><td><input type="text"id="totalfoodamount"class="form-control" value="0.00" name="totalfoodamount"> </td></tr>
+          <tr><th>Other Services</th><td><input type="text"id="totalserviceamount"class="form-control" value="0.00" name="totalserviceamount"></td></tr>
+          <tr><th>Subtotal</th><td><input type="text"id="subtotal"class="form-control" value="0.00" name="subtotal"></td></tr>
+          <tr><th>Discount</th><td><input type="text"id="discount"class="form-control" value="0.00" name="discount"></td></tr>
+          <tr><th>Tax</th><td> <input type="text"id="tax"class="form-control" value="0.00" name="tax"></td></tr>
+          <tr class="total-row"><th>Grand Total</th><td><input type="text"id="grandtotal"class="form-control" value="0.00" name="grandtotal"> </td></tr>
+        </tbody>
+      </table>
+      <div class="card-footer">
+        <button type="submit" id="saveipexpanded" class="btn btn-primary">Submit</button>
+    </div>
+    </form>
+    {% if error %}
+  <div style="color:red">{{ error }}</div>
+{% endif %}
+      <!-- Footer -->
+      <div class="row mt-5">
+        <div class="col-md-6">
+          <p><strong>Payment Status:</strong> Paid</p>
+          <p><strong>Payment Mode:</strong> UPI</p>
+        </div>
+        <div class="col-md-6 text-right">
+          <p><strong>Authorized By:</strong></p>
+          <p>_________________________</p>
+          <p><small>Billing In-Charge</small></p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Modal for displaying search results with DataTable -->
+<div class="modal fade" id="searchModal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title" id="searchModalLabel">Search Results</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <!-- DataTable for displaying search results -->
+          <table id="searchResultsTable" class="display table table-bordered">
+            <thead>
+              <tr>
+                <th>MR Number</th>
+                <th>Patient Name</th>
+                <th>Address</th>
+                <th>Contact No</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Results will be appended here -->
+            </tbody>
+          </table>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+$(document).ready(function () {
+  // Function to calculate total charges
+  function updateServiceTotal() {
+    let total = 0;
+    $(".service-charge").each(function () {
+      let val = parseFloat($(this).val());
+      if (!isNaN(val)) total += val;
+    });
+    $("#other-services-total").val(`${total.toFixed(2)}`);
+  }
+  // Add new row
+  $("#add-service").click(function () {
+    $("#other-services-table tbody").append(`
+      <tr>
+        <td><input type="text" class="form-control" name="service[]"  placeholder="Service"></td>
+        <td><input type="text" class="form-control" name="details[]"  placeholder="Details"></td>
+        <td><input type="number" class="form-control  service-charge" name="charges[]" value="0"></td>
+        <td><button class="btn btn-danger remove-service">Remove</button></td>
+      </tr>
+    `);
+    updateServiceTotal();
+  });
+  // Remove row
+  $("#other-services-table").on("click", ".remove-service", function () {
+    $(this).closest("tr").remove();
+    updateServiceTotal();
+    recalcBillSummary();
+  });
+  // Update total when charges are changed
+  $("#other-services-table").on("input", ".service-charge", function () {
+    updateServiceTotal();
+    recalcBillSummary();
+  });
+  // Recalculate Bill Summary from Other Services total
+  function recalcBillSummary() {
+    let roomRent = parseFloat($("#roomRentTotal").val()) || 0;
+    let medicineTotal = parseFloat($("#medicine-cost").val()) || 0;
+    let treatmentTotal = parseFloat($("#treatment-total").val()) || 0;
+    let foodCharges = parseFloat($("#food-total").val()) || 0;
+    let otherCharges = parseFloat($("#other-services-total").val()) || 0;
+    let subtotal = roomRent + medicineTotal + treatmentTotal + foodCharges + otherCharges;
+    $("#subtotal").val(subtotal.toFixed(2));
+    let discount = parseFloat($("#discount").val()) || 0;
+    let tax = parseFloat($("#tax").val()) || 0;
+    let grandTotal = subtotal - discount + tax;
+    $("#grandtotal").val(grandTotal.toFixed(2));
+    $("#totalrentamount").val(roomRent.toFixed(2));
+    $("#totalfoodamount").val(foodCharges.toFixed(2));
+    $("#totalmedicineamount").val(medicineTotal.toFixed(2));
+    $("#totaltreatmentamount").val(treatmentTotal.toFixed(2));
+    $("#totalserviceamount").val(otherCharges.toFixed(2));
+  }
+  // Initial calculation
+  updateServiceTotal();
+});
+</script>
+<script>
+    $(document).ready(function () {
+        let table = $("#searchResultsTable").DataTable({
+            paging: true,
+            searching: true,
+            info: true,
+            lengthChange: true,
+            pageLength: 10,
+        });
+        
+        // Search button click
+        $("#searchBtn").on("click", function (e) {
+        e.preventDefault();
+        let query = $("#mrSearch").val().trim();
+        if (query === "") {
+            alert("Please enter a search term.");
+            return;
+        }
+
+        // Show loading state
+        let btn = $(this);
+        let originalText = btn.html();
+        btn.html('<i class="fas fa-spinner fa-spin"></i> Searching...').prop('disabled', true);
+
+        table.clear().draw();
+        fetch(`/search_ip_expanded?query=${query}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.length > 0) {
+                    data.forEach(item => {
+                        // ✅ SAFELY STRINGIFY DATA - Only include needed fields
+                        const patientData = {
+                            Medical_Record_Number: item.Medical_Record_Number || '',
+                            Patient_Name: item.Patient_Name || '',
+                            address: item.address || '',
+                            contactno: item.contactno || '',
+                            Admission_Date: item.Admission_Date || '',
+                            Discharge_Date: item.Discharge_Date || '',
+                            ip_id: item.ip_id || '',
+                            age: item.age || '',
+                            gender: item.gender || '',
+                            room_rate: item.room_rate || 0,
+                            room_number: item.room_number || '',
+                            floor_number: item.floor_number || '',
+                            doctor: item.doctor || '',
+                            room_charges_breakdown: item.room_charges_breakdown || [],
+                            medicine_details: item.medicine_details || [],
+                            treatment_details: item.treatment_details || [],
+                            dischargeid: item.dischargeid || '',
+                            accommodation_type: item.accommodation_type || '',
+                            nursing_charge: item.nursing_charge || 0,
+                            water_electricity_charge: item.water_electricity_charge || 0
+                        };
+                        
+                        const btn = `<button class="btn btn-primary select-btn" 
+                            data-patient='${JSON.stringify(patientData)}'
+                            data-medicine-details='${JSON.stringify(patientData.medicine_details || [])}'
+                            data-treatment-details='${JSON.stringify(patientData.treatment_details || [])}'>
+                            Select
+                        </button>`;
+                        
+                        table.row.add([
+                            item.Medical_Record_Number || '',
+                            item.Patient_Name || '',
+                            item.address || "N/A",
+                            item.contactno || "N/A",
+                            btn
+                        ]).draw(false);
+                    });
+                    $("#searchModal").modal("show");
+                } else {
+                    alert("No matching records found.");
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("Error retrieving data. Please try again.");
+            })
+            .finally(() => {
+                btn.html(originalText).prop('disabled', false);
+            });
+    });
+        $("#searchResultsTable tbody").on("click", ".select-btn", function () {
+          let $btn = $(this);
+          const data = JSON.parse($(this).attr("data-patient"));
+            const admissionDate = new Date(data.Admission_Date);
+            const dischargeDate = new Date(data.Discharge_Date);
+            if (!dischargeDate) return alert("Patient not yet discharged.");
+            const stayDays = Math.max(1, Math.ceil((dischargeDate - admissionDate) / (1000 * 60 * 60 * 24)));
+           $("#admittedate").val(data.Admission_Date);
+            $("#discharge-id").val(data.dischargeid);
+            $("#disdate").val(data.Discharge_Date);
+            $("#ptname").val(data.Patient_Name);
+            $("#ipno").val(data.ip_id);
+            $("#age").val(data.age);
+            $("#mrno").val(data.Medical_Record_Number);
+            $("#gender").val(data.gender);
+            const tbody = $("#roomBreakdownTable tbody").empty();
+            let totalRent = 0;
+            if (data.room_charges_breakdown && data.room_charges_breakdown.length > 0) {
+                data.room_charges_breakdown.forEach(row => {
+                    const rate = parseFloat(row["Rate per Day"]) || 0;
+                    const days = parseInt(row["No of Days"]) || stayDays;
+                    const rent = rate * days;
+                    totalRent += rent;
+                    let roomid = parseInt(row["roomid"]) || stayDays;
+                    const label = row["accommodation_type"] || (row["Ward"] === "Yes" ? "Ward" : "Room");
+                    const isWard = row["Ward"] === "Yes";
+                    const rowClass = isWard ? "table-warning" : "table-info";
+                    const roomNumber = row["Room/Bed No"] || row["Room_No"] || row["Bed_No"] || "-";
+                    const floor = row["Floor No"] || "-";
+                    tbody.append(`
+                        <tr class="${rowClass}" data-rate="${rate}">
+                            <td>${label}
+                              <input type="hidden" class="roomid" value="${roomid}" name="room[]" ></td>
+                            <td>${roomNumber}</td>
+                            <td>${floor}</td>
+                            <td>${data.doctor || "-"}</td>
+                            <td><input type="number" class="form-control form-control-sm roomperrate" name="roomperrate[]" value="${rate.toFixed(2)}" min="1"></td>
+                            <td><input type="number" class="form-control form-control-sm room-days" name="days[]" value="${days}" min="1"></td>
+                            <td><input type="number" id="room-rent" class="form-control form-control-sm room-rent" name="totalrentamount[]"value="${rent.toFixed(2)}" min="1"></td>
+                   
+                        </tr>
+                    `);
+                });
+            } else {
+                const rate = parseFloat(data.room_rate || 0);
+                const rent = rate * stayDays;
+                totalRent = rent;
+                const roomNumber = data.room_number || "-";
+                const floor = data.floor_number || "-";
+                const label = data.accommodation_type || (data.ward ? "Ward" : "Room");
+                tbody.append(`
+                    <tr data-rate="${rate}">
+                        <td>${label}    <input type="hidden" class="roomid" name="room[]"value="${roomid}"></td>
+                          </td>
+                        <td>${roomNumber}</td>
+                        <td>${floor}</td>
+                        <td>${data.doctor || "-"}</td>
+                       
+                        <td><input type="number" class="form-control form-control-sm roomperrate" name="roomperrate[]" value="${rate.toFixed(2)}" min="1"></td>
+                        <td><input type="number" class="form-control form-control-sm room-days"name="days[]" value="${stayDays}" min="1"></td>
+                        <td ><input type="number" id="room-rent" class="form-control form-control-sm room-rate" name="totalrentamount[]" value="${rent.toFixed(2)}" min="1"></td>
+                    </tr>
+                `);
+            }
+            $("#roomRentTotal").val(totalRent.toFixed(2));
+           updateBillingTotal();
+           // Render medicine list
+            let medicineList = JSON.parse($btn.attr("data-medicine-details") || "[]");
+let medTable = $("#medicine-table-body");
+let medTotal = 0; // Initialize total
+medTable.empty();
+medicineList.forEach((med, index) => {
+  let stockid=med.physcid || 1;
+    let qty = med.count || 1;
+    let rate = med.rate || 0;
+    let total = med.total || (qty * rate);
+    medTotal += total;
+    medTable.append(`
+        <tr>
+            <td>
+              <input type="text" class="form-control form-control-sm medicinename" data-index="${index}"name="medicine_name[]" value="${med.name}">
+              <input type="hidden" class="form-control form-control-sm stockid" data-index="${index}"  name="medicine_stckid[]"  value="${stockid}"></td>
+            </td>
+            <td><input type="number" class="form-control form-control-sm med-qty" data-index="${index}" name="medicine_count[]"  value="${qty}" min="1"></td>
+            <td><input type="number" class="form-control form-control-sm med-rate" data-index="${index}" name="medicine_rate[]"  value="${rate}" step="0.01" min="0"></td>
+            <td> <input type="number" class="form-control form-control-sm  med-total" data-index="${index}" name="medicine_total[]"  value="${total.toFixed(2)}"></td>
+        </tr>
+    `);
+});
+// Update medicine total input and display cell
+$("#medicine-cost").val(medTotal.toFixed(2));
+let treatmentList = JSON.parse($btn.attr("data-treatment-details") || "[]");
+let treatTable = $("#treatment-table-body");
+let treatmentTotal = 0;
+treatTable.empty();
+
+treatmentList.forEach((treat, index) => {
+    let qty = treat.count || 1;
+    let rate = treat.rate || 0;
+    let total = qty * rate;
+    treatmentTotal += total;
+    let treatmntid=treat.treatmntid|| 1;
+    treatTable.append(`
+        <tr>
+            <td>
+              <input type="text" class="form-control form-control-sm treatmntname" name="treatmntname[]" data-index="${index}" value="${treat.name}" >
+              <input type="hidden" class="form-control form-control-sm treatmntid"  data-index="${index}" name="treatmntid[]"  value="${treatmntid}"></td>
+            <td><input type="number" class="form-control form-control-sm treat-qty" data-index="${index}"name="treatmntqty[]"  value="${qty}" min="1"></td>
+            <td><input type="number" class="form-control form-control-sm treat-rate" data-index="${index}" name="treatmntrate[]"  value="${rate}" step="0.01" min="0"></td>
+            <td><input type="number" class="form-control form-control-sm treat-total" data-index="${index}" name="treatmnttotal[]"  value="${total.toFixed(2)}" step="0.01" min="0"></td>
+        </tr>
+    `);
+});
+
+// Update treatment total fields
+$("#treatment-total").val(treatmentTotal.toFixed(2));
+
+            // Auto-add Nursing Charge and Water & Electricity Charge for Room accommodation type
+            let otherServicesTable = $("#other-services-table tbody").empty();
+            let otherServicesTotal = 0;
+            
+            if (data.accommodation_type === "Room") {
+                // Add Nursing Charge if configured
+                if (data.nursing_charge && parseFloat(data.nursing_charge) > 0) {
+                    otherServicesTable.append(`
+                        <tr>
+                            <td><input type="text" class="form-control" name="service[]" value="Nursing Charge" readonly></td>
+                            <td><input type="text" class="form-control" name="details[]" value="Nursing Charge for Room accommodation" readonly></td>
+                            <td><input type="number" class="form-control service-charge" name="charges[]" value="${parseFloat(data.nursing_charge).toFixed(2)}" readonly></td>
+                            <td><button class="btn btn-danger remove-service" type="button">Remove</button></td>
+                        </tr>
+                    `);
+                    otherServicesTotal += parseFloat(data.nursing_charge);
+                }
+                
+                // Add Water & Electricity Charge if configured
+                if (data.water_electricity_charge && parseFloat(data.water_electricity_charge) > 0) {
+                    otherServicesTable.append(`
+                        <tr>
+                            <td><input type="text" class="form-control" name="service[]" value="Water & Electricity Charge" readonly></td>
+                            <td><input type="text" class="form-control" name="details[]" value="Water & Electricity Charge for Room accommodation" readonly></td>
+                            <td><input type="number" class="form-control service-charge" name="charges[]" value="${parseFloat(data.water_electricity_charge).toFixed(2)}" readonly></td>
+                            <td><button class="btn btn-danger remove-service" type="button">Remove</button></td>
+                        </tr>
+                    `);
+                    otherServicesTotal += parseFloat(data.water_electricity_charge);
+                }
+            }
+            
+            $("#other-services-total").val(otherServicesTotal.toFixed(2));
+            updateBillingTotal();
+            $("#searchModal").modal("hide");
+        });
+    
+        // Billing total update
+        $("#days-stayed, #roomrate, #medicine-total, #treatment-total, #expense, #discount, #tax, #food-total").on("change keyup", function () {
+            updateBillingTotal();
+        });
+        // Room rent total update
+// Update room rent when day/rate inputs change
+$("#roomBreakdownTable").on("input", ".room-days", function () {
+    let row = $(this).closest("tr");
+    let rate = parseFloat(row.attr("data-rate")) || 0;
+    let days = parseFloat($(this).val()) || 0;
+    let total = rate * days;
+    row.find(".room-rent").val(total.toFixed(2));
+
+    // Recalculate total rent
+    let totalRent = 0;
+    $(".room-rent").each(function () {
+        let val = parseFloat($(this).val()) || 0;
+        totalRent += val;
+    });
+    $("#roomRentTotal").val(totalRent.toFixed(2));
+    updateBillingTotal(); // Ensure grand total is recalculated
+});
+
+    // Medicine total update
+
+$("#medicine-table-body").on("input", ".med-qty, .med-rate", function () {
+    let index = $(this).data("index");
+    let qty = parseFloat($(`.med-qty[data-index='${index}']`).val()) || 0;
+    let rate = parseFloat($(`.med-rate[data-index='${index}']`).val()) || 0;
+    let total = qty * rate;
+    $(`.med-total[data-index='${index}']`).val(`${total.toFixed(2)}`);
+
+    let medicineTotal = 0;
+    $(".med-total").each(function () {
+        let val = parseFloat($(this).val()) || 0;
+        medicineTotal += val;
+    });
+
+    $("#medicine-cost").val(medicineTotal.toFixed(2));
+    $("#totalmedicineamount").val(medicineTotal.toFixed(2));
+    updateBillingTotal();
+});
+
+// Treatment total update when quantity or rate changes
+$("#treatment-table-body").on("input", ".treat-qty, .treat-rate", function () {
+    let index = $(this).data("index");
+    let qty = parseFloat($(`.treat-qty[data-index='${index}']`).val()) || 0;
+    let rate = parseFloat($(`.treat-rate[data-index='${index}']`).val()) || 0;
+    let total = qty * rate;
+    $(`.treat-total[data-index='${index}']`).val(`${total.toFixed(2)}`);
+
+    let treatmentTotal = 0;
+    $(".treat-total").each(function () {
+        let val = parseFloat($(this).val()) || 0;
+        treatmentTotal += val;
+    });
+
+    $("#treatment-total").val(treatmentTotal.toFixed(2));
+    updateBillingTotal();
+});
+
+function updateBillingTotal() {
+    let roomRent = parseFloat($("#roomRentTotal").val()) || 0;
+    let medicineTotal = parseFloat($("#medicine-cost").val()) || 0;
+    let treatmentTotal = parseFloat($("#treatment-total").val()) || 0;
+    let foodCharges = parseFloat($("#food-total").val()) || 0;
+    let otherCharges = parseFloat($("#other-services-total").val()) || 0;
+
+    let subtotal = roomRent + medicineTotal + treatmentTotal + foodCharges + otherCharges;
+    $("#subtotal").val(subtotal.toFixed(2));
+
+    let discount = parseFloat($("#discount").val()) || 0;
+    let tax = parseFloat($("#tax").val()) || 0;
+
+    let grandTotal = subtotal - discount + tax;
+    $("#grandtotal").val(grandTotal.toFixed(2));
+
+    // Update individual totals for display consistency
+    $("#totalrentamount").val(roomRent.toFixed(2));
+    $("#totalfoodamount").val(foodCharges.toFixed(2));
+    $("#totalmedicineamount").val(medicineTotal.toFixed(2));
+    $("#totaltreatmentamount").val(treatmentTotal.toFixed(2));
+    $("#totalserviceamount").val(otherCharges.toFixed(2));
+}
+
+    });
+
+    </script>
+   <script>
+    document.getElementById('ipexpandedForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        let formData = new FormData(this);
+    
+        // Collect medicine details
+        let medicineDetails = [];
+        $('#medicine-table-body tr').each(function () {
+            medicineDetails.push({
+                name: $(this).find('.medicinename').val(),
+                stockid: $(this).find('.stockid').val(),
+                count: $(this).find('.med-qty').val(),
+                rate: $(this).find('.med-rate').val(),
+                total: $(this).find('.med-total').val()
+            });
+        });
+    
+        // Collect treatment details
+        let treatmentDetails = [];
+        $('#treatment-table-body tr').each(function () {
+            treatmentDetails.push({
+                name: $(this).find('.treatmntname').val(),
+                treatmntid: $(this).find('.treatmntid').val(),
+                count: $(this).find('.treat-qty').val(),
+                rate: $(this).find('.treat-rate').val(),
+                total: $(this).find('.treat-total').val()
+            });
+        });
+    
+        // Collect service details
+        let serviceDetails = [];
+        $('#other-services-table tbody tr').each(function () {
+            serviceDetails.push({
+                service: $(this).find('input[name="service[]"]').val(),
+                details: $(this).find('input[name="details[]"]').val(),
+                charges: $(this).find('input[name="charges[]"]').val()
+            });
+        });
+    
+        // Collect room details
+        let roomDetails = [];
+        $('#roomBreakdownTable tbody tr').each(function () {
+            roomDetails.push({
+                roomid: $(this).find('.roomid').val(),
+                rate: $(this).find('.roomperrate').val(),
+                days: $(this).find('.room-days').val(),
+                total: $(this).find('.room-rent').val()
+            });
+        });
+    
+        // Append all to formData
+        formData.append('medicine_details', JSON.stringify(medicineDetails));
+        formData.append('treatment_details', JSON.stringify(treatmentDetails));
+        formData.append('service_details', JSON.stringify(serviceDetails));
+        formData.append('room_details', JSON.stringify(roomDetails));
+    
+        // Also add totals
+        formData.append('grand_total', $('#grandtotal').val());
+        formData.append('sub_total', $('#subtotal').val());
+        formData.append('medicine_total', $('#medicine-cost').val());
+        formData.append('treatment_total', $('#treatment-total').val());
+        formData.append('service_total', $('#other-services-total').val());
+        formData.append('room_rent_total', $('#roomRentTotal').val());
+        // Now send to Django
+        fetch('{% url "ipbillexpand" %}', {
+    method: 'POST',
+    body: formData
+})
+.then(response => response.text())
+.then(text => {
+    try {
+        const data = JSON.parse(text);
+        if (data.success) {
+            alert('Saved successfully.');
+
+            // Redirect based on dynamic URL from the server
+            if (data.redirect_url) {
+                window.location.href = data.redirect_url;
+            } else {
+                window.location.href = "/ipbillexpand/"; // Fallback
+            }
+
+        } else {
+            alert('Error: ' + (data.error || 'Unknown server error.'));
+        }
+    } catch (err) {
+        console.error('Could not parse JSON:', err);
+        console.error('Raw response was:', text);
+        alert('Server returned unexpected response. Check console for details.');
+    }
+})
+.catch(error => {
+    console.error('Fetch error:', error);
+    alert('Something went wrong. Please try again.');
+});
+});
+    </script>
+     
+{%endblock%}

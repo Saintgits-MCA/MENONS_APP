@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>ReorderLevel Details</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item">
+                {% if rordmgmntadd == '1'%}<a href="{% url 'reorderlevel'%}?menumanagement_id={{ idmngmnt }}">Add</a>
+              {%endif%}</li>
+              <li class="breadcrumb-item active"></li>
+            </ol>
+          </div>
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-12">
+            <!-- /.card -->
+            <div class="card">
+           <div class="scroll">
+              <!-- /.card-header -->
+              <div class="card-body">
+                <table id="example1" class="table table-bordered table-striped">
+                  <thead>
+                 <tr>
+                  <th>SL No</th>
+                    <th>Item Name</th>
+                    <th>Company Name</th>
+                    <th>Reorder Number</th>
+                    <th>Action</th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                {% for i in ordt %}
+                  <tr>
+                    <td>{{ forloop.counter}}</td>
+                    <td>{{i.itemname.itemnm}}</td>
+                    <td>{{i.companyid.Comapany_name}}</td>
+                    <td>{{i.qty}}</td>
+                    <td>
+                    {% if rordmgmntedit == '1' %}
+                       <a href="{% url 'editreorder'%}?ids={{i.id}}"><i class="nav-icon " style="width:20px"><img src="{% static 'assets/dist/img/icons/edit.svg'%}"  class=" img-squre "  style="width:20px"></i></a>
+                    {%endif%}
+                       </td>
+                  </tr>
+                {% endfor %}
+                 
+                  </tbody>
+                 
+                </table>
+              </div>
+            </div>
+              <!-- /.card-body -->
+            </div>
+            <!-- /.card -->
+          </div>
+          <!-- /.col -->
+        </div>
+        <!-- /.row -->
+      </div>
+      <!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+  </div>
+{% endblock %}

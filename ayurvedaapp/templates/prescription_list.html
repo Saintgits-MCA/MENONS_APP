@@ -1,0 +1,312 @@
+{% extends 'base.html' %} {% load static %} {% block content %}
+
+<div class="content-wrapper">
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Prescriptions List</h1>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="content">
+    <div class="container-fluid mb-3">
+      <form id="filterForm" class="form-inline">
+        <label for="sdate" class="mr-2">Start Date:</label>
+        <input type="date" id="sdate" name="sdate" class="form-control mr-3" />
+
+        <label for="edate" class="mr-2">End Date:</label>
+        <input type="date" id="edate" name="edate" class="form-control mr-3" />
+
+        <label for="mrno" class="mr-2">MR No:</label>
+        <input type="text" id="mrno" name="mrno" class="form-control mr-3" />
+
+        <button type="submit" class="btn btn-primary">Filter</button>
+        <button type="button" id="resetBtn" class="btn btn-secondary ml-2">
+          Reset
+        </button>
+      </form>
+    </div>
+    <div class="container-fluid">
+      <div class="card">
+        <div class="card-body">
+          <table
+            id="prescriptiontable"
+            class="table table-bordered table-striped"
+          >
+            <thead>
+              <tr>
+                <th>SL No</th>
+                <th>Prescription Date</th>
+                <th>MR No</th>
+                <th>Patient Name</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Filled via AJAX -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+  $(document).ready(function () {
+    var table = $("#prescriptiontable").DataTable({
+      responsive: true,
+      lengthChange: true,
+      autoWidth: false,
+      processing: true,
+      ajax: {
+        url: "{% url 'prescription_list' %}",
+        type: "GET",
+        data: function (d) {
+          d.sdate = $("#sdate").val();
+          d.edate = $("#edate").val();
+          d.mrno = $("#mrno").val();
+        },
+      },
+      columns: [
+        { data: "sl_no" },
+        { data: "prescriptiondate" },
+        { data: "Medical_Record_Number" },
+        { data: "Patient_Name" },
+        {
+          data: null,
+          render: function (data, type, row) {
+            return `<button class="btn btn-primary btn-sm print-prescription" data-patient='${JSON.stringify(
+              row
+            )}'>Print</button>`;
+          },
+        },
+      ],
+      dom: "Bfrtip",
+      buttons: ["copy", "csv", "excel", "pdf", "print", "colvis"],
+      destroy: true,
+    });
+
+    // Filter form submit
+    $("#filterForm").on("submit", function (e) {
+      e.preventDefault();
+      table.ajax.reload();
+    });
+
+    // Reset button
+    $("#resetBtn").on("click", function () {
+      $("#sdate").val("");
+      $("#edate").val("");
+      $("#mrno").val("");
+      table.ajax.reload();
+    });
+
+    // Handle Print button click
+    $("#prescriptiontable").on("click", ".print-prescription", function () {
+      var patientData = $(this).data("patient");
+      printPrescription(patientData);
+    });
+  });
+
+  function printPrescription(data) {
+    const originalBodyClass = document.body.className;
+    document.body.classList.add("prescription-print");
+
+    const iframe = document.createElement("iframe");
+    iframe.style.position = "absolute";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "none";
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentDocument || iframe.contentWindow.document;
+
+    doc.open();
+    doc.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Prescription</title>
+      <style>
+        @media print {
+          body { margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 13px; }
+          table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+          td, th { border: 1px solid #000; padding: 6px; vertical-align: top; }
+          .header { text-align: center; margin-bottom: 10px; }
+          .header h2 { margin: 0; font-size: 20px; }
+          .header p { margin: 2px 0; font-size: 12px; }
+          .footer { position: fixed; bottom: 0; left: 0; width: 100%; text-align: center; font-size: 12px; border-top: 1px solid #000; padding-top: 5px; }
+        }
+
+        body { font-family: Arial, sans-serif; font-size: 13px; margin: 15px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        td, th { border: 1px solid #000; padding: 6px; vertical-align: top; }
+        .header { text-align: center; margin-bottom: 10px; }
+        .header h2 { margin: 0; font-size: 20px; }
+        .header p { margin: 2px 0; font-size: 12px; }
+        .footer { text-align: center; margin-top: 20px; font-size: 12px; }
+        .section-title { font-weight: bold; margin: 8px 0 4px; }
+        ul { margin: 5px 0; padding-left: 18px; }
+        .no-border td, .no-border th { border: none; }
+      </style>
+    </head>
+    <body>
+      <!-- Header -->
+      <div class="header">
+
+  <h2>${data.hospital_name || ""}</h2>
+
+  ${data.hospital_address ? `<p>${data.hospital_address}</p>` : ""}
+
+  <p>
+    ${data.hospital_phone ? ` ${data.hospital_phone}` : ""}
+
+    ${data.hospital_email ? ` | ✉ ${data.hospital_email}` : ""}
+
+    ${
+      data.hospital_gst && data.hospital_gst.toLowerCase() !== "none"
+        ? ` | GST NO: ${data.hospital_gst}`
+        : ""
+    }
+  </p>
+
+</div>
+      <br>
+
+      <!-- Patient Details -->
+      <table>
+        <tr>
+          <td><b>Name:</b> ${data.Patient_Name || " "}</td>
+          <td><b>Gender:</b> ${data.Gender || " "}</td>
+          <td><b>Age:</b> ${data.Age || " "}</td>
+          <td><b>ID:</b> ${data.Medical_Record_Number || " "}</td>
+        </tr>
+        <tr>
+          <td><b>First Visit:</b> ${data.first_visit || " "}</td>
+          <td><b>Last Visit:</b> ${data.last_visit || " "}</td>
+          <td><b>Total Visits:</b> ${data.visit_count || " "}</td>
+          <td><b>Phone:</b> ${data.contactno || " "}</td>
+        </tr>
+        <tr>
+          <td><b>Height (cm):</b> ${data.vitals?.height || " "}</td>
+          <td><b>Weight (kg):</b> ${data.vitals?.weight || " "}</td>
+          <td><b>BP:</b> ${data.vitals?.bp || " "}</td>
+          <td><b>Category:</b> </td>
+        </tr>
+      </table>
+
+      <!-- Doctor and Prescription Section -->
+      <table>
+        <tr>
+          <td style="width: 35%;">
+            <b>Consulted Doctors</b>
+            <ul>
+              <li>${data.doctor_name || " "}</li>
+            </ul>
+          </td>
+
+          <td style="width: 65%;">
+          <div style="text-align:center; margin-bottom:6px;">
+            <b style="font-size:16px;">Prescription</b><br>
+            <span style="font-size:12px;">
+              Date: ${data.prescriptiondate || " "}
+            </span>
+          </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Medicine</th>
+                  <th>Days</th>
+                  <th>Morning</th>
+                  <th>Noon</th>
+                  <th>Night</th>
+                  <th>Medicine Schedule</th>
+                  <th>Guidelines</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${
+                  data.medicines && data.medicines.length
+                    ? data.medicines
+                        .map(
+                          (m) => `
+                  <tr>
+                    <td>${m.medicine_name || " "}</td>
+                    <td>${m.noofdays || " "}</td>
+                    <td>${m.moringtime || " "}</td>
+                    <td>${m.noontime || " "}</td>
+                    <td>${m.nighttime || " "}</td>
+                    <td>${m.beforeorafterdiet || " "}</td>
+                    <td>${m.medicineguideline || " "}</td>
+                  </tr>`
+                        )
+                        .join("")
+                    : `<tr><td colspan="7" style="text-align:center">No Prescription Available</td></tr>`
+                }
+              </tbody>
+            </table>
+
+
+          </td>
+        </tr>
+      </table>
+
+<div class="section-title">Diet Plan</div>
+<table style="width:100%; border-collapse: collapse; margin-bottom:10px; border:1px solid #000;">
+  <thead>
+    <tr>
+      <th style="border:1px solid #000; padding:6px;">Diet Name</th>
+      <th style="border:1px solid #000; padding:6px;">No. of Days</th>
+      <th style="border:1px solid #000; padding:6px;">Foods to Avoid</th>
+    </tr>
+  </thead>
+  <tbody>
+    ${
+      data.diet_plans && data.diet_plans.length
+        ? data.diet_plans
+            .map(
+              (d) => `
+        <tr>
+          <td style="border:1px solid #000; padding:6px;">${
+            d.diet_name || " "
+          }</td>
+          <td style="border:1px solid #000; padding:6px;">${
+            d.noofdays || " "
+          }</td>
+          <td style="border:1px solid #000; padding:6px;">${
+            d.avoided_foods || " "
+          }</td>
+        </tr>
+      `
+            )
+            .join("")
+        : `<tr><td colspan="3" style="text-align:center; border:1px solid #000; padding:6px;">No diet plan provided</td></tr>`
+    }
+  </tbody>
+</table>
+
+      <!-- Footer -->
+      <div class="footer">
+        ${data.branch_address ? `<p>${data.branch_address}</p>` : ""}
+        ${data.branch_phone ? `<p>Phone: ${data.branch_phone}</p>` : ""}
+      </div>
+    </body>
+    </html>
+  `);
+    doc.close();
+
+    iframe.contentWindow.focus();
+    iframe.contentWindow.print();
+
+    setTimeout(() => {
+      document.body.removeChild(iframe);
+      document.body.classList.remove("prescription-print");
+      document.body.className = originalBodyClass;
+    }, 200);
+  }
+</script>
+
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="content-wrapper">
+
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6"><h1>Edit Lab Unit</h1></div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="{% url 'lab_unit_list' %}">View Units</a></li>
+            <li class="breadcrumb-item active">Edit Unit</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="content">
+    <div class="row">
+      <div class="col-md-8">
+        <div class="card card-primary">
+
+          <div class="card-header"><h3 class="card-title">Edit Unit</h3></div>
+
+          <form method="POST" action="{% url 'lab_unit_edit'%}?ids={{unit.id}}">
+            {% csrf_token %}
+            <div class="card-body">
+              {% if messages %}
+                {% for message in messages %}
+                  <div class="alert alert-info">{{ message }}</div>
+                {% endfor %}
+              {% endif %}
+              <div class="form-group">
+                <label>Unit</label>
+                <input type="text" class="form-control" name="unit_name" value="{{ unit.unit }}" required>
+              </div>
+              <div class="form-group">
+                <label>Status</label><br>
+                <label><input type="radio" name="status" value="Active" {% if unit.status %}checked{% endif %}> Active</label>&nbsp;
+                <label><input type="radio" name="status" value="Inactive" {% if not unit.status %}checked{% endif %}> Inactive</label>
+              </div>
+            </div>
+            <div class="card-footer">
+              <button type="submit" class="btn btn-primary">Update</button>
+              <a href="{% url 'lab_unit_list' %}" class="btn btn-secondary">Cancel</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

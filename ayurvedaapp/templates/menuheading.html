@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Menu Heading Details</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item">
+                {%if menuhdview == '1'%}
+                  <a href="{% url 'menuheaidngtable' %}?menumanagement_id={{ idmngmnt }}">View</a></li>
+                {%endif%}
+              <li class="breadcrumb-item active">Menu Heading</li>
+            </ol>
+          </div>
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+
+      <div class="row">
+        <div class="col-md-8">
+          <div class="card card-primary">
+            <div class="card-header">
+              <h3 class="card-title">Menu Heading</h3>
+
+              <div class="card-tools">
+                <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                  <!-- <i class="fas fa-minus"></i> -->
+                </button>
+              </div>
+            </div>
+            <form method="POST", action="{% url 'menuheading' %}?menumanagement_id={{ idmngmnt }}">
+                {% csrf_token %}
+          <div class="row">
+             <div class="col-md-12" >
+              <div class="card">
+                <div class="card-body" >
+                    <div class="form-group">
+                        <label for="exampleInputBranchName">Icon</label>
+                         <input type="text" class="form-control" id="exampleInputAddress" name="icon" placeholder="Enter Icon Name" required> 
+                    </div>
+                    <div class="form-group">
+                      <label for="exampleInputBranchName">Menu Heading</label>
+                      <input type="text" class="form-control" id="exampleInputAddress" name="menuhd" placeholder="Enter Menu Heading" required> 
+                        
+                    </div>
+                  <div class="form-group">
+                      <label for="exampleInputManagerName">Active</label>
+                      <br>
+                      <input type="radio"value="1" name="status" id="exampleInputStatus" required>
+                      <label for="exampleInputManagerName">Active</label>
+                      <input type="radio"value="0"id="exampleInputStatus" name="status" required>
+                      <label for="exampleInputManagerName">Inactive</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card-footer">
+                    {% if messages %}
+                        {% for message in messages %}
+                          <p style="color:green;">{{message}}</p> 
+                        {% endfor %}
+                    {% endif %}
+                    {%if menuhdadd == '1'%}
+                  <button type="submit" class="btn btn-primary">Submit</button>
+                  {%endif%}
+          </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+      
+    </section>
+    <!-- /.content -->
+  </div>
+  <!-- /.content-wrapper -->
+{% endblock %}

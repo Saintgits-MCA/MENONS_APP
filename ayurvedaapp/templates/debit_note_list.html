@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<style>
+    .page-header {
+        background-color: #00796b;
+        color: white;
+        padding: 20px 30px;
+        border-radius: 10px 10px 0 0;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .form-container {
+        background: #fff;
+        border-radius: 0 0 10px 10px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        padding: 30px;
+    }
+    .filter-card {
+        background-color: #f8f9fc;
+        border: 1px solid #e3e6f0;
+        border-radius: 8px;
+    }
+    .table th {
+        background-color: #f8f9fc;
+        color: #4e73df;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+    }
+    .table td {
+        vertical-align: middle;
+    }
+    .btn-action {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+        border-radius: 0.2rem;
+    }
+</style>
+ <div class="content-wrapper">
+
+<div class="container mt-4 mb-5">
+    
+    <div class="page-header d-flex justify-content-between align-items-center">
+        <h3 class="mb-0"><i class="fas fa-list-alt me-2"></i> Debit Notes</h3>
+        <div style="font-size: 16px; font-weight: 500;">
+            <span style="color: #ffffff;">List</span> 
+            <span style="color: #a8d5e2; margin: 0 8px;">/</span> 
+            <a href="{% url 'debit_note_create' %}" style="text-decoration: none; color: #a8d5e2; transition: color 0.3s;">Create Debit Note</a>
+        </div>
+    </div>
+    
+    <div class="form-container">
+        
+        <div class="filter-card p-3 mb-4">
+            <form method="get" class="row align-items-end">
+                <div class="col-md-5 mb-2 mb-md-0">
+                    <label class="form-label text-muted fw-bold small"><i class="fas fa-capsules me-1"></i> Medicine Name</label>
+                    <input type="text" name="medicine_name" class="form-control form-control-sm" placeholder="Search medicine..." value="{{ filters.medicine_name }}">
+                </div>
+                <div class="col-md-5 mb-2 mb-md-0">
+                    <label class="form-label text-muted fw-bold small"><i class="fas fa-building me-1"></i> Supplier Name</label>
+                    <input type="text" name="supplier_name" class="form-control form-control-sm" placeholder="Search supplier..." value="{{ filters.supplier_name }}">
+                </div>
+                <div class="col-md-2 mt-2 mt-md-0 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary btn-sm w-100 shadow-sm"><i class="fas fa-filter me-1"></i> Filter</button>
+                    <a href="{% url 'debit_note_list' %}" class="btn btn-secondary btn-sm w-100 shadow-sm"><i class="fas fa-sync-alt me-1"></i> Reset</a>
+                </div>
+            </form>
+        </div>
+
+        <div>
+            <table id="example1" class="table table-hover table-bordered">
+                <thead>
+                    <tr>
+                        <th class="text-center" style="width: 50px;">#</th>
+                        <th>Debit Note No.</th>
+                        <th>Date</th>
+                        <th>Supplier Name</th>
+                        <th>Medicine Names</th>
+                        <th class="text-end">Total Amount (₹)</th>
+                        <th class="text-center" style="width: 100px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for dn in debit_notes %}
+                    <tr>
+                        <td class="text-center">{{ forloop.counter }}</td>
+                        <td class="fw-bold">{{ dn.debit_note_number }}</td>
+                        <td>{{ dn.debit_note_date|date:"d/m/Y" }}</td>
+                        <td>{{ dn.supplier.suppliername|default:dn.supplier.shopname|default:"N/A" }}</td>
+                        <td>
+                            {% for item in dn.items.all %}
+                                <span class="badge bg-light text-dark border me-1 mb-1" style="font-size:0.75rem;">{{ item.medicine_name }}</span>
+                            {% empty %}
+                                <span class="text-muted small">—</span>
+                            {% endfor %}
+                        </td>
+                        <td class="text-end fw-bold text-success">{{ dn.grand_total }}</td>
+                        <td class="text-center d-flex justify-content-center">
+                            <a href="{% url 'debit_note_print' dn.id %}?source=list" class="btn btn-secondary btn-action shadow-sm me-1" title="View">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{% url 'debit_note_delete' dn.id %}" onclick="return confirm('Are you sure you want to delete this Debit Note? Stock quantities will be restored.');" class="btn btn-danger btn-action ml-2 shadow-sm" title="Delete">
+                                <i class="fas fa-trash-alt"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">
+                            <i class="fas fa-folder-open fa-3x mb-3 text-light"></i><br>
+                            No Debit Notes Found.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>
+</div>
+{% endblock %}

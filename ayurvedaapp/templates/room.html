@@ -1,0 +1,225 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Room Details </h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item">
+                {%if roomview == '1'%}
+                  <a href="{% url 'roomtable' %}?menumanagement_id={{ idmngmnt }}">View All</a>
+               {%endif%}</li>
+              <li class="breadcrumb-item active">Room Details</li>
+            </ol>
+          </div>
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+
+      <div class="row">
+        <div class="col-md-12">
+          <div class="card card-primary">
+            <div class="card-header">
+              <h3 class="card-title">Room Details</h3>
+
+              <div class="card-tools">
+                <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                  <!-- <i class="fas fa-minus"></i> -->
+                </button>
+              </div>
+            </div>
+            <form method="POST", action="{% url 'room' %}?menumanagement_id={{ idmngmnt }}">
+             
+                {% csrf_token %}
+                <div class="row">
+                  <div class="col-md-6">
+                      <div class="card">
+                     
+                     
+                          <div class="card-body" >
+
+                              <div class="form-group">
+                                <label for="exampleInputstatus">Branch Name</label>
+                                <select class="form-control" name="branchname" required>
+                                 
+                                      {% for i in branchobj %}
+                                          <option value="{{i.id}}">{{i.Branch_Name}}</option>
+                                      {% endfor %}
+                                  </select>
+                              </div>
+
+                              <div class="form-group">
+                              <label for="exampleInputBranchName">Floor Number</label>
+                                <input type="text" class="form-control" id="exampleInputFloorno" name="floornumber" placeholder="Enter Floor No" required> 
+                                
+                              </div>
+                              <div class="form-group">
+                              <label for="exampleInputBranchName">Block Number</label>
+                                <input type="text" class="form-control" id="exampleInputBlockno" name="blocknumber" placeholder="Enter Block No" required> 
+                                
+                              </div>
+                              <div class="form-group">
+                                <label for="accommodationType">Select Accommodation Type:</label>
+                                <br>
+                                <input type="radio" value="Ward" name="accommodation" id="accommodationWard" required>
+                                <label for="accommodationWard">Ward</label> 
+                                <input type="radio" value="Room" id="accommodationRoom" name="accommodation" required>
+                                <label for="accommodationRoom">Room</label>
+                            </div>
+                            
+                            </div>
+                     </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="card">
+                      <div class="card-body">
+                         <!-- Room Type (Show only for Room) -->
+                          <div class="form-group" id="roomTypeField">
+                            <label for="exampleInputBranchName">Room Type</label>
+                            <select class="form-control" name="roomtype">
+                          
+                              <option value="Premium">Premium</option>
+                              <option value="Single">Single</option>
+                          </select>
+                          </div>
+
+                      <!-- Room Number (Show only for Room) -->
+                      <div class="form-group" id="roomNoField">
+                        <label for="exampleInputBranchName">Room Number</label>
+                        <input type="text" class="form-control" id="exampleInputroomno" name="roomnumber" placeholder="Enter Room No">
+                      </div>
+
+                      <!-- Bed Type (Show for both Room & Ward) -->
+                      <div class="form-group" id="bedTypeField">
+                        <label for="exampleInputBranchName">Bed Type</label>
+                        <select class="form-control" name="bedtype">
+                          
+                            <option value="single">Single</option>
+                            <option value="double">Double</option>
+                        </select>
+                      </div>
+
+                      <!-- Bed Number (Show only for Ward) -->
+                      <div class="form-group" id="bedNoField">
+                        <label for="exampleInputBranchName">Bed Number</label>
+                        <input type="text" class="form-control" name="bednumber" placeholder="Enter Bed No">
+                      </div>
+
+                        <div class="form-group">
+                          <label for="exampleInputBranchName"> Rate</label>
+                          <input type="text" class="form-control" id="exampleInputroomrate" name="rate" placeholder="Enter  Rate" required> 
+                        </div>
+
+                      <!-- Nursing Charge (Show only for Room) -->
+                      <div class="form-group" id="nursingChargeField">
+                        <label>Nursing Charge</label>
+                        <input type="number" step="0.01" class="form-control" name="nursingcharge" placeholder="Enter Nursing Charge">
+                      </div>
+
+                      <!-- Water & Electricity Charge (Show only for Room) -->
+                      <div class="form-group" id="waterElectricityChargeField">
+                        <label>Water & Electricity Charge</label>
+                        <input type="number" step="0.01" class="form-control" name="waterelectricitycharge" placeholder="Enter Water & Electricity Charge">
+                      </div>
+                      </div>
+
+                    </div>
+                  </div>
+                </div>
+              <div class="card-footer">
+                 {% if messages %}
+        {% for message in messages %}
+        <p style="color:green;">{{message}}</p> 
+        {% endfor %}
+        {% endif %}
+        {%if roomadd == '1'%}
+                  <button type="submit" class="btn btn-primary">Submit</button>
+        
+        {%endif%}
+                </div>
+              </form>
+            <!-- /.card-body -->
+          </div>
+          <!-- /.card -->
+        </div>
+     
+      </div>
+
+      
+    </section>
+    <!-- /.content -->
+  </div>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Get radio buttons
+        let wardRadio = document.getElementById("accommodationWard");
+        let roomRadio = document.getElementById("accommodationRoom");
+
+        // Get the fields to toggle
+        let roomTypeField = document.getElementById("roomTypeField");
+        let roomNoField = document.getElementById("roomNoField");
+        let bedTypeField = document.getElementById("bedTypeField");
+        let bedNoField = document.getElementById("bedNoField");
+        let nursingChargeField = document.getElementById("nursingChargeField");
+        let waterElectricityChargeField = document.getElementById("waterElectricityChargeField");
+
+        function toggleFields() {
+            if (wardRadio.checked) {
+                // Show bed type and bed number, hide room fields
+                bedTypeField.style.display = "block";
+                bedNoField.style.display = "block";
+                roomTypeField.style.display = "none";
+                roomNoField.style.display = "none";
+                nursingChargeField.style.display = "none";
+                waterElectricityChargeField.style.display = "none";
+            } else if (roomRadio.checked) {
+                // Show room type, room number, and bed type
+                bedTypeField.style.display = "block";
+                roomTypeField.style.display = "block";
+                roomNoField.style.display = "block";
+                bedNoField.style.display = "none";
+                nursingChargeField.style.display = "block";
+                waterElectricityChargeField.style.display = "block";
+            } else {
+                // Hide everything by default if nothing is selected
+                roomTypeField.style.display = "none";
+                roomNoField.style.display = "none";
+                bedTypeField.style.display = "none";
+                bedNoField.style.display = "none";
+                nursingChargeField.style.display = "none";
+                waterElectricityChargeField.style.display = "none";
+            }
+        }
+
+        // Hide fields initially when the page loads
+        roomTypeField.style.display = "none";
+        roomNoField.style.display = "none";
+        bedTypeField.style.display = "none";
+        bedNoField.style.display = "none";
+        nursingChargeField.style.display = "none";
+        waterElectricityChargeField.style.display = "none";
+
+        // Attach event listeners
+        wardRadio.addEventListener("change", toggleFields);
+        roomRadio.addEventListener("change", toggleFields);
+
+        // Run the function once in case any radio button is pre-selected
+        toggleFields();
+    });
+</script>
+
+    
+  <!-- /.content-wrapper -->
+{% endblock %}

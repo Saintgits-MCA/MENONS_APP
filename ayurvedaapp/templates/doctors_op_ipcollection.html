@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="content-wrapper">
+
+    <!-- Page Header -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Doctor's OP/IP Collection Report</h1>
+                </div>
+                <div class="col-sm-6 text-right">
+                    <!-- Print button removed as requested -->
+                </div>
+            </div>
+
+            <!-- Filter Card -->
+            <div class="card">
+                <div class="card-body">
+                    <form method="GET" action="" id="filterForm">
+                        <div class="row">
+                            <div class="col-lg-3 col-md-6">
+                                <div class="form-group">
+                                    <label>From Date</label>
+                                    <input type="date" class="form-control" name="from_date" value="{{ from_date }}" id="fromDate">
+                                </div>
+                            </div>
+
+                            <div class="col-lg-3 col-md-6">
+                                <div class="form-group">
+                                    <label>To Date</label>
+                                    <input type="date" class="form-control" name="to_date" value="{{ to_date }}" id="toDate">
+                                </div>
+                            </div>
+
+                            <div class="col-lg-3 col-md-6">
+                                <div class="form-group">
+                                    <label>Doctor</label>
+                                    <select class="form-control" name="doctor" id="doctorFilter">
+                                        <option value="">All Doctors</option>
+                                        {% for doctor in doctors %}
+                                        <option value="{{ doctor.id }}" {% if doctor_id == doctor.id|stringformat:"s" %}selected{% endif %}>
+                                            {{ doctor.name }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-3 col-md-6">
+                                <div class="form-group">
+                                    <label>&nbsp;</label>
+                                    <button type="submit" class="btn btn-primary btn-block">
+                                        <i class="fas fa-search"></i> Search
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <section class="content">
+        <div class="container-fluid">
+
+            <div class="card">
+                <div class="card-body">
+
+                    <!-- Report Header -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h5 class="mb-0 font-weight-bold">Doctor's OP/IP Collection Report</h5>
+                            <small class="text-muted">
+                                Period: {{ from_date|date:"d-M-Y" }} to {{ to_date|date:"d-M-Y" }}
+                            </small>
+                        </div>
+                    </div>
+
+                    <div>
+                        <table class="table table-bordered table-striped w-100" id="example1">
+                            <thead>
+                                <tr>
+                                    <th width="60">Sl No</th>
+                                    <th>Doctor Name</th>
+                                    <th class="text-center">OP</th>
+                                    <th class="text-right">Reg.</th>
+                                    <th class="text-right">Con.</th>
+                                    <th class="text-center">IP</th>
+                                    <th class="text-right">Amount</th>
+                                    <th class="text-right">Total</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                {% if collection_data %}
+                                    {% for item in collection_data %}
+                                    <tr>
+                                        <td>{{ item.sl_no }}</td>
+                                        <td>{{ item.doctor_name }}</td>
+                                        <td class="text-center">{{ item.op_count }}</td>
+                                        <td class="text-right">{{ item.reg_fees|floatformat:2 }}</td>
+                                        <td class="text-right">{{ item.cons_fees|floatformat:2 }}</td>
+                                        <td class="text-center">{{ item.ip_count }}</td>
+                                        <td class="text-right">{{ item.ip_amount|floatformat:2 }}</td>
+                                        <td class="text-right">{{ item.total|floatformat:2 }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="8" class="text-center text-muted py-3">
+                                            No data found for the selected period
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+
+                            <tfoot>
+                                <tr class="font-weight-bold bg-light">
+                                    <td colspan="2" class="text-center">
+                                        TOTAL
+                                    </td>
+                                    <td class="text-center">{{ total_op }}</td>
+                                    <td class="text-right">{{ total_reg|floatformat:2 }}</td>
+                                    <td class="text-right">{{ total_cons|floatformat:2 }}</td>
+                                    <td class="text-center">{{ total_ip }}</td>
+                                    <td class="text-right">{{ total_ip_amount|floatformat:2 }}</td>
+                                    <td class="text-right">{{ total_amount|floatformat:2 }}</td>
+                                </tr>
+                            </tfoot>
+
+                        </table>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+</div>
+
+<script>
+
+function resetFilters() {
+    document.getElementById('fromDate').value = '';
+    document.getElementById('toDate').value = '';
+    document.getElementById('doctorFilter').value = '';
+    document.getElementById('filterForm').submit();
+}
+</script>
+
+{% endblock %}

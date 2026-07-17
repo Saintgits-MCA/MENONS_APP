@@ -1,0 +1,496 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="content-wrapper">
+    <section class="content">
+        <div class="container-fluid">
+            <div class="card card-primary shadow-lg">
+                <div class="card-header">
+                    <h3 class="card-title">Inpatient Billing Form</h3>
+                </div>
+                <form method="POST" action="{% url 'ipbill' %}">
+                    {% csrf_token %}
+                    <div class="card-body">
+                        <h4 class="mb-3 text-primary">Patient Information</h4>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="mrSearch">MR Number/PhoneNo/Name</label>
+                                    <input type="text" id="mrSearch" class="form-control" placeholder="Type MR Number">
+                                    <button id="searchBtn" class="btn btn-primary btn-block mt-2">Search</button>
+                                </div>
+                                <div class="form-group mt-2">
+                                    <label for="mrDropdown">Selected MR Number/Patient</label>
+                                    <select class="form-control" name="mrnum" id="mrDropdown" required>
+                                        <option selected disabled value="">Select</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="ptdt">Patient Details</label>
+                                    <input type="text" id="exampleInputAddress" class="form-control" readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="admission-date">Admission Date:</label>
+                                    <input type="date" id="admission-date" class="form-control" name="admission_date" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="discharge-date">Discharge Date:</label>
+                                    <input type="hidden" id="discharge-id" class="form-control" name="discharge_id" required>
+                                    <input type="date" id="discharge-date" class="form-control mt-2" name="discharge_date" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h4 class="mb-3 text-primary">Room Charges</h4>
+                        <h5>Room/Ward Accommodation History</h5>
+                        <table class="table table-bordered" id="roomBreakdownTable">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Room/Ward No</th>
+                                    <th>Floor</th>
+                                    <th>Doctor</th>
+                                  
+                                    <th>Rate/Day</th>
+                                    <th>Days</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="6" class="text-end font-weight-bold">Total Room Rent</td>
+                                    <td><input type="text" id="roomRentTotal"class="form-control" value="0.00" name="roomRentTotal">
+                                  </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+
+                        <h4 class="mb-3 text-primary">Charges</h4>
+                        <table class="table table-bordered table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Treatment Amount</th>
+                                    <th>Medicine Amount</th>
+                                    <th>Food Charges</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><input type="text" id="treatment-total" class="form-control" name="treatment_total"></td>
+                                    <td><input type="text" id="medicine-total" class="form-control" name="medicine_total"></td>
+                                    <td><input type="number" id="food-total" class="form-control" name="food_total"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <h4 class="mb-3 text-primary">Billing Summary</h4>
+                        <div class="row">
+                            <div class="col-md-6">
+                               <label>Other Expense:</label>
+                                <input type="number" id="expense" class="form-control" name="expense">
+                                <label>Subtotal:</label>
+                                <input type="number" id="sub-total" class="form-control" name="sub_total" readonly>
+                               
+                                <label>Tax (%):</label>
+                                <input type="number" id="tax" class="form-control" name="tax" step="0.01">
+                            </div>
+                            <div class="col-md-6">
+                                <label>Discount:</label>
+                                <input type="number" id="discount" class="form-control" name="discount">
+                                <label>Total:</label>
+                                <input type="number" id="total" class="form-control" name="total" readonly>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-success btn-lg btn-block mt-4">Submit Bill</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Modal for Search -->
+<div class="modal fade" id="searchModal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="searchModalLabel">Search Results</h5>
+        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close"><span>&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <table id="searchResultsTable" class="display table table-bordered">
+          <thead>
+            <tr>
+              <th>MR Number</th>
+              <th>Patient Name</th>
+              <th>Address</th>
+              <th>Contact No</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+    $(document).ready(function () {
+        const table = $("#searchResultsTable").DataTable();
+    
+        $("#searchBtn").on("click", function (e) {
+            e.preventDefault();
+            const query = $("#mrSearch").val().trim();
+            if (!query) return alert("Please enter a search term.");
+            table.clear().draw();
+    
+            fetch(`/search_ip_patient_details?query=${query}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.length) return alert("No records found.");
+                    data.forEach(item => {
+                        const btn = `<button class="btn btn-primary select-btn" data-patient='${JSON.stringify(item)}'>Select</button>`;
+                        table.row.add([
+                            item.Medical_Record_Number,
+                            item.Patient_Name,
+                            item.address || "N/A",
+                            item.contactno || "N/A",
+                            btn
+                        ]).draw(false);
+                    });
+                    $("#searchModal").modal("show");
+                }).catch(err => {
+                    console.error(err);
+                    alert("Error fetching data.");
+                });
+        });
+    
+        $("#searchResultsTable tbody").on("click", ".select-btn", function () {
+            const data = JSON.parse($(this).attr("data-patient"));
+            const admissionDate = new Date(data.Admission_Date);
+            const dischargeDate = new Date(data.Discharge_Date);
+            if (!dischargeDate) return alert("Patient not yet discharged.");
+    
+            const stayDays = Math.max(1, Math.ceil((dischargeDate - admissionDate) / (1000 * 60 * 60 * 24)));
+    
+            $("#mrDropdown").html(`<option value="${data.ip_id}" selected>${data.Medical_Record_Number} - ${data.Patient_Name}</option>`);
+            $("#exampleInputAddress").val(`${data.Medical_Record_Number} - ${data.Patient_Name} (${data.contactno})`);
+            $("#admission-date").val(data.Admission_Date);
+            $("#discharge-id").val(data.dischargeid);
+            $("#discharge-date").val(data.Discharge_Date);
+            $("#treatment-total").val(parseFloat(data.treatment_cost || 0).toFixed(2));
+            $("#medicine-total").val(parseFloat(data.medicine_cost || 0).toFixed(2));
+            $("#food-total").val(0);
+    
+            const tbody = $("#roomBreakdownTable tbody").empty();
+            let totalRent = 0;
+    
+            if (data.room_charges_breakdown && data.room_charges_breakdown.length > 0) {
+                data.room_charges_breakdown.forEach(row => {
+                    const rate = parseFloat(row["Rate per Day"]) || 0;
+                    const days = parseInt(row["No of Days"]) || stayDays;
+                    const rent = rate * days;
+                    totalRent += rent;
+    
+                    const isWard = row["Ward"] === "Yes";
+                    const label = isWard ? "Ward" : "Room";
+                    const rowClass = isWard ? "table-warning" : "table-info";
+                    const roomNumber = row["Room/Bed No"] || row["Room_No"] || row["Bed_No"] || "-";
+                    const floor = row["Floor No"] || "-";
+    
+                    tbody.append(`
+                        <tr class="${rowClass}" data-rate="${rate}">
+                            <td>${label}</td>
+                            <td>${roomNumber}</td>
+                            <td>${floor}</td>
+                            <td>${data.doctor || "-"}</td>
+                            <td>${rate.toFixed(2)}</td>
+                            <td><input type="number" class="form-control form-control-sm room-days" value="${days}" min="1"></td>
+                            <td class="room-rent">${rent.toFixed(2)}</td>
+                        </tr>
+                    `);
+                });
+            } else {
+                const rate = parseFloat(data.room_rate || 0);
+                const rent = rate * stayDays;
+                totalRent = rent;
+    
+                const roomNumber = data.room_number || "-";
+                const floor = data.floor_number || "-";
+                const label = data.ward ? "Ward" : "Room";
+    
+                tbody.append(`
+                    <tr data-rate="${rate}">
+                        <td>${label}</td>
+                        <td>${roomNumber}</td>
+                        <td>${floor}</td>
+                        <td>${data.doctor || "-"}</td>
+                        <td>${rate.toFixed(2)}</td>
+                        <td><input type="number" class="form-control form-control-sm room-days" value="${stayDays}" min="1"></td>
+                        <td class="room-rent">${rent.toFixed(2)}</td>
+                    </tr>
+                `);
+            }
+    
+            $("#roomRentTotal").val(totalRent.toFixed(2));
+            updateBillingTotal();
+            $("#searchModal").modal("hide");
+        });
+    
+        // Trigger calculation on input changes
+        $(document).on("input", "#treatment-total, #medicine-total, #food-total, #expense, #discount, #tax, .room-days", updateBillingTotal);
+    
+        // Billing total calculation
+        function updateBillingTotal() {
+            let roomRent = 0;
+    
+            // Calculate room rent based on room-days inputs
+            $("#roomBreakdownTable tbody tr").each(function () {
+                const $row = $(this);
+                const rate = parseFloat($row.attr("data-rate")) || 0;
+                const days = parseInt($row.find(".room-days").val()) || 1;
+                const rent = rate * days;
+    
+                $row.find(".room-rent").text(rent.toFixed(2));
+                roomRent += rent;
+            });
+    
+            $("#roomRentTotal").val(roomRent.toFixed(2));
+    
+            // Calculate totals
+            const medicine = parseFloat($("#medicine-total").val()) || 0;
+            const treatment = parseFloat($("#treatment-total").val()) || 0;
+            const food = parseFloat($("#food-total").val()) || 0;
+            const expense = parseFloat($("#expense").val()) || 0;
+            const tax = parseFloat($("#tax").val()) || 0;
+            const discount = parseFloat($("#discount").val()) || 0;
+    
+            const subTotal = roomRent + medicine + treatment + food + expense;
+            const taxAmount = (subTotal * tax) / 100;
+            const total = subTotal + taxAmount - discount;
+    
+            $("#sub-total").val(subTotal.toFixed(2));
+            $("#total").val(total.toFixed(2));
+        }
+    });
+    </script>
+    
+   
+ <!--  <script>
+ $(document).ready(function () {
+    let table = $("#searchResultsTable").DataTable({
+        paging: true,
+        searching: true,
+        info: true,
+        lengthChange: true,
+        pageLength: 10,
+    });
+
+    // Event listener for search button
+    $("#searchBtn").on("click", function (e) {
+        e.preventDefault();
+        let query = $("#mrSearch").val().trim();
+        if(query === "") {
+            alert("Please enter a search term.");
+            return;
+        }
+        table.clear().draw();
+        fetch(`/search_ip_patient_details?query=${query}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.length > 0) {
+                    data.forEach(item => {
+                        let actionBtn = `<button class="btn btn-primary select-btn" 
+                                            data-id="${item.ip_id}" 
+                                            data-name="${item.Patient_Name}" 
+                                            data-mrno="${item.Medical_Record_Number}" 
+                                            data-contact="${item.contactno}"
+                                            data-admission="${item.Admission_Date}"
+                                            data-room-number="${item.room_number}"
+                                            data-bed-number="${item.bed_number}"
+                                            data-floor-number="${item.floor_number}"
+                                            data-doctor="${item.doctor}"
+                                            data-room-rate="${item.room_rate}"
+                                            data-medicine-cost="${item.medicine_cost}"
+                                            data-treatment-cost="${item.treatment_cost}"
+                                            data-total-cost="${item.total_cost}"
+                                            data-discharge-date="${item.Discharge_Date}"
+                                            data-discharge-id="${item.dischargeid}"
+                                        >Select</button>`;
+                        table.row.add([
+                            item.Medical_Record_Number, 
+                            item.Patient_Name, 
+                            item.address || "N/A",
+                            item.contactno || "N/A",
+                            actionBtn
+                        ]).draw(false);
+                    });
+                    $("#searchModal").modal("show");
+                } else {
+                    alert("No matching records found.");
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("Error retrieving data. Please try again.");
+            });
+    });
+
+    // Handle selection from search results
+    $("#searchResultsTable tbody").on("click", ".select-btn", function () {
+        let id = $(this).data("id"),
+            mrno = $(this).data("mrno"),
+            name = $(this).data("name"),
+            contact = $(this).data("contact"),
+            admissionDate = $(this).data("admission"),
+            roomRate = parseFloat($(this).data("room-rate")) || 0,
+            medicineCost = parseFloat($(this).data("medicine-cost")) || 0,
+            treatmentCost = parseFloat($(this).data("treatment-cost")) || 0,
+            disdate = $(this).data("discharge-date"),
+            disid = $(this).data("discharge-id"),
+            
+            totalCost = parseFloat($(this).data("total-cost")) || 0;
+            console.log("Discharge Date:", disdate); // Debugging
+            $("#discharge-date").val(disdate);
+            if (!disdate) {
+        alert("This patient is not discharged yet. Billing cannot proceed.");
+        return;
+    }
+        // Populate selected patient details
+        $("#mrDropdown").html(`<option value="${id}" selected>${mrno} - ${name}</option>`);
+        $("#exampleInputAddress").val(`${mrno} - ${name} (${contact})`);
+        $("#admission-date").val(admissionDate);
+        $("#discharge-id").val(disid);
+        // let daysStayed = parseInt($("#days-stayed").val()) || 1;
+        // let roomTotal = roomRate * daysStayed;
+        // $("#days-stayed").val(daysStayed);
+        let daysStayed = Math.max(1, Math.ceil((new Date(disdate) - new Date(admissionDate)) / (1000 * 60 * 60 * 24)));
+$("#days-stayed").val(daysStayed);
+
+        // $("#roomrate").val(roomRate.toFixed(2));
+        // $("#room-total").val(roomTotal.toFixed(2));
+        $("#treatment-total").val(treatmentCost.toFixed(2));
+        $("#medicine-total").val(medicineCost.toFixed(2));
+        // Populate room history
+            let roomChanges = $(this).data("room-changes"); // Must be passed from backend as JSON string
+          
+            let dischargeDate = new Date($(this).data("discharge-date"));
+            let breakdownTable = $("#roomBreakdownTable tbody");
+            breakdownTable.empty();
+
+            let totalRoomRent = 0;
+
+            if (roomChanges && roomChanges.length > 0) {
+                roomChanges.forEach((change, index) => {
+                    let fromDate = index === 0 ? admissionDate : new Date(change.change_date);
+                    let toDate = (roomChanges[index + 1]) ? new Date(roomChanges[index + 1].change_date) : dischargeDate;
+                    let days = Math.max(1, Math.ceil((toDate - fromDate) / (1000 * 60 * 60 * 24)));
+                    let rate = parseFloat(change.rate) || 0;
+                    let rent = rate * days;
+                    totalRoomRent += rent;
+
+                    breakdownTable.append(`
+                        <tr data-rate="${rate}">
+                            <td>${change.room_number || 'N/A'}</td>
+                            <td>${change.from_room_or_ward || '-'}</td>
+                            <td>${change.change_date}</td>
+                            <td>${rate.toFixed(2)}</td>
+                            <td><input type="number" class="form-control form-control-sm room-days" value="${days}" min="1" /></td>
+                            <td class="room-rent">${rent.toFixed(2)}</td>
+                        </tr>
+                    `);
+                });
+            } else {
+                // No change history — single room
+                let days = Math.max(1, Math.ceil((dischargeDate - admissionDate) / (1000 * 60 * 60 * 24)));
+                let rate = parseFloat($(this).data("room-rate")) || 0;
+                let rent = rate * days;
+                totalRoomRent += rent;
+
+                breakdownTable.append(`
+                    <tr data-rate="${rate}">
+                        <td>${$(this).data("room-number") || 'N/A'}</td>
+                        <td>-</td>
+                        <td>${$(this).data("admission")}</td>
+                        <td>${rate.toFixed(2)}</td>
+                        <td><input type="number" class="form-control form-control-sm room-days" value="${days}" min="1" /></td>
+                        <td class="room-rent">${rent.toFixed(2)}</td>
+                    </tr>
+                `);
+            }
+
+            $("#roomRentTotal").text(totalRoomRent.toFixed(2));
+            $("#roomrate").val(totalRoomRent.toFixed(2));
+            $("#room-total").val(totalRoomRent.toFixed(2));
+            $("#days-stayed").val("0"); // No longer used directly
+updateBillingTotal();
+
+        updateBillingTotal();
+        $("#searchModal").modal("hide");
+    });
+// Update rent when days changed by user
+$("#roomBreakdownTable").on("input", ".room-days", function () {
+    let row = $(this).closest("tr");
+    let rate = parseFloat(row.data("rate")) || 0;
+    let days = parseInt($(this).val()) || 1;
+    let rent = rate * days;
+    row.find(".room-rent").text(rent.toFixed(2));
+    // Recalculate total
+    let totalRoomRent = 0;
+    $("#roomBreakdownTable .room-rent").each(function () {
+        totalRoomRent += parseFloat($(this).text()) || 0;
+    });
+    $("#roomRentTotal").text(totalRoomRent.toFixed(2));
+    $("#roomrate").val(totalRoomRent.toFixed(2));
+    $("#room-total").val(totalRoomRent.toFixed(2));
+    updateBillingTotal();
+});
+
+   // Update billing calculation when values change
+$("#days-stayed, #roomrate, #medicine-total, #treatment-total, #expense, #discount, #tax, #food-total").on("change keyup", function () {
+    updateBillingTotal();
+});
+
+function updateBillingTotal() {
+    let daysStayed = parseInt($("#days-stayed").val()) || 1;
+    let roomRate = parseFloat($("#roomrate").val()) || 0;
+    let medicineCost = parseFloat($("#medicine-total").val()) || 0;
+    let treatmentCost = parseFloat($("#treatment-total").val()) || 0;
+    let foodCost = parseFloat($("#food-total").val()) || 0;
+    let otherExpense = parseFloat($("#expense").val()) || 0;
+    let discount = parseFloat($("#discount").val()) || 0;
+    let tax = parseFloat($("#tax").val()) || 0;
+    let roomTotal = roomRate * daysStayed;
+    let subTotal = roomTotal + medicineCost + treatmentCost + foodCost + otherExpense;
+
+    let taxAmount = (subTotal * tax) / 100;
+    let totalWithTax = subTotal + taxAmount - discount;
+
+    $("#room-total").val(roomTotal.toFixed(2));
+    $("#sub-total").val(subTotal.toFixed(2));
+    $("#total").val(totalWithTax.toFixed(2));
+}
+    $("#discharge-date").on("change", function () {
+        let admission = new Date($("#admission-date").val()),
+            discharge = new Date($(this).val()),
+            daysStayed = Math.max(1, Math.ceil((discharge - admission) / (1000 * 60 * 60 * 24))),
+            roomRate = parseFloat($("#roomrate").val()) || 0;
+
+        $("#days-stayed").val(daysStayed);
+        $("#room-total").val((roomRate * daysStayed).toFixed(2));
+
+        let subTotal = (roomRate * daysStayed) + parseFloat($("#medicine-total").val()) + parseFloat($("#treatment-total").val())+ parseFloat($(foodCost).val());
+        $("#sub-total").val(subTotal.toFixed(2));
+        $("#total").val(subTotal.toFixed(2));
+    });
+});
+
+
+
+    </script> -->
+    
+{% endblock %}

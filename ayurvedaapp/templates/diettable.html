@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="content-wrapper">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Diet Management</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item">
+                            {% if dietadd == '1' %}
+                                <a href="{% url 'add_diet' %}?menumanagement_id={{ idmngmnt }}">Add Diet</a>
+                            {% endif %}
+                        </li>
+                        <li class="breadcrumb-item active">Diet Table</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">List of Diets</h3>
+                    </div>
+                    <div class="card-body">
+                        <table id="example1" class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Slno</th>
+                                    <th>Diet Name</th>
+                                    <th>Description</th>
+                                    <th>Created At</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for diet in objdiettable %}
+                                    <tr>
+                                        <td>{{ forloop.counter }}</td>
+                                        <td>{{ diet.name }}</td>
+                                        <td>{{ diet.description|default:"N/A" }}</td>
+                                        <td>{{ diet.created_at }}</td>
+                                        <td>
+                                            {%if dietedit == '1'%}
+                                                 <a href="{% url 'edit_diet'%}?ids={{diet.id}}"><i class="nav-icon " style="width:20px"><img src="{% static 'assets/dist/img/icons/edit.svg'%}"  class=" img-squre "  style="width:20px"></i></a>
+                                            {%endif%}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+{% endblock %}

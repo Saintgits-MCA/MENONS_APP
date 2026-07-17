@@ -1,0 +1,283 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Purchase Orders</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'purchase_order_create' %}">Create New</a>
+                        </li>
+                        <li class="breadcrumb-item active">Purchase Orders</li>
+                    </ol>
+                </div>
+            </div>
+        </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Purchase Order List</h3>
+                            <div class="card-tools">
+                                <a href="{% url 'purchase_order_create' %}" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-plus"></i> New Purchase Order
+                                </a>
+                            </div>
+                        </div>
+                        <!-- /.card-header -->
+                        <div class="card-body">
+                            <!-- Filter Form -->
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <form method="GET" class="form-inline">
+                                        <div class="form-group mr-2">
+                                            <input type="text" name="search" class="form-control" placeholder="Search by PO No or Supplier" value="{{ search }}" style="width: 250px;">
+                                        </div>
+                                        <div class="form-group mr-2">
+                                            <input type="date" name="from_date" class="form-control" placeholder="From Date" value="{{ from_date }}">
+                                        </div>
+                                        <div class="form-group mr-2">
+                                            <input type="date" name="to_date" class="form-control" placeholder="To Date" value="{{ to_date }}">
+                                        </div>
+                                        <div class="form-group mr-2">
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fas fa-filter"></i> Filter
+                                            </button>
+                                        </div>
+                                        <div class="form-group">
+                                            <a href="{% url 'purchaseorderlistforownbranch' %}" class="btn btn-secondary">
+                                                <i class="fas fa-sync-alt"></i> Reset
+                                            </a>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <div class="scroll">
+                                <table id="example1" class="table table-bordered table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th width="5%">SL No</th>
+                                            <th width="15%">PO Number</th>
+                                            <th width="10%">Date</th>
+                                            <th width="20%">Supplier Name</th>
+                                            <th width="10%">Branch</th>
+                                            <th width="10%">Delivery Date</th>
+                                            <th width="10%">Total Amount</th>
+                                            <th width="20%">Action</th>
+                                         </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for po in page_obj %}
+                                        <tr>
+                                            <td class="text-center">{{ forloop.counter0|add:page_obj.start_index }}</td>
+                                            <td>
+                                                <strong>{{ po.po_number }}</strong>
+                                            </td>
+                                            <td class="text-center">{{ po.po_date|date:"d-m-Y" }}</td>
+                                            <td>{{ po.supplier_name|truncatechars:40 }}</td>
+                                            <td>
+                                                {% if po.branch %}
+                                                    {{ po.branch.Branch_Name }}
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-center">
+                                                {% if po.expected_delivery_date %}
+                                                    {{ po.expected_delivery_date|date:"d-m-Y" }}
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-right"><strong>₹ {{ po.grand_total|floatformat:2 }}</strong></td>
+                                            <td class="text-center">
+                                                <!-- CORRECTED: Pass po.id as argument to the URL tag -->
+                                                <a href="{% url 'create_stock_transfer_from_po' po.id %}" 
+                                                   class="btn btn-primary btn-sm" 
+                                                   title="Create Stock Transfer">
+                                                    <i class="fas fa-exchange-alt"></i> Create Stock Transfer
+                                                </a>
+                                                <a href="{% url 'purchase_order_view' %}?ids={{ po.id }}" class="btn btn-info btn-sm" title="View">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <!-- <button class="btn btn-danger btn-sm delete-btn" data-id="{{ po.id }}" data-po="{{ po.po_number }}" title="Delete">
+                                                    <i class="fas fa-trash"></i>
+                                                </button> -->
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="8" class="text-center">
+                                                <div class="alert alert-info mb-0">
+                                                    <i class="fas fa-info-circle"></i> No purchase orders found.
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Pagination -->
+                            {% if page_obj.has_other_pages %}
+                            <div class="row mt-3">
+                                <div class="col-12">
+                                    <nav aria-label="Page navigation">
+                                        <ul class="pagination justify-content-center">
+                                            {% if page_obj.has_previous %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}">
+                                                    <i class="fas fa-chevron-left"></i> Previous
+                                                </a>
+                                            </li>
+                                            {% else %}
+                                            <li class="page-item disabled">
+                                                <span class="page-link"><i class="fas fa-chevron-left"></i> Previous</span>
+                                            </li>
+                                            {% endif %}
+                                            
+                                            {% for num in page_obj.paginator.page_range %}
+                                                {% if page_obj.number == num %}
+                                                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                                <li class="page-item">
+                                                    <a class="page-link" href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}">{{ num }}</a>
+                                                </li>
+                                                {% endif %}
+                                            {% endfor %}
+                                            
+                                            {% if page_obj.has_next %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}">
+                                                    Next <i class="fas fa-chevron-right"></i>
+                                                </a>
+                                            </li>
+                                            {% else %}
+                                            <li class="page-item disabled">
+                                                <span class="page-link">Next <i class="fas fa-chevron-right"></i></span>
+                                            </li>
+                                            {% endif %}
+                                        </ul>
+                                    </nav>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-12 text-center text-muted">
+                                    <small>Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} entries</small>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <!-- /.card-body -->
+                    </div>
+                    <!-- /.card -->
+                </div>
+                <!-- /.col -->
+            </div>
+            <!-- /.row -->
+        </div>
+        <!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+</div>
+<!-- /.content-wrapper -->
+
+<script src="{% static 'assets/js/jquery-3.6.0.min.js' %}"></script>
+<script>
+// Optional: If you want to use JavaScript function instead of direct link
+function createStockTransfer(poId) {
+    // This will work if you have the URL pattern with po_id parameter
+    window.location.href = "{% url 'create_stock_transfer_from_po' 0 %}".replace('0', poId);
+}
+
+// Alternative: Using fetch to check stock availability before redirect
+async function createStockTransferWithCheck(poId, buttonElement) {
+    // Show loading state
+    const originalText = buttonElement.innerHTML;
+    buttonElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
+    buttonElement.disabled = true;
+    
+    try {
+        // Optional: Check if stock is available
+        const response = await fetch(`/api/check-po-stock-availability/${poId}/`);
+        const data = await response.json();
+        
+        if (data.has_stock) {
+            window.location.href = "{% url 'create_stock_transfer_from_po' 0 %}".replace('0', poId);
+        } else {
+            alert('No stock available for transfer. Please ensure stock has been received.');
+            buttonElement.innerHTML = originalText;
+            buttonElement.disabled = false;
+        }
+    } catch (error) {
+        alert('Error checking stock availability');
+        buttonElement.innerHTML = originalText;
+        buttonElement.disabled = false;
+    }
+}
+$(document).ready(function() {
+    // Delete button functionality
+    $('.delete-btn').click(function(e) {
+        e.preventDefault();
+        var poId = $(this).data('id');
+        var poNumber = $(this).data('po');
+        
+        if (confirm('Are you sure you want to delete Purchase Order ' + poNumber + '?')) {
+            $.ajax({
+                url: '/purchase-order-delete/' + poId + '/',
+                type: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        location.reload();
+                    } else {
+                        alert('Error deleting purchase order');
+                    }
+                },
+                error: function() {
+                    alert('Error deleting purchase order');
+                }
+            });
+        }
+    });
+});
+</script>
+
+<style>
+.scroll {
+    overflow-x: auto;
+}
+.btn-sm {
+    margin: 2px;
+}
+.table td {
+    vertical-align: middle;
+}
+.btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+.btn-primary:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+}
+</style>
+
+{% endblock %}

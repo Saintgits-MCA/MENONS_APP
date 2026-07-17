@@ -1,0 +1,326 @@
+
+{% load static %}
+{% load math_filters %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B2C Invoice - {{ invoice.invoicenumber }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Arial', sans-serif;
+            font-size: 11px;
+            line-height: 1.3;
+            padding: 10mm;
+        }
+        .container {
+            width: 100%;
+            max-width: 210mm;
+            margin: 0 auto;
+        }
+        .header {
+            margin-bottom: 15px;
+        }
+        .company-name {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .clinic-name {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+        .address {
+            font-size: 10px;
+            margin-bottom: 2px;
+        }
+        .emergency {
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        .invoice-title {
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 10px 0;
+            text-decoration: underline;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+        }
+        table, th, td {
+            border: 1px solid #000;
+        }
+        th, td {
+            padding: 4px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .text-center {
+            text-align: center;
+        }
+        .section-title {
+            font-weight: bold;
+            margin: 10px 0 5px 0;
+            font-size: 12px;
+        }
+        .box {
+            border: 1px solid #000;
+            padding: 5px;
+            margin-bottom: 10px;
+        }
+        .total-row {
+            font-weight: bold;
+            background-color: #e6f3ff;
+        }
+        .signature-section {
+            margin-top: 30px;
+        }
+        .signature-box {
+            margin-top: 40px;
+        }
+        .footer-note {
+            margin-top: 20px;
+            font-size: 9px;
+            color: #666;
+        }
+        @media print {
+            body {
+                padding: 0;
+            }
+            .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div style="display: flex; justify-content: space-between;">
+                <div style="width: 50%;">
+                    <div class="company-name"></div>
+                    {% for x in brname %}
+                    <div class="clinic-name">{{ x.hosporclinic|default:"Johnmarian Wellness Clinic" }}</div>
+                    <div class="address">{{ x.Branch_Address }}</div>
+                    <div class="address">Phone: {{ x.Branch_contactno }}</div>
+                    <div class="address">GST: {{ branch_gst|default:"N/A" }}</div>
+                    {% endfor %}
+                    
+                </div>
+                <div style="width: 48%;">
+                    <div class="invoice-title">TAX INVOICE (B2C)</div>
+                    <table style="border: 1px solid #000;">
+                        <tr>
+                            <td width="40%"><strong>Invoice No.</strong></td>
+                            <td>{{ invoice.invoicenumber }}</td>
+                            <td width="20%"><strong>Dated</strong></td>
+                            <td>{{ invoice.invoice_date|date:"d-M-Y" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Delivery Note</strong></td>
+                            <td></td>
+                            <td><strong>Mode/Terms of Payment</strong></td>
+                            <td>Cash / Online</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Reference No. & Date</strong></td>
+                            <td>{% if invoice.proforma_reference %}{{ invoice.proforma_reference }}{% endif %}</td>
+                            <td><strong>Other References</strong></td>
+                            <td></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Customer Details -->
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+            <div style="width: 48%;">
+                <div class="section-title">Consignee (Ship to)</div>
+                <div class="box">
+                    <div style="font-weight: bold;">{{ invoice.customer_name }}</div>
+                    <div>{{ invoice.customer_address|linebreaksbr }}</div>
+                    <div><strong>State Name:</strong> {{ invoice.customer_state|default:"Kerala" }}, Code: {{ invoice.customer_state_code|default:"32" }}</div>
+                   
+                </div>
+            </div>
+            <div style="width: 48%;">
+                <div class="section-title">Buyer (Bill to)</div>
+                <div class="box">
+                    <div style="font-weight: bold;">{{ invoice.bill_to_name|default:invoice.customer_name }}</div>
+                    <div>{{ invoice.bill_to_address|default:invoice.customer_address|linebreaksbr }}</div>
+                    <div><strong>State Name:</strong> {{ invoice.customer_state|default:"Kerala" }}, Code: {{ invoice.customer_state_code|default:"32" }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dispatch Details -->
+        <div class="section-title">Dispatch Details:</div>
+        <table>
+            <tr>
+                <td width="25%"><strong>Buyer's Order No.</strong></td>
+                <td width="25%"></td>
+                <td width="25%"><strong>Dated</strong></td>
+                <td width="25%"></td>
+            </tr>
+            <tr>
+                <td><strong>Dispatch Doc No.</strong></td>
+                <td></td>
+                <td><strong>Delivery Note Date</strong></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td><strong>Dispatched through</strong></td>
+                <td>{{ invoice.transport_mode|default:"By Road" }}</td>
+                <td><strong>Destination</strong></td>
+                <td>{{ invoice.place_of_supply|default:invoice.customer_state|default:"Kerala" }}</td>
+            </tr>
+            <tr>
+                <td><strong>Terms of Delivery</strong></td>
+                <td colspan="3">F.O.R. Destination</td>
+            </tr>
+        </table>
+
+        <!-- Items Table -->
+        <table>
+            <thead>
+                <tr>
+                    <th width="5%" rowspan="2">Sl No</th>
+                    <th width="30%" rowspan="2">Description of Goods</th>
+                    <th width="8%" rowspan="2">HSN/SAC</th>
+                    <th width="10%" rowspan="2">Quantity</th>
+                    <th width="8%" rowspan="2">Rate</th>
+                    <th width="5%" rowspan="2">per</th>
+                    <th width="8%" rowspan="2">Taxable Value</th>
+                    <th width="6%" rowspan="2">GST %</th>
+                    <th width="9%" colspan="2" class="text-center">CGST</th>
+                    <th width="9%" colspan="2" class="text-center">SGST</th>
+                    <th width="8%" rowspan="2">Total (₹)</th>
+                </tr>
+                <tr>
+                    <th width="4.5%">Rate</th>
+                    <th width="4.5%">Amount</th>
+                    <th width="4.5%">Rate</th>
+                    <th width="4.5%">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td class="text-center">{{ item.sl_no }}</td>
+                    <td>
+                        <div style="font-weight: bold;">{{ item.description }}</div>
+                        {% if item.batch_info %}
+                        <div style="font-size: 9px;">Batch: {{ item.batch_info }}</div>
+                        {% endif %}
+                    </td>
+                    <td>{{ item.hsn_code|default:"-" }}</td>
+                    <td>{{ item.quantity|floatformat:0 }}<br><small>{{ item.unit }}</small></td>
+                    <td class="text-right">{{ item.rate|floatformat:2 }}</td>
+                    <td>{{ item.unit }}</td>
+                    <td class="text-right">₹ {{ item.taxable_value|floatformat:2 }}</td>
+                    <td class="text-right">{{ item.gst_percent|floatformat:1 }}%</td>
+                    <td class="text-right">{{ item.gst_percent|half|floatformat:1 }}%</td>
+                    <td class="text-right">₹ {{ item.cgst|floatformat:2 }}</td>
+                    <td class="text-right">{{ item.gst_percent|half|floatformat:1 }}%</td>
+                    <td class="text-right">₹ {{ item.sgst|floatformat:2 }}</td>
+                    <td class="text-right">₹ {{ item.total_amount|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="6" class="text-right"><strong>Subtotal:</strong></td>
+                    <td colspan="4"></td>
+                    <td class="text-right"><strong>₹ {{ invoice.subtotal|floatformat:2 }}</strong></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td colspan="6" class="text-right"><strong>CGST Total:</strong></td>
+                    <td colspan="3"></td>
+                    <td class="text-right"><strong>₹ {{ invoice.cgst_total|floatformat:2 }}</strong></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td colspan="6" class="text-right"><strong>SGST Total:</strong></td>
+                    <td colspan="3"></td>
+                    <td class="text-right"><strong>₹ {{ invoice.sgst_total|floatformat:2 }}</strong></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr class="total-row">
+                    <td colspan="6" class="text-right"><strong>Grand Total:</strong></td>
+                    <td colspan="4"><strong>₹ {{ invoice.grand_total|floatformat:2 }}</strong></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <!-- Amount in Words -->
+        <div style="margin: 10px 0;">
+            <strong>In Words:</strong> {{ invoice.amount_in_words|default:"Zero Rupees Only" }}
+        </div>
+
+        <!-- Terms -->
+        <table style="border: none;">
+            <tr style="border: none;">
+                <td width="33%" style="border: none;"><strong>Terms of Delivery:</strong> F.O.R. Destination</td>
+                <td width="33%" style="border: none;"><strong>Payment Terms:</strong> Advance / Online / Cash</td>
+                <td width="33%" style="border: none;"><strong>GST:</strong> As applicable (CGST + SGST)</td>
+            </tr>
+            <tr style="border: none;">
+                <td colspan="3" style="border: none;"><strong>Place of Supply:</strong> {{ invoice.customer_state|default:"Kerala" }}</td>
+            </tr>
+        </table>
+
+        <!-- Signatures -->
+        <div class="signature-section">
+            <div style="display: flex; justify-content: space-between;">
+                <div style="width: 48%;">
+                    <div>For {{ invoice.branch.Branch_Name }}</div>
+                    <div class="signature-box">(Authorized Signatory)</div>
+                </div>
+                <div style="width: 48%;">
+                    <div>Customer's Signature</div>
+                    <div class="signature-box">_________________</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer-note">
+            <div>This is a computer-generated document and does not require a physical signature.</div>
+            <div>For billing and general queries, please mail: johnmarianwellness@gmail.com</div>
+            <div>Terms: Payment due within 15 days from the date of invoice.</div>
+        </div>
+    </div>
+
+    {% if auto_print %}
+    <script>
+        window.onload = function() {
+            window.print();
+        }
+    </script>
+    {% endif %}
+</body>
+</html>

@@ -1,0 +1,818 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<!-- jQuery core -->
+
+<style>
+/* === VARIABLES === */
+:root {
+  --bg: #f6f8fb;
+  --card: #ffffff;
+  --text: #1f2a37;
+  --muted: #6b7280;
+  --brand: #2fbac6;
+  --tab: #8bd08a;
+  --accent: #3b82f6;
+  --ok: #22c55e;
+  --danger: #ef4444;
+  --shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  --radius: 14px;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font: 15px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell,
+    "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  color: var(--text);
+  background: var(--bg);
+}
+.page { max-width: 1200px; margin: 28px auto; padding: 0 18px; }
+.content-wrapper { background: #f3f6fb; padding: 20px; }
+
+/* HEADER */
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+.page-header h1 { font-size: 22px; font-weight: 800; color: #1f2937; }
+.breadcrumb { font-size: 14px; color: #6b7280; }
+.breadcrumb a { text-decoration: none; color: var(--brand); font-weight: 600; }
+
+/* SEARCH */
+.search-wrapper { background: #fff; padding: 18px; border-radius: 18px; box-shadow: var(--shadow); margin-bottom: 20px; }
+.search-box { display: flex; gap: 12px; }
+.search-box input { flex: 1; height: 42px; border-radius: 12px; border: 1px solid #e5e7eb; padding: 0 14px; }
+.search-box button { height: 42px; padding: 0 18px; border: none; border-radius: 12px; background: var(--brand); color: #fff; font-weight: 600; cursor: pointer; box-shadow: var(--shadow); }
+.search-box button:hover { background: #2563eb; }
+.patient-details {
+  background: #fff;
+  border-radius: 14px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px 24px;
+}
+.patient-details .field {
+  display: flex;
+  gap: 6px;
+}
+.patient-details .label {
+  font-weight: 700;
+  color: #6b7280;
+}
+.patient-details .value {
+  color: #1f2937;
+  font-weight: 600;
+}
+/* CARD */
+.card { background: #fff; border-radius: 18px; box-shadow: var(--shadow); padding: 20px; margin-bottom: 24px; }
+
+/* PATIENT INFO */
+.info { display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap; }
+.patient-info { flex: 1; font-size: 15px; }
+.kv { display: grid; grid-template-columns: 140px 1fr; gap: 6px 12px; }
+.k { color: #6b7280; font-weight: 600; }
+
+/* VISIT */
+.visit { flex: 2; }
+.visit-row { display: grid; grid-template-columns: 56px 120px 80px 80px 80px 120px 120px; gap: 8px; align-items: center; background: #f9fafb; border-radius: 12px; padding: 8px 12px; margin-bottom: 8px; }
+.visit-row.header { background: transparent; font-weight: 700; color: #374151; }
+.pill { background: #e8f4ff; border-radius: 12px; padding: 6px 12px; font-weight: 600; text-align: center; }
+
+/* TABS */
+.tabs { display: flex; gap: 12px; flex-wrap: wrap; margin: 20px 0 12px; }
+.tab { padding: 10px 16px; border-radius: 12px; border: none; cursor: pointer; background: var(--tab); color: #0f172a; font-weight: 700; min-width: 128px; box-shadow: var(--shadow); }
+.tab.active { background: var(--brand); color: #fff; }
+.underline { height: 4px; background: var(--accent); border-radius: 999px; margin-bottom: 16px; }
+.lab-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr); /* 4 columns */
+  gap: 20px; /* space between cards */
+}
+
+.lab-card {
+  border: 1px solid #ccc;
+  padding: 15px;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+}
+
+.lab-card-title {
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.test-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.test-item {
+  padding: 5px 10px;
+  border: 1px solid #007bff;
+  border-radius: 4px;
+  background-color: #fff;
+  cursor: pointer;
+}
+
+.test-item.selected {
+  background-color: #007bff;
+  color: #fff;
+}
+
+ .selected-tests {
+    display: flex;
+    flex-wrap: wrap; /* allows wrapping to next line if too many */
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .selected-tests span {
+    background: #4CAF50;
+    color: white;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: bold;
+  }
+  
+/* GRID */
+.grid { display: grid; grid-template-columns: 1fr 340px; gap: 24px; }
+@media (max-width: 1024px) { .grid { grid-template-columns: 1fr; } }
+
+/* RIGHT SIDE: Complaints */
+.side .h { font-weight: 800; margin-bottom: 12px; font-size: 16px; }
+.chipdate { background: #d1fae5; border-radius: 999px; padding: 4px 10px; font-weight: 700; display: inline-block; margin: 10px 0; }
+.note { white-space: pre-line; line-height: 1.5; border-left: 4px solid #e5e7eb; padding-left: 10px; margin-bottom: 12px; color: #111827; }
+.diagnosis { margin-top: 20px; padding: 14px; background: #fff7ed; border: 1px solid #fdba74; border-radius: 12px; font-size: 14px; color: #7c2d12; box-shadow: var(--shadow); }
+
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* TABLE */
+table { width: 100%; border-collapse: separate; border-spacing: 0 10px; }
+thead th { text-align: left; font-size: 13px; font-weight: 700; color: #374151; padding: 8px 10px; }
+tbody tr { background: #f8fafc; border-radius: 12px; box-shadow: var(--shadow); }
+tbody td { padding: 10px 12px; }
+.dosechip { background: #fff; border-radius: 8px; padding: 4px 10px; font-weight: 700; display: inline-block; box-shadow: var(--shadow); }
+
+/* ACTIONS */
+.actions { display: flex; gap: 8px; }
+.iconbtn { width: 34px; height: 34px; border: none; border-radius: 10px; display: grid; place-items: center; cursor: pointer; color: #fff; box-shadow: var(--shadow); }
+.iconbtn.ok { background: var(--ok); }
+.iconbtn.del { background: var(--danger); }
+  
+
+.scrollable-checkbox-container {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 12px;
+    background-color: #f9fafb;
+}
+
+.form-check {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.form-check-input {
+    margin-right: 8px;
+    margin-top: 0;
+}
+
+.form-check-label {
+    font-size: 14px;
+    margin-bottom: 0;
+}
+
+.scrollable-checkbox-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.scrollable-checkbox-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.scrollable-checkbox-container::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+.scrollable-checkbox-container::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+</style>
+
+<div class="content-wrapper">
+  <!-- Header -->
+  <section class="content-header">
+    <div class="page-header">
+      <h1>Patient Vitals</h1>
+      <div class="breadcrumb">
+        {% if stckmgmntview == '1' %}
+          <a href="{% url 'physicaltable'%}?menumanagement_id={{ idmngmnt }}">View All Patients</a>
+        {% endif %}
+        / Case History
+      </div>
+    </div>
+  </section>
+<!-- Search -->
+<div class="search-wrapper">
+  <div class="search-box">
+    <input type="text" id="mrSearch" class="form-control" placeholder="Type MR Number">
+    <button id="searchBtn">Search</button>
+  </div>
+</div>
+<!-- Patient Case History Card -->
+<div class="card">
+  <!-- Patient Info -->
+  <div class="row">
+    <div class="col-md-12">
+      <div class="patient-details">
+     
+        <div class="field"><span class="label">MR No:</span><span class="value" name="mrnum" id="mrDropdown"></span></div>
+        <div class="field"><span class="label">Name:</span><span class="value" name="ptname" id="ptname"></span></div>
+        <div class="field"><span class="label">Gender:</span><span class="value" name="ptgender" id="ptgender"></span></div>
+        <div class="field"><span class="label">Address:</span><span class="value" name="ptaddress" id="ptaddress"></span></div>
+        <div class="field"><span class="label">Phone:</span><span class="value" name="ptphno" id="ptphno"></span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <!-- <div class="tabs">
+    <button class="tab active" data-tab="vitals">Vitals</button>
+    <button class="tab " data-tab="diagnosis">Diagnosis</button>
+    <button class="tab" data-tab="prescription">Prescription</button>
+    <button class="tab" data-tab="lab">Lab</button>
+    <button class="tab" data-tab="history">History</button>
+    <button class="tab" data-tab="treatment">Treatment</button>
+    <button class="tab" data-tab="note">Doctor's Note</button>
+    <button class="tab" data-tab="labresults">Lab Result</button>
+    <button class="tab" data-tab="diet">Diet Plan</button>
+  </div>
+  <div class="underline"></div> -->
+
+  <!-- LEFT SIDE (tabs content) -->
+  <div>
+    <!-- Vitals -->
+    <div id="vitals" class="tab-content active">
+       <input type="hidden" class="form-control" name="ptid" id="ptid">
+      <form method="POST" id="vitalform">
+        {% csrf_token %}
+        <div class="row">
+          <div class="col-md-3">
+            <div class="form-group">
+              <label for="age">Age</label>
+                  
+              <input type="hidden" class="form-control" name="mrpt_id" id="mrpt_id">
+              <input type="number" class="form-control" id="age" name="age" placeholder="Enter Age" min="0">
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="form-group">
+              <label for="height">Height (cm)</label>
+              <input type="number" name="height" class="form-control" id="ptheight" placeholder="Enter Height (cm)" step="0.1">
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="form-group">
+              <label for="weight">Weight (kg)</label>
+              <input type="number" class="form-control" id="ptweight" name="weight" placeholder="Enter Weight (kg)" step="0.1">
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="form-group">
+              <label for="bmi">BMI</label>
+              <input type="text" class="form-control" name="bmi" id="ptbmi" >
+            </div>
+          </div>
+        </div>
+
+        <div class="row mt-3">
+          <div class="col-md-3">
+            <div class="form-group">
+              <label for="bp">Blood Pressure (mmHg)</label>
+              <input type="text" class="form-control" name="bp" id="bp" placeholder="e.g. 120/80">
+            </div>
+          </div>
+          <div class="col-md-3">
+        <div class="form-group">
+            <label for="pr">Pulse Rate (bpm)</label>
+            <input type="text" class="form-control" name="pr" id="pr" placeholder="e.g. 72">
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="form-group">
+            <label for="spo2">SpO₂ (%)</label>
+            <input type="text" class="form-control" name="spo2" id="spo2" placeholder="e.g. 98">
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="form-group">
+            <label for="temperature">Temperature (°F)</label>
+            <input type="text" class="form-control" name="temperature" id="temperature" placeholder="e.g. 98.6">
+        </div>
+    </div>
+        </div>
+        
+        <div class="mt-4">
+          <button type="submit" class="btn btn-primary">Save Vitals</button>
+        </div>
+      </form>
+      <table id="vitalsTable" class="table table-striped table-sm">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Age</th>
+            <th>BP</th>
+            <th>PR</th>  
+            <th>SpO₂</th>  
+            <th>Temperature</th> 
+            <th>Weight</th>
+            <th>Height</th>
+            <th>BMI</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+<!-- Modal for displaying search results with DataTable -->
+<div class="modal" id="searchModal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="searchModalLabel">Search Results</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <!-- DataTable for displaying search results -->
+        <table id="searchResultsTable" class="display table table-bordered">
+          <thead>
+            <tr>
+              <th>MR Number</th>
+              <th>Patient Name</th>
+              <th>Address</th>
+              <th>Contact No</th>
+              <th>Gender</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Results will be appended here -->
+          </tbody>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Vitals Modal -->
+<div class="modal fade" id="editVitalsModal" tabindex="-1" role="dialog" aria-labelledby="editVitalsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="editVitalsModalLabel">Edit Vitals</h5>
+        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="editVitalsForm">
+          {% csrf_token %}
+          <input type="hidden" id="edit_vitals_id" name="vitals_id">
+          
+          <div class="row">
+            <div class="col-md-3">
+              <div class="form-group">
+                <label for="edit_age">Age</label>
+                <input type="number" class="form-control" id="edit_age" name="age" min="0">
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group">
+                <label for="edit_height">Height (cm)</label>
+                <input type="number" name="height" class="form-control" id="edit_height" step="0.1">
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group">
+                <label for="edit_weight">Weight (kg)</label>
+                <input type="number" class="form-control" id="edit_weight" name="weight" step="0.1">
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group">
+                <label for="edit_bmi">BMI</label>
+                <input type="text" class="form-control" name="bmi" id="edit_bmi" readonly>
+              </div>
+            </div>
+          </div>
+
+          <div class="row mt-3">
+            <div class="col-md-3">
+              <div class="form-group">
+                <label for="edit_bp">Blood Pressure (mmHg)</label>
+                <input type="text" class="form-control" name="bp" id="edit_bp">
+              </div>
+            </div>
+             <div class="col-md-3">
+        <div class="form-group">
+            <label for="edit_pr">Pulse Rate (bpm)</label>
+            <input type="text" class="form-control" name="pr" id="edit_pr" placeholder="e.g. 72">
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="form-group">
+            <label for="edit_spo2">SpO₂ (%)</label>
+            <input type="text" class="form-control" name="spo2" id="edit_spo2" placeholder="e.g. 98">
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="form-group">
+            <label for="edit_temperature">Temperature (°F / °C)</label>
+            <input type="text" class="form-control" name="temperature" id="edit_temperature" placeholder="e.g. 98.6">
+        </div>
+    </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="updateVitalsBtn">Update Vitals</button>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+</div>
+<script>
+// ======== Fill Table Functions (Global) ========
+function fillTable(tableId, items, columns) {
+    const tbody = $(tableId + ' tbody');
+    tbody.empty();
+    if (!items || !items.length) {
+        tbody.append('<tr><td colspan="' + columns.length + '">No records found</td></tr>');
+        return;
+    }
+    items.forEach(item => {
+        let row = '<tr>';
+        columns.forEach(col => row += `<td>${item[col] || ''}</td>`);
+        row += '</tr>';
+        tbody.append(row);
+    });
+}
+
+function fillTables(history) {
+const vitalsTbody = $('#vitalsTable tbody');
+    vitalsTbody.empty();
+    
+    if (!history.vitals || !history.vitals.length) {
+        vitalsTbody.append('<tr><td colspan="20">No vitals records found</td></tr>');
+        return;
+    }
+    
+    history.vitals.forEach(vital => {
+        const row = `
+            <tr data-id="${vital.id}">
+                <td>${vital.date || ''}</td>
+                <td>${vital.age || ''}</td>
+                <td>${vital.bp || ''}</td>
+                <td>${vital.pr || ''}</td>  <!-- 🔥 NEW -->
+                <td>${vital.spo2 || ''}</td>  <!-- 🔥 NEW -->
+                <td>${vital.temperature || ''}</td>  <!-- 🔥 NEW -->
+                <td>${vital.weight || ''}</td>
+                <td>${vital.height || ''}</td>
+                <td>${vital.bmi || ''}</td>
+                <td>
+                    <button class="btn btn-sm btn-primary edit-vitals" data-id="${vital.id}">
+                        <i class="fas fa-edit"></i> Edit
+                    </button>
+                </td>
+            </tr>
+        `;
+        vitalsTbody.append(row);
+    });
+
+}
+// Add this new function to handle tables with actions
+function fillTableWithActions(tableId, items, columns, actionRenderer) {
+    const tbody = $(tableId + ' tbody');
+    tbody.empty();
+    if (!items || !items.length) {
+        tbody.append('<tr><td colspan="' + (columns.length + 1) + '">No records found</td></tr>');
+        return;
+    }
+    items.forEach(item => {
+        let row = '<tr>';
+        columns.forEach(col => {
+            if (col === 'report_file' && item[col]) {
+                row += `<td><a href="${item[col]}" target="_blank">Download</a></td>`;
+            } else {
+                row += `<td>${item[col] || ''}</td>`;
+            }
+        });
+        row += `<td>${actionRenderer(item)}</td>`;
+        row += '</tr>';
+        tbody.append(row);
+    });
+}
+
+
+
+// ======== Main DOMContentLoaded ========
+document.addEventListener('DOMContentLoaded', function () {
+    // ======== BMI Calculation ========
+    function calculateBMI() {
+        const height = parseFloat(document.getElementById('ptheight').value) / 100;
+        const weight = parseFloat(document.getElementById('ptweight').value);
+        document.getElementById('ptbmi').value =
+            height && weight ? (weight / (height * height)).toFixed(2) : '';
+    }
+    document.getElementById('ptheight').addEventListener('input', calculateBMI);
+    document.getElementById('ptweight').addEventListener('input', calculateBMI);
+
+    // ======== DataTable Init ========
+    let searchTable = $('#searchResultsTable').DataTable({
+        paging: true,
+        searching: true,
+        info: true,
+        lengthChange: true,
+        pageLength: 10
+    });
+
+    // ======== Modal Cleanup ========
+    $('.modal').on('hidden.bs.modal', function () { $('.modal-backdrop').remove(); });
+    $('.modal').on('show.bs.modal', function () { $(this).removeClass('fade'); });
+
+    // ======== Tabs ========
+    const tabs = document.querySelectorAll(".tab");
+    const contents = document.querySelectorAll(".tab-content");
+    tabs.forEach(tab => {
+        tab.addEventListener("click", () => {
+            tabs.forEach(t => t.classList.remove("active"));
+            contents.forEach(c => c.classList.remove("active"));
+            tab.classList.add("active");
+            const targetContent = document.getElementById(tab.dataset.tab);
+            if (targetContent) targetContent.classList.add("active");
+        });
+    });
+
+    // ======== Patient Search ========
+    $('#searchBtn').on('click', function () {
+        const query = $('#mrSearch').val().trim();
+        if (!query) return alert('Please enter a search term.');
+        searchTable.clear().draw();
+        fetch(`/search_mrno?query=${query}`)
+            .then(res => res.json())
+            .then(data => {
+                if (!data.length) return alert('No matching records found.');
+                data.forEach(item => {
+                    searchTable.row.add([
+                        item.Medical_Record_Number,
+                        item.Patient_Name,
+                        item.address || 'N/A',
+                        item.contactno,
+                        item.Gender,
+                        `<button class="btn btn-primary select-btn"
+                                 data-id="${item.id}"
+                                 data-name="${item.Patient_Name}"
+                                 data-mrno="${item.Medical_Record_Number}"
+                                 data-contact="${item.contactno}"
+                                 data-gender="${item.Gender}"
+                                 data-address="${item.address || 'N/A'}">Select</button>`
+                    ]).draw(false);
+                });
+                $('#searchModal').modal({ backdrop: 'static', keyboard: true });
+                $('.modal-backdrop').removeClass('fade');
+            })
+            .catch(err => { console.error(err); alert('Error retrieving data.'); });
+    });
+
+    // ======== Select Patient ========
+    $('#searchResultsTable').on('click', '.select-btn', function () {
+        const btn = $(this);
+        loadPatientById(btn.data('id'));
+        $('#searchModal').modal('hide');
+    });
+
+    // ======== Load Patient Function ========
+function loadPatientById(ptid) {
+    if (!ptid) return;
+     $("#ptid,#mrpt_id").val(ptid);
+    $.ajax({
+        url: '/get_patient_full_history/',
+        data: { mrno: ptid },
+        success: function (res) {
+            if (!res || !res.history) return;
+            fillTables(res.history);
+            const patient = res.patient || {};
+            $('#mrDropdown').html(`<option value="${ptid}" selected>${patient.Medical_Record_Number || ''}</option>`);
+            $('#ptname').text(patient.Patient_Name || '');
+            $('#ptphno').text(patient.contactno || '');
+            $('#ptgender').text(patient.Gender || '');
+            $('#ptaddress').text(patient.address || '');
+    
+            // 🔹 Fetch latest vitals (Age, Height, Weight, BP)
+            fetch(`/get_latest_vitals?mrno=${ptid}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        $('input[name="age"]').val(data.age);
+
+                        // 🔸 Trigger BMI update if height/weight exist
+                        $('#ptheight').trigger('input');
+                        $('#ptweight').trigger('input');
+                    } else {
+                        console.warn("No previous vitals found or error:", data.error);
+                    }
+                })
+                .catch(err => console.error("Error fetching latest vitals:", err));
+        },
+        error: function () {
+            alert('Error fetching patient history.');
+        }
+    });
+}
+
+    // ======== Auto-load Patient ========
+    const urlParams = new URLSearchParams(window.location.search);
+    const ptidFromURL = urlParams.get('ids');
+    if (ptidFromURL) {
+        loadPatientById(ptidFromURL);
+    }
+});
+</script>
+
+<script>
+// ======== Refresh Patient History ========
+function refreshPatientHistory() {
+    const ptid = $("#ptid").val();
+    if (!ptid) return;
+
+    $.ajax({
+        url: '/get_patient_full_history/',
+        data: { mrno: ptid },
+        success: function(res) {
+            if (res && res.history) {
+                fillTables(res.history); // make sure fillTables is accessible globally
+            }
+        },
+        error: function() {
+            console.error("Error refreshing patient history");
+        }
+    });
+
+}
+</script>
+<script>
+let caseHistoryId = null; 
+function ensurePatientSelected() {
+    const ptid = $("#ptid").val();
+    const mrno = $("#mrpt_id").val(); // or .val() if it’s an input/select
+
+    if (!ptid || !mrno) {
+        alert("Please select patient first!");
+        return false;
+    }
+    return true;
+}
+
+
+
+$(document).ready(function () {
+
+  // ---- Autocomplete Patient Selection ----
+  $(document).on("click", ".patient-option", function () {
+      let id = $(this).data("id"); 
+      $("#ptid").val(id);  // keep hidden input in sync
+      console.log("Patient selected via autocomplete:", id);
+  });
+
+
+
+  // ---- Vitals Submit ----
+  $("#vitalform").submit(function (e) {
+    e.preventDefault();
+    let form = this; 
+    if (!ensurePatientSelected()) return;
+    $.ajax({
+      url: "{% url 'create_casehistoryvitals' %}",
+      type: "POST",
+      data: $(this).serialize(),
+      success: function (response) {
+        if (response.success) {
+           alert("Vitals saved!"); 
+        form.reset(); 
+        refreshPatientHistory(); 
+      }
+        else { alert("Error: " + response.error); }
+      }
+    });
+  });
+
+});
+
+
+</script>
+
+
+
+<script>
+// Edit vitals functionality
+$(document).on('click', '.edit-vitals', function() {
+    const vitalsId = $(this).data('id');
+    
+    
+    if (!vitalsId) {
+        alert('Error: Vitals ID is missing');
+        return;
+    }
+    
+    // Fetch vitals details
+    $.ajax({
+        url: '/get_vitals_details/',
+        method: 'GET',
+        data: { vitals_id: vitalsId },
+        success: function(response) {
+            console.log("Vitals details response:", response);
+            if (response.success) {
+                const vitals = response.vitals;
+                
+                // Populate the edit form
+                $('#edit_vitals_id').val(vitals.id);
+                $('#edit_age').val(vitals.age || '');
+                $('#edit_height').val(vitals.height || '');
+                $('#edit_weight').val(vitals.weight || '');
+                $('#edit_bmi').val(vitals.bmi || '');
+                $('#edit_bp').val(vitals.bp || '');
+                $('#edit_pr').val(vitals.pr || '');
+                $('#edit_spo2').val(vitals.spo2 || '');
+                $('#edit_temperature').val(vitals.temperature || '');
+               
+                // Show the modal
+                $('#editVitalsModal').modal('show');
+            } else {
+                alert('Error fetching vitals details: ' + response.error);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error("AJAX error:", error);
+            alert('Error fetching vitals details: ' + error);
+        }
+    });
+});
+
+// Update vitals
+$('#updateVitalsBtn').click(function() {
+    const formData = $('#editVitalsForm').serialize();
+    console.log("Updating vitals with data:", formData);
+    
+    $.ajax({
+        url: '/update_vitals/',
+        method: 'POST',
+        data: formData,
+        success: function(response) {
+            console.log("Update response:", response);
+            if (response.success) {
+                $('#editVitalsModal').modal('hide');
+                alert('Vitals updated successfully');
+               refreshPatientHistory();// Refresh the tables
+            } else {
+                alert('Error updating vitals: ' + response.error);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error("AJAX error:", error);
+            alert('Error updating vitals: ' + error);
+        }
+    });
+});
+
+// BMI calculation for edit form
+$('#edit_height, #edit_weight').on('input', function() {
+    const height = parseFloat($('#edit_height').val()) / 100;
+    const weight = parseFloat($('#edit_weight').val());
+    
+    if (height && weight) {
+        const bmi = (weight / (height * height)).toFixed(2);
+        $('#edit_bmi').val(bmi);
+    } else {
+        $('#edit_bmi').val('');
+    }
+});
+</script> 
+
+{% endblock %}

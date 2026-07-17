@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="content-wrapper">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Food Management</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{% url 'index' %}">Home</a></li>
+                        <li class="breadcrumb-item active">Food List</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card card-primary">
+                        <div class="card-header">
+                            <h3 class="card-title">Add New Food</h3>
+                        </div>
+                        <form method="POST" action="{% url 'food_create' %}">
+                            {% csrf_token %}
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <div class="form-group">
+                                            <label for="foodName">Food Name</label>
+                                            <input type="text" class="form-control" id="foodName" name="name" 
+                                                   placeholder="Enter food name" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4" style="margin-top: 32px;">
+                                        <button type="submit" class="btn btn-primary">Add Food</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Food List</h3>
+                        </div>
+                        <div class="card-body">
+                            {% if messages %}
+                                {% for message in messages %}
+                                    <div class="alert alert-{{ message.tags }} alert-dismissible">
+                                        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+                                        {{ message }}
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+
+                            <table id="foodTable" class="table table-bordered table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Food Name</th>
+                                        <th>Created Date</th>
+                                      
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for food in foods %}
+                                    <tr>
+                                        <td>{{ forloop.counter }}</td>
+                                        <td>{{ food.name }}</td>
+                                        <td>{{ food.created_at|date:"Y-m-d H:i" }}</td>
+                                       
+                                    </tr>
+
+                                  
+
+                                  
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="4" class="text-center">No food items found.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+
+{% endblock %}

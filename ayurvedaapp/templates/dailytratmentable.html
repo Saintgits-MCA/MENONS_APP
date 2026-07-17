@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Daily Treatment Details</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item">
+                <a href="{% url 'dailytreatment' %}">Add</a></li>
+              <li class="breadcrumb-item active"> Daily Treatment Details</li>
+            </ol>
+          </div>
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-12">
+            
+            <!-- /.card -->
+
+            <div class="card">
+           <div class="scroll">
+              <!-- /.card-header -->
+              <div class="card-body">
+                <table id="example1" class="table table-bordered table-striped">
+                  <thead>
+                   
+                 <tr>
+                  <th>SL No</th>
+                    <th>Staff Id</th>
+                    <th>Admission Number</th>
+                    <th>Patient Name</th>
+                    <th>Treatment Name</th>
+                    <th>Medicine Name</th>
+                    <th>Current Date</th>
+                    <th>Actions</th>
+                  </tr>
+                  </thead>
+                  <tbody>
+              {%for i in dailytrdetails %}
+                  <tr>
+
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{i.Staff_name.id}}</td>
+                    <td>{{i.MR_Number.Medical_Record_Number}}</td>
+                   <td>{{i.Patient_Name.Patient_Name}}</td>
+                    <td>{{i.Treatment_name}}</td>
+                    <td>{{i.Medicinename}}</td>                   
+                    <td>{{i.Current_date}}</td>
+                    <td>
+                      <a href="{% url 'editdailytreatment'%}?ids={{i.id}}"><i class="nav-icon " style="width:20px"><img src="{% static 'assets/dist/img/icons/edit.svg'%}"  class=" img-squre "  style="width:20px"></i></a>
+                      
+                      <a href="{% url 'deldepartment'%}?ids={{i.id}}"><i class="nav-icon " style="width:20px"><img src="{% static 'assets/dist/img/icons/delete.svg'%}"  class=" img-squre "  style="width:20px"></i></a>
+     
+                    </td>
+                  </tr>
+              {% endfor%}
+                  </tbody>
+                 
+                </table>
+              </div>
+            </div>
+              <!-- /.card-body -->
+            </div>
+            <!-- /.card -->
+          </div>
+          <!-- /.col -->
+        </div>
+        <!-- /.row -->
+      </div>
+      <!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+  </div>
+{% endblock %}

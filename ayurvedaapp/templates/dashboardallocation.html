@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<!-- Content Wrapper -->
+<div class="content-wrapper">
+  <!-- Page Header -->
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Menu Management Details</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"></li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content -->
+  <section class="content">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card card-primary">
+          <div class="card-header">
+            <h3 class="card-title">Menu Management Details</h3>
+          </div>
+
+          <!-- Form -->
+          <form method="POST" enctype="multipart/form-data" action="{% url 'assign_dashboard_to_role' %}">
+            {% csrf_token %}
+            <div class="card">
+              <div class="card-body">
+                <!-- Role Selection -->
+                <div class="row">
+                  <div class="col-md-2"></div>
+                  <div class="col-sm-2">
+                    <div class="form-group">
+                      <label for="role_selector">Role</label>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="form-group">
+                      <select class="form-control" id="role_selector" name="rolename" required onchange="fetchAssignedDashboards(this.value)">
+                        <option selected disabled value="">Select</option>
+                        {% for role in roles %}
+                            <option value="{{ role.id }}">{{ role.rolename }}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Dashboard Checkboxes -->
+                {% for heading in dashboardesign_headings %}
+                <div class="row">
+                  <div class="col-md-12">
+                    <div class="col-12 d-flex no-block align-items-center">
+                      <h5 class="page-title">
+                        <input type="checkbox" name="head[]" id="heading_{{ heading.id }}" value="{{ heading.id }}" 
+                        class="heading-checkbox" {% if heading.id in assigned_dashboard_ids %}checked{% endif %} />
+                        &nbsp;{{ heading.dashboardname }}
+                      </h5>
+                    </div>
+                  </div>
+                </div>
+                {% endfor %}
+
+                <!-- Hidden Input to Store Order -->
+                <input type="hidden" name="order" id="order_input">
+
+              </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="card-footer">
+              <button type="submit" class="btn btn-primary">Submit</button>
+            </div>
+          </form>
+          <!-- End of Form -->
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- JavaScript -->
+<script>
+  let checkedOrder = [];
+
+  document.addEventListener("DOMContentLoaded", function() {
+      document.querySelectorAll('.heading-checkbox').forEach(checkbox => {
+          checkbox.addEventListener('change', function() {
+              let value = parseInt(this.value);
+
+              if (this.checked) {
+                  if (!checkedOrder.includes(value)) {
+                      checkedOrder.push(value);
+                  }
+              } else {
+                  checkedOrder = checkedOrder.filter(id => id !== value);
+              }
+
+              console.log("Selected Order:", checkedOrder);
+              document.getElementById("order_input").value = checkedOrder.join(",");
+          });
+      });
+  });
+
+  function fetchAssignedDashboards(roleId) {
+      fetch(`/get-assigned-dashboards/?role_id=` + roleId)
+        .then(response => response.json())
+        .then(data => {
+          checkedOrder = data.assigned_dashboards; // Set initial order
+          document.querySelectorAll('.heading-checkbox').forEach(checkbox => {
+              checkbox.checked = data.assigned_dashboards.includes(parseInt(checkbox.value));
+          });
+          document.getElementById("order_input").value = checkedOrder.join(",");
+        })
+        .catch(error => {
+          console.error("Error fetching assigned dashboards:", error);
+          alert("Unable to fetch assigned dashboards. Please try again.");
+        });
+  }
+</script>
+
+{% endblock %}

@@ -1,0 +1,298 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    .proforma-container {
+        background: #fff;
+        padding: 15px;
+        max-width: 1200px;
+        margin: 20px auto;
+        box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+        border-radius: 5px;
+    }
+
+    .top-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border: 1px solid #ccc;
+        padding: 10px;
+        margin-bottom: 20px;
+    }
+
+    .logo img {
+        width: 100px;
+    }
+
+    .header-center {
+        flex: 1;
+        text-align: center;
+        font-size: 14px;
+    }
+
+    .header-center h6 {
+        margin: 0;
+        font-size: 16px;
+        color: green;
+    }
+
+    .emergency-box {
+        background-color: red;
+        color: white;
+        font-weight: bold;
+        padding: 8px 12px;
+        border-radius: 4px;
+        font-size: 14px;
+        white-space: nowrap;
+    }
+
+    h4 {
+        text-align: center;
+        margin: 10px 0;
+        color: #333;
+    }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        gap: 15px;
+    }
+
+    .box {
+        flex: 1;
+        border: 1px solid #000;
+        padding: 10px;
+        font-size: 14px;
+    }
+
+    .order-details table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .order-details th,
+    .order-details td {
+        border: 1px solid black;
+        padding: 8px;
+        font-size: 12px;
+        text-align: left;
+        vertical-align: top;
+    }
+
+    .order-details th {
+        background-color: #f5f5f5;
+        font-weight: bold;
+    }
+
+    .total {
+        text-align: right;
+        font-weight: bold;
+        margin: 15px 0;
+        padding-top: 10px;
+        border-top: 2px solid #000;
+    }
+
+    .amount-words {
+        font-weight: bold;
+        margin: 10px 0;
+    }
+
+    .footer {
+        margin-top: 15px;
+        text-align: center;
+        font-size: 11px;
+    }
+
+    .print-btn {
+        text-align: center;
+        margin: 20px 0;
+    }
+
+    .btn-group {
+        margin-bottom: 20px;
+    }
+
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+        body {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        @page {
+            size: A4;
+            margin: 1cm;
+        }
+        .proforma-container {
+            padding: 0;
+            margin: 0;
+        }
+    }
+</style>
+
+<div class="container">
+    <div class="btn-group no-print">
+        <a href="{% url 'proforma_invoice_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> New Proforma Invoice
+        </a>
+        <a href="{% url 'proforma_invoice_list' %}" class="btn btn-info">
+            <i class="fas fa-list"></i> View All
+        </a>
+    </div>
+
+    {% if recent_invoices %}
+    <div class="card no-print mb-4">
+        <div class="card-header">
+            <h5>Recent Proforma Invoices</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Voucher No</th>
+                            <th>Date</th>
+                            <th>Buyer Name</th>
+                            <th>Amount</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for inv in recent_invoices %}
+                        <tr>
+                            <td>{{ inv.voucher_no }}</td>
+                            <td>{{ inv.invoice_date|date:"d-m-Y" }}</td>
+                            <td>{{ inv.buyer_name|truncatechars:40 }}</td>
+                            <td>₹ {{ inv.grand_total|floatformat:2 }}</td>
+                            <td>
+                                <a href="{% url 'proforma_invoice_view' inv.id %}" class="btn btn-sm btn-info">View</a>
+                                <a href="{% url 'proforma_invoice_print' inv.id %}" class="btn btn-sm btn-primary" target="_blank">Print</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="proforma-container" id="proforma-invoice">
+        <div class="top-row">
+            {% for i in objhospt %}
+            <div class="logo">
+                <img src="{{ i.Logo.url }}" alt="{{ i.Name }} Logo">
+            </div>
+            {% endfor %}
+            <div class="header-center">
+                {% for x in brname %}
+                <h6>{{ x.hosporclinic|default:"Johnmarian Wellness Clinic" }}</h6>
+                <div>{{ x.Branch_Address }}</div>
+                <div>Phone: {{ x.Branch_contactno }}</div>
+                {% endfor %}
+            </div>
+            <div class="emergency-box">EMERGENCY ☎8289821234</div>
+        </div>
+
+        <h4>SALES ORDER / PROFORMA INVOICE</h4>
+
+        <!-- Sample Content - This would be replaced with dynamic data -->
+        <div class="info-row">
+            <div class="box">
+                <p><strong>Voucher No:</strong> PI-JMP/180/25-26</p>
+                <p><strong>Date:</strong> 30-Jul-25</p>
+            </div>
+            <div class="box">
+                <strong>Buyer Details:</strong><br>
+                <p><strong>Samveda Healwellzone Pvt Ltd</strong></p>
+                <p>Thazhe Varatyakku Mukkam Road Kunnamangalam</p>
+                <p>Kozhikode - 673571</p>
+                <p><strong>GSTIN:</strong> 32ABACS4210Q1ZE</p>
+            </div>
+        </div>
+
+        <div class="order-details">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Sl</th>
+                        <th>Description of Goods</th>
+                        <th>Qty</th>
+                        <th>Unit</th>
+                        <th>Rate</th>
+                        <th>GST</th>
+                        <th>HSN/SAC</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>JM Ecoflora<div class="batch-info">Batch: EF001</div></td>
+                        <td>50</td>
+                        <td>BTL</td>
+                        <td>139.80</td>
+                        <td>18%</td>
+                        <td>21069099</td>
+                        <td>6,990.00</td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>Mygut 1*10<div class="batch-info">Batch: EFC-2505001</div></td>
+                        <td>50</td>
+                        <td>STRP</td>
+                        <td>101.70</td>
+                        <td>18%</td>
+                        <td>21069099</td>
+                        <td>5,085.00</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="total">
+            <p><strong>Total Amount: ₹ 41,574.42</strong></p>
+        </div>
+
+        <div class="amount-words">
+            In Words: Rupees Forty One Thousand Five Hundred Seventy Four Only
+        </div>
+
+        <div class="footer">
+            <p>This is a computer-generated statement and requires no signature.</p>
+            <p>For billing and general queries, please mail: <a href="mailto:johnmarianwellness@gmail.com">johnmarianwellness@gmail.com</a></p>
+        </div>
+
+        <div class="print-btn no-print">
+            <button onclick="printProforma()" class="btn btn-primary">Print Proforma Invoice</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function printProforma() {
+    var invoiceContent = document.getElementById("proforma-invoice").outerHTML;
+    var styles = Array.from(document.querySelectorAll("style"))
+        .map(style => style.innerHTML)
+        .join("\n");
+
+    var printWindow = window.open("", "_blank");
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+            <head>
+                <title>Proforma Invoice</title>
+                <style>${styles}</style>
+            </head>
+            <body onload="window.print(); window.onafterprint = function(){ window.close(); }">
+                ${invoiceContent}
+            </body>
+        </html>
+    `);
+    printWindow.document.close();
+}
+</script>
+{% endblock %}

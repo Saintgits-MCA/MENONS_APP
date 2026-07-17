@@ -1,0 +1,277 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+  <div class="content-wrapper">
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Patient Room Booking</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item">
+              
+                  <a href="{% url 'patient_room_booking_list' %}">View All</a>
+ 
+            </li>
+            <li class="breadcrumb-item active">Patient Room Booking</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content">
+      <div class="row">
+        <div class="col-md-12">
+          <div class="card card-primary">
+            <div class="card-header">
+              <h3 class="card-title">Patient Room Booking</h3>
+            </div>
+            <form id="patientDetailsForm" method="POST" action="{% url 'admission' %}">
+                {% csrf_token %}
+                <div class="row">
+                    <!-- Left Column -->
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label for="ptid">MR No</label>
+                                    <input type="hidden" class="form-control" id="ptid" value="{{ patientid }}" name="patientid" placeholder="Enter Patient Id" required>
+                                    <input type="text" class="form-control mt-2" id="exampleInputpatientname" value="{{ mrno }}" name="patientname" placeholder="Enter Patient Name" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="admdate">Admission Date</label>
+                                    <input type="date" class="form-control" id="admdate" name="admdate" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="admtime">Admission Time</label>
+                                    <input type="time" class="form-control" id="admtime" name="admtime" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="admdoc">Admitted Doctor</label>
+                                    <select class="form-control" id="admdoc" name="admdoc">
+                                      {% for i in stffallc %}
+                                      <option value="{{ i.id }}">{{ i.Staff__Staff_firstname }} {{ i.Staff__Staff_lastname }}</option>
+                                      {% endfor %}
+                                    </select> 
+                                </div>
+                                <div class="form-group">
+                                  <label for="admdpt">Department</label>
+                                  <select class="form-control" id="admdpt" name="admdpt">
+                                    {% for i in dpt %}
+                                      <option value="{{ i.id }}">{{ i.Department_Name }}</option>
+                                    {% endfor %}
+                                  </select> 
+                              </div>  
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column -->
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label for="emgcont">Emergency Contact No</label>
+                                    <input type="text" class="form-control" id="emgcont" name="emgcont" placeholder="Enter Contact No" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="branch">Branch</label>
+                                    <select class="form-control" name="branch">
+                                        {% for i in brch %}
+                                        <option value="{{ i.id }}">{{ i.Branch_Name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                               
+                              <div class="form-group">
+                                <label for="accommodationType">Select Accommodation Type:</label><br>
+                                <input type="radio" value="Ward" name="accommodation" id="accommodationWard" required>
+                                <label for="accommodationWard">Ward</label> 
+                            
+                                <input type="radio" value="Room" id="accommodationRoom" name="accommodation" required>
+                                <label for="accommodationRoom">Room</label>
+                            </div>
+                            
+                            <!-- Room selection fields -->
+                            <div id="roomSelection" style="display: none;">
+                                <div class="form-group">
+                                    <label for="roomtype">Room Type</label>
+                                    <select class="form-control" name="roomtype" id="roomtype">
+                                        <option value="">Select Room Type</option>
+                                        {% for i in unique_room_types %}
+                                            <option value="{{ i }}">{{ i }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="roommnumber">Room Number</label>
+                                    <select class="form-control" name="roommnumber" id="roommnumber">
+                                        <option value="">Select Room Number</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="roomfloor">Floor Number</label>
+                                    <input type="text" class="form-control" id="roomfloor" name="roomfloor" readonly>
+                                </div>
+                            </div>
+                            
+                            <!-- Ward selection fields -->
+                            <div id="wardSelection" style="display: none;">
+                                <div class="form-group">
+                                    <label for="wardbedno">Available Bed Number</label>
+                                    <select class="form-control" name="wardbedno" id="wardbedno">
+                                        <option value="">Select Bed Number</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="wardfloor">Floor Number</label>
+                                    <input type="text" class="form-control" id="wardfloor" name="wardfloor" readonly>
+                                </div>
+                            </div>
+                            
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="card-footer">
+                  {% if messages %}
+        {% for message in messages %}
+        <p style="color:green;">{{message}}</p> 
+        {% endfor %}
+        {% endif %}
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Success Message Modal -->
+  <div class="modal fade" id="successModal" tabindex="-1" role="dialog" aria-labelledby="successModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title" id="successModalLabel">Success</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          {% for message in messages %}
+            <p>{{ message }}</p>
+          {% endfor %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+<script>
+  $(document).ready(function () {
+    // Show/Hide room or ward options based on the selected accommodation type
+    $("input[name='accommodation']").change(function () {
+      var selectedType = $(this).val();
+
+      if (selectedType === "Room") {
+        $("#roomSelection").show();
+        $("#wardSelection").hide();
+      } else if (selectedType === "Ward") {
+        $("#roomSelection").hide();
+        $("#wardSelection").show();
+      }
+    });
+
+    // Fetch available room numbers when room type is selected
+    $("#roomtype").change(function () {
+      let roomType = $(this).val();
+
+      if (roomType) {
+        $.ajax({
+          url: "{% url 'get_available_accommodations' %}",
+          data: {
+            "accommodation_type": "Room",
+            "room_type": roomType
+          },
+          dataType: "json",
+          success: function (data) {
+            let roomDropdown = $("#roommnumber");
+            let floorInput = $("#roomfloor");
+
+            roomDropdown.empty();
+            floorInput.val("");
+
+            if (data.rooms.length > 0) {
+              roomDropdown.append('<option value="">Select Room Number</option>');
+              $.each(data.rooms, function (index, room) {
+                roomDropdown.append('<option value="' + room.id + '" data-floor="' + room.Floorno + '">' + room.Roomno + '</option>');
+              });
+
+              // Update floor number on room selection
+              roomDropdown.off('change').on('change', function () {
+                var selectedOption = $(this).find(":selected");
+                var floor = selectedOption.data("floor");
+                floorInput.val(floor || '');
+              });
+            } else {
+              roomDropdown.append('<option value="">No rooms available</option>');
+            }
+          },
+          error: function () {
+            alert("Error fetching available rooms.");
+          }
+        });
+      }
+    });
+
+    // Fetch available beds when Ward is selected
+    $("input[name='accommodation']").change(function () {
+      var accommodationType = $("input[name='accommodation']:checked").val();
+
+      if (accommodationType === "Ward") {
+        $.ajax({
+          url: "{% url 'get_available_accommodations' %}",
+          data: { "accommodation_type": accommodationType },
+          dataType: "json",
+          success: function (data) {
+            var bedDropdown = $("#wardbedno");
+            var floorInput = $("#wardfloor");
+
+            bedDropdown.empty();
+            floorInput.val("");
+
+            if (data.beds.length > 0) {
+              bedDropdown.append('<option value="">Select Bed Number</option>');
+              $.each(data.beds, function (index, bed) {
+                bedDropdown.append('<option value="' + bed.id + '" data-floor="' + bed.Floorno + '">' + bed.wardbedno + '</option>');
+              });
+
+              // Update floor number on bed selection
+              bedDropdown.off('change').on('change', function () {
+                var selectedOption = $(this).find(":selected");
+                var floor = selectedOption.data("floor");
+                floorInput.val(floor || '');
+              });
+            } else {
+              bedDropdown.append('<option value="">No beds available</option>');
+            }
+          },
+          error: function () {
+            alert("Error fetching available beds.");
+          }
+        });
+      }
+    });
+  });
+</script>
+
+
+{% endblock %}

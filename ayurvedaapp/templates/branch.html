@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Branch Details</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item">
+                {%if brchview == '1'%}<a href="{% url 'branchtable' %}?menumanagement_id={{ idmngmnt }}">View All</a>
+              {%endif%}</li>
+              <li class="breadcrumb-item active">Branch</li>
+            </ol>
+          </div>
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+
+      <div class="row">
+
+        <div class="col-md-12">
+          <div class="card card-primary">
+            <div class="card-header">
+              <h3 class="card-title">Branch</h3>
+
+              <div class="card-tools">
+                <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                  <!-- <i class="fas fa-minus"></i> -->
+                </button>
+              </div>
+            </div>
+         <form method="POST", action="{% url 'branch' %}?menumanagement_id={{ idmngmnt }}"  onsubmit="return validateForm()">
+             
+                {% csrf_token %}
+      <div class="row">
+          <div class="col-md-6">
+              <div class="card">
+             
+             
+                <div class="card-body">
+                  
+                  <div class="form-group">
+                   <label for="exampleInputBranchName">Branch Name</label>
+                    <input type="text" class="form-control" id="exampleInputAddress" name="branchname" placeholder="Enter Branch Name" required> 
+                    
+                  </div>
+                   <div class="form-group">
+                    <label for="exampleInputEmail">GST Number</label>
+                    <input type="text" class="form-control" id="gst" name="gst" placeholder="Enter Gst" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="exampleInputFile">Address</label>
+                    <div class="input-group">
+                     <textarea  class="form-control" id="exampleInputAddress" name="brachaddress" placeholder="Enter Branch Address" required>
+                       
+                     </textarea>
+                    </div>
+                  </div>
+                 
+                 
+                </div>
+              </div>
+            </div>
+                <!-- /.card-body -->
+             
+              <div class="col-md-6">
+              <div class="card">
+                <div class="card-body">
+                  <div class="form-group">
+                    <label for="exampleInputEmail">Contact number</label>
+                    <input type="text" class="form-control" id="exampleInputnumber" name="contctnum" placeholder="Enter  Contact number" required>
+                  </div> 
+                    <div class="form-group">
+                    <label for="exampleInputEmail">Branch Incharge Name</label>
+                    <input type="text" class="form-control" id="exampleInputEmail" name="inchargenme" placeholder="Enter Incharge Name" required>
+                  </div>
+                    <div class="form-group">
+                    <label for="exampleInputEmail">Branch Incharge Phone Number</label>
+                    <input type="text" class="form-control" id="inchargephone" name="inchargephone" placeholder="Enter Phone Number">
+                  </div>
+                  
+                </div>
+              </div>
+            </div>
+            <div class="card-footer">
+              {% if messages %}
+        {% for message in messages %}
+        <p style="color:green;">{{message}}</p> 
+        {% endfor %}
+        {% endif %}
+            <button type="submit" class="btn btn-primary">Submit</button>
+            </div>
+          </div>
+                
+              </form>
+          
+            <!-- /.card-body -->
+          </div>
+          <!-- /.card -->
+        </div>
+     
+      </div>
+
+      
+    </section>
+    <!-- /.content -->
+  </div>
+  <script>
+    function validateForm() {
+        var contactNumberInput = document.getElementById('exampleInputnumber');
+        var inchargePhoneInput = document.getElementById('inchargephone');
+
+        if (!validateContactNumber(contactNumberInput.value)) {
+            alert('Invalid contact number. Please enter a valid 10-digit number.');
+            return false;
+        }
+
+        if (!validateInchargePhone(inchargePhoneInput.value)) {
+            alert('Invalid Branch Incharge Phone Number. Please enter a valid phone number.');
+            return false;
+        }
+
+        return true;
+    }
+
+    function validateContactNumber(contactNumber) {
+        var contactNumberRegex = /^\+?\d{10}$/;
+        return contactNumberRegex.test(contactNumber);
+    }
+
+    function validateInchargePhone(inchargePhone) {
+        // You can modify the regex pattern as needed based on your requirements
+        var inchargePhoneRegex = /^\+?\d{10}$/;
+        return inchargePhoneRegex.test(inchargePhone);
+    }
+</script>
+ 
+  <!-- /.content-wrapper -->
+{% endblock %}

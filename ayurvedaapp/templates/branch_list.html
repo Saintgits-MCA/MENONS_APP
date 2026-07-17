@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<style>
+  .filter-box {
+      background: #fff;
+      border: 2px solid #000;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 20px;
+  }
+
+  .small-box {
+      border-radius: 12px;
+      padding: 20px;
+      color: #000;
+      text-align: center;
+      background-color: #fff;
+      border: 2px solid #000;
+      box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.05);
+      transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      height: 550px; /* ⬆ Increased height */
+  }
+
+  .small-box:hover {
+      transform: translateY(-5px);
+      box-shadow: 0px 8px 18px rgba(0, 0, 0, 0.15);
+  }
+
+  .small-box .inner h3 {
+      font-size: 1.4em;
+      margin-bottom: 8px;
+      font-weight: 700;
+      color: rgb(40, 143, 109);
+  }
+
+  .small-box .inner h4 {
+      font-size: 1em;
+      margin-bottom: 8px;
+      color: #333;
+      font-weight: 600;
+      text-transform: uppercase;
+  }
+
+  .small-box .inner p {
+      margin: 3px 0;
+      font-size: 0.9em;
+      font-weight: 500;
+      color: #545454;
+  }
+
+  .total-visit {
+      font-size: 1.2em;
+      font-weight: 700;
+      color: rgb(201, 59, 59);
+      margin-bottom: 10px;
+  }
+
+  .total-collection {
+      margin-top: 15px;
+      font-size: 1.1em;
+      font-weight: 700;
+      color: #000;
+      background-color: rgb(245, 245, 245);
+      border-radius: 8px;
+      padding: 10px;
+      border: 1px solid #ccc;
+  }
+
+  @media (max-width: 992px) {
+      .small-box {
+          height: auto;
+          padding: 15px;
+      }
+  }
+
+  button.btn-filter {
+      background-color: rgb(40, 143, 109);
+      color: #fff;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      transition: all 0.3s ease-in-out;
+  }
+
+  button.btn-filter:hover {
+      background-color: rgb(32, 114, 87);
+  }
+</style>
+
+<div class="content-wrapper">
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1 class="m-0">All Branches</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+            <li class="breadcrumb-item active">Branches</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="content">
+    <div class="container-fluid">
+      <div class="filter-box">
+        <form method="get">
+          <div class="row align-items-end">
+            <div class="col-md-4">
+              <label for="start_date">Start Date:</label>
+              <input type="date" id="start_date" name="start_date" class="form-control" value="{{ start_date }}">
+            </div>
+            <div class="col-md-4">
+              <label for="end_date">End Date:</label>
+              <input type="date" id="end_date" name="end_date" class="form-control" value="{{ end_date }}">
+            </div>
+            <div class="col-md-4">
+              <button type="submit" class="btn-filter mt-4">Filter</button>
+            </div>
+          </div>
+        </form>
+      </div><br>
+
+      <div class="row justify-content-center">
+        {% for item in branch_data %}
+          <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12 mb-4">
+            <div class="small-box">
+              <div class="inner">
+                <h3>{{ item.branch.Branch_Name }}</h3><br>
+
+                <!-- 🔹 Total Visit Highlighted -->
+                <p class="total-visit">Total Visit: {{ item.total_visit }}</p><br>
+
+              
+
+                <!-- Pharmacy Section -->
+                <h4 style="color:rgb(9, 206, 140)">Inventory</h4>
+                <p><strong>Cash:</strong> ₹{{ item.ph_cash_total|floatformat:2 }}</p>
+                <p><strong>Card:</strong> ₹{{ item.ph_card_total|floatformat:2 }}</p>
+                <p><strong>GPay:</strong> ₹{{ item.ph_gpay_total|floatformat:2 }}</p>
+                <p style="font-weight: bold; color: #0a9b7d;">Total: ₹{{ item.pharmacy_total|floatformat:2 }}</p>
+
+                <br>
+
+               
+                <div class="total-collection">
+                  🏦 Total Collection: ₹{{ item.total_collection|floatformat:2 }}
+                </div>
+              </div>
+            </div>
+          </div>
+        {% empty %}
+          <div class="col-12 text-center">
+            <p>No branches available.</p>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+</div>
+
+{% endblock %}

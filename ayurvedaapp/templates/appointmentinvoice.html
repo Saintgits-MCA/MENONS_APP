@@ -1,0 +1,285 @@
+{% extends 'base.html' %} {% load static %} {% block content %}
+<style>
+  .invoice-container {
+    background: #fff;
+    padding: 15px;
+    max-width: 700px;
+    margin: 20px auto;
+    box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+  }
+
+  h4 {
+    text-align: center;
+    margin: 10px 0;
+  }
+
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .box {
+    width: 48%;
+    border: 1px solid #000;
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  .order-details table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    word-break: break-word;
+  }
+
+  .order-details th,
+  .order-details td {
+    border: 1px solid black;
+    padding: 6px;
+    font-size: 12px;
+    text-align: left;
+    vertical-align: top;
+    word-wrap: break-word;
+  }
+
+  .order-details th:nth-child(2),
+  .order-details td:nth-child(2) {
+    width: 120px;
+  }
+
+  .total {
+    text-align: right;
+    font-weight: bold;
+    margin-bottom: 10px;
+  }
+
+  .amount-words {
+    font-weight: bold;
+  }
+
+  .top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-bottom: 20px;
+  }
+
+  .logo img {
+    width: 100px;
+  }
+
+  .header-center {
+    flex: 1;
+    text-align: center;
+    font-size: 14px;
+  }
+
+  .header-center h6 {
+    margin: 0;
+    font-size: 16px;
+    color: green;
+  }
+
+  .emergency-box {
+    background-color: red;
+    color: white;
+    font-weight: bold;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+
+  .page-break {
+    page-break-after: always;
+  }
+
+  @media print {
+    .page-number:after {
+      content: "Page " counter(page) " of " counter(pages);
+      position: fixed;
+      bottom: 10mm;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-size: 12px;
+      color: #000;
+    }
+
+    html {
+      counter-reset: page;
+    }
+
+    body {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .header-center h6 {
+      color: green;
+    }
+
+    .print-btn {
+      display: none !important;
+    }
+
+    @page {
+      size: A4 portrait;
+      margin: 15mm 10mm 20mm 10mm;
+    }
+
+    .invoice-container {
+      box-shadow: none !important;
+      margin: 0 auto !important;
+      width: 100% !important;
+      padding: 0 !important;
+    }
+
+    .top-row,
+    .info-row,
+    .total,
+    .footer {
+      page-break-inside: avoid;
+    }
+  }
+</style>
+
+<div id="invoice" class="invoice-container">
+  <div class="top-row">
+   <div class="logo">
+  {% if objhospt and objhospt.Logo %}
+    <img src="{{ objhospt.Logo.url }}" alt="{{ objhospt.Name }}">
+  {% endif %}
+</div>
+
+<div class="header-center">
+
+  <h6>{{ objhospt.Name }}</h6>
+
+  <div>{{ objhospt.Address }}</div>
+
+  <div>
+    {{ objhospt.Contact_no }}
+
+    {% if objhospt.Email %}
+      | ✉ {{ objhospt.Email }}
+    {% endif %}
+
+    {% if objhospt.GST and objhospt.GST|lower != "none" %}
+      | GST NO : {{ objhospt.GST }}
+    {% endif %}
+  </div>
+
+  <div>{{ brname.Branch_Address }}</div>
+
+  {% if brname.Branch_contactno %}
+    <div>Branch Ph : {{ brname.Branch_contactno }}</div>
+  {% endif %}
+
+</div>
+
+<div class="emergency-box">
+  EMERGENCY ☎ {{ objhospt.Contact_no }}
+</div>
+  </div>
+
+  <h4>APPOINTMENT INVOICE</h4>
+
+  <div class="info-row">
+    <div class="box">
+      <p>Patient Name: {{ lsinvoice.patientname }}</p>
+      <p>Patient Phone Number: {{ lsinvoice.patientphno }}</p>
+    </div>
+    <div class="box">
+      <strong>Bill Details:</strong><br />
+      <p>Invoice Number: {{ lsinvoice.treatmentInvoicenumber }}</p>
+      <p>Date: {{ lsinvoice.currentdate }}</p>
+    </div>
+  </div>
+
+  <div class="order-details">
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">SL No</th>
+          <th scope="col">Doctor</th>
+          <th scope="col">Appointment Date</th>
+          <th scope="col">Consultation Fee</th>
+          <th scope="col">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td>{{ doctor_name }}</td>
+          <td>{{ lsinvoice.currentdate }}</td>
+          <td>{{ lsinvoice.consultationfee }}</td>
+          <td>{{ lsinvoice.total }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="total">
+    {% if lsinvoice.consultationfee %}
+    <p>Consultation Fee: ₹{{ lsinvoice.consultationfee }}</p>
+    {% elif lsinvoice.consultationfeecumregfee %}
+    <p>
+      Consultation Cum Registration Fee: ₹{{ lsinvoice.consultationfeecumregfee
+      }}
+    </p>
+    {% endif %}
+    <p><strong>Total Amount: ₹{{ lsinvoice.total }}</strong></p>
+  </div>
+
+  <div class="amount-words">In Words: {{ amount_in_words }}</div>
+  <p>This is a computer-generated statement and requires no signature.</p>
+  <p>
+    This receipt is valid for an employer or insurer, who is contractually
+    obligated to reimburse the medical expenses.
+  </p>
+
+  <div class="footer">
+    <p>
+      For billing and general queries, please mail:
+      <a href="mailto:{{ objhospt.Email }}">
+    {{ objhospt.Email }}
+</a>
+     
+    </p>
+  </div>
+
+  <div class="print-btn">
+    <button onclick="printInvoice()" class="btn btn-primary">
+      Print Invoice
+    </button>
+  </div>
+
+  <div class="page-number"></div>
+</div>
+
+<script>
+  function printInvoice() {
+    var invoiceContent = document.getElementById("invoice").outerHTML;
+    var styles = Array.from(document.querySelectorAll("style"))
+      .map((style) => style.innerHTML)
+      .join("\n");
+
+    var printWindow = window.open("", "_blank");
+    printWindow.document.write(
+      "<html><head><title>Appointment Invoice</title><style>" +
+        styles +
+        "</style></head><body>" +
+        invoiceContent +
+        "</body></html>"
+    );
+    printWindow.document.close();
+    printWindow.print();
+  }
+</script>
+
+{% endblock %}

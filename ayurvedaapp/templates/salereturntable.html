@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Sale Return Details</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="{% url 'supplierdetails' %}">Add</a></li>
+              <li class="breadcrumb-item active">Sale Return Details</li>
+            </ol>
+          </div>
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-12">
+            
+            <!-- /.card -->
+
+            <div class="card">
+           <div class="scroll">
+            <form method="POST", action="{% url 'process_return' %}">
+             
+                {% csrf_token %}
+              <!-- /.card-header -->
+              <div class="card-body">
+                <table id="example1" class="table table-bordered table-striped">
+                    <thead>
+                  
+                    <tr>
+                        <th scope="col">SL No{{invno}}</th>
+                        <th scope="col">Particulars</th>
+                      
+                        <th scope="col">Mfg</th>
+                        <th scope="col">Batch</th>
+                        <th scope="col"> Expiry</th>
+                        <th scope="col">Qty</th>
+                        <th scope="col">Rate</th>
+                        <th scope="col">Total</th>
+                        <th scope="col">Return </th>
+                        <th>Return Qty</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+   {% for item in invchild %}
+   <tr>
+    <td>{{ forloop.counter }}</td>
+    <td>{{ item.particulars }}-{{ item.unt }}</td>
+   
+    <td>{{ item.mfg }}</td>
+    <td>{{ item.batchno }}</td>
+    <td>{{ item.expirydate }}</td>
+    <td>{{ item.quantity }}</td>
+    <td>{{ item.amount }}</td>
+    <td>{{ item.sutotal }}</td>
+    <td>
+      <input type="checkbox" name="items" value="{{ item.id }}"
+             {% if item.return_quantity == item.quantity %} disabled {% endif %}>
+  </td>
+  <td>
+      <input type="text" name="qty" value="{{ item.return_quantity }}"
+             {% if item.return_quantity == item.quantity %} readonly {% endif %}>
+  </td>
+
+  </tr>
+{% endfor %}
+                    </tbody>
+                   
+                  </table>
+              </div>
+            </div>
+              <!-- /.card-body -->
+            </div>
+            <!-- /.card -->
+            <div class="card-footer">
+                {% if messages %}
+       {% for message in messages %}
+       <p style="color:green;">{{message}}</p> 
+       {% endfor %}
+       {% endif %}
+                 <button type="submit" class="btn btn-primary">Submit</button>
+               </div>
+             </form>
+          </div>
+          <!-- /.col -->
+        </div>
+        <!-- /.row -->
+      </div>
+      <!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+  </div>
+  <!-- /.content-wrapper -->
+  {% endblock %}

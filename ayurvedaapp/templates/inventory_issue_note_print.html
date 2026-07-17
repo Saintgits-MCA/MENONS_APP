@@ -1,0 +1,222 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="content-wrapper">
+    <!-- Print Header -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Inventory Issue Note</h1>
+                </div>
+                <div class="col-sm-6 text-right no-print">
+                    <button onclick="window.print()" class="btn btn-primary">
+                        <i class="fas fa-print"></i> Print
+                    </button>
+                    <a href="{% url 'inventory_issue_note_detail' %}?id={{ gin.id }}&menumanagement_id={{ idmngmnt }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Print Content -->
+    <section class="content" id="printArea">
+        <div class="container-fluid">
+            <div class="card">
+                <div class="card-body" style="padding: 30px 40px;">
+                    
+                    <!-- ========== HOSPITAL HEADER ========== -->
+                    <div class="text-center" style="margin-bottom: 15px;">
+                        {% if hospital %}
+                            <h2 style="font-size: 22px; font-weight: bold; margin: 0; padding: 0;">{{ hospital.Name }}</h2>
+                            <p style="font-size: 13px; margin: 2px 0;">{{ hospital.Address }}</p>
+                            <p style="font-size: 13px; margin: 2px 0;">Phone: {{ hospital.Contact_no }} | Email: {{ hospital.Email }}</p>
+                            <hr style="border: 1px solid #000; margin: 8px 0;">
+                        {% endif %}
+                        <h3 style="font-size: 18px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin: 5px 0;">INVENTORY ISSUE NOTE</h3>
+                    </div>
+
+                    <!-- ========== GIN DETAILS ========== -->
+                    <div style="margin-bottom: 12px;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                            <tr>
+                                <td style="padding: 2px 5px; width: 15%; font-weight: bold;">GIN Number:</td>
+                                <td style="padding: 2px 5px; width: 35%;">{{ gin.gin_number }}</td>
+                                <td style="padding: 2px 5px; width: 15%; font-weight: bold;">Department:</td>
+                                <td style="padding: 2px 5px; width: 35%;">{{ gin.department.Department_Name|default:'' }}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 2px 5px; font-weight: bold;">Date:</td>
+                                <td style="padding: 2px 5px;">{{ gin.gin_date|date:'d-m-Y' }}</td>
+                                <td style="padding: 2px 5px; font-weight: bold;">Staff:</td>
+                                <td style="padding: 2px 5px;">
+                                    {% if gin.staff %}
+                                        {{ gin.staff.Staff_firstname }} {{ gin.staff.Staff_lastname }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 2px 5px; font-weight: bold;">Branch:</td>
+                                <td style="padding: 2px 5px;">{{ gin.branch.Branch_Name|default:'' }}</td>
+                                <td style="padding: 2px 5px; font-weight: bold;">Reference No:</td>
+                                <td style="padding: 2px 5px;">{{ gin.reference_no|default:'-' }}</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <!-- ========== ITEMS TABLE ========== -->
+                    <div style="margin-top: 10px;">
+                        <table class="table-bordered" style="width: 100%; border-collapse: collapse; font-size: 12px;" id="printItemsTable">
+                            <thead>
+                                <tr style="background-color: #f0f0f0;">
+                                    <th style="padding: 5px 8px; border: 1px solid #000; text-align: center; width: 5%;">#</th>
+                                    <th style="padding: 5px 8px; border: 1px solid #000; text-align: left; width: 18%;">Item Name</th>
+                                    <th style="padding: 5px 8px; border: 1px solid #000; text-align: left; width: 12%;">Company</th>
+                                    <th style="padding: 5px 8px; border: 1px solid #000; text-align: left; width: 14%;">Supplier</th>
+                                    <th style="padding: 5px 8px; border: 1px solid #000; text-align: center; width: 10%;">Batch No</th>
+                                    <th style="padding: 5px 8px; border: 1px solid #000; text-align: center; width: 5%;">Qty</th>
+                                    <th style="padding: 5px 8px; border: 1px solid #000; text-align: center; width: 7%;">Unit</th>
+                                    <th style="padding: 5px 8px; border: 1px solid #000; text-align: right; width: 10%;" class="d-none">Rate</th>
+                                    <th style="padding: 5px 8px; border: 1px solid #000; text-align: right; width: 8%;" class="d-none">Tax %</th>
+                                    <th style="padding: 5px 8px; border: 1px solid #000; text-align: right; width: 11%;" class="d-none">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in items %}
+                                <tr>
+                                    <td style="padding: 4px 8px; border: 1px solid #000; text-align: center;">{{ forloop.counter }}</td>
+                                    <td style="padding: 4px 8px; border: 1px solid #000; text-align: left;">{{ item.item_name.itemnm }}</td>
+                                    <td style="padding: 4px 8px; border: 1px solid #000; text-align: left;">{{ item.company.Comapany_name|default:'-' }}</td>
+                                    <td style="padding: 4px 8px; border: 1px solid #000; text-align: left;">{{ item.supplier.shopname|default:'-' }}</td>
+                                    <td style="padding: 4px 8px; border: 1px solid #000; text-align: center;">{{ item.batch_no }}</td>
+                                    <td style="padding: 4px 8px; border: 1px solid #000; text-align: center;">{{ item.quantity }}</td>
+                                    <td style="padding: 4px 8px; border: 1px solid #000; text-align: center;">{{ item.unit.unitname|default:'-' }}</td>
+                                    <td style="padding: 4px 8px; border: 1px solid #000; text-align: right;" class="d-none">{{ item.rate|floatformat:2 }}</td>
+                                    <td style="padding: 4px 8px; border: 1px solid #000; text-align: right;" class="d-none">{{ item.tax_percentage|floatformat:2 }}</td>
+                                    <td style="padding: 4px 8px; border: 1px solid #000; text-align: right;" class="d-none">{{ item.total_amount|floatformat:2 }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="10" style="padding: 10px; border: 1px solid #000; text-align: center;">No items found.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            {% comment %} <tfoot>
+                                <tr>
+                                    <th colspan="5" class="text-right">Totals:</th>
+                                    <th class="text-center"></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th class="text-right" id="printTotalAmount">0.00</th>
+                                </tr>
+                            </tfoot> {% endcomment %}
+                        </table>
+                    </div>
+
+                    {% comment %} <!-- ========== TOTALS ========== -->
+                    <div style="text-align: right; margin-top: 5px; font-size: 14px;">
+                        <span style="font-weight: bold;">Totals:</span>
+                        <span style="font-weight: bold; margin-left: 10px;" id="printTotalAmount">0.00</span>
+                    </div> {% endcomment %}
+
+                    <!-- ========== REMARKS ========== -->
+                    <div style="margin-top: 12px;">
+                        <p style="font-size: 13px; margin: 0;"><strong>Remarks:</strong> {{ gin.remarks|default:'-' }}</p>
+                    </div>
+
+                    <!-- ========== SIGNATURES ========== -->
+                    <div style="margin-top: 30px;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td style="width: 50%; padding-right: 20px; vertical-align: bottom;">
+                                    <hr style="border: 1px solid #000; margin: 0 0 3px 0; width: 80%;">
+                                    <p style="font-size: 13px; margin: 0; font-weight: bold;">Issued By</p>
+                                    <p style="font-size: 13px; margin: 2px 0;">
+                                        {% if gin.created_by %}
+                                            {{ gin.created_by.Staff.Staff_firstname }} {{ gin.created_by.Staff.Staff_lastname }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </p>
+                                    <p style="font-size: 11px; color: #666; margin: 0;">(Signature &amp; Date)</p>
+                                </td>
+                                <td style="width: 50%; vertical-align: bottom;">
+                                    <hr style="border: 1px solid #000; margin: 0 0 3px 0; width: 80%;">
+                                    <p style="font-size: 13px; margin: 0; font-weight: bold;">Received By</p>
+                                    <p style="font-size: 13px; margin: 2px 0;">_________________________</p>
+                                    <p style="font-size: 11px; color: #666; margin: 0;">(Signature &amp; Date)</p>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <!-- ========== PRINT DATE ========== -->
+                    <div style="text-align: center; margin-top: 20px; font-size: 11px; color: #666;">
+                        <p style="margin: 0;">Printed on: {% now "d-m-Y H:i:s" %}</p>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script>
+$(document).ready(function() {
+    var totalAmount = 0;
+    $('#printItemsTable tbody tr').each(function() {
+        var amount = parseFloat($(this).find('td:eq(9)').text()) || 0;
+        totalAmount += amount;
+    });
+    $('#printTotalAmount').text(totalAmount.toFixed(2));
+});
+</script>
+
+<style>
+@media print {
+    .main-footer
+    {
+        display:none;
+    }
+    
+   
+    .no-print {
+        display: none !important;
+    }
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .card-body {
+        padding: 20px !important;
+    }
+    .table-bordered th,
+    .table-bordered td {
+        border: 1px solid #000 !important;
+        padding: 4px 8px !important;
+    }
+    .bg-light {
+        background-color: #f0f0f0 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    hr {
+        border: 1px solid #000 !important;
+    }
+     /* Page setup for A4 */
+    @page {
+        size: A4;
+        margin: 15mm 20mm 15mm 20mm;
+    }
+}
+</style>
+{% endblock %}

@@ -1,0 +1,904 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<style>
+  textarea
+  {
+    resize:none;
+  }
+</style>
+<div class="content-wrapper">
+
+<section class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6"><h1>Lab Test Invoice</h1></div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="{%url 'lab_invoice_list'%}">Lab Invoice list</a></li>
+                    <li class="breadcrumb-item active">Lab Invoice</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</section>
+ 
+<!-- Modal for displaying search results with DataTable -->
+<div class="modal fade" id="searchModal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="searchModalLabel">Search Results</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <!-- DataTable for displaying search results -->
+        <table id="searchResultsTable" class="display table table-bordered">
+          <thead>
+            <tr>
+              <th>MR Number</th>
+              <th>Patient Name</th>
+              <th>Address</th>
+              <th>Contact No</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Results will be appended here -->
+          </tbody>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- Modal for Adding New Patient -->
+<div class="modal fade" id="addPatientModal" tabindex="-1" role="dialog" aria-labelledby="addPatientModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title" id="addPatientModalLabel">
+          <i class="fas fa-user-plus"></i> Add New Patient (Unregistered)
+        </h5>
+        <button type="button" class="btn btn-sm btn-danger" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true" class="text-white fas fa-times"></span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="addPatientForm">
+          {% csrf_token %}
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="new_patient_name">Patient Name <span class="text-danger">*</span></label>
+                <input type="text" id="new_patient_name" name="patient_name" class="form-control" required>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group">
+                <label for="new_patient_age">Age <span class="text-danger">*</span></label>
+                <input type="number" id="new_patient_age" name="patient_age" class="form-control" onwheel="this.blur()" required>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group">
+                <label for="new_patient_gender">Gender <span class="text-danger">*</span></label>
+                <select id="new_patient_gender" name="patient_gender" class="form-control" required>
+                  <option value="">Select</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="new_patient_phone">Contact Number<span class="text-danger">*</span></label>
+                <input type="text" id="new_patient_phone" name="patient_phone" class="form-control" maxlength="15" required>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="new_patient_email">Email</label>
+                <input type="email" id="new_patient_email" name="patient_email" class="form-control">
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-12">
+              <div class="form-group">
+                <label for="new_patient_address">Address</label>
+                <textarea id="new_patient_address" name="patient_address" class="form-control" rows="2"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <div class="alert alert-info mt-2">
+            <i class="fas fa-info-circle"></i> 
+            <strong>Note:</strong> MR Number will be auto-generated (Format: MRNOYYYYMMDDXXX)
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-success" id="saveNewPatientBtn">
+          <i class="fas fa-save"></i> Save Patient & Select
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="content">
+<form id="invoiceForm" method="POST" action="{% url 'save_lab_invoice' %}">
+    {% csrf_token %}
+
+    <div class="invoice p-3 mb-3">
+
+        <!-- Hospital Header -->
+        <div class="row">
+            <div class="col text-center">
+                {% for h in objhospt %}
+                <h4>{{ h.Name }}</h4>
+                <input type="hidden" name="hosptname" value="{{ h.id }}">
+                {% endfor %}
+
+                {% for b in brname %}
+                <p>
+                    Branch: {{ b.Branch_Name }} | {{ b.Branch_Address }} | {{ b.Branch_contactno }} | GST: {{ b.gstno }}
+                </p>
+                <input type="hidden" name="branchname" value="{{ b.id }}">
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Patient Details -->
+      <div class="row mt-4">
+
+    <!-- Patient Search & Details Section -->
+    <div class="col-md-8">
+        
+        <!-- Search Patient - Kept Together -->
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label for="mrSearch">Search Patient</label>
+                <div class="input-group">
+                    <input type="text" id="mrSearch" class="form-control" placeholder="MR No / Name / Phone">
+                    <button id="searchBtn" type="button" class="btn btn-primary">Search</button>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <label for="mrDropdown">Select Patient</label>
+                <select id="mrDropdown" name="mrnum" class="form-control" required>
+                    <option value="">Select</option>
+                </select>
+            </div>
+            
+    <div class="col-md-3">
+        <label>&nbsp;</label>
+        <button type="button" class="btn btn-success btn-sm w-75 form-control" id="openAddPatientBtn" style="margin-top: 2px;">
+            <i class="fas fa-user-plus mr-1"></i>New Patient
+        </button>
+    </div>
+        </div>
+
+        <!-- Patient Details -->
+        <div class="row">
+            <div class="col-md-6">
+                <label for="pt_name">Patient Name</label>
+                <input type="text" id="pt_name" name="ptname" class="form-control" readonly>
+            </div>
+            <div class="col-md-6">
+                <label for="phno">Contact Number</label>
+                <input type="text" id="phno" name="ptphone" class="form-control">
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Invoice Information -->
+    <div class="col-md-4">
+        <div class="card border-0 bg-light h-100">
+            <div class="card-body pt-3">
+                <p class="mb-2"><strong>Date:</strong> {{ today }}</p>
+                <p class="mb-0"><strong>Invoice No:</strong> {{ invoiceno }}</p>
+                <input type="hidden" name="invno" value="{{ inv_id }}">
+            </div>
+        </div>
+    </div>
+
+</div>
+
+        <hr>
+
+     
+        <!-- Test search + table -->
+        <div class="row">
+          <div class="col-md-12 ">
+            <label class="">Search Test</label>
+
+            <div class="position-relative">
+              <input type="text" id="searchTest" class="form-control" placeholder="Search test...">
+              <div id="searchResults" class="list-group position-absolute w-100" style="z-index:9999; max-height:250px; overflow:auto;"></div>
+            </div>
+
+            <button type="button" class="btn btn-primary mt-2" id="addTestBtn">Add Selected</button>
+
+            <table class="table table-bordered mt-3">
+              <thead>
+                <tr>
+                  <th>Sl</th>
+                  <th>Test Name</th>
+                  <th>Qty</th>
+                  <th>Rate</th>
+                  <th>Subtotal</th>
+                  <th>Remove</th>
+                </tr>
+              </thead>
+              <tbody id="testTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <hr>
+
+        <!-- Totals -->
+        <div class="row">
+          <div class="col-md-6"></div>
+          <div class="col-md-6">
+            <table class="table">
+              <tr>
+                <th>Subtotal:</th>
+                <td><input type="text" id="subtotal" name="totsubtoal" class="form-control" readonly></td>
+              </tr>
+              <tr>
+                <th>Tax %</th>
+                <td><input type="text" id="tax_percent" name="taxperc" class="form-control"></td>
+              </tr>
+              <tr>
+                <th>Discount:</th>
+                <td><input type="text" id="discount" name="discount" class="form-control"></td>
+              </tr>
+              <tr>
+                <th>Consultation Fee:</th>
+                <td><input type="text" id="cfee" name="cfee" class="form-control"></td>
+              </tr>
+              <tr>
+                <th>Registration Fee:</th>
+                <td><input type="text" id="rgfee" name="rgfee" class="form-control"></td>
+              </tr>
+              <tr>
+                <th>Total:</th>
+                <td><input type="text" id="grand_total" name="totalIncludingTax" class="form-control" readonly></td>
+              </tr>
+
+            </table>
+          </div>
+        </div>
+         <div class="row mb-4">
+          <div class="col-md-6"></div>
+          <div class="col-md-2 text-end">
+            <label class="col-form-label"><strong>Payment Mode:</strong></label>
+          </div>
+          <div class="col-md-4">
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="cashCheck" name="payment_modes" value="Cash"  onchange="togglePaymentInputs()">
+              <label class="form-check-label" for="cashCheck">Cash</label>
+              <input type="number" id="cashInput" name="cash_amount" class="form-control mt-1 payment-input" placeholder="Cash Amount" min="0" onwheel="this.blur()">
+            </div>
+
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="gpayCheck" name="payment_modes" value="GPay" onchange="togglePaymentInputs()">
+              <label class="form-check-label" for="gpayCheck">Online Payment</label>
+              <input type="number" id="gpayInput" name="gpay_amount" class="form-control mt-1 payment-input" placeholder="GPay Amount" style="display:none;" min="0" onwheel="this.blur()">
+            </div>
+
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="cardCheck" name="payment_modes" value="Card" onchange="togglePaymentInputs()">
+              <label class="form-check-label" for="cardCheck">Card</label>
+              <input type="number" id="cardInput" name="card_amount" class="form-control mt-1 payment-input" placeholder="Card Amount" style="display:none;" min="0" onwheel="this.blur()">
+            </div>
+
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="creditCheck" name="payment_modes" value="Credit" onchange="togglePaymentInputs()" checked>
+              <label class="form-check-label" for="creditCheck">Credit</label>
+              <input type="number" id="creditInput" name="credit_amount" class="form-control mt-1 payment-input" placeholder="Credit Amount" style="display:none;" min="0" onwheel="this.blur()">
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-success">Submit Invoice</button>
+      </div>
+    </form>
+  </section>
+</div>
+
+<!-- jQuery -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+<script>
+/* globals $ */
+let rowCount = 0;
+let selectedTest = null; // {id, name, rate}
+
+// Search tests (AJAX) - expects backend to return {"results":[{id,name,rate,type,group}, ...]}
+$("#searchTest").on("input", function() {
+    let q = $(this).val().trim();
+    if (q.length < 2) { $("#searchResults").empty(); return; }
+
+    $.get("{% url 'search_lab_tests' %}", { q: q })
+      .done(function(res) {
+          const data = res.results || [];
+          let html = "";
+          if (data.length === 0) {
+              html = '<a class="list-group-item">No results</a>';
+          } else {
+              data.forEach(item => {
+                  html += `<a href="#" class="list-group-item list-group-item-action test-item"
+                              data-id="${item.id}" data-name="${item.name}" data-rate="${item.rate}">
+                              <b>${item.name}</b> <small class="text-muted">(${item.type})</small>
+                              ${item.group ? '<br><small>Group: ' + item.group + '</small>' : ''}
+                              <span class="float-end">₹${item.rate || 0}</span>
+                           </a>`;
+              });
+          }
+          $("#searchResults").html(html);
+      })
+      .fail(function() {
+          $("#searchResults").html('<a class="list-group-item text-danger">Error</a>');
+      });
+});
+
+// Click an item to select it
+$(document).on("click", ".test-item", function(e) {
+    e.preventDefault();
+    selectedTest = {
+        id: $(this).data("id"),
+        name: $(this).data("name"),
+        rate: $(this).data("rate") || 0
+    };
+    $("#searchTest").val(selectedTest.name);
+    $("#searchResults").empty();
+});
+
+// Add selected test to table
+$("#addTestBtn").click(function() {
+    if (!selectedTest) return alert("Select a test first.");
+    addTestRow(selectedTest);
+    selectedTest = null;
+    $("#searchTest").val('');
+});
+
+// Append a row (does not reindex existing rows)
+function addTestRow(test) {
+    rowCount++;
+    
+    let id = test.id || "";
+    let name = (test.name || "").replace(/"/g, '&quot;');
+    let rate = parseFloat(test.rate || 0).toFixed(2);
+    let isGroup = test.is_group || false;
+    let groupId = test.group_id || "";
+    let groupTests = test.tests || [];
+    
+    // ✅ If it's a group, store the individual test IDs as hidden fields
+    let groupTestIds = "";
+    if (isGroup && groupTests.length > 0) {
+        groupTestIds = groupTests.map(t => t.id).join(',');
+    }
+    
+    let row = `<tr data-row="${rowCount}" data-is-group="${isGroup}" data-group-id="${groupId}">
+        <td class="sl">${rowCount}</td>
+        <td>
+          <input type="hidden" name="testid${rowCount}" value="${id}">
+          ${isGroup ? `<input type="hidden" name="group_id${rowCount}" value="${groupId}">
+                        <input type="hidden" name="group_test_ids${rowCount}" value="${groupTestIds}">
+                        <input type="hidden" name="is_group${rowCount}" value="true">` : ''}
+          <input type="text" class="form-control" name="testname${rowCount}" value="${name}" readonly>
+          ${isGroup ? `<small class="text-muted d-block">${groupTests.length} test(s) in this group</small>` : ''}
+        </td>
+        <td>
+          <input type="number" min="0" step="0.01" onwheel="this.blur()" class="form-control qty" name="qty${rowCount}" value="1">
+        </td>
+        <td>
+          <input type="number" step="0.01" class="form-control rate" name="rate${rowCount}" value="${rate}" onwheel="this.blur()">
+        </td>
+        <td>
+          <input type="text" class="form-control amount" name="amount${rowCount}" value="${rate}" readonly>
+        </td>
+        <td>
+          <button type="button" class="btn btn-danger removeRow">X</button>
+        </td>
+    </tr>`;
+
+    $("#testTableBody").append(row);
+    calculateAll();
+}
+
+// remove row (we do NOT reindex row numbers — backend will iterate 1..rowCount and skip missing)
+$(document).on("click", ".removeRow", function() {
+    $(this).closest("tr").remove();
+    updateRowNumbers();
+    calculateAll();
+});
+
+
+// recalc row subtotal and totals
+$(document).on("input", ".qty", function() {
+    let row = $(this).closest("tr");
+    let qty = parseFloat($(this).val()) || 0;
+    let rate = parseFloat(row.find(".rate").val()) || 0;
+    let amount = (qty * rate).toFixed(2);
+    row.find(".amount").val(amount);
+    calculateAll();
+});
+
+$(document).on("input", ".rate", function() {
+    let row = $(this).closest("tr");
+    let rate = parseFloat($(this).val()) || 0;
+    let qty = parseFloat(row.find(".qty").val()) || 0;
+    let amount = (qty * rate).toFixed(2);
+    row.find(".amount").val(amount);
+    calculateAll();
+});
+
+function calculateAll() {
+    let subtotal = 0;
+    $("#testTableBody tr").each(function() {
+        let amt = parseFloat($(this).find(".amount").val()) || 0;
+        subtotal += amt;
+    });
+    $("#subtotal").val(subtotal.toFixed(2));
+
+    let tax = parseFloat($("#tax_percent").val()) || 0;
+    let discount = parseFloat($("#discount").val()) || 0;
+    let cfee = parseFloat($("#cfee").val()) || 0;
+    let rgfee = parseFloat($("#rgfee").val()) || 0;
+
+    let taxAmount = subtotal * (tax / 100);
+    let grand = subtotal + taxAmount + cfee + rgfee - discount;
+    $("#grand_total").val(grand.toFixed(2));
+}
+function togglePaymentInputs() {
+    const cashChecked = $("#cashCheck").is(":checked");
+    const gpayChecked = $("#gpayCheck").is(":checked");
+    const cardChecked = $("#cardCheck").is(":checked");
+    const creditChecked = $("#creditCheck").is(":checked");
+
+    // If any of Cash, GPay, or Card is checked → Disable Credit
+    if (cashChecked || gpayChecked || cardChecked) {
+        $("#creditCheck").prop("checked", false);
+        $("#creditInput").hide().val("");
+    }
+
+    // If Credit is checked → Disable Cash, GPay, and Card
+    if (creditChecked) {
+        $("#cashCheck, #gpayCheck, #cardCheck").prop("checked", false);
+        $("#cashInput, #gpayInput, #cardInput").hide().val("");
+    }
+
+    // Show/Hide respective amount fields
+    $("#cashInput").toggle(cashChecked);
+    $("#gpayInput").toggle(gpayChecked);
+    $("#cardInput").toggle(cardChecked);
+    $("#creditInput").toggle(creditChecked);
+}
+// Also recalc when tax/discount/fees change
+$(document).on("input", "#tax_percent, #discount, #cfee, #rgfee", calculateAll);
+$(document).ready(function() {
+    togglePaymentInputs();
+    $("#cashCheck, #gpayCheck, #cardCheck, #creditCheck").on("change", function() {
+        togglePaymentInputs();
+    });
+    
+    // Validation before submit
+    $("#invoiceForm").on("submit", function() {
+        const total = parseFloat($("#grand_total").val()) || 0;
+        let paid = 0;
+
+        // Check for zero amount tests
+        let hasZeroAmount = false;
+        let zeroAmountTests = [];
+        
+        $("#testTableBody tr").each(function() {
+            let row = $(this);
+            let testName = row.find("input[name^='testname']").val() || "Unknown Test";
+            let rate = parseFloat(row.find(".rate").val()) || 0;
+            let qty = parseFloat(row.find(".qty").val()) || 0;
+            let amount = parseFloat(row.find(".amount").val()) || 0;
+            
+            if (rate === 0 || amount === 0) {
+                hasZeroAmount = true;
+                zeroAmountTests.push({
+                    name: testName,
+                    rate: rate,
+                    qty: qty,
+                    amount: amount
+                });
+            }
+        });
+        
+        // If zero amount tests found, show warning
+        if (hasZeroAmount) {
+            let warningMessage = "⚠️ The following tests have zero amount and will be added with ₹0.00:\n\n";
+            zeroAmountTests.forEach((test, index) => {
+                warningMessage += `${index + 1}. ${test.name}\n`;
+                warningMessage += `   Rate: ₹${test.rate.toFixed(2)} | Qty: ${test.qty} | Amount: ₹${test.amount.toFixed(2)}\n\n`;
+            });
+            warningMessage += "Do you want to continue with these tests?";
+            
+            if (!confirm(warningMessage)) {
+                return false;
+            }
+        }
+
+        // Check if any tests exist
+        if ($("#testTableBody tr").length === 0) {
+            alert("❌ Please add at least one test to the invoice.");
+            return false;
+        }
+
+        // Check if total is zero
+        if (total === 0) {
+            alert("❌ Cannot submit invoice with ₹0.00 total amount. Please add valid tests with rates.");
+            return false;
+        }
+
+        // Payment validation
+        if ($("#creditCheck").is(":checked")) {
+            paid = parseFloat($("#creditInput").val()) || 0;
+        } else {
+            if ($("#cashCheck").is(":checked")) {
+                paid += parseFloat($("#cashInput").val()) || 0;
+            }
+            if ($("#gpayCheck").is(":checked")) {
+                paid += parseFloat($("#gpayInput").val()) || 0;
+            }
+            if ($("#cardCheck").is(":checked")) {
+                paid += parseFloat($("#cardInput").val()) || 0;
+            }
+        }
+
+        console.log("Total:", total, "Paid:", paid);
+
+        if (Math.abs(paid - total) > 0.01) {
+            alert("Payment amount does not match the Total. Please check.");
+            return false;
+        }
+        
+        return true;
+    });
+    
+    function calculatePaidAmount() {
+        let paid = 0;
+        
+        if ($("#creditCheck").is(":checked")) {
+            paid = parseFloat($("#creditInput").val()) || 0;
+        } else {
+            if ($("#cashCheck").is(":checked")) {
+                paid += parseFloat($("#cashInput").val()) || 0;
+            }
+            if ($("#gpayCheck").is(":checked")) {
+                paid += parseFloat($("#gpayInput").val()) || 0;
+            }
+            if ($("#cardCheck").is(":checked")) {
+                paid += parseFloat($("#cardInput").val()) || 0;
+            }
+        }
+        
+        const total = parseFloat($("#grand_total").val()) || 0;
+        
+        if (paid > total) {
+            $(".payment-input").css('border-color', 'red');
+        } else {
+            $(".payment-input").css('border-color', '');
+        }
+        
+        return paid;
+    }
+});
+
+</script>
+
+  <script>$(document).ready(function() {
+    // Initialize DataTable (without data initially)
+    let table = $('#searchResultsTable').DataTable({
+      paging: true,
+      searching: true, // Enable internal search for filtering
+      info: true,
+      lengthChange: true, // Allow changing number of entries shown
+      pageLength: 10,     // Limit results to 10 per page
+    });
+  
+    // Event listener for the search button click
+    $('#searchBtn').on('click', function() {
+      let query = $('#mrSearch').val();
+  
+      // Ensure the search query is not empty
+      if (query.trim() === '') {
+        alert('Please enter a search term.');
+        return;
+      }
+  
+      // Clear previous table data
+      table.clear().draw();
+  
+      // Send an AJAX request to search for the query
+      fetch(`/search_mrno?query=${query}`)
+        .then(response => response.json())
+        .then(data => {
+          // Check if data exists
+          if (data.length > 0) {
+            // Loop through the results and add to the table
+            data.forEach(item => {
+              let actionBtn = `<button class="btn btn-primary select-btn" data-id="${item.id}" 
+                                  data-name="${item.Patient_Name}" 
+                                  data-mrno="${item.Medical_Record_Number}" 
+                                  data-contact="${item.contactno}"
+                                  data-address="${item.Housename}">
+                                Select
+                              </button>`;
+  
+              // Make sure to add data in the correct order: MR Number -> Name -> Contact -> Address -> Action
+              table.row.add([
+                item.Medical_Record_Number,  // MR Number
+                item.Patient_Name,
+                item.Housename || 'N/A',            // Patient Name
+                item.contactno,              // Contact Number
+                    // Address (if null, show 'N/A')
+                actionBtn,                   // Action Button
+              ]).draw(false); // Re-draw the table after adding the row
+            });
+  
+            // Show the modal with the DataTable results
+            $('#searchModal').modal('show');
+          } else {
+            alert('No matching records found.');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('There was an error retrieving the data. Please try again.');
+        });
+    });
+    function clearTestTable() {
+    $("#testTableBody").empty();
+    rowCount = 0;
+    $("#rowCount").val(0);   // if you are using this hidden field
+    calculateAll();          // Reset totals
+}
+    // Event delegation to handle clicks on dynamically generated "Select" buttons
+    $('#searchResultsTable tbody').on('click', '.select-btn', function() {
+      let id = $(this).data('id');
+      let mrno = $(this).data('mrno');
+      let name = $(this).data('name');
+      let contact = $(this).data('contact');
+      let address = $(this).data('address');
+      // Populate the dropdown with the selected value
+      $('#mrDropdown').html(`<option value="${id}" selected>${mrno} - ${name}</option>`);
+      // Populate the patient details input
+      $('#pt_name').val(`${mrno} - ${name}`);
+      $('#phno').val(`${contact}`);
+      clearTestTable();
+
+      loadPendingLabTests(id);
+      
+      // Close the modal
+      $('#searchModal').modal('hide');
+    });
+
+    $(".payment-input").on("input", function() {
+        calculatePaidAmount();
+    });
+   function loadPendingLabTests(patientId) {
+    $.get(`/get_pending_labtests/?mrno=${patientId}`)
+        .done(function(data) {
+            if (data && data.length > 0) {
+                let groupInfo = {};
+                let individualTests = [];
+                
+                // ✅ Process tests and group them
+                data.forEach(test => {
+                    if (test.is_from_group && test.group_id) {
+                        // ✅ If test belongs to a group
+                        if (!groupInfo[test.group_id]) {
+                            groupInfo[test.group_id] = {
+                                group_name: test.group_name,
+                                group_id: test.group_id,
+                                rate: test.rate,
+                                tests: []
+                            };
+                        }
+                        groupInfo[test.group_id].tests.push(test);
+                    } else {
+                        // ✅ Individual test
+                        individualTests.push(test);
+                    }
+                });
+                
+                // ✅ Add Group Tests first
+                Object.values(groupInfo).forEach(group => {
+                    // Add one row for the entire group with group name
+                    let groupRow = {
+                        id: `group_${group.group_id}`,
+                        name: `${group.group_name} (Group)`,
+                        rate: group.rate || 0,
+                        is_group: true,
+                        group_id: group.group_id,
+                        tests: group.tests
+                    };
+                    addTestRow(groupRow);
+                });
+                
+                // ✅ Add Individual Tests
+                individualTests.forEach(test => {
+                    let testData = {
+                        id: test.id,
+                        name: test.testname,
+                        rate: test.rate || 0,
+                        is_group: false
+                    };
+                    addTestRow(testData);
+                });
+                
+                console.log(`✅ ${data.length} pending lab tests loaded from requisition!`);
+                console.log(`   - ${Object.keys(groupInfo).length} group(s)`);
+                console.log(`   - ${individualTests.length} individual test(s)`);
+            } else {
+                console.log("No pending requisition tests found. You can add tests manually.");
+            }
+        })
+        .fail(function() {
+            console.log("Failed to load pending tests.");
+        });
+}
+  });
+  function updateRowNumbers() {
+    $("#testTableBody tr").each(function(index) {
+        let newRowNum = index + 1;
+        $(this).find(".sl").text(newRowNum);
+        
+        // Update input names
+        $(this).find("input[name^='testid']").attr("name", `testid${newRowNum}`);
+        $(this).find("input[name^='testname']").attr("name", `testname${newRowNum}`);
+        $(this).find("input[name^='qty']").attr("name", `qty${newRowNum}`);
+        $(this).find("input[name^='rate']").attr("name", `rate${newRowNum}`);
+        $(this).find("input[name^='amount']").attr("name", `amount${newRowNum}`);
+        
+        // Update data-row attribute
+        $(this).attr("data-row", newRowNum);
+    });
+    rowCount = $("#testTableBody tr").length;
+}
+
+$("#openAddPatientBtn").click(function() {
+    // Reset form
+    $("#addPatientForm")[0].reset();
+    $("#addPatientModal").modal("show");
+});
+
+// Function to generate MR Number (same format as backend)
+function generateMRNumber() {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const todate = `${year}${month}${day}`;
+    return `MRNO${todate}`;
+}
+
+$("#saveNewPatientBtn").click(function() {
+    // Validate required fields
+    const patientName = $("#new_patient_name").val().trim();
+    const patientAge = $("#new_patient_age").val().trim();
+    const patientGender = $("#new_patient_gender").val();
+    const patientPhone = $("#new_patient_phone").val().trim();
+    
+    if (!patientName) {
+        alert("Please enter patient name");
+        $("#new_patient_name").focus();
+        return;
+    }
+    
+    if (!patientAge) {
+        alert("Please enter patient age");
+        $("#new_patient_age").focus();
+        return;
+    }
+    
+    if (!patientGender) {
+        alert("Please select gender");
+        $("#new_patient_gender").focus();
+        return;
+    }
+    
+    if (!patientPhone) {
+        alert("Please enter contact number");
+        $("#new_patient_phone").focus();
+        return;
+    }
+    
+    // Show loading state
+    const saveBtn = $("#saveNewPatientBtn");
+    const originalText = saveBtn.html();
+    saveBtn.html('<i class="fas fa-spinner fa-spin"></i> Saving...').prop("disabled", true);
+    
+    // Build URL with GET parameters
+    const params = new URLSearchParams({
+        patient_name: patientName,
+        patient_age: patientAge,
+        patient_gender: patientGender,
+        patient_phone: patientPhone,
+        patient_email: $("#new_patient_email").val().trim(),
+        patient_address: $("#new_patient_address").val().trim(),
+        csrfmiddlewaretoken: $("input[name=csrfmiddlewaretoken]").val()
+    });
+    
+    // Use the same URL with GET method
+    const saveUrl = `/save_lab_invoice/?${params.toString()}`;
+    
+    console.log("Saving patient to URL:", saveUrl);
+    
+    $.ajax({
+        url: saveUrl,
+        method: "GET",  // Using GET method
+        dataType: "json",
+        success: function(response) {
+            console.log("Response:", response);
+            if (response.success) {
+                // Add new patient to dropdown
+                const newOption = `<option value="${response.patient_id}" selected>
+                    ${response.mr_number} - ${response.patient_name}
+                </option>`;
+                $("#mrDropdown").append(newOption);
+                $("#mrDropdown").val(response.patient_id);
+                
+                // Update patient details display
+                $("#pt_name").val(`${response.mr_number} - ${response.patient_name}`);
+                $("#phno").val(response.patient_phone || '');
+                
+                // Clear test table and load pending tests
+                if (typeof clearTestTable === 'function') clearTestTable();
+                if (typeof loadPendingLabTests === 'function') {
+                    setTimeout(function() {
+                        loadPendingLabTests(response.patient_id);
+                    }, 100);
+                }
+                
+                // Close modal and show success
+                $("#addPatientModal").modal("hide");
+                alert(`✅ Patient saved successfully!\nMR Number: ${response.mr_number}\nName: ${response.patient_name}`);
+            } else {
+                alert("❌ Error: " + response.error);
+            }
+        },
+        error: function(xhr) {
+            console.error("AJAX Error:", xhr);
+            let errorMsg = "Failed to save patient. Please try again.";
+            if (xhr.responseJSON && xhr.responseJSON.error) {
+                errorMsg = xhr.responseJSON.error;
+            } else if (xhr.status === 404) {
+                errorMsg = "URL not found. Please check server connection.";
+            } else if (xhr.status === 500) {
+                errorMsg = "Server error. Please try again.";
+            }
+            alert("❌ " + errorMsg);
+        },
+        complete: function() {
+            saveBtn.html(originalText).prop("disabled", false);
+        }
+    });
+});
+  </script>
+{% endblock %}

@@ -1,0 +1,998 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<head>
+  <style type="text/css">
+    /*Acco*/
+.ac-container {
+    /*max-width: 400px;*/
+    max-width: 1600px;
+}
+
+.ac-container label {
+    height: 30px !important;
+    line-height: 21px !important;
+    font-size: 12px !important;
+    font-family: 'Open Sans','Arial Narrow',Arial,sans-serif !important;
+    padding: 5px 20px;
+    position: relative;
+    z-index: 20;
+    display: block;
+    height: 30px;
+    cursor: pointer;
+    color: #777;
+    text-shadow: 1px 1px 1px rgba(255,255,255,0.8);
+    line-height: 33px;
+    font-size: 19px;
+    background: #fff;
+    background: -moz-linear-gradient(top,#fff 1%,#eaeaea 100%);
+    background: -webkit-gradient(linear,left top,left bottom,color-stop(1%,#fff),color-stop(100%,#eaeaea));
+    background: -webkit-linear-gradient(top,#fff 1%,#eaeaea 100%);
+    background: -o-linear-gradient(top,#fff 1%,#eaeaea 100%);
+    background: -ms-linear-gradient(top,#fff 1%,#eaeaea 100%);
+    background: linear-gradient(top,#fff 1%,#eaeaea 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fff',endColorstr='#eaeaea',GradientType=0 );
+    box-shadow: 0 0 0 1px rgba(155,155,155,0.3),1px 0 0 rgba(255,255,255,0.9) inset,0 2px 2px rgba(0,0,0,0.1);
+    font-size: 12px;
+    height: 30px;
+    line-height: 20px;
+}
+
+.ac-container {
+    width: 100%;
+    margin: 10px auto 30px auto;
+    text-align: left;
+}
+
+.ac-container label:hover {
+    background: #fff;
+}
+
+.ac-container input:checked + label,.ac-container input:checked + label:hover {
+    background: #f1f2f3;
+    color: #666;
+    text-shadow: 0 1px 1px rgba(255,255,255,0.6);
+    box-shadow: 0 0 0 1px rgba(155,155,155,0.3),0 2px 2px rgba(0,0,0,0.1);
+    height: 30px;
+    line-height: 21px;
+    font-size: 13px;
+}
+
+.ac-container label:hover:after,.ac-container input:checked + label:hover:after {
+    content: '';
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    right: 13px;
+    top: 7px;
+    background: transparent url(../images/arrow_down.png) no-repeat center center;
+}
+
+.ac-container input:checked + label:hover:after {
+    background-image: url(../images/arrow_up.png);
+}
+
+/*.ac-container input {
+    display: none;
+}
+*/
+#ac-1,#ac-2,#ac-3,#ac-4,#ac-5,#ac-6,#ac-7,#ac-8,#ac-9,#ac-10,#ac-11{
+  display: none;
+}
+.ac-container article {
+    background: rgba(255,255,255,0.5);
+    margin-top: -1px;
+    overflow: hidden;
+    height: 0;
+    position: relative;
+    z-index: 10;
+    -webkit-transition: height 0.3s ease-in-out,box-shadow 0.6s linear;
+    -moz-transition: height 0.3s ease-in-out,box-shadow 0.6s linear;
+    -o-transition: height 0.3s ease-in-out,box-shadow 0.6s linear;
+    -ms-transition: height 0.3s ease-in-out,box-shadow 0.6s linear;
+    transition: height 0.3s ease-in-out,box-shadow 0.6s linear;
+}
+
+.ac-container article p {
+    font-style: normal;
+    color: #777;
+    line-height: 23px;
+    font-size: 10px;
+    padding: 20px;
+    text-shadow: 1px 1px 1px rgba(255,255,255,0.8);
+    font: normal normal 12px 'Open Sans';
+}
+
+.ac-container input:checked ~ article {
+    -webkit-transition: height 0.5s ease-in-out,box-shadow 0.1s linear;
+    -moz-transition: height 0.5s ease-in-out,box-shadow 0.1s linear;
+    -o-transition: height 0.5s ease-in-out,box-shadow 0.1s linear;
+    -ms-transition: height 0.5s ease-in-out,box-shadow 0.1s linear;
+    transition: height 0.5s ease-in-out,box-shadow 0.1s linear;
+    box-shadow: 0 0 0 1px rgba(155,155,155,0.3);
+}
+
+.ac-container input:checked ~ article.ac-small {
+    height: 150px;
+}
+
+.ac-container input:checked ~ article.ac-medium {
+    height: 310px;
+}
+
+.ac-container input:checked ~ article.ac-large {
+    height: 550px;
+}
+
+.ac-container input:checked ~ article.ac-large1 {
+    height: 780px;
+}
+
+.card-body{
+  overflow: scroll;
+  height: 600px;
+}
+
+.card-body1{
+  overflow: scroll;
+  height: 200px;
+}
+
+.card-body2{
+  overflow: scroll;
+  height: 300px;
+}
+  .mrcard{
+    height: 150px;
+
+  }
+
+  .box {
+    background-color: white;
+    margin: 10px;
+    width: 50px;
+    height: 50px;
+    border-radius: 5px;
+    opacity: 0.5;
+  }
+  
+
+  </style>
+</head>
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Doctor's Prescription</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="{% url 'patientadmissiontable'%}">View All</a></li>
+              <li class="breadcrumb-item active">Prescription</li>
+            </ol>
+          </div>
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+
+      <div class="row">
+        <div class="col-md-12">
+          <div class="card card-primary">
+            <div class="card-header">
+              <h3 class="card-title">Prescription</h3>
+              
+              <div class="card-tools">
+                <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                  <!-- <i class="fas fa-minus"></i> -->
+                </button>
+              </div>
+            </div>
+             <form method="POST", action="{% url 'prescription' %}">
+             
+                {% csrf_token %}
+      <div class="row">
+          <div class="col-md-12">
+              <div class="card">
+             
+             
+                <div class="card-body mrcard">
+
+                 
+
+                   <div class="form-group">
+                    <label for="exampleInputEmail1">MR Number</label>
+                    <select class="form-control" name="mrnum">
+                        <option selected>Select</option>
+                                        {% for i in mrnoobj %}
+
+                      <option value="{{i.MR_Number.id}}">{{i.MR_Number.Medical_Record_Number}}</option>
+
+                               {% endfor %}         
+                      </select>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+          
+          </div>
+
+
+                <div class="card-footer">
+                  
+                  <button type="submit" class="btn btn-primary">Submit</button>
+                </div>
+             
+            <!-- /.card-body -->
+          </div>
+          <!-- /.card -->
+        </div>
+     
+      </div></section>
+
+
+
+      <div class="row">
+      <div class="col-md-12">
+    <section class="ac-container">
+       <div class="row">
+          <div class="col-md-12">
+
+          <input id="ac-1" name="accordion-1" type="radio"  >
+          <label for="ac-1">Preliminary Data</label>
+
+          <article class="ac-large">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-body">
+
+
+
+            <div class="card">
+           <div class="scroll">
+              <!-- /.card-header -->
+              <div class="card-body">
+                <table id="example1" class="table table-bordered table-striped">
+                  <thead>
+                  <tr>
+                      <th>Date</th>
+                      <th>MR Number</th>
+                      <th>Gender</th>
+                      <th>Age</th>
+                      <th>Address</th>
+                      <th>Occupation</th>
+                      <th>Phone Number</th>
+                      <th>Place</th>
+                      <th>Marital Status</th>
+                    
+                    </tr>
+                  </thead>
+                  <tbody>
+  {% for i in objprelimdatatable %}
+                  <tr>
+                    <td>{{i.Current_Date}}</td>
+                    <td>{{i.MR_Number_id}}</td>
+                    <td>{{i.Gender}}</td>
+                    <td>{{i.Age}}</td>
+                    <td>{{i.Address}}</td>
+                    <td>{{i.Occupation}}</td>
+                    <td>{{i.Phone_number}}</td>
+                    <td>{{i.Place}}</td>
+                    <td>{{i.Marital_status}}</td>
+                  </tr>
+                  
+
+  {% endfor %}
+                  </tbody>
+                 
+                </table>
+              </div>
+            </div>
+             
+            </div>
+
+                            </div>
+                          </div>
+                      </div>
+                    </div>
+          </article>
+       
+                  </div>
+                </div>
+
+<div class="row">
+  <div class="col-md-12">
+          <input id="ac-2" name="accordion-1" type="radio">
+          <label for="ac-2">complaints</label>
+          <article class="ac-large">
+            <div class="row">
+                  <div class="col-md-12">
+                    <div class="card">
+                                  
+           <div class="scroll">
+              <!-- /.card-header -->
+              <div class="card-body2">
+                <table id="example1" class="table table-bordered table-striped">
+                  <thead>
+                   
+                <tr>
+                    <th>Date</th>
+                    <th>MR Number</th>
+                    <th>Chief Complaints</th> 
+                </tr>
+                  </thead>
+                  <tbody>
+  {% for i in objcomplainttable %}
+                  <tr>
+                    <td>{{i.Current_Date}}</td>
+                    <td>{{i.MR_Number_id}}</td>
+                    <td>{{i.complaints}}</td>
+                  </tr>
+  {% endfor %}
+                  </tbody>
+                 
+                </table>
+              </div>
+            </div>
+             
+           
+
+                            </div>
+                          </div>
+                      </div>
+                    
+          </article>
+       </div>
+                  </div>
+                
+
+
+<div>
+          <input id="ac-3" name="accordion-1" type="radio">
+          <label for="ac-3">History</label>
+          <article class="ac-small">
+                          <div class="row">
+                <div class="col-md-12">
+                  <div class="card">
+                
+              <div class="card-body2">
+                <table id="example1" class="table table-bordered table-striped">
+                  <thead>
+                   
+                <tr>
+                    <th>Date</th>
+                    <th>MR Number</th>
+                    <th>Medical&Past History</th>
+                    
+                    
+                    
+                  </tr>
+                  </thead>
+                  <tbody>
+            {% for i in objhistable %}
+                  <tr>
+                    <td>{{i.Current_Date}}</td>
+                    <td>{{i.MR_Number_id}}</td>
+                    <td>{{i.Med_history}}</td>
+                    
+                  </tr>
+                  
+
+           {% endfor %}
+                  </tbody>
+                 
+                </table>
+              </div>
+                  </div>
+                </div>
+                    <!-- /.card-body -->
+                
+              </div>
+          </article>
+        </div>
+
+        <div>
+          <input id="ac-4" name="accordion-1" type="radio">
+          <label for="ac-4">Medication</label>
+          <article class="ac-small">
+            <div class="row">
+                  <div class="col-md-12">
+                      <div class="card">
+                    
+              <div class="card-body2">
+                <table id="example1" class="table table-bordered table-striped">
+                  <thead>
+                   
+                <tr>
+                    <th>Date</th>
+                    <th>MR Number</th>
+                    <th>Medical&Past History</th>
+                    
+                    
+                    
+                  </tr>
+                  </thead>
+                  <tbody>
+  {% for i in objmedicationtable %}
+                  <tr>
+                    <td>{{i.Current_Date}}</td>
+                    <td>{{i.MR_Number_id}}</td>
+                    <td>{{i.Medication}}</td>
+                    
+                  </tr>
+                  
+
+  {% endfor %}
+                  </tbody>
+                 
+                </table>
+              </div>
+                      </div>
+                    </div>
+                    
+                </div>
+          </article>
+        </div>
+
+        <div>
+          <input id="ac-5" name="accordion-1" type="radio">
+          <label for="ac-5">Personal History</label>
+          <article class="ac-medium">
+                  <div class="row">
+          <div class="col-md-12">
+              <div class="card">
+            
+              <div class="card-body2">
+                <table id="example1" class="table table-bordered table-striped">
+                  <thead>
+                   
+                <tr>
+                    <th>Date</th>
+                    <th>MR Number</th>
+                    <th>Sleep</th>
+                    <th>Bowels</th>
+                    <th>Appetite</th>
+                    <th>Thirst&Micturition</th>
+                    <th>Habits&Micturition</th>
+                    
+                    
+                    
+                  </tr>
+                  </thead>
+                  <tbody>
+                {% for i in objpershisttable %}
+                    <tr>
+                      <td>{{i.Current_Date}}</td>
+                      <td>{{i.MR_Number_id}}</td>
+                      <td>{{i.Sleep}}</td>
+                      <td>{{i.Bowels}}</td>
+                      <td>{{i.Appetite}}</td>
+                      <td>{{i.Thirst}}</td>
+                      <td>{{i.Habits}}</td>
+                      
+                    </tr>
+                  
+
+                {% endfor %}
+                  </tbody>
+                 
+                </table>
+              </div>
+              </div>
+            </div>
+                <!-- /.card-body -->
+             
+              
+          </div>
+          </article>
+        </div>
+         
+
+        <div>
+          <input id="ac-6" name="accordion-1" type="radio">
+          <label for="ac-6">OBG History</label>
+          <article class="ac-large">
+            <div class="row">
+                  <div class="col-md-12">
+                      <div class="card">
+                    
+              <div class="card-body2">
+                <table id="example1" class="table table-bordered table-striped">
+                  <thead>
+                   
+                <tr>
+                    <th>Date</th>
+                    <th>MR Number</th>
+                    <th>Menstrual Cycle Days/Menapause History</th>
+                    <th>LMP</th>
+                    <th>Pain/Clots/Flows/PMS</th>
+                   
+                  </tr>
+                  </thead>
+                  <tbody>
+  {% for i in objcycletable %}
+                  <tr>
+                    <td>{{i.Current_Date}}</td>
+                    <td>{{i.MR_Number_id}}</td>
+                    <td>{{i.MenstrualCycle_History}}</td>
+                    <td>{{i.LMP}}</td>
+                    <td>{{i.Painclot}}</td>
+                   
+                  </tr>
+                  
+
+  {% endfor %}
+                  </tbody>
+                 
+                </table>
+              </div>
+              </div>
+            </div>                 
+                </div>
+              
+          </article>
+        </div>
+
+
+      <div>
+          <input id="ac-7" name="accordion-1" type="radio">
+          <label for="ac-7">Vitals</label>
+          <article class="ac-large">
+            <div class="row">
+          <div class="col-md-12">
+              <div class="card">
+            
+              <div class="card-body2">
+                <table id="example1" class="table table-bordered table-striped">
+                  <thead>
+                   
+                <tr>
+                    <th>Date</th>
+                    <th>MR Number</th>
+                    <th>Blood Pressure</th>
+                    <th>Pulserate</th>
+                    <th>Respiratoryrate</th>
+                    <th>SPO2</th>
+                    <th>Temperature</th>
+                    <th>Height</th>
+                    <th>Weight</th>
+                    <th>BMI</th>
+                    <th>IBW</th>
+                    <th>Blood parameters record</th>
+                   
+                  </tr>
+                  </thead>
+                  <tbody>
+  {% for i in objvitalstable %}
+                  <tr>
+                    <td>{{i.Current_Date}}</td>
+                    <td>{{i.MR_Number_id}}</td>
+                    <td>{{i.Blood_Pressure}}</td>
+                    <td>{{i.Pulse_rate}}</td>
+                    <td>{{i.Respiratory_rate}}</td>
+                    <td>{{i.Spo}}</td>
+                    <td>{{i.Temperature}}</td>
+                    <td>{{i.Height}}</td>
+                    <td>{{i.Weight}}</td>
+                    <td>{{i.BMI}}</td>
+                    <td>{{i.IBW}}</td>
+                    <td>{{i.Blood_Parameter_Record}}</td>
+                   
+                  </tr>
+  {% endfor %}
+                  </tbody>
+
+                </table>
+              </div>
+          <div class="row ">
+            <div class="col-md-12">
+              <table class="table table-striped" style="width: 800px;margin-left: 30px;">
+  <thead>
+    <tr>
+      <th scope="col">PARAMETERS</th>
+      <th scope="col">ONADMISSION</th>
+      <th scope="col">DISCHARGE</th>
+      
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th scope="row">Weight</th>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <th scope="row">AmCircumference</th>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <th scope="row">Abdomen Circum</th>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <th scope="row">Thigh Circum</th>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+  </tbody>
+</table>
+            
+          </div>
+          </article>
+        </div>
+
+
+          <div>
+          <input id="ac-8" name="accordion-1" type="radio">
+          <label for="ac-8">Dietary History</label>
+          <article class="ac-large">
+            <div class="row">
+                <div class="col-md-12">
+                  <div class="card">
+                
+              <div class="card-body2">
+                <table id="example1" class="table table-bordered table-striped">
+                  <thead>
+                   
+                <tr>
+                    <th>Date</th>
+                    <th>MR Number</th>
+                    <th>Veg/Non-Veg/Vegan</th>
+                    <th>Food Allergy</th>
+                    <th>Likes/Dislikes</th>
+                    <th>Home Recall</th>
+                  
+                  </tr>
+                  </thead>
+                  <tbody>
+  {% for i in objdietarytable %}
+                  <tr>
+                    <td>{{i.Current_Date}}</td>
+                    <td>{{i.MR_Number_id}}</td>
+                    <td>{{i.Food_type}}</td>
+                    <td>{{i.Food_Allergy}}</td>
+                    <td>{{i.Likes_dislikes}}</td>
+                    <td>{{i.Home_Recall}}</td>
+                   
+                  </tr>
+                  
+
+  {% endfor %}
+                  </tbody>
+                 
+                </table>
+              </div>
+                  </div>
+                </div>
+                    <!-- /.card-body -->
+                
+              </div>
+      </article>
+    </div>
+
+    <div>
+    <input id="ac-9" name="accordion-1" type="radio">
+    <label for="ac-9">Physical & Systematic Examination</label>
+    <article class="ac-large">
+        <div class="row">
+          {% for i in objphysyexm %}
+            <div class="col-md-12">
+                <!-- General Physical Examination Card -->
+               
+                    <div class="card-body">
+                        <!-- General Physical Examination Form -->
+                        <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title">GENERAL PHYSICAL EXAMINATION</h3>
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                                <!-- <i class="fas fa-minus"></i> -->
+                            </button>
+                        </div>
+                    </div>
+              <div class="card-body2">
+                <table id="example1" class="table table-bordered table-striped">
+                  <thead>
+                   
+                <tr>
+                    <th>Date</th>
+                    <th>MR Number</th>
+                    <th>Built</th>
+                    <th>Pallor</th>
+                    <th>Icterus</th>
+                    <th>EDEMA/ASCITIS</th>
+                    <th>Cyanosis</th>
+                    <th>Clubbing</th>
+                    
+                  </tr>
+                  </thead>
+                  <tbody>
+  {% for i in objphsyextable %}
+                  <tr>
+                    <td>{{i.Current_Date}}</td>
+                    <td>{{i.MR_Number_id}}</td>
+                    <td>{{i.Built}}</td>
+                    <td>{{i.Pallor}}</td>
+                    <td>{{i.Icterus}}</td>
+                    <td>{{i.Edema}}</td>
+                    <td>{{i.Cyanosis}}</td>
+                    <td>{{i.Clubbing}}</td>
+                    
+                  </tr>
+                  
+
+  {% endfor %}
+                  </tbody>
+                 
+                </table>
+
+                        <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title">SYSTEMATIC EXAMINATION</h3>
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                                <!-- <i class="fas fa-minus"></i> -->
+                            </button>
+                        </div>
+                    </div>
+              <div class="card-body2">
+                <table id="example1" class="table table-bordered table-striped">
+                  <thead>
+                   
+                <tr>
+                    <th>Date</th>
+                    <th>MR Number</th>
+                    <th>CVS</th>
+                    <th>RS</th>
+                    <th>CNS</th>
+                    <th>Joints</th>
+                    
+                    
+                  </tr>
+                  </thead>
+                  <tbody>
+  {% for i in objphsyextable %}
+                  <tr>
+                    <td>{{i.Current_Date}}</td>
+                    <td>{{i.MR_Number_id}}</td>
+                    <td>{{i.CVS}}</td>
+                    <td>{{i.RS}}</td>
+                    <td>{{i.CNS}}</td>
+                    <td>{{i.Joints}}</td>
+                    
+                    
+                  </tr>
+                  
+
+  {% endfor %}
+                  </tbody>
+                 
+                </table>
+              </div>  
+
+        </div>
+
+
+              </div>  
+
+        </div>
+      </div>
+    </div>
+ 
+
+      </div>
+    
+    </article>
+</div>
+  {% endfor %}
+
+   <div>
+    <input id="ac-10" name="accordion-1" type="radio">
+    <label for="ac-10">Diagnosis</label>
+    {% for i in objdiag %}
+    <article class="ac-medium">
+        <div class="row">
+            <div class="col-md-12">
+                <!-- Natural Diagnosis/Pulse Diagnosis -->
+                <div class="card card-primary">
+                    
+                    
+
+               <div class="card-body2">
+                <table id="example1" class="table table-bordered table-striped">
+                  <thead>
+                   
+                <tr>
+                    <th>Date</th>
+                    <th>MR Number</th>
+                    <th>Natural diagnosis/pulse diagnosis</th>
+                    <th>Provisional Diagnosis</th>
+                    
+                  </tr>
+                  </thead>
+                  <tbody>
+  {% for i in objdiagnosistable %}
+                  <tr>
+                    <td>{{i.Current_Date}}</td>
+                    <td>{{i.MR_Number_id}}</td>
+                    <td>{{i.Natural_Diagnosis}}</td>
+                    <td>{{i.Provisional_Diagnosis}}</td>
+                    
+                  </tr>
+                  
+
+  {% endfor %}
+                  </tbody>
+                 
+                </table>
+              </div>
+                </div>
+
+
+
+            </div>
+
+        </div>
+    </article>
+     {% endfor %}
+</div>
+
+              </form>
+
+<div>
+  <input id="ac-11" name="accordion-1" type="radio">
+  <label for="ac-11">Prescription</label>
+  <article class="ac-large">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card">
+          <div class="card-body">
+            <form id="inputForm" method="POST" action="{% url 'prescription_form' %}">
+              {% csrf_token %}
+
+              <div class="card table-bordered" id="before-diet">
+                <div class="input-container">
+                  <label for="exampleInputoccurance">Before Diet</label>
+                  <div class="row" id="before-diet-row">
+                    <div class="col-md-12" id="before-medicine-container">
+                      <!-- Initial medicine input for before diet -->
+                    </div>
+                  </div>
+                  <button type="button" class="btn btn-primary" onclick="addMedicineRow('before')"> Prescription  +</button>
+                </div>
+              </div>
+
+              <div class="card table-bordered" id="after-diet">
+                <div class="input-container">
+                  <label for="exampleInputoccurance">After Diet</label>
+                  <div class="row" id="after-diet-row">
+                    <div class="col-md-12" id="after-medicine-container">
+                      <!-- Initial medicine input for after diet -->
+                    </div>
+                  </div>
+                  <button type="button" class="btn btn-primary" onclick="addMedicineRow('after')"> Prescription  +</button>
+                </div>
+              </div>
+
+              <div class="table-bordered mt-3">
+                <div class="form-group">
+                  <label for="exampleInputFirstName"> Notes</label>
+                  <textarea class="form-control" rows="4" cols="5" name="notes"></textarea>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary mt-3">Submit</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </article>
+</div>
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script>
+  function addMedicineRow(dietType) {
+    var medicineContainer;
+    var dietRow; 
+    
+    
+    if (dietType === 'before') {
+      medicineContainer = document.getElementById('before-medicine-container');
+      dietRow = document.getElementById('before-diet-row');
+    } else if (dietType === 'after') {
+      medicineContainer = document.getElementById('after-medicine-container');
+      dietRow = document.getElementById('after-diet-row');
+    }
+    // Get or initialize the counter for the specific medicineContainer
+    var medInputCounter = parseInt(medicineContainer.getAttribute('data-counter')) || 0;
+
+    var rowDiv = document.createElement('div');
+    rowDiv.className = 'row';
+    medicineContainer.appendChild(rowDiv);
+
+    var medInputDiv = document.createElement('div');
+    medInputDiv.className = 'col-md-3';
+    rowDiv.appendChild(medInputDiv);
+   
+    var newMedicineInput = document.createElement('input');
+     // Increment the counter
+     medInputCounter++;
+
+// Set the counter as a custom attribute on the medicineContainer
+medicineContainer.setAttribute('data-counter', medInputCounter);
+
+// Append the counter to the name to make it unique
+    newMedicineInput.name = dietType + medInputCounter;
+
+    newMedicineInput.type = 'text';
+    newMedicineInput.className = 'form-control';
+    newMedicineInput.placeholder = 'Medicine Name';
+    medInputDiv.appendChild(newMedicineInput);
+    
+
+    var qtyInputDiv = document.createElement('div');
+    qtyInputDiv.className = 'col-md-3';
+    rowDiv.appendChild(qtyInputDiv);
+
+    var newQuantityInput = document.createElement('input'); 
+    newQuantityInput.type = 'number';
+    newQuantityInput.className = 'form-control';
+    newQuantityInput.placeholder = 'Occurences';
+    newQuantityInput.addEventListener('input', function() {
+      regenerateBoxes(this.value, rowDiv,dietType,newMedicineInput.value);
+    });
+    qtyInputDiv.appendChild(newQuantityInput);
+  }
+  function regenerateBoxes(count, rowDiv,dietType, medicineName) {
+    var boxesContainer = rowDiv.querySelector('.boxes-container');
+    if (boxesContainer) {
+      boxesContainer.remove();
+    }
+    if (count > 0) {
+      generateBoxes(count, rowDiv,dietType,medicineName);
+    }
+  }
+  function generateBoxes(count, rowDiv,dietType, medicineName) {
+    var container = document.createElement('div');
+    container.className = 'boxes-container';
+    if (dietType === 'before') {
+    for (var i = 0; i < count; i++) {
+      var div = document.createElement('input');
+
+      div.className = 'box';
+      div.name = dietType+ medicineName +'diet_quantity_'+ i;
+      container.appendChild(div);
+    }
+    rowDiv.appendChild(container);
+  }
+  else if (dietType === 'after') {
+    for (var i = 0; i < count; i++) {
+      var div = document.createElement('input');
+
+      div.className = 'box';
+      
+      div.name = dietType+ medicineName +'diet_quantity_'+ i;
+   
+      container.appendChild(div);
+    }
+    rowDiv.appendChild(container);
+  }
+  }
+</script>
+</div>
+</div>
+ {% endblock %}

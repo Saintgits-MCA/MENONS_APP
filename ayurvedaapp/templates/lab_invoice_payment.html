@@ -1,0 +1,209 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="content-wrapper">
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h5>Payment for Credit Invoice</h5>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="{% url 'lab_invoice_list' %}">Lab Invoices</a></li>
+            <li class="breadcrumb-item active">Payment</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="content">
+    <div class="row">
+      <div class="col-md-9 offset-md-1">
+        <div class="card card-primary">
+          <div class="card-header">
+            <h3 class="card-title">Invoice Payment</h3>
+          </div>
+          
+          <form method="POST" action="{% url 'lab_invoice_payment' %}" id="paymentForm">
+            {% csrf_token %}
+            <input type="hidden" name="invoice_id" value="{{ invoice.id }}">
+            
+            <div class="card-body">
+              {% if messages %}
+                {% for message in messages %}
+                  <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                  </div>
+                {% endfor %}
+              {% endif %}
+
+              <!-- Invoice Details -->
+              <div class="callout callout-info">
+                <h5>Invoice Details</h5>
+                <div class="row">
+                  <div class="col-md-6">
+                    <p><strong>Invoice No:</strong> {{ invoice.invoiceno }}</p>
+                    <p><strong>Patient Name:</strong> {{ invoice.patient.Patient_Name }}</p>
+                    <p><strong>MR No:</strong> {{ invoice.patient.Medical_Record_Number }}</p>
+                  </div>
+                  <div class="col-md-6">
+                    <p><strong>Date:</strong> {{ invoice.date|date:"d-m-Y" }}</p>
+                    <p><strong>Total Amount:</strong> <span class="text-success font-weight-bold">₹ {{ invoice.total|floatformat:2 }}</span></p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Payment Details -->
+              <h5 class="mt-3">Payment Details</h5>
+              <div class="alert alert-warning">
+                <i class="fas fa-info-circle"></i> Total Due: <strong>₹ {{ invoice.total|floatformat:2 }}</strong>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="cash_amount">Cash Amount</label>
+                    <input type="number" id="cash_amount" name="cash_amount" class="form-control payment-input" 
+                           placeholder="Enter cash amount" min="0" onwheel="this.blur()" value="0">
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="gpay_amount">GPay / Online Payment</label>
+                    <input type="number" id="gpay_amount" name="gpay_amount" class="form-control payment-input" 
+                           placeholder="Enter GPay amount" min="0" onwheel="this.blur()" value="0">
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="card_amount">Card Amount</label>
+                    <input type="number" id="card_amount" name="card_amount" class="form-control payment-input" 
+                           placeholder="Enter card amount" min="0" onwheel="this.blur()" value="0">
+                  </div>
+                </div>
+              </div>
+
+              <div class="alert alert-info" id="totalPaidAlert">
+                Total Paid: <strong>₹ 0.00</strong>
+              </div>
+
+              <div class="form-group">
+                <div class="custom-control custom-switch">
+                  <input type="checkbox" class="custom-control-input" id="fullPaymentCheck">
+                  <label class="custom-control-label" for="fullPaymentCheck">Mark as Full Payment (Total: ₹ {{ invoice.total|floatformat:2 }})</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-footer">
+              <button type="submit" class="btn btn-success">
+                <i class="fas fa-check-circle"></i> Complete Payment
+              </button>
+              <a href="{% url 'lab_invoice_list' %}" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Cancel
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<style>
+  .callout {
+    border-left: 5px solid;
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 20px;
+  }
+  .callout-info {
+    background-color: #f0f8ff;
+    border-left-color: #17a2b8;
+  }
+  .payment-input:focus {
+    border-color: #28a745;
+    box-shadow: 0 0 0 0.2rem rgba(40,167,69,0.25);
+  }
+</style>
+
+<script>
+$(document).ready(function() {
+  const totalAmount = {{ invoice.total|floatformat:2 }};
+  
+  // Update total paid when any payment input changes
+  $('.payment-input').on('input', function() {
+    calculateTotalPaid();
+  });
+  
+  // Full payment checkbox
+  $('#fullPaymentCheck').on('change', function() {
+    if ($(this).is(':checked')) {
+      $('#cash_amount').val(totalAmount);
+      $('#gpay_amount').val(0);
+      $('#card_amount').val(0);
+      calculateTotalPaid();
+    } else {
+      $('#cash_amount').val(0);
+      $('#gpay_amount').val(0);
+      $('#card_amount').val(0);
+      calculateTotalPaid();
+    }
+  });
+  
+  // Calculate total paid amount
+  function calculateTotalPaid() {
+    let cash = parseFloat($('#cash_amount').val()) || 0;
+    let gpay = parseFloat($('#gpay_amount').val()) || 0;
+    let card = parseFloat($('#card_amount').val()) || 0;
+    let totalPaid = cash + gpay + card;
+    
+    $('#totalPaidAlert').html(`Total Paid: <strong>₹ ${totalPaid.toFixed(2)}</strong>`);
+    
+    if (Math.abs(totalPaid - totalAmount) < 0.01) {
+      $('#totalPaidAlert').removeClass('alert-info').addClass('alert-success');
+      $('#fullPaymentCheck').prop('checked', true);
+    } else {
+      $('#totalPaidAlert').removeClass('alert-success').addClass('alert-info');
+      if (!$('#fullPaymentCheck').is(':checked')) {
+        $('#fullPaymentCheck').prop('checked', false);
+      }
+    }
+    
+    if (totalPaid > totalAmount) {
+      $('#totalPaidAlert').removeClass('alert-info alert-success').addClass('alert-danger');
+      alert('Payment amount exceeds invoice total!');
+      return false;
+    }
+    return true;
+  }
+  
+  // Form validation before submit
+  $('#paymentForm').on('submit', function(e) {
+    let cash = parseFloat($('#cash_amount').val()) || 0;
+    let gpay = parseFloat($('#gpay_amount').val()) || 0;
+    let card = parseFloat($('#card_amount').val()) || 0;
+    let totalPaid = cash + gpay + card;
+    
+    if (totalPaid <= 0) {
+      alert('Please enter at least one payment amount');
+      e.preventDefault();
+      return false;
+    }
+    
+    if (Math.abs(totalPaid - totalAmount) > 0.01) {
+      alert(`Payment amount (₹${totalPaid.toFixed(2)}) does not match invoice total (₹${totalAmount.toFixed(2)})`);
+      e.preventDefault();
+      return false;
+    }
+    
+    return true;
+  });
+});
+</script>
+
+{% endblock %}

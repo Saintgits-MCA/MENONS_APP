@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Follow Up Details</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item">
+                {%if follwupadd == '1'%}<a href="{% url 'followuptable' %}?menumanagement_id={{ idmngmnt }}">View</a></li>
+               {%endif%}<li class="breadcrumb-item active">Follow Up</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="content">
+      <div class="row">
+        <div class="col-md-12">
+          <div class="card card-primary">
+            <div class="card-header">
+              <h3 class="card-title">Call Follow-up Overview</h3>
+              <div class="card-tools">
+                <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                  <!-- <i class="fas fa-minus"></i> -->
+                </button>
+              </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-body">
+                         
+   
+    <table   id="example1" class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Total Calls</th>
+                <th>Pending</th>
+                <th>Priority</th>
+                <th>Recontact</th>
+                <th>Recontact2</th>
+                <th>Dropped</th>
+                <th>Converted</th>
+                <th>Followup By </th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for data in followup_summary %}
+            <tr>
+                <td>{{ data.currentdate }}</td>
+                <td>{{ data.total_calls }}</td>
+                <td>{{ data.pending_count }}</td>
+                <td>{{ data.priority_count }}</td>
+                <td>{{ data.recontact_count }}</td>
+                <td>{{ data.recontact2_count }}</td>
+                <td>{{ data.dropped_count }}</td>
+                <td>{{ data.converted_count }}</td>
+                <td>{{ data.followedby__Staff_firstname }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- /.content -->
+</div>
+
+<!-- /.content-wrapper -->
+{% endblock %}

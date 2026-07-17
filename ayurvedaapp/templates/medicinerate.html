@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<!-- Content Wrapper -->
+<div class="content-wrapper">
+  <!-- Content Header -->
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Medicine Rate Details</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item">
+              {% if rateview == '1' %}
+                <a href="{% url 'medicineratetable' %}?menumanagement_id={{ idmngmnt }}">View All</a>
+              {% endif %}
+            </li>
+            <li class="breadcrumb-item active">Medicine Rate</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main content -->
+  <section class="content">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card card-primary">
+          <div class="card-header">
+            <h3 class="card-title">Add Medicine Rate</h3>
+            <div class="card-tools">
+              <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse"></button>
+            </div>
+          </div>
+
+          <!-- Form Start -->
+          <form method="POST" action="{% url 'add_medicinerate' %}?menumanagement_id={{ idmngmnt }}" onsubmit="return validateRateForm()">
+            {% csrf_token %}
+            <div class="row">
+              <!-- Left Column -->
+              <div class="col-md-6">
+                <div class="card">
+                  <div class="card-body">
+                    
+                    <!-- Medicine Dropdown -->
+                    <div class="form-group">
+                      <label for="itemid">Select Medicine</label>
+                      <select class="form-control" id="itemid" name="itemid" required>
+                        <option value="">-- Select Medicine --</option>
+                        {% for med in medicines %}
+                          <option value="{{ med.id }}">{{ med.itemnm }}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+
+                    <!-- MRP -->
+                    <div class="form-group">
+                      <label for="mrp">MRP</label>
+                      <input type="text" class="form-control" id="mrp" name="mrp" placeholder="Enter MRP" required>
+                    </div>
+                    
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right Column -->
+              <div class="col-md-6">
+                <div class="card">
+                  <div class="card-body">
+                    
+                    <!-- Branch Dropdown -->
+                    <div class="form-group">
+                      <label for="branchid">Select Branch</label>
+                      <select class="form-control" id="branchid" name="branchid" required>
+                        <option value="">-- Select Branch --</option>
+                        {% for branch in branches %}
+                          <option value="{{branch.id}}">{{ branch.Branch_Name }}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+
+              <!-- Submit Button -->
+              <div class="card-footer">
+                {% if messages %}
+                  {% for message in messages %}
+                    <p style="color:green;">{{ message }}</p>
+                  {% endfor %}
+                {% endif %}
+                <button type="submit" class="btn btn-primary">Submit</button>
+              </div>
+            </div>
+          </form>
+          <!-- /.Form End -->
+
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Validation Script -->
+<script>
+  function validateRateForm() {
+      const mrpInput = document.getElementById('mrp').value.trim();
+
+      // Validate that MRP is a positive number
+      if (!/^[0-9]+(\.[0-9]{1,2})?$/.test(mrpInput)) {
+          alert('Invalid MRP. Please enter a valid number (e.g., 100 or 99.50).');
+          return false;
+      }
+      return true;
+  }
+</script>
+
+{% endblock %}

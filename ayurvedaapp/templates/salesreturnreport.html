@@ -1,0 +1,405 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="content-wrapper">
+    <section class="content">        
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header" style="padding: 10px 20px;">
+                            <h3 class="card-title" style="font-size: 16px;">
+                                <i class="fas fa-undo-alt"></i> Sales-Return Details
+                            </h3>
+                            <div class="card-tools">
+                                <button type="button" class="btn btn-primary btn-sm" onclick="printFullReport()">
+                                    <i class="fas fa-print"></i> Print Full Report
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body" style="padding: 15px;">
+                            <!-- Filter Section -->
+                            <form method="GET" class="mb-3" id="filterForm">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <div class="form-group" style="margin-bottom: 5px;">
+                                            <label style="font-size: 13px;">From Date</label>
+                                            <input type="date" class="form-control form-control-sm" name="from_date" value="{{ from_date }}" id="fromDate">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group" style="margin-bottom: 5px;">
+                                            <label style="font-size: 13px;">To Date</label>
+                                            <input type="date" class="form-control form-control-sm" name="to_date" value="{{ to_date }}" id="toDate">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group" style="margin-bottom: 5px;">
+                                            <label style="font-size: 13px;">Bill Type</label>
+                                            <select class="form-control form-control-sm" name="bill_type" id="billType">
+                                                <option value="">All</option>
+                                                <option value="Cash" {% if bill_type == 'Cash' %}selected{% endif %}>Cash</option>
+                                                <option value="Credit" {% if bill_type == 'Credit' %}selected{% endif %}>Credit</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group" style="margin-bottom: 5px;">
+                                            <label style="font-size: 13px;">&nbsp;</label>
+                                            <button type="submit" class="btn btn-primary btn-sm btn-block">
+                                                <i class="fas fa-search"></i> Filter
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group" style="margin-bottom: 5px;">
+                                            <label style="font-size: 13px;">&nbsp;</label>
+                                            <button type="button" class="btn btn-secondary btn-sm btn-block" onclick="resetFilters()">
+                                                <i class="fas fa-undo"></i> Reset
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+
+                            <!-- Report Table -->
+                            <div class="table-responsive" id="reportTable">
+                                <table class="table table-bordered table-striped" id="salesReturnTable" style="font-size: 13px; width: 100%;">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 50px;">Sl.No</th>
+                                            <th style="width: 100px;">Date</th>
+                                            <th style="width: 100px;">Credit No</th>
+                                            <th>Products</th>
+                                            <th style="width: 100px;">Batch</th>
+                                            <th style="width: 80px;" class="text-right">Qty</th>
+                                            <th style="width: 100px;" class="text-right">Amount (₹)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% if sales_returns %}
+                                            {% regroup sales_returns by date as date_list %}
+                                            {% for date_group in date_list %}
+                                                <!-- Date Header Row -->
+                                                <tr style="font-weight: bold;">
+                                                    <td colspan="7" style="font-size: 14px; text-align: left;">
+                                                        <i class="fas fa-calendar-day"></i> 
+                                                        <strong>{{ date_group.grouper|date:"l, d M Y" }}</strong>
+                                                    </td>
+                                                </tr>
+                                                <!-- Items for this date -->
+                                                {% for item in date_group.list %}
+                                                <tr>
+                                                    <td>{{ forloop.parentloop.counter }}.{{ forloop.counter }}</td>
+                                                    <td>{{ item.date|date:"d/m/Y" }}</td>
+                                                    <td>{{ item.credit_no }}</td>
+                                                    <td>{{ item.product_name }}</td>
+                                                    <td>{{ item.batch }}</td>
+                                                    <td class="text-right">{{ item.quantity }}</td>
+                                                    <td class="text-right">{{ item.amount|floatformat:2 }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                                <!-- Day Total Row -->
+                                                <tr style="font-weight: bold;">
+                                                    <td colspan="6" class="text-right">
+                                                        <i class="fas fa-calculator"></i> Day Total ({{ date_group.grouper|date:"d/m/Y" }}):
+                                                    </td>
+                                                    <td class="text-right">
+                                                        ₹ 
+                                                        {% for date_str, day_total in day_totals.items %}
+                                                            {% if date_str == date_group.grouper|date:"d/m/Y" %}
+                                                                {{ day_total|floatformat:2 }}
+                                                            {% endif %}
+                                                        {% endfor %}
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        {% else %}
+                                            <tr>
+                                                <td colspan="7" class="text-center text-muted py-2">
+                                                    No sales returns found for this period
+                                                </td>
+                                            </tr>
+                                        {% endif %}
+                                    </tbody>
+                                    <tfoot>
+                                        <!-- Grand Total -->
+                                        <tr style="font-weight: bold; font-size: 14px;">
+                                            <th colspan="6" class="text-right">Grand Total:</th>
+                                            <th class="text-right">₹ {{ total_amount|floatformat:2 }}</th>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+
+                            <!-- Pagination -->
+                            <div class="row mt-3">
+                                <div class="col-sm-12 col-md-5">
+                                    <div class="dataTables_info" role="status" aria-live="polite">
+                                        Showing {{ sales_returns.start_index }} to {{ sales_returns.end_index }} of {{ sales_returns.paginator.count }} entries
+                                    </div>
+                                </div>
+                                <div class="col-sm-12 col-md-7">
+                                    <div class="dataTables_paginate paging_simple_numbers">
+                                        <ul class="pagination">
+                                            {% if sales_returns.has_previous %}
+                                                <li class="paginate_button page-item previous">
+                                                    <a href="?page=1{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}{% if bill_type %}&bill_type={{ bill_type }}{% endif %}" class="page-link">First</a>
+                                                </li>
+                                                <li class="paginate_button page-item previous">
+                                                    <a href="?page={{ sales_returns.previous_page_number }}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}{% if bill_type %}&bill_type={{ bill_type }}{% endif %}" class="page-link">Previous</a>
+                                                </li>
+                                            {% else %}
+                                                <li class="paginate_button page-item previous disabled">
+                                                    <span class="page-link">First</span>
+                                                </li>
+                                                <li class="paginate_button page-item previous disabled">
+                                                    <span class="page-link">Previous</span>
+                                                </li>
+                                            {% endif %}
+
+                                            {% for num in sales_returns.paginator.page_range %}
+                                                {% if sales_returns.number == num %}
+                                                    <li class="paginate_button page-item active">
+                                                        <span class="page-link">{{ num }}</span>
+                                                    </li>
+                                                {% elif num > sales_returns.number|add:'-3' and num < sales_returns.number|add:'3' %}
+                                                    <li class="paginate_button page-item">
+                                                        <a href="?page={{ num }}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}{% if bill_type %}&bill_type={{ bill_type }}{% endif %}" class="page-link">{{ num }}</a>
+                                                    </li>
+                                                {% endif %}
+                                            {% endfor %}
+
+                                            {% if sales_returns.has_next %}
+                                                <li class="paginate_button page-item next">
+                                                    <a href="?page={{ sales_returns.next_page_number }}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}{% if bill_type %}&bill_type={{ bill_type }}{% endif %}" class="page-link">Next</a>
+                                                </li>
+                                                <li class="paginate_button page-item next">
+                                                    <a href="?page={{ sales_returns.paginator.num_pages }}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}{% if bill_type %}&bill_type={{ bill_type }}{% endif %}" class="page-link">Last</a>
+                                                </li>
+                                            {% else %}
+                                                <li class="paginate_button page-item next disabled">
+                                                    <span class="page-link">Next</span>
+                                                </li>
+                                                <li class="paginate_button page-item next disabled">
+                                                    <span class="page-link">Last</span>
+                                                </li>
+                                            {% endif %}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Footer -->
+                            <div class="row mt-3 d-none">
+                                <div class="col-12 text-center">
+                                    <hr style="margin: 5px 0;">
+                                    <p style="margin: 0; font-size: 11px; color: #6c757d;">
+                                        <strong>*** This is a computer generated report ***</strong> | 
+                                        Generated on: {% now "d/m/Y H:i:s" %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Hidden Print Area -->
+<div id="printArea" style="display: none; padding: 20px;">
+    <!-- Hospital Header -->
+    {% if hospital %}
+    <div style="text-align: center; margin-bottom: 20px;">
+        <h2 style="margin: 0; font-weight: bold; font-size: 20px;">{{ hospital.Name }}</h2>
+        <p style="margin: 0; font-size: 14px;">{{ hospital.Address }}</p>
+        {% if hospital.GST and hospital.GST|lower != "none" %}
+        <p style="margin: 0; font-size: 14px;"><strong>TIN:</strong> {{ hospital.GST }}</p>
+        {% endif %}
+        <h4 style="margin: 10px 0; font-size: 18px;">Sales-Return Details</h4>
+        <p style="margin: 0; font-size: 14px;">
+            <strong>Period:</strong> 
+            {% if from_date and to_date %}
+                {{ from_date }} To {{ to_date}}
+            {% else %}
+                All Dates
+            {% endif %}
+            {% if bill_type %} | <strong>Bill Type:</strong> {{ bill_type }}{% endif %}
+        </p>
+        <hr style="border: 1px solid #000; margin: 10px 0;">
+    </div>
+    {% endif %}
+
+    <!-- Full Table for Print -->
+    <table class="table table-bordered" style="width: 100%; border-collapse: collapse; font-size: 12px;">
+        <thead>
+            <tr style="">
+                <th style="border: 1px solid #000; padding: 6px; text-align: left; width: 50px;">Sl.No</th>
+                <th style="border: 1px solid #000; padding: 6px; text-align: left; width: 100px;">Date</th>
+                <th style="border: 1px solid #000; padding: 6px; text-align: left; width: 100px;">Credit No</th>
+                <th style="border: 1px solid #000; padding: 6px; text-align: left;">Products</th>
+                <th style="border: 1px solid #000; padding: 6px; text-align: left; width: 100px;">Batch</th>
+                <th style="border: 1px solid #000; padding: 6px; text-align: right; width: 80px;">Qty</th>
+                <th style="border: 1px solid #000; padding: 6px; text-align: right; width: 100px;">Amount (₹)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if all_sales_returns %}
+                {% regroup all_sales_returns by date as date_list %}
+                {% for date_group in date_list %}
+                    <!-- Date Header Row -->
+                    <tr style=" font-weight: bold;">
+                        <td colspan="7" style="border: 1px solid #000; padding: 6px; text-align: left; font-size: 14px;">
+                            <i class="fas fa-calendar-day"></i> 
+                            <strong>{{ date_group.grouper|date:"l, d M Y" }}</strong>
+                        </td>
+                    </tr>
+                    <!-- Items for this date -->
+                    {% for item in date_group.list %}
+                    <tr>
+                        <td style="border: 1px solid #000; padding: 4px; text-align: left;">{{ forloop.parentloop.counter }}.{{ forloop.counter }}</td>
+                        <td style="border: 1px solid #000; padding: 4px; text-align: left;">{{ item.date|date:"d/m/Y" }}</td>
+                        <td style="border: 1px solid #000; padding: 4px; text-align: left;">{{ item.credit_no }}</td>
+                        <td style="border: 1px solid #000; padding: 4px; text-align: left;">{{ item.product_name }}</td>
+                        <td style="border: 1px solid #000; padding: 4px; text-align: left;">{{ item.batch }}</td>
+                        <td style="border: 1px solid #000; padding: 4px; text-align: right;">{{ item.quantity }}</td>
+                        <td style="border: 1px solid #000; padding: 4px; text-align: right;">{{ item.amount|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+                    <!-- Day Total Row -->
+                    <tr style="font-weight: bold;">
+                        <td colspan="6" style="border: 1px solid #000; padding: 6px; text-align: right;">
+                            <i class="fas fa-calculator"></i> Day Total ({{ date_group.grouper|date:"d/m/Y" }}):
+                        </td>
+                        <td style="border: 1px solid #000; padding: 6px; text-align: right;">
+                            ₹ 
+                            {% for date_str, day_total in day_totals.items %}
+                                {% if date_str == date_group.grouper|date:"d/m/Y" %}
+                                    {{ day_total|floatformat:2 }}
+                                {% endif %}
+                            {% endfor %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="7" style="border: 1px solid #000; padding: 6px; text-align: center;">
+                        No sales returns found for this period
+                    </td>
+                </tr>
+            {% endif %}
+        </tbody>
+        <tfoot>
+            <!-- Grand Total -->
+            <tr style="font-weight: bold; font-size: 14px;">
+                <th colspan="6" style="border: 1px solid #000; padding: 6px; text-align: right;">Grand Total:</th>
+                <th style="border: 1px solid #000; padding: 6px; text-align: right;">₹ {{ total_amount|floatformat:2 }}</th>
+            </tr>
+        </tfoot>
+    </table>
+
+    <!-- Footer -->
+    <div style="text-align: center; margin-top: 20px;display:none; font-size: 11px; color: #6c757d;">
+        <hr style="border: 1px solid #ddd; margin: 10px 0;">
+        <p style="margin: 0;"><strong>*** This is a computer generated report ***</strong></p>
+        <p style="margin: 0;">Generated on: {% now "d/m/Y H:i:s" %}</p>
+    </div>
+</div>
+
+<style>
+@media print {
+    @page{
+        size:A4;
+    }
+    .card-tools, .form-group, .btn, #filterForm, .pagination, .dataTables_info, .dataTables_paginate {
+        display: none !important;
+    }
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+    .card-header {
+        background: white !important;
+        border-bottom: 2px solid #000 !important;
+    }
+    .table {
+        font-size: 12px !important;
+    }
+    .table-bordered {
+        border: 1px solid #000 !important;
+    }
+    .table-bordered th,
+    .table-bordered td {
+        border: 1px solid #000 !important;
+        padding: 4px !important;
+    }
+}
+
+.pagination {
+    margin: 0;
+    float: right;
+}
+
+.pagination .page-link {
+    padding: 6px 12px;
+    margin: 0 2px;
+    border-radius: 4px;
+}
+
+.pagination .active .page-link {
+    background-color: #007bff;
+    border-color: #007bff;
+    color: white;
+}
+
+.pagination .disabled .page-link {
+    color: #6c757d;
+    pointer-events: none;
+    background-color: #fff;
+    border-color: #dee2e6;
+}
+
+.dataTables_info {
+    padding-top: 8px;
+    color: #6c757d;
+}
+
+</style>
+
+<script>
+function resetFilters() {
+    document.getElementById('fromDate').value = '';
+    document.getElementById('toDate').value = '';
+    document.getElementById('billType').value = '';
+    document.getElementById('filterForm').submit();
+}
+
+function printFullReport() {
+    // Get the print area content
+    var printContent = document.getElementById('printArea').innerHTML;
+    
+    // Create a new window for printing
+    var printWindow = window.open('', '_blank', 'width=1000,height=800');
+    printWindow.document.write('<html><head><title>Sales Return Report</title>');
+    printWindow.document.write('<style>');
+    printWindow.document.write('body { padding: 20px; font-family: Arial, sans-serif; }');
+    printWindow.document.write('.table { width: 100%; border-collapse: collapse; font-size: 12px; }');
+    printWindow.document.write('.table th, .table td { border: 1px solid #000; padding: 6px; }');
+    printWindow.document.write('@page { size: A4; margin: 15mm; }');
+    printWindow.document.write('@media print { body { padding: 0; } }');
+    printWindow.document.write('</style>');
+    printWindow.document.write('</head><body>');
+    printWindow.document.write(printContent);
+    printWindow.document.write('</body></html>');
+    printWindow.document.close();
+    
+    // Wait for content to load then print
+    setTimeout(function() {
+        printWindow.print();
+        printWindow.close();
+    }, 500);
+}
+</script>
+{% endblock %}

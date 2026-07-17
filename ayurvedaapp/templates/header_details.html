@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="content-wrapper">
+    <section class="content-header">
+        <div class="container-fluid">
+            <h1>Upload Header & Footer Images</h1>
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title">Upload Images</h3>
+                    </div>
+
+                    <form method="POST" enctype="multipart/form-data" action="{% url 'header_detail' %}">
+                        {% csrf_token %}
+                        <div class="card-body">
+
+                            <!-- Header Image Upload -->
+                            <div class="form-group">
+                                <label>Select Header Image</label>
+                                <input type="file" name="headerimage" class="form-control" required>
+                            </div>
+
+                            {% if header and header.header_image %}
+                                <p>Current Header:</p>
+                                <img src="{{ header.header_image.url }}" width="200">
+                            {% endif %}
+
+                            <hr>
+
+                            <!-- Footer Image Upload -->
+                            <div class="form-group">
+                                <label>Select Footer Image</label>
+                                <input type="file" name="footerimage" class="form-control">
+                            </div>
+
+                            {% if header and header.footer_image %}
+                                <p>Current Footer:</p>
+                                <img src="{{ header.footer_image.url }}" width="200">
+                            {% endif %}
+
+                        </div>
+
+                        <div class="card-footer">
+                            <button type="submit" class="btn btn-primary">Upload</button>
+                        </div>
+
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+{% endblock %}

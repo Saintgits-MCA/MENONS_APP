@@ -1,0 +1,500 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Invoice</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="#">Home</a></li>
+              <li class="breadcrumb-item active">Invoice</li>
+            </ol>
+          </div>
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
+
+    <section class="content">
+      <div class="container-fluid">
+        <form method="POST", action="{% url 'saveinvoice' %}">
+             
+          {% csrf_token %}
+        <div class="row">
+          <div class="col-12">
+            <!-- <div class="callout callout-info">
+              <h5><i class="fas fa-info"></i> Note:</h5>
+              This page has been enhanced for printing. Click the print button at the bottom of the invoice to test.
+            </div> -->
+            
+
+            <!-- Main content -->
+            <div class="invoice p-3 mb-3">
+              <!-- title row -->
+              {% for i in objhospt%}
+              <div class="row">
+                <div class="col-12">
+                  <h4>
+                    <i class="fas fa-globe"></i> {{i.Name}}
+                    <small class="float-right">Date: {{todate}}</small>
+                  </h4>
+                </div>
+                <!-- /.col -->
+              </div>
+              <!-- info row -->
+              <div class="row invoice-info">
+                <div class="col-sm-4 invoice-col">
+                  From
+                 
+                  <address>
+                    <h3>{{i.Name}}</h3>
+                    <input type="hidden" class="form-control" value="{{i.id}}" name="hosptname">
+                    {{i.Address}}<br>
+                    GST NO: {{i.GST}}<br>
+                    Phone:{{i.Contact_no}}<br>
+                    Email: {{i.Email}}
+                    {% endfor %}
+                    <br>
+                    {% for x in brname %}
+                     Branch:{{x.Branch_Name}}
+                     <input type="hidden" class="form-control" value="{{x.id}}" name="branchname">
+                   
+                    {% endfor %}
+                  </address>
+                 
+                </div>
+               
+                <!-- /.col -->
+                <div class="col-sm-4 invoice-col">
+                  To
+                  <address>
+                    <label for="exampleInputPincode">MR Number</label>
+                   
+                    <select class="form-control" name="mrnum" id="mrDropdown">
+                        <option selected>Select</option>
+                        {% for i in mrnoobj %}
+                        <option value="{{i.id}}">{{i.Medical_Record_Number}}</option>
+                            <!-- <option value="{{i.MR_No_id}}">{{i.MR_No.Medical_Record_Number}}</option> -->
+                        {% endfor %}
+                    </select>
+                    <label> Name</label>
+                    <input type="text" class="form-control" name="ptname" id="ptname">
+                    
+                    <label>Address</label>
+                    <textarea class="form-control" id="exampleInputAddress"  name="address"  >
+                     
+                    </textarea>
+                   <label> Phone: </label><input type="text" name="ptphno" class="form-control" id="ptphno">
+                   <label>Email:</label>
+                   <input type="email" class="form-control" id="ptemail">
+                   
+                     <!-- <label>Branch Name</label>
+                     <input type="text" class="form-control"> -->
+                  </address>
+                </div>
+                <!-- /.col -->
+                <div class="col-sm-4 invoice-col">
+                  <b><p >Invoice No: {{inv_id}}</p></b><br>
+                  <input type="hidden" class="form-control" value="{{inv_id}}" name="invno">
+                   
+                </div>
+                
+                <!-- /.col -->
+              </div>
+              <!-- /.row -->
+
+              <!-- Table row -->
+              <div class="row">
+                <div class="col-12 table-responsive">
+                  <table class="table table-striped" >
+                    <thead>
+                    <tr>
+                      <input type="text" id="companyTextBox">
+                      <select id="companySelect">
+                        
+                      </select>
+                      <!-- <input type="text" name="cmp" id="cmp">
+                      
+                      <input type="text"  class="form-control"  id="searchInputmed" placeholder="Search for medicine...">
+                     
+                       <select class="form-control" name="searchResultsmed"  id="medicineSelect" required>
+                         <option selected>Select</option>
+                         {% for i in m %}
+                         <option value="{{i.itemnm_id}}">{{i.itemnm_id}}</option>
+                         {%endfor%}
+                         
+                     </select>
+                     <select id="companySelect">
+                     
+                  </select> -->
+                      <th>Sl.No.</th>
+                      <th>Medicine
+                        <input type="text"  class="form-control"  id="searchInput" placeholder="Search for medicine...">
+                       <!-- <br> -->
+                        <select class="form-control" name="particulars" id="searchResults" required>
+                          <option selected>Select</option>
+                          
+                      </select>
+                      </th>
+                      <th>Company <input type="text"  class="form-control"  id="searchcompanyinput" placeholder="Search for Company...">
+                       
+                         <select class="form-control" name="searchcompanyk" id="searchcompany" required>
+                           <option selected>Select</option>
+                           
+                       </select></th>
+                     
+                      <th>Description</th>
+                      <th>Qty.</th>
+                      <th>Rate</th>
+                      <!-- <th>Discount</th> -->
+                      <th>Subtotal</th>
+                      <th> 
+                         <button type="button" style="width:60px;height: 40px;" class="btn btn-primary" id="addBtn">Add</button></td>
+                      </th>
+                    
+                    </tr>
+                    </thead>
+                    <tbody id="tbody">
+                  
+                      <tr class="recordsheet">
+                        
+                       
+                    </tr>
+                   </tbody>
+                  </table>
+                </div>
+                <!-- /.col -->
+              </div>
+              <!-- /.row -->
+              <div class="row">
+              
+                <!-- /.col -->
+                <div class="col-md-12">
+                 
+                  <div class="table-responsive">
+                    <table class="table">
+                      <tr>
+                        <input type="hidden" name="treatment_count" class="treatment-count" value="{{ treatment_counter }}">
+                       
+                        <th style="width:50%">Total:</th>
+                        <td><input type="text" class="form-control" id="totsubtoal" name="totsubtoal" ></td>
+                      </tr>
+                      <tr>
+                        <th>Tax Percentage</th>
+                        <td><input type="text" class="form-control" id="taxperc" name="taxperc" oninput="totaltaxinctx(this)"></td>
+                        <td><input type="hidden" class="form-control" id="totdis"></td>
+                        <!-- <td><input type="text" class="form-control" id="totamount"></td> -->
+                      </tr>
+                     
+                      <tr>
+                        <th>Discount:</th>
+                        <td><input type="text" class="form-control" id="discount" name="discount" oninput="totaltaxinctx(this)"></td>
+                        
+                      </tr>
+                      <tr>
+                        <th>Shipping:</th>
+                        <td><input type="text" class="form-control" id="shipping"  name="shipping" oninput="totaltaxinctx(this)"></td>
+                      </tr>
+                      <tr>
+                        <th>Total Including Tax:</th>
+                        <td><input type="text" class="form-control" id="totalIncludingTax" name="totalIncludingTax"></td>
+                        <input type="hidden" id="record_count" name="record_count" value="1">
+                      </tr>
+
+                    </table>
+                  </div>
+                </div>
+                <!-- /.col -->
+              </div>
+              <!-- /.row -->
+
+              <!-- this row will not appear when printing -->
+              <div class="row no-print">
+                <div class="col-12">
+                  <a href="{% url 'invoiceprint'%}" rel="noopener" target="_blank" class="btn btn-default"><i class="fas fa-print"></i> Print</a>
+                  <!-- <button type="button" class="btn btn-success float-right"><i class="far fa-credit-card"></i> Submit
+                    Payment
+                  </button>
+                  <button type="button" class="btn btn-primary float-right" style="margin-right: 5px;">
+                    <i class="fas fa-download"></i> Generate PDF
+                  </button> -->
+                </div>
+              </div>
+            </div>
+            <!-- /.invoice -->
+          </div><!-- /.col -->
+        </div><!-- /.row -->
+
+        <div class="card-footer">
+          <button type="submit" class="btn btn-primary">Submit</button>
+      </div>
+      </form>
+
+      </div><!-- /.container-fluid -->
+    </div>
+    </section>
+    <!-- Add this to your HTML file where you want to include jQuery -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+
+    <!-- /.content -->
+    <script>
+     
+   let treatmentCounter = 0;
+document.getElementById('addBtn').addEventListener('click', function() {
+ 
+ 
+  addRecordSheetRow();
+  
+ 
+});
+
+function addRecordSheetRow() {
+  var inputField = document.getElementById('searchResults');
+  var  selectedValue  =inputField.value;
+  var compamyField = document.getElementById('searchcompany');
+  var  selectedcompanyValue  =compamyField.value;
+  
+  var tbody = document.getElementById('tbody');
+  treatmentCounter++;
+  var newRow = document.createElement('tr');
+  newRow.classList.add('recordsheet');
+  newRow.innerHTML = `
+  <td><input type="text" class="form-control sl" style="width:20px;" name="sl${treatmentCounter}" value="${treatmentCounter}"></td>
+  <td><input type="text" class="form-control company" id="company" name="company${treatmentCounter}" value="${selectedcompanyValue}"></td>
+  
+  <td><input type="text" class="form-control particular" id="particular" name="particular${treatmentCounter}" value="${selectedValue}"></td>
+  <td><textarea class="form-control desc" name="desc${treatmentCounter}"></textarea></td>
+  <td><input type="text" class="form-control quantity" name="quantity${treatmentCounter}" oninput="calculateSubtotal(this)"></td>
+  <td><input type="text" class="form-control amount" name="amount${treatmentCounter}" oninput="calculateSubtotal(this)"></td>
+  <td><input type="text" class="form-control subtotal" name="subtotal${treatmentCounter}" readonly></td>
+  <input type="hidden" name="form-control treatmentCounter" value="${treatmentCounter}">
+  <td><button type="button" class="btn btn-danger" onclick="deleteRow(this)">Delete</button></td>
+  `;
+  tbody.appendChild(newRow);
+  document.getElementById('record_count').value = treatmentCounter;
+}
+// Event listener for the input event on the 'particular' input fields
+
+function calculateSubtotal(inputElement) {
+    var row = inputElement.closest('tr');
+    var quantity = row.querySelector('.quantity').value;
+    
+    var amount = row.querySelector('.amount').value;
+    var subtotal = row.querySelector('.subtotal');
+    // Calculate subtotal and update the subtotal field
+    subtotal.value = (quantity * amount).toFixed(2);
+    updateTotalSubtotal();
+    totaltaxinctx();
+  }
+  function updateTotalSubtotal() {
+  var subtotalElements = document.querySelectorAll('.subtotal');
+  var totalSubtotal = 0;
+  subtotalElements.forEach(function (element) {
+    totalSubtotal += parseFloat(element.value) || 0;
+  });
+  document.getElementById('totsubtoal').value = totalSubtotal.toFixed(2);
+  }
+  function calculatetax() {
+  var totalSubtotal = parseFloat(document.getElementById('totsubtoal').value) || 0;
+  var taxPercentage = parseFloat(document.getElementById('taxperc').value) || 0;
+ 
+  var taxAmount = (totalSubtotal * (taxPercentage / 100)).toFixed(2);
+  var totamount = (totalSubtotal + parseFloat(taxAmount)).toFixed(2);
+  
+  document.getElementById('totdis').value = taxAmount;
+}
+
+ function totaltaxinctx(){
+  var subtotal = parseFloat(document.getElementById('totsubtoal').value) || 0;
+  var taxPercentage = parseFloat(document.getElementById('taxperc').value) || 0;
+ 
+   var taxAmount =(subtotal * (taxPercentage / 100)).toFixed(2);
+   var totamount = (subtotal + parseFloat(taxAmount)).toFixed(2);
+  var shippingAmount = parseFloat(document.getElementById('shipping').value) || 0;
+  var disc=parseFloat(document.getElementById('discount').value) || 0;
+  // var taxAmount = (subtotal * (taxPercentage / 100)).toFixed(2);
+
+  // Calculate the total amount before discount and tax
+  // var totalBeforeDiscountAndTax = subtotal + shippingAmount;
+
+  // Apply discount to the total amount
+  // var totalAfterDiscount = totalBeforeDiscountAndTax - disc;
+
+  // Calculate the total amount including tax
+  // var totalAmount = totalAfterDiscount + taxAmount;
+  var tottax = ( parseFloat(totamount) + parseFloat(shippingAmount) - parseFloat(disc)).toFixed(2);
+  document.getElementById('totalIncludingTax').value = tottax;
+ 
+ }
+ 
+function deleteRow(button) {
+  // Get the row to be deleted
+  var row = button.parentNode.parentNode;
+  
+  // Remove the row
+  row.parentNode.removeChild(row);
+}
+</script>
+
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script>
+      $(document).ready(function () {
+        // Function to update patient name and address based on selected MR Number
+        function updatePatientDetails() {
+          var selectedMrNumber = $("#mrDropdown").val();
+    
+          // Make an AJAX request to fetch patient details
+          $.ajax({
+            type: "GET",
+            url: "{% url 'getmrdetails' %}",  // Update this URL based on your project structure
+            data: { mrNumber: selectedMrNumber },
+            success: function (data) {
+              // Update patient name and address in the text input boxes
+              $("#exampleInputAddress").val(data.Housename);
+              $("#ptname").val(data.Patient_Name);
+              $("#ptphno").val(data.phno);
+              $("#ptemail").val(data.patient_email);
+              
+              // Add similar lines to update other fields if needed
+            },
+            error: function (xhr, status, error) {
+              console.error("Error fetching patient details:", error);
+            },
+          });
+        }
+     $("#mrDropdown").on("change", updatePatientDetails);
+      });
+</script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function() {
+    $('#searchInput').keyup(function() {
+        var query = $(this).val();
+        if (query.length >= 2) {
+            $.ajax({
+                url: "{% url 'search_medicine' %}",
+                data: {
+                    'term': query
+                },
+                dataType: 'json',
+                success: function(data) {
+                    $('#searchResults').empty();
+                    $.each(data, function(index, item) {
+                      
+                     
+                      $('#searchResults').append('<option value="' + item.item_id + '">' + item.item_name + '</option>');
+                   
+                    });
+                }
+            });
+        } else {
+            $('#searchResults').empty();
+        }
+    });
+    // searchmedicine
+    // $('#searchcompanyinput').keyup(function() {
+    //     var query = $(this).val();
+    //     if (query.length >= 2) {
+    //         $.ajax({
+    //             url: "{% url 'search_company' %}",
+    //             data: {
+    //                 'term': query
+    //             },
+    //             dataType: 'json',
+    //             success: function(data) {
+    //                 $('#searchcompany').empty();
+    //                 $.each(data, function(index, item) {
+    //                     $('#searchcompany').append('<option>' + item.name+ '</option>');
+    //                 });
+    //             }
+    //         });
+    //     } else {
+    //         $('#searchcompany').empty();
+    //     }
+    // });
+    // fetch company from selected medicine
+    // $(document).ready(function() {
+   
+
+   
+
+});
+// $('#particular').keyup(function() {
+//         var medicineName = $(this).val();
+//         $.ajax({
+//             url: '/find_quantity/',
+//             type: 'GET',
+//             data: {'medicine_master_id': medicineName},
+//             success: function(data) {
+//                 $.each(data, function(index, item) {
+//                     console.log('Particulars ID: ' + item.particulars_id + ', Quantity: ' + item.quantity);
+//                 });
+//             },
+//             error: function(xhr, status, error) {
+//                 console.error('Error fetching data:', error);
+//             }
+//         });
+//     });
+</script> 
+<script>
+  $(document).ready(function() {
+      $('#searchResults').change(function() {
+          var selectedMedicineId = $(this).val();
+          // AJAX request to fetch corresponding companies
+          $.ajax({
+              url: '/get_companies/' + selectedMedicineId, // Adjust the URL as per your project setup
+              method: 'GET',
+              success: function(data) {
+                  $('#searchcompany').empty(); // Clear previous options
+                  // Populate options based on data received
+                  $.each(data, function(index, company) {
+                   
+                      $('#searchcompany').append($('<option>', {
+                          value: company.id,
+                          text: company.Comapany_name__Comapany_name // Adjust this based on the actual field name
+                      }));
+                  });
+              },
+              error: function(xhr, status, error) {
+                  console.error('Error fetching companies:', error);
+              }
+          });
+      });
+  });
+  </script>
+  
+  
+
+  {%endblock%}
+
+ 
+  $.ajax({
+    url: '/get_companies/' + item.item_id, // Adjust the URL as per your project setup
+    method: 'GET',
+    success: function(data) {
+        $('#searchcompany').empty(); // Clear previous options
+        // Populate options based on data received
+        $.each(data, function(index, company) {
+         
+            $('#searchcompany').append($('<option>', {
+                value: company.id,
+                text: company.Comapany_name__Comapany_name // Adjust this based on the actual field name
+            
+              }));
+             
+           
+        });
+    },
+    error: function(xhr, status, error) {
+        console.error('Error fetching companies:', error);
+    }
+});

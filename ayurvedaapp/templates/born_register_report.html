@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="content-wrapper">
+
+    <!-- Page Header -->
+    <section class="content-header">
+        <div class="container-fluid">
+
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Birth Register Report</h1>
+                </div>
+            </div>
+
+            <!-- Filter Card -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+
+                        <div class="col-lg-3 col-md-6">
+                            <div class="form-group">
+                                <label>From Date</label>
+                                <input type="date" class="form-control">
+                            </div>
+                        </div>
+
+                        <div class="col-lg-3 col-md-6">
+                            <div class="form-group">
+                                <label>To Date</label>
+                                <input type="date" class="form-control">
+                            </div>
+                        </div>
+
+                        <!-- <div class="col-lg-2 col-md-6">
+                            <div class="form-group">
+                                <label>Area</label>
+                                <select class="form-control">
+                                    <option value="">All Areas</option>
+                                    <option>Palakkad</option>
+                                    <option>Olavakode</option>
+                                    <option>Malampuzha</option>
+                                </select>
+                            </div>
+                        </div> -->
+
+                        <div class="col-lg-2 col-md-6">
+                            <div class="form-group">
+                                <label>&nbsp;</label>
+                                <button type="button" class="btn btn-primary btn-block">
+                                    Search
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-2 col-md-6">
+                            <div class="form-group">
+                                <label>&nbsp;</label>
+                                <button type="reset" class="btn btn-secondary btn-block">
+                                    Reset
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <section class="content">
+        <div class="container-fluid">
+
+            <div class="card">
+
+                
+
+                <div class="card-body">
+
+                    <div class="table-responsive">
+
+                        <table
+                            id="example1"
+                            class="table table-bordered table-striped table-sm"
+                            style="width:100%"
+                        >
+                            <thead>
+                                <tr>
+                                    <th>OP Number</th>
+                                    <th>Patient Name</th>
+                                    <th>Birth Time</th>
+                                    <th>Weight</th>
+                                    <th>Mother OP</th>
+                                    <th>Address</th>
+                                    <th>Sex</th>
+                                    <th>Area</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                <tr>
+                                    <td>OP-2026-001</td>
+                                    <td>RASHIDHA.M</td>
+                                    <td>14:30:00</td>
+                                    <td>3.2 Kg</td>
+                                    <td>OP-2025-089</td>
+                                    <td>PUTTING ON A BLACK GOWN</td>
+                                    <td>Female</td>
+                                    <td>Palakkad</td>
+                                </tr>
+
+                                <tr>
+                                    <td>OP-2026-002</td>
+                                    <td>HEMALATHA.K</td>
+                                    <td>09:15:00</td>
+                                    <td>2.8 Kg</td>
+                                    <td>OP-2025-092</td>
+                                    <td>W/O MANIKANDAN</td>
+                                    <td>Female</td>
+                                    <td>Olavakode</td>
+                                </tr>
+
+                                
+
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    </section>
+
+</div>
+
+{% endblock %}

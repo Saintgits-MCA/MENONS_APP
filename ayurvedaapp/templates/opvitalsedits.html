@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Daily Reports Details</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="{% url 'opvitalstable' %}">View All</a></li>
+              <li class="breadcrumb-item active">Daily Reports</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+      <!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="row">
+        <div class="col-md-12">
+          <div class="card card-primary">
+            <div class="card-header">
+              <h3 class="card-title">Daily Reports Details</h3>
+              <div class="card-tools">
+                <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse"></button>
+              </div>
+            </div>
+
+            <form method="POST" action="{% url 'opvitals' %}">
+              {% csrf_token %}
+
+              <div class="card">
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label for="exampleInputRegisterNo">Current Date</label>
+                        <input type="text" class="form-control" name="currentdate" id="exampleInputdate" value="{{ currentdate|date:'d-m-Y' }}" readonly>
+                      </div>
+
+                      <div class="form-group">
+                        <label for="exampleInputPincode">MR Number</label>
+                        <select class="form-control" name="mrnum" id="mrDropdown">
+                          <option selected>Select</option>
+                          {% for i in mrnoobj %}
+                            <option value="{{ i.id }}">{{ i.Medical_Record_Number }}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+
+                      <div class="form-group">
+                        <label for="exampleInputEmail1">Name</label>
+                     
+                        <input type="text" class="form-control" name="ptname"  id="ptname">
+                      </div>
+
+                      <div class="form-group">
+                        <label for="exampleInputEmail1">Phno</label>
+                        <input type="text" name="ptphno" class="form-control" id="ptphno">
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="row">
+                    <div class="col-md-12">
+                      <table id="example1" class="table table-bordered table-striped">
+                        <thead>
+                          <tr>
+                            <th>SL No</th>
+                            <th>Test/Particulars</th>
+                            <th>Value</th>
+                            <th>Normal Value</th>
+                            <th>
+                              <button type="button" style="width:60px;height: 40px;" class="btn btn-primary" id="addBtn">Add</button>
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody id="tbody">
+                         
+                          <tr class="recordsheet"></tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card-footer">
+                  {% if messages %}
+                    {% for message in messages %}
+                      <p style="color:green;">{{ message }}</p>
+                    {% endfor %}
+                  {% endif %}
+                  <button type="submit" class="btn btn-primary">Submit</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- /.content -->
+  </div>
+  <!-- /.content-wrapper -->
+
+  <script>
+    $(document).ready(function () {
+      // Function to update patient name and address based on selected MR Number
+      function updatePatientDetails() {
+        var selectedMrNumber = $("#mrDropdown").val();
+  
+        // Make an AJAX request to fetch patient details
+        $.ajax({
+          type: "GET",
+          url: "{% url 'getmrdetails' %}",  // Update this URL based on your project structure
+          data: { mrNumber: selectedMrNumber },
+          success: function (data) {
+            // Update patient name and address in the text input boxes
+            $("#exampleInputAddress").val(data.Housename);
+            $("#ptname").val(data.Patient_Name);
+            $("#ptphno").val(data.phno);
+            $("#ptemail").val(data.patient_email);
+            // Add similar lines to update other fields if needed
+          },
+          error: function (xhr, status, error) {
+            console.error("Error fetching patient details:", error);
+          },
+        });
+      }
+
+      $("#mrDropdown").on("change", updatePatientDetails);
+    });
+
+    let treatmentCounter = 0;
+
+    document.getElementById('addBtn').addEventListener('click', function() {
+      addRecordSheetRow();
+    });
+
+    function addRecordSheetRow() {
+      var tbody = document.getElementById('tbody');
+      treatmentCounter++;
+      var newRow = document.createElement('tr');
+      newRow.classList.add('recordsheet');
+  
+      newRow.innerHTML = `
+        <td><input type="text" class="form-control sl" name="sl${treatmentCounter}" value="${treatmentCounter}"></td>
+        <td><input type="text" class="form-control particular" name="particular${treatmentCounter}"></td>
+        <td><input type="text" class="form-control un" name="value${treatmentCounter}"></td>
+        <td><input type="text" class="form-control hsn" name="normalvalue${treatmentCounter}"></td>
+        <td><button type="button" class="btn btn-danger remove-item">Remove</button></td>
+      `;
+      tbody.appendChild(newRow);
+      document.getElementById('record_count').value = treatmentCounter;
+  
+      // Function to remove a row from the table
+      $("table").on("click", ".remove-item", function () {
+        var row = $(this).closest("tr");
+        row.remove();
+      });
+    }
+  </script>
+{% endblock %}

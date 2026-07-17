@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="content-wrapper">
+
+  <!-- Page Header -->
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Admission Discharge Bill Register</h1>
+        </div>
+      </div>
+
+      <!-- Filter Card -->
+      <div class="card">
+        <div class="card-body">
+          <form method="GET" action="">
+            <div class="row">
+
+              <div class="col-lg-3 col-md-6">
+                <div class="form-group">
+                  <label>From Date</label>
+                  <input type="date" class="form-control" name="from_date" value="{{ from_date|default:'' }}">
+                </div>
+              </div>
+
+              <div class="col-lg-3 col-md-6">
+                <div class="form-group">
+                  <label>To Date</label>
+                  <input type="date" class="form-control" name="to_date" value="{{ to_date|default:'' }}">
+                </div>
+              </div>
+
+              <div class="col-lg-2 col-md-6">
+                <div class="form-group">
+                  <label>Doctor Name</label>
+                  <select class="form-control" name="doctor">
+                    <option value="">All Doctors</option>
+                    {% for doctor in doctors %}
+                      <option value="{{ doctor.id }}" {% if doctor.id|stringformat:"s" == doctor_name %}selected{% endif %}>
+                        {{ doctor.name }}
+                      </option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+
+              <div class="col-lg-2 col-md-6">
+                <div class="form-group">
+                  <label>&nbsp;</label>
+                  <button type="submit" class="btn btn-primary btn-block">
+                    <i class="fas fa-search mr-1"></i> Search
+                  </button>
+                </div>
+              </div>
+
+              <div class="col-lg-2 col-md-6">
+                <div class="form-group">
+                  <label>&nbsp;</label>
+                  <a href="{% url 'admission_discharge_bill_register' %}" class="btn btn-secondary btn-block">
+                    <i class="fas fa-undo mr-1"></i> Reset
+                  </a>
+                </div>
+              </div>
+
+            </div>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Main Content -->
+  <section class="content">
+    <div class="container-fluid">
+
+      <div class="card">
+        <div class="card-body">
+
+          <!-- Register Title -->
+          <div class="row mb-3">
+            <div class="col-md-10">
+              <h5 class="font-weight-bold mb-0">
+                ADMISSION-DISCHARGE-BILL REGISTER {% if display_from_date or display_to_date %} FOR THE PERIOD FROM
+                    {{ display_from_date|default:"-" }} TO {{ display_to_date|default:"-" }}{% endif %}
+              </h5>
+            </div>
+          </div>
+
+          <!-- Register Table -->
+          <table
+            id="example1"
+            class="table table-bordered table-striped table-sm"
+            style="width:100%;"
+          >
+            <thead>
+              <tr>
+                <th>SL No.</th>
+                <th>IP No</th>
+                <th>Adm.Date</th>
+                <th>Patient</th>
+                <th>Room</th>
+                <th>Dis.Date</th>
+                <th>Bill No</th>
+                {% comment %} <th>Action</th> {% endcomment %}
+              </tr>
+            </thead>
+
+            <tbody>
+              {% for bill in bills %}
+              <tr>
+                <td>{{forloop.counter}}</td>
+                <td>{{ bill.ip_number }}</td>
+                <td>
+                  {{ bill.admission_date|date:"d/m/Y"|default:"-" }}<br>
+                  <small>{{ bill.admission_time|time:"H:i:s"|default:"-" }}</small>
+                </td>
+                <td>
+                  {{ bill.patient_name }}<br>
+                  <small>{{ bill.patient_address|default:"-" }}</small>
+                </td>
+                <td>{{ bill.room }}</td>
+                <td>{{ bill.discharge_date|date:"d/m/Y"|default:"-" }}</td>
+                <td>{{ bill.bill_no }}</td>
+                {% comment %} <td>
+                  <a href="{% url 'edit_ip_bill' bill.id %}" title="Edit">
+                    <img src="{% static 'assets/dist/img/icons/edit.svg' %}" width="20" />
+                  </a>
+                  <a href="{% url 'delete_ip_bill' bill.id %}" onclick="return confirm('Delete this record?');" title="Delete">
+                    <img src="{% static 'assets/dist/img/icons/delete.svg' %}" width="20" />
+                  </a>
+                </td> {% endcomment %}
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="7" class="text-center">No admission discharge bill records found.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</div>
+
+{% endblock %}

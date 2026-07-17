@@ -1,0 +1,788 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="content-wrapper">
+    <!-- Content Header -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Inventory Issue Note</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'inventory_issue_note_list' %}?menumanagement_id={{ idmngmnt }}">GIN List</a>
+                        </li>
+                        <li class="breadcrumb-item active">Create GIN</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title">Create New Inventory Issue Note</h3>
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                <!-- <i class="fas fa-minus"></i> -->
+                            </button>
+                        </div>
+                    </div>
+                    <form id="ginForm" method="POST" action="{% url 'inventory_issue_note_create' %}?menumanagement_id={{ idmngmnt }}">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <!-- GIN Header -->
+                                        <div class="form-group">
+                                            <label>GIN Number</label>
+                                            <input type="text" class="form-control" value="{{ gin_number }}" disabled>
+                                            <input type="hidden" name="gin_number" value="{{ gin_number }}">
+                                        </div>
+                                        <div class="form-group">
+                                            <label>GIN Date</label>
+                                            <input type="date" class="form-control" name="gin_date" value="{{ today|date:'Y-m-d' }}">
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Branch</label>
+                                            <input type="text" class="form-control" value="{{ branch.Branch_Name|default:'Not Assigned' }}" disabled>
+                                            <input type="hidden" name="branch" value="{{ branch_id }}">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <!-- Department & Staff -->
+                                        <div class="form-group">
+                                            <label>Department <span class="text-danger">*</span></label>
+                                            <select name="department" id="departmentSelect" class="form-control" required>
+                                                <option value="">Select Department</option>
+                                                {% for dept in departments %}
+                                                <option value="{{ dept.id }}">{{ dept.Department_Name }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Staff <span class="text-danger">*</span></label>
+                                            <select name="staff" id="staffSelect" class="form-control" required>
+                                                <option value="">Select Staff</option>
+                                            </select>
+                                            <small class="text-muted">Staff will load based on selected department</small>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Invoice / Reference No</label>
+                                            <input type="text" class="form-control" name="reference_no" placeholder="Enter Reference Number">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Items Section -->
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h3 class="card-title">Issue Items</h3>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered table-striped" id="itemsTable">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Item Name *</th>
+                                                        <th>Company</th>
+                                                        <th>Supplier</th>
+                                                        <th>Qty *</th>
+                                                        <th>Unit *</th>
+                                                        <th class="d-none">Rate *</th>
+                                                        <th class="d-none">Tax %</th>
+                                                        <th>MFG Date</th>
+                                                        <th>Expiry Date</th>
+                                                        <th>Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="itemsBody">
+                                                    <tr>
+                                                        <td>
+                                                            <select class="form-control item-select" name="item_id_1" required>
+                                                                <option value="">Select Item</option>
+                                                                {% for item in items %}
+                                                                <option value="{{ item.id }}">{{ item.itemnm }}</option>
+                                                                {% endfor %}
+                                                            </select>
+                                                            <input type="hidden" class="item-name-hidden" name="item_name_1">
+                                                            <input type="hidden" class="batch-no-input" name="batch_no_1">
+                                                        </td>
+                                                        <td>
+                                                            <select class="form-control company-select" name="company_1">
+                                                                <option value="">Select Company</option>
+                                                                {% for company in companies %}
+                                                                <option value="{{ company.id }}">{{ company.Comapany_name }}</option>
+                                                                {% endfor %}
+                                                            </select>
+                                                        </td>
+                                                        <td>
+                                                            <select class="form-control supplier-select" name="supplier_1">
+                                                                <option value="">Select Supplier</option>
+                                                                {% for supplier in suppliers %}
+                                                                <option value="{{ supplier.id }}">{{ supplier.shopname }}</option>
+                                                                {% endfor %}
+                                                            </select>
+                                                        </td>
+                                                        <td>
+                                                            <input type="number" class="form-control qty-input" name="quantity_1" min="1" value="1" required>
+                                                            <small class="qty-error text-danger" style="display:none;">Quantity must be at least 1</small>
+                                                        </td>
+                                                        <td>
+                                                            <select class="form-control unit-select" name="unit_1" required>
+                                                                <option value="">Select Unit</option>
+                                                                {% for unit in units %}
+                                                                <option value="{{ unit.id }}">{{ unit.unitname }}</option>
+                                                                {% endfor %}
+                                                            </select>
+                                                        </td>
+                                                        <td class="d-none"><input type="number" step="0.01" class="form-control rate-input d-none" name="rate_1" required></td>
+                                                        <td class="d-none"><input type="number" step="0.01" class="form-control tax-input d-none" name="tax_1" value="0"></td>
+                                                        <td><input type="date" class="form-control mfg-date" name="mfg_date_1"></td>
+                                                        <td><input type="date" class="form-control expiry-date" name="expiry_date_1"></td>
+                                                        <td>
+                                                            <button type="button" class="btn btn-danger btn-sm remove-item" disabled>
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                                <tfoot>
+                                                    <tr>
+                                                        <td colspan="10">
+                                                            <button type="button" class="btn btn-success btn-sm" id="addItemBtn">
+                                                                <i class="fas fa-plus"></i> Add Item
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                </tfoot>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <input type="hidden" name="item_count" id="itemCountInput" value="1">
+
+                        <!-- Summary -->
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <label>Total Quantity</label>
+                                                    <input type="text" class="form-control" id="totalQuantity" value="0.00" readonly>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4 d-none">
+                                                <div class="form-group">
+                                                    <label>Sub Total</label>
+                                                    <input type="text" class="form-control" id="subTotal" value="0.00" readonly>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4 d-none">
+                                                <div class="form-group">
+                                                    <label>Total Tax Amount</label>
+                                                    <input type="text" class="form-control" id="totalTax" value="0.00" readonly>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Remarks</label>
+                                            <textarea class="form-control" name="remarks" rows="2" placeholder="Enter remarks (optional)"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-footer">
+                            {% if messages %}
+                                {% for message in messages %}
+                                    <p style="color:green;">{{ message }}</p>
+                                {% endfor %}
+                            {% endif %}
+                            <button type="submit" class="btn btn-primary" id="submitBtn">
+                                <i class="fas fa-save"></i> Create GIN
+                            </button>
+                            <a href="{% url 'inventory_issue_note_list' %}?menumanagement_id={{ idmngmnt }}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script>
+var itemCount = 1;
+
+// ============================================
+// CHECK FOR DUPLICATE ITEMS
+// ============================================
+function checkDuplicateItem(row) {
+    var currentItemId = row.find('.item-select').val();
+    var currentCompanyId = row.find('.company-select').val();
+    var currentSupplierId = row.find('.supplier-select').val();
+    
+    if (!currentItemId || !currentCompanyId || !currentSupplierId) {
+        return true;
+    }
+    
+    var isDuplicate = false;
+    var duplicateRow = null;
+    
+    $('#itemsBody tr').each(function() {
+        var rowItemId = $(this).find('.item-select').val();
+        var rowCompanyId = $(this).find('.company-select').val();
+        var rowSupplierId = $(this).find('.supplier-select').val();
+        
+        if ($(this)[0] === row[0]) {
+            return true;
+        }
+        
+        if (rowItemId == currentItemId && 
+            rowCompanyId == currentCompanyId && 
+            rowSupplierId == currentSupplierId) {
+            isDuplicate = true;
+            duplicateRow = $(this);
+            return false;
+        }
+    });
+    
+    if (isDuplicate) {
+        var itemName = row.find('.item-select option:selected').text();
+        var companyName = row.find('.company-select option:selected').text();
+        var supplierName = row.find('.supplier-select option:selected').text();
+        
+        row.find('.duplicate-error').remove();
+        row.find('.item-select').after(
+            '<small class="duplicate-error text-danger">⚠️ Duplicate item! "' + 
+            itemName + '" with "' + companyName + '" and "' + supplierName + 
+            '" already exists in row ' + (duplicateRow.index() + 1) + '</small>'
+        );
+        row.find('.item-select, .company-select, .supplier-select').css('border-color', '#dc3545');
+        return false;
+    } else {
+        row.find('.duplicate-error').remove();
+        row.find('.item-select, .company-select, .supplier-select').css('border-color', '');
+        return true;
+    }
+}
+
+// ============================================
+// VALIDATE QUANTITY (Min 1)
+// ============================================
+function validateQuantity(row) {
+    var qtyInput = row.find('.qty-input');
+    var qtyError = row.find('.qty-error');
+    var qty = parseInt(qtyInput.val()) || 0;
+    
+    if (qty < 1) {
+        qtyInput.css('border-color', '#dc3545');
+        qtyError.show();
+        return false;
+    } else {
+        qtyInput.css('border-color', '');
+        qtyError.hide();
+        return true;
+    }
+}
+
+// ============================================
+// DEPARTMENT → STAFF AJAX
+// ============================================
+$(document).ready(function() {
+    $('#departmentSelect').on('change', function() {
+        var departmentId = $(this).val();
+        var staffSelect = $('#staffSelect');
+        
+        staffSelect.find('option:not(:first)').remove();
+        staffSelect.val('');
+        
+        if (!departmentId) {
+            return;
+        }
+        
+        staffSelect.append('<option value="" disabled>Loading staff...</option>');
+        
+        $.ajax({
+            url: '/get_staff_by_department_ajax/',
+            type: 'GET',
+            data: {
+                department_id: departmentId
+            },
+            dataType: 'json',
+            success: function(response) {
+                staffSelect.find('option[disabled]').remove();
+                
+                if (response.length > 0) {
+                    $.each(response, function(index, staff) {
+                        staffSelect.append('<option value="' + staff.id + '">' + staff.name + '</option>');
+                    });
+                } else {
+                    staffSelect.append('<option value="" disabled>No staff found in this department</option>');
+                }
+            },
+            error: function() {
+                staffSelect.find('option[disabled]').remove();
+                staffSelect.append('<option value="" disabled>Error loading staff</option>');
+            }
+        });
+    });
+});
+
+// ============================================
+// GET INVENTORY STOCK DETAILS - KEEP OPTIONS
+// ============================================
+$(document).on('change', '.item-select', function() {
+    var select = $(this);
+    var row = select.closest('tr');
+    var itemId = select.val();
+    var branchId = '{{ branch_id }}';
+    
+    row.find('.stock-info').remove();
+    row.find('.qty-input').css('border-color', '');
+    row.find('.duplicate-error').remove();
+    row.find('.item-select, .company-select, .supplier-select').css('border-color', '');
+    
+    if (!itemId) {
+        clearRow(row);
+        return;
+    }
+    
+    $.ajax({
+        url: '/get-inventory-stock/',
+        data: {
+            item_id: itemId,
+            branch_id: branchId
+        },
+        dataType: 'json',
+        success: function(data) {
+            if (data.success) {
+                row.find('.item-name-hidden').val(data.item_name);
+                
+                // Update company dropdown - ADD NEW OPTIONS, KEEP EXISTING
+                var companySelect = row.find('.company-select');
+                var existingCompanyIds = {};
+                companySelect.find('option').each(function() {
+                    if ($(this).val()) {
+                        existingCompanyIds[$(this).val()] = true;
+                    }
+                });
+                
+                $.each(data.batches, function(index, batch) {
+                    if (batch.company_id && !existingCompanyIds[batch.company_id]) {
+                        companySelect.append('<option value="' + batch.company_id + '">' + batch.company_name + '</option>');
+                        existingCompanyIds[batch.company_id] = true;
+                    }
+                });
+                
+                // Update supplier dropdown - ADD NEW OPTIONS, KEEP EXISTING
+                var supplierSelect = row.find('.supplier-select');
+                var existingSupplierIds = {};
+                supplierSelect.find('option').each(function() {
+                    if ($(this).val()) {
+                        existingSupplierIds[$(this).val()] = true;
+                    }
+                });
+                
+                $.each(data.batches, function(index, batch) {
+                    if (batch.supplier_id && !existingSupplierIds[batch.supplier_id]) {
+                        supplierSelect.append('<option value="' + batch.supplier_id + '">' + batch.supplier_name + '</option>');
+                        existingSupplierIds[batch.supplier_id] = true;
+                    }
+                });
+                
+                // Update unit dropdown - ADD NEW OPTIONS, KEEP EXISTING
+                var unitSelect = row.find('.unit-select');
+                var existingUnitIds = {};
+                unitSelect.find('option').each(function() {
+                    if ($(this).val()) {
+                        existingUnitIds[$(this).val()] = true;
+                    }
+                });
+                
+                $.each(data.batches, function(index, batch) {
+                    if (batch.unit_id && !existingUnitIds[batch.unit_id]) {
+                        unitSelect.append('<option value="' + batch.unit_id + '">' + batch.unit_name + '</option>');
+                        existingUnitIds[batch.unit_id] = true;
+                    }
+                });
+                
+                row.data('batches', data.batches);
+                
+                // Auto-select if only one batch
+                if (data.batches.length === 1) {
+                    var batch = data.batches[0];
+                    row.find('.company-select').val(batch.company_id);
+                    row.find('.supplier-select').val(batch.supplier_id);
+                    row.find('.unit-select').val(batch.unit_id);
+                    row.find('.rate-input').val(batch.rate);
+                    row.find('.tax-input').val(batch.tax_percentage);
+                    row.find('.mfg-date').val(batch.mfg_date);
+                    row.find('.expiry-date').val(batch.expiry_date);
+                    row.find('.batch-no-input').val(batch.batch_no);
+                    
+                    // Trigger stock check after auto-select
+                    checkStockAvailability(row);
+                    calculateTotals();
+                }
+            }
+        }
+    });
+});
+
+// ============================================
+// CHECK STOCK AVAILABILITY - ON ANY CHANGE
+// ============================================
+function checkStockAvailability(row) {
+    var itemId = row.find('.item-select').val();
+    var companyId = row.find('.company-select').val();
+    var supplierId = row.find('.supplier-select').val();
+    var batchNo = row.find('.batch-no-input').val();
+    var quantity = parseInt(row.find('.qty-input').val()) || 0;
+    var branchId = '{{ branch_id }}';
+    
+    row.find('.stock-info').remove();
+    row.find('.qty-input').css('border-color', '');
+    
+    // ✅ Only check stock if quantity is valid (>0)
+    if (!itemId || !batchNo || quantity <= 0) {
+        return;
+    }
+    
+    var qtyInput = row.find('.qty-input');
+    qtyInput.css('border-color', '#ffc107');
+    
+    $.ajax({
+        url: '/check-inventory-stock/',
+        data: {
+            item_id: itemId,
+            company_id: companyId,
+            supplier_id: supplierId,
+            batch_no: batchNo,
+            quantity: quantity,
+            branch_id: branchId
+        },
+        dataType: 'json',
+        success: function(response) {
+            qtyInput.css('border-color', '');
+            
+            // ✅ Validate quantity after stock check (min 1)
+            if (!validateQuantity(row)) {
+                return;
+            }
+            
+            if (response.available) {
+                qtyInput.css('border-color', '#28a745');
+                row.find('.qty-input').after(
+                    '<small class="stock-info text-success">✅ ' + response.message + 
+                    ' (' + response.available_qty + ' units available)</small>'
+                );
+            } else {
+                qtyInput.css('border-color', '#dc3545');
+                row.find('.qty-input').after(
+                    '<small class="stock-info text-danger">❌ ' + response.message + '</small>'
+                );
+            }
+        },
+        error: function() {
+            qtyInput.css('border-color', '#ffc107');
+        }
+    });
+}
+
+// ============================================
+// TRIGGER STOCK CHECK ON ANY FIELD CHANGE
+// ============================================
+// When item changes
+$(document).on('change', '.item-select', function() {
+    var row = $(this).closest('tr');
+    checkDuplicateItem(row);
+    // Stock check will be triggered after batch loads
+});
+
+// When company changes
+$(document).on('change', '.company-select', function() {
+    var row = $(this).closest('tr');
+    checkDuplicateItem(row);
+    
+    var companyId = row.find('.company-select').val();
+    var supplierId = row.find('.supplier-select').val();
+    var batches = row.data('batches') || [];
+    
+    var matchedBatch = null;
+    $.each(batches, function(index, batch) {
+        if ((!companyId || batch.company_id == companyId) && 
+            (!supplierId || batch.supplier_id == supplierId)) {
+            matchedBatch = batch;
+            return false;
+        }
+    });
+    
+    if (matchedBatch) {
+        row.find('.rate-input').val(matchedBatch.rate);
+        row.find('.mfg-date').val(matchedBatch.mfg_date);
+        row.find('.expiry-date').val(matchedBatch.expiry_date);
+        row.find('.batch-no-input').val(matchedBatch.batch_no);
+        row.find('.tax-input').val(matchedBatch.tax_percentage);
+    }
+    
+    checkStockAvailability(row);
+});
+
+// When supplier changes
+$(document).on('change', '.supplier-select', function() {
+    var row = $(this).closest('tr');
+    checkDuplicateItem(row);
+    
+    var companyId = row.find('.company-select').val();
+    var supplierId = row.find('.supplier-select').val();
+    var batches = row.data('batches') || [];
+    
+    var matchedBatch = null;
+    $.each(batches, function(index, batch) {
+        if ((!companyId || batch.company_id == companyId) && 
+            (!supplierId || batch.supplier_id == supplierId)) {
+            matchedBatch = batch;
+            return false;
+        }
+    });
+    
+    if (matchedBatch) {
+        row.find('.rate-input').val(matchedBatch.rate);
+        row.find('.mfg-date').val(matchedBatch.mfg_date);
+        row.find('.expiry-date').val(matchedBatch.expiry_date);
+        row.find('.batch-no-input').val(matchedBatch.batch_no);
+        row.find('.tax-input').val(matchedBatch.tax_percentage);
+    }
+    
+    checkStockAvailability(row);
+});
+
+// When unit changes
+$(document).on('change', '.unit-select', function() {
+    var row = $(this).closest('tr');
+    checkStockAvailability(row);
+});
+
+// ✅ When quantity changes - validate AND check stock
+$(document).on('input', '.qty-input', function() {
+    var row = $(this).closest('tr');
+    
+    // ✅ Validate quantity (min 1)
+    validateQuantity(row);
+    
+    // ✅ Calculate totals
+    calculateTotals();
+    
+    // ✅ Check stock only if quantity is valid
+    var qty = parseInt($(this).val()) || 0;
+    if (qty > 0) {
+        checkStockAvailability(row);
+    } else {
+        // Remove stock info if quantity is invalid
+        row.find('.stock-info').remove();
+        row.find('.qty-input').css('border-color', '#dc3545');
+    }
+});
+
+// ✅ When rate changes - recalculate totals
+$(document).on('input', '.rate-input', function() {
+    calculateTotals();
+});
+
+// ✅ When tax changes - recalculate totals
+$(document).on('input', '.tax-input', function() {
+    calculateTotals();
+});
+
+// When batch number changes (manual entry)
+$(document).on('input', '.batch-no-input', function() {
+    var row = $(this).closest('tr');
+    var qty = parseInt(row.find('.qty-input').val()) || 0;
+    if (qty > 0) {
+        checkStockAvailability(row);
+    }
+});
+
+// ============================================
+// ADD ITEM ROW - With Full Options
+// ============================================
+$('#addItemBtn').click(function() {
+    itemCount++;
+    var newRow = $('#itemsBody tr:first').clone();
+    
+    // Update row index in names
+    newRow.find('[name]').each(function() {
+        var name = $(this).attr('name');
+        if (name) {
+            var newName = name.replace(/\d+$/, itemCount);
+            $(this).attr('name', newName);
+        }
+    });
+    
+    // Reset values but KEEP ALL OPTIONS
+    newRow.find('select').each(function() {
+        $(this).val('');
+    });
+    newRow.find('input').each(function() {
+        if ($(this).attr('type') !== 'hidden') {
+            $(this).val('');
+        }
+    });
+    newRow.find('.qty-input').val('1'); // Set default quantity to 1
+    newRow.find('.item-name-hidden').val('');
+    newRow.find('.batch-no-input').val('');
+    newRow.find('.tax-input').val('0');
+    newRow.find('.qty-input').css('border-color', '');
+    newRow.find('.stock-info').remove();
+    newRow.find('.duplicate-error').remove();
+    newRow.find('.qty-error').hide();
+    
+    newRow.find('.remove-item').prop('disabled', false);
+    
+    $('#itemsBody').append(newRow);
+    $('#itemCountInput').val(itemCount);
+});
+
+// ============================================
+// REMOVE ITEM ROW
+// ============================================
+$(document).on('click', '.remove-item', function() {
+    if ($('#itemsBody tr').length > 1) {
+        $(this).closest('tr').remove();
+        calculateTotals();
+        var remainingRows = $('#itemsBody tr').length;
+        $('#itemCountInput').val(remainingRows);
+        itemCount = remainingRows;
+    } else {
+        alert('At least one item is required');
+    }
+});
+
+// ============================================
+// CALCULATE TOTALS - FIXED
+// ============================================
+function calculateTotals() {
+    var totalQty = 0;
+    var subTotal = 0;
+    var totalTax = 0;
+    
+    $('#itemsBody tr').each(function() {
+        var qty = parseFloat($(this).find('.qty-input').val()) || 0;
+        var rate = parseFloat($(this).find('.rate-input').val()) || 0;
+        var tax = parseFloat($(this).find('.tax-input').val()) || 0;
+        
+        // ✅ Only add valid quantities and rates
+        if (qty > 0 && rate > 0) {
+            var amount = qty * rate;
+            var taxAmount = (amount * tax) / 100;
+            
+            totalQty += qty;
+            subTotal += amount;
+            totalTax += taxAmount;
+        }
+    });
+    
+    $('#totalQuantity').val(totalQty.toFixed(2));
+    $('#subTotal').val(subTotal.toFixed(2));
+    $('#totalTax').val(totalTax.toFixed(2));
+}
+
+// ============================================
+// AUTO-CALCULATE ON INPUT CHANGE
+// ============================================
+$(document).on('input', '.qty-input, .rate-input, .tax-input', function() {
+    calculateTotals();
+});
+
+// ============================================
+// CLEAR ROW
+// ============================================
+function clearRow(row) {
+    row.find('select').each(function() {
+        $(this).val('');
+    });
+    row.find('.rate-input, .mfg-date, .expiry-date, .batch-no-input, .item-name-hidden').val('');
+    row.find('.qty-input').val('1');
+    row.find('.tax-input').val('0');
+    row.find('.qty-input').css('border-color', '');
+    row.find('.stock-info').remove();
+    row.find('.duplicate-error').remove();
+    row.find('.qty-error').hide();
+}
+
+// ============================================
+// FORM SUBMIT VALIDATION
+// ============================================
+$('#ginForm').on('submit', function(e) {
+    var isValid = true;
+    var hasItems = false;
+    
+    // Check all quantity fields
+    $('#itemsBody tr').each(function() {
+        var row = $(this);
+        var qty = parseInt(row.find('.qty-input').val()) || 0;
+        var itemId = row.find('.item-select').val();
+        
+        if (itemId && itemId !== '') {
+            hasItems = true;
+            if (qty < 1) {
+                isValid = false;
+                row.find('.qty-input').css('border-color', '#dc3545');
+                row.find('.qty-error').show();
+            }
+        }
+    });
+    
+    if (!hasItems) {
+        e.preventDefault();
+        alert('Please add at least one item.');
+        return false;
+    }
+    
+    if (!isValid) {
+        e.preventDefault();
+        alert('Please ensure all quantities are at least 1.');
+        return false;
+    }
+});
+
+// ============================================
+// INITIALIZE ITEM COUNT ON PAGE LOAD
+// ============================================
+$(document).ready(function() {
+    var initialRows = $('#itemsBody tr').length;
+    $('#itemCountInput').val(initialRows);
+    itemCount = initialRows;
+    
+    // Initial calculation
+    calculateTotals();
+});
+</script>
+{% endblock %}

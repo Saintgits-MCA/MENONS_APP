@@ -1,0 +1,337 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<body>
+    <div class="content-wrapper">
+        <!-- Content Header (Page header) -->
+        <section class="content-header">
+            <div class="container-fluid">
+                <div class="row mb-2">
+                    <div class="col-sm-6">
+                        <h1>Prescription</h1>
+                    </div>
+                    <div class="col-sm-6">
+                        <ol class="breadcrumb float-sm-right">
+                            <li class="breadcrumb-item"><a href="#">Home</a></li>
+                            <li class="breadcrumb-item active">Prescription</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="content">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-md-12 displaydate" style="overflow-y: auto; max-height: 300px;">
+                        <div id="popup" style="display: none;">
+                            <div id="popupContent"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <form method="POST" action="{% url 'saveprescription' %}?menumanagement_id={{ idmngmnt }}">
+                    {% csrf_token %}
+                    <div class="row p-3">
+                        <div class="col-md-12">
+                            <div class="card">
+                                <div class="scroll">
+                                    <div class="card-body">
+                                        <div class="col-md-6">
+                                            <address>
+                                               
+                                                <div class="form-group">
+                                                    <label for="mrSearch">MR Number</label>
+                                                    <input type="text" id="mrSearch" class="form-control" placeholder="Type MR Number">
+                                                    <select class="form-control" name="mrnum" id="mrDropdown" required>
+                                                      <option selected disabled value="">Select</option>
+                                                    </select>
+                                                  </div>
+                                                <label>Name</label>
+                                                <input type="text" class="form-control" name="ptname" id="ptname">
+                                                <label>Phone:</label>
+                                                <input type="text" name="ptphno" class="form-control" id="ptphno">
+                                            </address>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-sm-3">
+                                                <button type="button" class="btn btn-info" onclick="viewPreviousPrescriptions($('#mrDropdown').val())">View Previous Prescriptions</button>
+                                            </div>
+                                            <div class="col-sm-3">
+                                                <button type="button" class="btn btn-info" data-toggle="modal" data-target="#caseHistoryModal" onclick="viewcasehistory($('#mrDropdown').val())">View Case History</button>
+                                            </div>
+                                            <div class="col-sm-3">
+                                                <button type="button" class="btn btn-info" data-toggle="modal" data-target="#dailyreportModal" onclick="viewdailyreport($('#mrDropdown').val())">View Reports</button>
+                                            </div>
+                                        </div>
+
+                                        <table class="table table-bordered">
+                                            <thead>
+                                                <tr>
+                                                    <th>Sl. No</th>
+                                                    <th>Medicine Name
+                                                        <input type="text" class="form-control" id="searchInput" placeholder="Search for medicine...">
+                                                        <select class="form-control" name="particulars" id="searchResults">
+                                                            <option selected>Select</option>
+                                                        </select>
+                                                        
+                
+                                                    </th>
+                                                    <th>Dosage</th>
+                                                    <th>Directions</th>
+                                                    <input type="hidden" id="record_count" name="record_count" value="1">
+                                                    <th>
+                                                        <button type="button" style="width:60px;height: 40px;" class="btn btn-primary" id="addBtn">Add</button>
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="tbody">
+                                                <tr class="recordsheet"></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="card-footer">
+                                    <button type="submit" class="btn btn-primary">Submit</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </section>
+    </div>
+
+    <!-- Case History Modal -->
+    <div class="modal fade" id="caseHistoryModal" tabindex="-1" aria-labelledby="caseHistoryModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="caseHistoryModalLabel">Case History</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="caseHistoryContent"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="dailyreportModal" tabindex="-1" aria-labelledby="dailyreportLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="dailyreportLabel">dailyreport</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="dailyreportContent"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script>
+     $(document).ready(function () {
+    $('#mrSearch').on('input', function() {
+      var query = $(this).val();
+      if (query.length >= 2) {  // Start searching after 2 characters
+        $.ajax({
+          type: 'GET',
+          url: "{% url 'search_mrno' %}",
+          data: { query: query },
+          success: function(data) {
+            var dropdown = $('#mrDropdown');
+            dropdown.empty();
+            if (data.length > 0) {
+              data.forEach(function(item) {
+                dropdown.append('<option value="' + item.id + '">' + item.Medical_Record_Number + '</option>');
+              });
+              dropdown.val(data[0].id);  // Select the first matching MR number
+            } else {
+              dropdown.append('<option selected disabled value="">No matching MR numbers found</option>');
+            }
+          }
+        });
+      }
+    });});
+   </script>
+    <script>
+        $(document).ready(function () {
+            function updatePatientDetails() {
+                var selectedMrNumber = $("#mrDropdown").val();
+                $.ajax({
+                    type: "GET",
+                    url: "{% url 'getmrdetails' %}",
+                    data: { mrNumber: selectedMrNumber },
+                    success: function (data) {
+                        $("#exampleInputAddress").val(data.Housename);
+                        $("#ptname").val(data.Patient_Name);
+                        $("#ptphno").val(data.phno);
+                        $("#ptemail").val(data.patient_email);
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("Error fetching patient details:", error);
+                    },
+                });
+            }
+            $("#mrDropdown").on("change", updatePatientDetails);
+        });
+    </script>
+
+    <script>
+        let treatmentCounter = 0;
+        document.getElementById('addBtn').addEventListener('click', function () {
+            addRecordSheetRow();
+        });
+
+        function addRecordSheetRow() {
+            var inputField = document.getElementById('searchResults');
+            var selectedValue = inputField.value;
+            var medicineName = $("#searchResults option:selected").text();
+
+            if (!medicineName || medicineName.trim() === '') {
+                alert("Medicine name is required.");
+                return;
+            }
+
+            var tbody = document.getElementById('tbody');
+            treatmentCounter++;
+            var newRow = document.createElement('tr');
+            newRow.classList.add('recordsheet');
+
+            $.ajax({
+                type: 'GET',
+                url: '/fetchmedicnedt/',
+                data: { id: selectedValue },
+                success: function (response) {
+                    if (response.hasOwnProperty('error')) {
+                        alert(response.error);
+                        return;
+                    }
+                    newRow.innerHTML = `
+                        <td><input type="text" class="form-control sl" name="sl${treatmentCounter}" value="${treatmentCounter}"></td>
+                        <td>
+                            <input type="text" class="form-control medicine" name="medicine${treatmentCounter}" value="${response.medicinename}" required>
+                            <input type="hidden" class="form-control medicineid" name="medicineid${treatmentCounter}" value="${response.medid}">
+                        </td>
+                        <td><input type="text" class="form-control dosage" name="dosage${treatmentCounter}" required></td>
+                        <td><textarea class="form-control direction" name="direction${treatmentCounter}" cols="25" rows="5" required></textarea></td>
+                        <td><button type="button" class="btn btn-danger remove-item">Remove</button></td>
+                    `;
+                    tbody.appendChild(newRow);
+                    document.getElementById('record_count').value = treatmentCounter;
+                    $("table").on("click", ".remove-item", function () {
+                        var row = $(this).closest("tr");
+                        row.remove();
+                    });
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error fetching name:", error);
+                    alert("Medicine name is required.");
+                }
+            });
+        }
+    </script>
+
+    <script>
+        $(document).ready(function () {
+            $('#searchInput').keyup(function () {
+                var query = $(this).val();
+                if (query.length >= 3) {
+                    $.ajax({
+                        url: "{% url 'prescriptionsearch_medicine' %}",
+                        data: { 'term': query },
+                        dataType: 'json',
+                        success: function (data) {
+                            $('#searchResults').empty();
+                            $.each(data, function (index, item) {
+                                $('#searchResults').append('<option value="' + item.item_id + '">' + item.item_name + ' - ' + item.unit + '</option>');
+                                $('#searchResults option:last').data('med-id', item.item_id);
+                                $('#searchResults option:last').data('sup-id', item.supplier_name);
+                            });
+                            $('#searchResults').trigger('change');
+                        }
+                    });
+                } else {
+                    $('#searchResults').empty();
+                }
+            });
+
+            $('#searchResults').change(function () {
+                var selectedOption = $(this).find(':selected');
+                var selectedMedId = selectedOption.data('med-id');
+                var selectedsupId = selectedOption.data('sup-id');
+                $('#medid').val(selectedMedId);
+                $('#supid').val(selectedsupId);
+            });
+        });
+    </script>
+
+    <script>
+        function viewPreviousPrescriptions(mrNumber) {
+            $.ajax({
+                type: "GET",
+                url: "/viewpreviousprescriptions/",
+                data: { mrNumber: mrNumber },
+                success: function (response) {
+                    $('#popupContent').html(response);
+                    $('#popup').show();
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error fetching previous prescriptions:", error);
+                    alert("MR Number is required.");
+                }
+            });
+        }
+    </script>
+    
+    <script>
+        function viewcasehistory(mrNumber) {
+            $.ajax({
+                type: "GET",
+                url: "/casehistoryable/",
+                data: { mrNumber: mrNumber },
+                success: function (response) {
+                    $('#caseHistoryContent').html(response);
+                    $('#caseHistoryModal').show();
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error fetching previous prescriptions:", error);
+                    alert("MR Number is required.");
+                }
+            });
+        }
+    </script>
+<script>
+
+    function viewdailyreport(mrNumber) {
+        $.ajax({
+            type: "GET",
+            url: "/get_dailyreport_details/",
+            data: { mrNumber: mrNumber },
+            success: function (response) {
+                $('#dailyreportContent').html(response);
+                $('#dailyreportModal').show();
+            },
+            error: function (xhr, status, error) {
+                console.error("Error fetching daily report details:", error);
+                var errorMessage = xhr.responseJSON.error || "An error occurred while fetching daily report details.";
+                alert(errorMessage);
+            }
+        });
+    } 
+</script>
+
+
+{% endblock %}

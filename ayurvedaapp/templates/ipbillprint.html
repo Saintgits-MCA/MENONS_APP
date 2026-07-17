@@ -1,0 +1,251 @@
+
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invoice</title>
+  <style>
+.invoice-box {
+    max-width: 800px;
+    padding: 10px;
+    border: 2px solid #000;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    font-family: Arial, sans-serif;
+}
+p{
+  font-size: 14px;
+}
+.invoice-header {
+    text-align: center;
+    font-weight: bold;
+    font-size: 22px;
+    text-transform: uppercase;
+    border-bottom: 2px solid #000;
+    padding-bottom: 10px;
+}
+
+.details, .charges {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.details th, .charges th {
+    background-color: #f2f2f2;
+    border: 1px solid #000;
+    padding: 10px;
+    text-align: left;
+    font-weight: bold;
+}
+
+.details td, .charges td {
+    border: 1px solid #000;
+    padding: 10px;
+    text-align: right;
+}
+
+.total {
+    font-size: 18px;
+    font-weight: bold;
+    text-align: right;
+    margin-top: 20px;
+}
+
+.print-btn {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.print-btn button {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border: none;
+    border-radius: 5px;
+}
+@media print {
+    @page {
+        size: A5 portrait; /* Ensure A5 portrait format */
+        margin: 5mm;
+    }
+    
+    body {
+        zoom: 85%; /* Reduce scale slightly to fit within A5 */
+    }
+p{
+  font-size: 10px;
+}
+    .invoice-box {
+        width: 100%;
+        max-width: 100%; /* Ensure it doesn’t exceed A5 width */
+        padding: 10px; /* Reduce padding */
+        box-shadow: none; /* Remove unnecessary box shadow */
+    }
+    .details, .charges {
+        width: 100%;
+    }
+
+    .print-btn {
+        display: none; /* Hide print button */
+    }
+
+    /* Prevent tables from breaking across pages */
+    table {
+        page-break-inside: avoid;
+    }
+
+    /* Avoid splitting sections */
+    .invoice-header, .details, .charges {
+        page-break-before: auto;
+        page-break-after: auto;
+    }
+}
+       </style>
+</head>
+<body>
+
+
+<div class="content-wrapper">
+  <!-- Content Header (Page header) -->
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Invoice</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+         
+          </ol>
+        </div>
+      </div>
+    </div><!-- /.container-fluid -->
+  </section>
+
+  <section class="content">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-12"  >
+        
+          <!-- Main content -->
+          <div class="invoice p-3 mb-3">
+            <div class="container" id="invoice">
+              <div class="row">
+                <div class="col">
+          
+                  
+              
+                  <div class="invoice-header">
+                    {% for i in objhospt %}
+                    <div class="hospital-info">
+                        <img src="{{ i.Logo.url }}" alt="{{ i.Name }} Logo" class="hospital-logo"  style="width: 100px; height: 100px; ">
+                        <div class="hospital-details">
+                            <p>{{ i.Name }}</p>
+                            <p>{{ i.Address }}, Phone: {{ i.Contact_no }}, Email: {{ i.Email }}, GST NO: {{ i.GST }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    <p>Composition Taxable Persons, not eligible to collect Tax on Suppliers</p>
+                </div>
+                
+              </div>
+
+        <table class="details">
+            <tr>
+                <th>Patient MR No</th>
+                <td><p>{{ bill.ip_admission.MR_Number.Medical_Record_Number }}</p></td>
+                <th>Billing Date</th>
+                <td><p>{{ bill.billing_date }}</p></td>
+            </tr>
+            <tr>
+                <th>Patient Name</th>
+                <td><p>{{ bill.ip_admission.MR_Number.Patient_Name }}</p></td>
+                <th>Contact</th>
+                <td><p>{{ bill.ip_admission.contactnumber }}</p></td>
+            </tr>
+        </table>
+
+        <h6>Billing Details</h6>
+        <table class="charges">
+            <tr>
+                <th>Description</th>
+                <th>Amount</th>
+            </tr>
+            <tr>
+                <td>Room Charges</td>
+                <td><p>{{ bill.room_charges }}</p></td>
+            </tr>
+            <tr>
+                <td>Food Charges</td>
+                <td><p>{{ bill.food_expenses}}</p></td>
+            </tr>
+            <tr>
+                <td>Medicine Charges</td>
+                <td><p>{{ bill.medicine_charges }}</p></td>
+            </tr>
+            <tr>
+                <td>Treatment Charges</td>
+                <td><p>{{ bill.treatment_charges }}</p></td>
+            </tr>
+            <tr>
+                <td>Other Expenses</td>
+                <td><p>{{ bill.other_expenses }}</p></td>
+            </tr>
+            <tr>
+                <td>Discount</td>
+                <td><p>{{ bill.discount }}</p></td>
+            </tr>
+            <tr>
+                <td>Tax</td>
+                <td><p>{{ bill.tax }}</p></td>
+            </tr>
+            <tr>
+                <th>Total Amount</th>
+                <th><p>{{ bill.total_amount }}</p></th>
+            </tr>
+        </table>
+</div>
+</div>
+</div>
+        <div class="print-btn">
+            <button onclick="printInvoice()" class="btn btn-primary">Print Invoice</button>
+
+        </div>
+    </div>
+
+</div>
+</section>
+</div>
+<script>
+    function printInvoice() {
+        // Get the HTML content of the invoice div
+        var invoiceContent = document.getElementById('invoice').outerHTML;
+  
+        // Get the internal CSS styles from the parent document
+        var styles = Array.from(document.querySelectorAll('style'))
+            .map(style => style.innerHTML)
+            .join('\n');
+  
+        // Open a new window
+        var printWindow = window.open('', '_blank');
+        
+        // Set the HTML content of the new window along with the internal CSS styles
+        printWindow.document.write('<html><head><title>Invoice</title><style>' + styles + '</style></head><body>' + invoiceContent + '</body></html>');
+        printWindow.document.close();
+  
+        // Print the new window
+        printWindow.print();
+        
+    }
+  </script>
+  
+  <!-- invoicenewprint.html -->
+  
+  {% endblock %}
