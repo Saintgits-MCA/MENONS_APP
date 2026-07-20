@@ -33335,8 +33335,6 @@ def appointment_fee_add(request):
                 doctor_id=doctor_id,
                 visit_type=visit_type,
                 fee_amount=float(fee_amount),
-                no_of_days=request.POST.get('visit_days_range'),
-                max_visit_count=request.POST.get('max_visit_count'),
                 is_active=True
             )
             messages.success(request, "Appointment fee added successfully!")
@@ -33438,8 +33436,6 @@ def appointment_fee_edit(request):
         fee.branch_id = branch_id
         fee.doctor_id = doctor_id
         fee.visit_type = visit_type
-        fee.no_of_days = visit_days_range_int
-        fee.max_visit_count = max_visit_count_int
         fee.fee_amount = float(fee_amount)
         fee.save()
         
@@ -43574,13 +43570,12 @@ def patient_visit_cycle_list(request):
             Q(patient__Patient_Name__icontains=search) |
             Q(patient__Medical_Record_Number__icontains=search)
         )
-   
     context = {
         'cycles': cycles,
         'patients': Patient_details.objects.filter(
             id__in=PatientVisitCycleLog.objects.values_list('patient_id', flat=True).distinct()
         ).order_by('Patient_Name'),
-        'status_choices': ['Consultation', 'Revisit', 'Followup'],
+        'status_choices': AppointmentStatus.objects.all(),
         'filters': {
             'patient_id': patient_id,
             'status': status,

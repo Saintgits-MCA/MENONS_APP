@@ -337,14 +337,6 @@ class AppointmentFee(models.Model):
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    no_of_days = models.IntegerField(
-        default=1,
-        help_text="Number of days within which a patient is considered a visit"
-    )
-    max_visit_count = models.IntegerField(
-        default=1,
-        help_text="Maximum number of visits allowed for a patient"
-    )    
 
     class Meta:
         ordering = ['branch', 'doctor', 'visit_type']
@@ -3487,11 +3479,7 @@ class PatientVisitCycleAppointment(models.Model):
     appointment = models.ForeignKey('Appointments', on_delete=models.CASCADE, related_name='cycle_appointments')
     
     # Status of this appointment within the cycle
-    status = models.CharField(max_length=50, choices=[
-        ('Consultation', 'Consultation'),
-        ('Revisit', 'Revisit'),
-        ('Followup', 'Followup'),
-    ])
+    status = models.CharField(max_length=50)
     
     # Fee for this appointment
     fee = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)

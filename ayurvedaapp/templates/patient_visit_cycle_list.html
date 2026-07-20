@@ -58,7 +58,7 @@
                         <th>Status</th>
                         <th>Visits (C/R/F)</th>
                         <th>Total Fee</th>
-                        <th>Cycle</th>
+                        {% comment %} <th>Cycle</th> {% endcomment %}
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -77,6 +77,7 @@
                                 {% if cycle.current_status == 'Consultation' %}badge-primary
                                 {% elif cycle.current_status == 'Revisit' %}badge-info
                                 {% elif cycle.current_status == 'Followup' %}badge-success
+                                {%else%}badge-warning
                                 {% endif %}">
                                 {{ cycle.current_status }}
                             </span>
@@ -88,15 +89,6 @@
                             <small class="text-muted">(C/R/F)</small>
                         </td>
                         <td>₹{{ cycle.total_fee_collected|floatformat:2 }}</td>
-                        <td>
-                            {% if cycle.is_cycle_active %}
-                                <span class="badge badge-success">Active</span>
-                            {% else %}
-                                <span class="badge badge-danger">Closed</span>
-                            {% endif %}
-                            <br>
-                            <small class="text-muted">{{ cycle.days_from_consultation }} days</small>
-                        </td>
                         <td>
                             <a href="{% url 'patient_visit_cycle_detail' %}?cycle_id={{ cycle.id }}" 
                                class="btn btn-sm btn-info">

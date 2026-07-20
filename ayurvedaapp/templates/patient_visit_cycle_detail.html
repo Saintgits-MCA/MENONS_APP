@@ -104,6 +104,7 @@
                                 {% if app.status == 'Consultation' %}badge-primary
                                 {% elif app.status == 'Revisit' %}badge-info
                                 {% elif app.status == 'Followup' %}badge-success
+                                {%else%}badge-warning
                                 {% endif %}">
                                 {{ app.status }}
                             </span>
