@@ -101,27 +101,8 @@
                                                 <div class="form-group">
                                                     <label for="fee_amount">Fee Amount (₹) <span class="text-danger">*</span></label>
                                                     <input type="number" class="form-control" name="fee_amount" id="fee_amount" 
-                                                           step="0.01" min="0" value="{{ fee.fee_amount|default:'0.00' }}" 
+                                                           step="1" min="0" value="{{ fee.fee_amount|default:'0' }}" 
                                                            placeholder="Enter fee amount" required>
-                                                </div>
-                                            </div>
-                                             <div class="col-md-4">
-                                                <div class="form-group">
-                                                    <label for="visit_days_range">No. of Days</label>
-                                                    <input type="number" class="form-control" name="visit_days_range" id="revisit_days_range" 
-                                                           min="0" max="365" value="{{ fee.no_of_days|default:'0.00' }}" 
-                                                           placeholder="Enter days (e.g., 20)">
-                                                    <small class="text-muted">Number of days within which a patient is considered a revisit</small>
-                                                </div>
-                                            </div>
-
-                                            <div class="col-md-4">
-                                                <div class="form-group">
-                                                    <label for="max_visit_count">Maximum  Count</label>
-                                                    <input type="number" class="form-control" name="max_visit_count" id="max_revisit_count" 
-                                                           min="1" max="50"  value="{{ fee.max_visit_count|default:'0.00' }}" 
-                                                           placeholder="Enter Max Number of Visit Type (e.g., 3)" >
-                                                    <small class="text-muted">Maximum number of each visits allowed for a patient</small>
                                                 </div>
                                             </div>
                                         </div>

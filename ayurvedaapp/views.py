@@ -33259,12 +33259,32 @@ def appointment_fee_list(request):
     fees = fees.filter(is_active=True).order_by('branch__Branch_Name', 'doctor__Staff_firstname', 'visit_type')
     
     branches = Branch.objects.filter(inactive=False).order_by('Branch_Name')
+    staff_allocations = Staffallocation.objects.filter(
+        Status='Active',
+        Designation_Name__Designation_Name__in=[
+            'Doctor', 'Peadiatrist', 'Gynacologist', 'CMO', 'Admin', 'Associate Doctors', 'Specialist'
+        ]
+    )
+    
+    # Filter by branch if branch is selected
+    if branch_filter and branch_filter.isdigit():
+        staff_allocations = staff_allocations.filter(Branch_Name_id=int(branch_filter))
+    elif not is_superadmin:
+        staff_allocations = staff_allocations.filter(Branch_Name_id=staff_branch_id)
+    
+    # ✅ Get distinct Staffdetails from these allocations
+    doctor_ids = staff_allocations.values_list('Staff_id', flat=True).distinct()
+    doctors = Staffdetails.objects.filter(
+        id__in=doctor_ids,
+        deleted=False
+    ).order_by('Staff_firstname')
     appointment_status=AppointmentStatus.objects.filter(is_active="1")
     context = {
         'appointment_status':appointment_status,
         'fees': fees,
         'branches': branches,
         'is_superadmin': is_superadmin,
+        'doctors':doctors,
         'staff_branch_id': staff_branch_id if not is_superadmin else None,
     }
     
@@ -43482,287 +43502,6 @@ def delete_appointment_status(request):
     
     return redirect(f'/appointment-status-list/?menumanagement_id={menu_management_id}')
 
-
-
-def get_appointment_status_for_patient(patient_id, doctor_id, appointment_date, branch_id=None):
-    """
-    Determine appointment status based on comprehensive visit cycle logic.
-    
-    Status Flow:
-    1. Consultation → Revisit (max within revisit_days) → Followup (if within followup_days)
-    2. Each status has its own days range and count limits from AppointmentFee table
-    
-    Returns:
-        tuple: (status, last_appointment_date, days_difference)
-               status will be 'Consultation', 'Revisit', or 'Followup' if conditions met, else None
-    """
-    try:
-        patient = Patient_details.objects.get(id=patient_id)
-        doctor = Staffdetails.objects.get(id=doctor_id)
-        
-        if isinstance(appointment_date, str):
-            appointment_date = datetime.strptime(appointment_date, '%Y-%m-%d').date()
-        
-        # ✅ Get settings for all statuses from database
-        consultation_setting = AppointmentFee.objects.filter(
-            doctor_id=doctor_id,
-            visit_type='Consultation',
-            is_active=True
-        ).first()
-        
-        revisit_setting = AppointmentFee.objects.filter(
-            doctor_id=doctor_id,
-            visit_type='Revisit',
-            is_active=True
-        ).first()
-        
-        followup_setting = AppointmentFee.objects.filter(
-            doctor_id=doctor_id,
-            visit_type='Followup',
-            is_active=True
-        ).first()
-        
-        # ✅ If consultation setting doesn't exist, no cycle can start
-        if not consultation_setting:
-            return None, None, None
-        
-        consultation_days = consultation_setting.no_of_days
-        
-        # ✅ STEP 1: Check if there's ANY previous appointment for this patient with this doctor
-        any_previous_appointment = Appointments.objects.filter(
-            MR_Number=patient,
-            Doctor_Name=doctor,
-            Appointment_date__lte=appointment_date
-        ).exists()
-        
-        # ✅ If NO previous appointment at all → This is a NEW CONSULTATION
-        if not any_previous_appointment:
-            return 'Consultation', None, 0
-        
-        # ✅ STEP 2: Find the LAST CONSULTATION (starts the cycle)
-        last_consultation = Appointments.objects.filter(
-            MR_Number=patient,
-            Doctor_Name=doctor,
-            status='Consultation',
-            Appointment_date__lte=appointment_date
-        ).order_by('-Appointment_date').first()
-        
-        if not last_consultation:
-            # No consultation found → This is a NEW CONSULTATION
-            return 'Consultation', None, 0
-        
-        consultation_date = last_consultation.Appointment_date
-        days_from_consultation = (appointment_date - consultation_date).days
-        
-        # ✅ STEP 3: Check if consultation window is still valid
-        if days_from_consultation > consultation_days:
-            # Consultation window expired → New consultation
-            return 'Consultation', None, 0
-        
-        # ✅ STEP 4: Check REVISIT - must have revisit setting
-        if revisit_setting:
-            revisit_days = revisit_setting.no_of_days
-            max_revisit_count = revisit_setting.max_visit_count
-            
-            # Count REVISITS since the last consultation
-            revisits_since_consultation = Appointments.objects.filter(
-                MR_Number=patient,
-                Doctor_Name=doctor,
-                status='Revisit',
-                Appointment_date__gte=consultation_date,
-                Appointment_date__lte=appointment_date
-            ).count()
-            
-            # Check if REVISIT is allowed
-            if days_from_consultation <= revisit_days and revisits_since_consultation < max_revisit_count:
-                return 'Revisit', consultation_date, days_from_consultation
-        
-        # ✅ STEP 5: Check FOLLOWUP - must have followup setting and at least one revisit
-        if followup_setting and revisits_since_consultation > 0:
-            followup_days = followup_setting.no_of_days
-            max_followup_count = followup_setting.max_visit_count
-            
-            # Count FOLLOWUPS since the last consultation
-            followups_since_consultation = Appointments.objects.filter(
-                MR_Number=patient,
-                Doctor_Name=doctor,
-                status='Followup',
-                Appointment_date__gte=consultation_date,
-                Appointment_date__lte=appointment_date
-            ).count()
-            
-            # Check if FOLLOWUP is allowed
-            if days_from_consultation <= followup_days and followups_since_consultation < max_followup_count:
-                return 'Followup', consultation_date, days_from_consultation
-        
-        # ✅ If no revisit or followup allowed, but consultation window is still open
-        # This could happen when max counts are exhausted
-        # In this case, it should be a new consultation
-        if days_from_consultation <= consultation_days:
-            return 'Consultation', None, 0
-        
-        # No status found
-        return None, None, None
-        
-    except (Patient_details.DoesNotExist, Staffdetails.DoesNotExist) as e:
-        print(f"Error checking appointment status: {e}")
-        return None, None, None
-    
-
-
-def check_appointment_status(request):
-    """
-    AJAX endpoint to check appointment status (Revisit or Followup)
-    """
-    patient_id = request.GET.get('patient_id')
-    doctor_id = request.GET.get('doctor_id')
-    appointment_date = request.GET.get('appointment_date')
-    branch_id = request.GET.get('branch_id')
-    
-    if not all([patient_id, doctor_id, appointment_date]):
-        return JsonResponse({'error': 'Missing parameters'}, status=400)
-    
-    try:
-        # Call the helper function
-        status_result, consultation_date, days_diff = get_appointment_status_for_patient(
-            patient_id, doctor_id, appointment_date, branch_id
-        )
-        
-        # ✅ If status_result is 'Consultation' → New patient or new consultation
-        if status_result == 'Consultation':
-            # Get fee for Consultation
-            fee_amount = get_appointment_fee(doctor_id, 'Consultation', branch_id)
-            
-            # Get consultation settings
-            consultation_setting = AppointmentFee.objects.filter(
-                doctor_id=doctor_id,
-                visit_type='Consultation',
-                is_active=True
-            ).first()
-            
-            consultation_days = consultation_setting.no_of_days if consultation_setting else 0
-            
-            return JsonResponse({
-                'is_revisit': False,
-                'is_followup': False,
-                'is_consultation': True,
-                'status': 'Consultation',
-                'consultation_date': consultation_date.strftime('%Y-%m-%d') if consultation_date else None,
-                'days_from_consultation': days_diff if days_diff else 0,
-                'fee_amount': fee_amount,
-                'visit_settings': {
-                    'consultation_days': consultation_days,
-                    'revisit_days': 0,
-                    'max_revisit_count': 0,
-                    'current_revisits': 0,
-                    'remaining_revisits': 0,
-                    'followup_days': 0,
-                    'max_followup_count': 0,
-                    'current_followups': 0,
-                    'remaining_followups': 0,
-                }
-            })
-        
-        elif status_result in ['Revisit', 'Followup']:
-            # Get settings for response from database
-            revisit_setting = AppointmentFee.objects.filter(
-                doctor_id=doctor_id,
-                visit_type='Revisit',
-                is_active=True
-            ).first()
-            
-            followup_setting = AppointmentFee.objects.filter(
-                doctor_id=doctor_id,
-                visit_type='Followup',
-                is_active=True
-            ).first()
-            
-            consultation_setting = AppointmentFee.objects.filter(
-                doctor_id=doctor_id,
-                visit_type='Consultation',
-                is_active=True
-            ).first()
-            
-            appointment_date_obj = datetime.strptime(appointment_date, '%Y-%m-%d').date()
-            
-            # Get counts only if settings exist
-            revisits_since_consultation = 0
-            followups_since_consultation = 0
-            revisit_days = 0
-            max_revisit_count = 0
-            followup_days = 0
-            max_followup_count = 0
-            consultation_days = 0
-            
-            if revisit_setting:
-                revisit_days = revisit_setting.no_of_days
-                max_revisit_count = revisit_setting.max_visit_count
-                revisits_since_consultation = Appointments.objects.filter(
-                    MR_Number_id=patient_id,
-                    Doctor_Name_id=doctor_id,
-                    status='Revisit',
-                    Appointment_date__gt=consultation_date,
-                    Appointment_date__lt=appointment_date_obj
-                ).count()
-            
-            if followup_setting:
-                followup_days = followup_setting.no_of_days
-                max_followup_count = followup_setting.max_visit_count
-                followups_since_consultation = Appointments.objects.filter(
-                    MR_Number_id=patient_id,
-                    Doctor_Name_id=doctor_id,
-                    status='Followup',
-                    Appointment_date__gt=consultation_date,
-                    Appointment_date__lt=appointment_date_obj
-                ).count()
-            
-            if consultation_setting:
-                consultation_days = consultation_setting.no_of_days
-            
-            # Calculate remaining
-            remaining_revisits = max_revisit_count - revisits_since_consultation
-            if remaining_revisits < 0:
-                remaining_revisits = 0
-            
-            remaining_followups = max_followup_count - followups_since_consultation
-            if remaining_followups < 0:
-                remaining_followups = 0
-            
-            # Get fee
-            fee_amount = get_appointment_fee(doctor_id, status_result, branch_id)
-            
-            return JsonResponse({
-                'is_revisit': True if status_result == 'Revisit' else False,
-                'is_followup': True if status_result == 'Followup' else False,
-                'is_consultation': False,
-                'status': status_result,
-                'consultation_date': consultation_date.strftime('%Y-%m-%d') if consultation_date else None,
-                'days_from_consultation': days_diff,
-                'fee_amount': fee_amount,
-                'visit_settings': {
-                    'consultation_days': consultation_days,
-                    'revisit_days': revisit_days,
-                    'max_revisit_count': max_revisit_count,
-                    'current_revisits': revisits_since_consultation,
-                    'remaining_revisits': remaining_revisits,
-                    'followup_days': followup_days,
-                    'max_followup_count': max_followup_count,
-                    'current_followups': followups_since_consultation,
-                    'remaining_followups': remaining_followups,
-                }
-            })
-        else:
-            return JsonResponse({
-                'is_revisit': False,
-                'is_followup': False,
-                'is_consultation': False,
-                'status': None
-            })
-            
-    except Exception as e:
-        logger.error(f"Error in check_appointment_status: {str(e)}")
-        return JsonResponse({'error': str(e)}, status=500)
-    
 
 def get_appointment_fee(doctor_id, status, branch_id=None):
     """

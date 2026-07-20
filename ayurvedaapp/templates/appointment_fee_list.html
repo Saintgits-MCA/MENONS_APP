@@ -56,6 +56,19 @@
                                                     </select>
                                                 </div>
                                             </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label for="doctor">Doctor</label>
+                                                    <select class="form-control" name="doctor" id="doctor">
+                                                        <option value="">All Doctors</option>
+                                                        {% for doctor in doctors %}
+                                                        <option value="{{ doctor.id }}" {% if doctor.id|stringformat:"s" == request.GET.doctor %}selected{% endif %}>
+                                                            {{ doctor.Staff_firstname }} {{ doctor.Staff_lastname }}
+                                                        </option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                            </div>
                                             <div class="col-md-4">
                                                 <div class="form-group">
                                                     <label for="status">Status</label>
@@ -122,8 +135,6 @@
                                             <th>Doctor</th>
                                             <th>Status</th>
                                             <th>Fee Amount</th>
-                                            <th>No of Days</th>
-                                            <th>Maximum Count</th>
                                             <th>Action</th>
                                         </tr>
                                     </thead>
@@ -143,8 +154,6 @@
                                                 <span class="badge badge-info">{{ fee.get_visit_type_display }}</span>
                                             </td>
                                             <td>₹{{ fee.fee_amount }}</td>
-                                            <td>{{fee.no_of_days}}</td>
-                                            <td>{{fee.max_visit_count}}</td>
                                             <td>
                                                 <a href="{% url 'appointment_fee_edit'  %}?ids={{fee.id}}" class="btn btn-primary btn-sm">Edit</a>
                                                 <a href="{% url 'appointment_fee_delete' fee.id %}" 

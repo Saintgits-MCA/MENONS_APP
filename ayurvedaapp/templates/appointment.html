@@ -211,12 +211,12 @@
                                         </div>
                                         <div class="form-group">
                                             <label for="exampleInputRegisterNo">Status</label>
-                                            <input type="text" class="form-control" id="status" name="status" required readonly>
-                                                {% comment %} <option value="" selected disabled>Select</option>
+                                            <select type="text" class="form-control" id="status" name="status" required>
+                                              <option value="" selected disabled>Select</option>
                                                {%for i in appointment_status%}
                                                <option value="{{i.status_name}}">{{i.status_name}}</option>
                                                {%endfor%}
-                                            </input> {% endcomment %}
+                                            </select> 
                                         </div>
                                         <div class="form-group">
                                             <label for="exampleInputContactNo">Appointment Fee</label>
@@ -379,9 +379,9 @@
             
             // Set readonly property based on status
             if (readonlyStatuses.includes(selectedStatus)) {
-                feeInput.prop('readonly', true);
-            } else {
                 feeInput.prop('readonly', false);
+            } else {
+                feeInput.prop('readonly', true);
             }
             
             // Clear any previous warning
@@ -416,149 +416,6 @@
     }
 
     // ==================== CHECK REVISIT STATUS ====================
-   function checkAppointmentStatus() {
-    var patientId = $('#mrDropdown').val();
-    var doctorId = $('#docname').val();
-    var appointmentDate = $('#exampleInputdate').val();
-    var branchId = $('#brch').val();
-    if (!patientId || !doctorId || !appointmentDate) {
-        if ($('#status').val() === 'Revisit' || $('#status').val() === 'Followup') {
-            $('#status').val('');
-        }
-        $('#status').css('border-color', '');
-        $('#status').css('border-width', '');
-        $('#status').css('background-color', '');
-        $('#examplefee').val('');
-        $('.status-warning').removeClass('d-none');
-        return;
-    }
-    
-    $.ajax({
-        url: "{% url 'check_appointment_status' %}",  // New URL
-        type: 'GET',
-        data: {
-            patient_id: patientId,
-            doctor_id: doctorId,
-            appointment_date: appointmentDate,
-            branch_id: branchId
-        },
-        success: function(response) {
-        if (response.is_consultation) {
-        // Auto-select "Consultation" status
-        $('#status').val('Consultation');
-        $('#status').css('border-color', '#007bff');
-        $('#status').css('border-width', '2px');
-        $('#status').css('background-color', '#cce5ff');
-        $("#status").parent().find('.status-warning').remove();
-        
-        var feeInput = $("#examplefee");
-        if (response.fee_amount > 0) {
-            feeInput.val(response.fee_amount);
-            feeInput.removeClass('fee-not-configured');
-        } else {
-            feeInput.val(0);
-            feeInput.addClass('fee-not-configured');
-        }
-        feeInput.prop('readonly', true);
-        
-        var message = 'New Consultation';
-        if (response.consultation_date) {
-            message = 'Previous consultation expired after ' + response.visit_settings.consultation_days + ' days. New consultation required.';
-        }
-        
-        if (typeof toastr !== 'undefined') {
-            toastr.info(message, 'Consultation Required', {
-                timeOut: 8000,
-                closeButton: true,
-                progressBar: true
-            });
-        }
-        
-    } else if (response.is_revisit) {
-                // Auto-select "Revisit" status
-                $('#status').val('Revisit');
-                $('#status').css('border-color', '#28a745');
-                $('#status').css('border-width', '2px');
-                $('#status').css('background-color', '#d4edda');
-                $('.status-warning').addClass('d-none');
-                var feeInput = $("#examplefee");
-                if (response.fee_amount > 0) {
-                    feeInput.val(response.fee_amount);
-                    feeInput.removeClass('fee-not-configured');
-                } else {
-                    feeInput.val(0);
-                    feeInput.addClass('fee-not-configured');
-                }
-                feeInput.prop('readonly', true);
-             
-                var settings = response.visit_settings;
-                var message = 'Last Consultation: ' + response.consultation_date + ' (' + response.days_from_consultation + ' days ago)';
-                message += ' | Revisits: ' + settings.current_revisits + '/' + settings.max_revisit_count;
-                message += ' (Remaining: ' + settings.remaining_revisits + ')';
-                
-                if (typeof toastr !== 'undefined') {
-                    toastr.success(message, 'Revisit Detected', {
-                        timeOut: 10000,
-                        closeButton: true,
-                        progressBar: true
-                    });
-                }
-                
-            } else if (response.is_followup) {
-                // Auto-select "Followup" status
-                $('#status').val('Followup');
-                $('#status').css('border-color', '#17a2b8');
-                $('#status').css('border-width', '2px');
-                $('#status').css('background-color', '#d1ecf1');
-                $('.status-warning').addClass('d-none');
-                var feeInput = $("#examplefee");
-                if (response.fee_amount > 0) {
-                    feeInput.val(response.fee_amount);
-                    feeInput.removeClass('fee-not-configured');
-                } else {
-                    feeInput.val(0);
-                    feeInput.addClass('fee-not-configured');
-                }
-                feeInput.prop('readonly', true);
-                
-                
-                var settings = response.visit_settings;
-                var message = 'Last Consultation: ' + response.consultation_date + ' (' + response.days_from_consultation + ' days ago)';
-                message += ' | Followups: ' + settings.current_followups + '/' + settings.max_followup_count;
-                message += ' (Remaining: ' + settings.remaining_followups + ')';
-                
-                if (typeof toastr !== 'undefined') {
-                    toastr.info(message, 'Followup Detected', {
-                        timeOut: 10000,
-                        closeButton: true,
-                        progressBar: true
-                    });
-                }
-                
-            } else {
-                // Reset if status was previously set
-                if ($('#status').val() === 'Revisit' || $('#status').val() === 'Followup') {
-                    $('#status').val('');
-                }
-                
-                $('#status').css('border-color', '');
-                $('#status').css('border-width', '');
-                $('#status').css('background-color', '');
-                $('.status-warning').removeClass('d-none');
-                var currentStatus = $('#status').val();
-                if (currentStatus && currentStatus !== "Select" && currentStatus !== "") {
-                    updateFeeField(currentStatus);
-                } else {
-                    showStatusWarning();
-                    $('#examplefee').val('');
-                }
-            }
-        },
-        error: function(xhr) {
-            console.log('Error checking appointment status:', xhr.responseText);
-        }
-    });
-    }
 
     // ==================== DEBOUNCE FUNCTION ====================
     function debounce(func, wait) {
@@ -572,8 +429,6 @@
             }, wait);
         };
     }
-
-    var debouncedCheck = debounce(checkAppointmentStatus, 500);
 
     // ==================== EVENT HANDLERS ====================
     
@@ -594,18 +449,7 @@
         }
     });
     
-    // Patient, Doctor, Date changes for revisit check
-    $('#mrDropdown').on('change', function() {
-        debouncedCheck();
-    });
-    
-    $('#docname').on('change', function() {
-        debouncedCheck();
-    });
-    
-    $('#exampleInputdate').on('change', function() {
-        debouncedCheck();
-    });
+   
 
     // ==================== FORM SUBMIT VALIDATION ====================
     $('#appointmentForm').on('submit', function(e) {
@@ -651,7 +495,6 @@
 
     // Check revisit on page load
     setTimeout(function() {
-        checkAppointmentStatus();
     }, 1000);
 });
     </script>
@@ -982,148 +825,6 @@
     $(document).ready(function() {
     // Function to check revisit status
     // ==================== CHECK APPOINTMENT STATUS ====================
-function checkAppointmentStatus() {
-    var patientId = $('#mrDropdown').val();
-    var doctorId = $('#docname').val();
-    var appointmentDate = $('#exampleInputdate').val();
-    var branchId = $('#brch').val();
-    
-    if (!patientId || !doctorId || !appointmentDate) {
-        if ($('#status').val() === 'Revisit' || $('#status').val() === 'Followup') {
-            $('#status').val('');
-        }
-        $('#status').css('border-color', '');
-        $('#status').css('border-width', '');
-        $('#status').css('background-color', '');
-        $('#examplefee').val('');
-        $('.status-warning').removeClass('d-none');
-        return;
-    }
-    
-    $.ajax({
-        url: "{% url 'check_appointment_status' %}",  // New URL
-        type: 'GET',
-        data: {
-            patient_id: patientId,
-            doctor_id: doctorId,
-            appointment_date: appointmentDate,
-            branch_id: branchId
-        },
-        success: function(response) {
-        if (response.is_consultation) {
-        // Auto-select "Consultation" status
-        $('#status').val('Consultation');
-        $('#status').css('border-color', '#007bff');
-        $('#status').css('border-width', '2px');
-        $('#status').css('background-color', '#cce5ff');
-        $("#status").parent().find('.status-warning').remove();
-        var feeInput = $("#examplefee");
-        if (response.fee_amount > 0) {
-            feeInput.val(response.fee_amount);
-            feeInput.removeClass('fee-not-configured');
-        } else {
-            feeInput.val(0);
-            feeInput.addClass('fee-not-configured');
-        }
-        feeInput.prop('readonly', true);
-        
-        var message = 'New Consultation';
-        if (response.consultation_date) {
-            message = 'Previous consultation expired after ' + response.visit_settings.consultation_days + ' days. New consultation required.';
-        }
-        
-        if (typeof toastr !== 'undefined') {
-            toastr.info(message, 'Consultation Required', {
-                timeOut: 8000,
-                closeButton: true,
-                progressBar: true
-            });
-        }
-        
-    } else if (response.is_revisit) {
-                // Auto-select "Revisit" status
-                $('#status').val('Revisit');
-                $('#status').css('border-color', '#28a745');
-                $('#status').css('border-width', '2px');
-                $('#status').css('background-color', '#d4edda');
-                $('.status-warning').addClass('d-none');
-                var feeInput = $("#examplefee");
-                if (response.fee_amount > 0) {
-                    feeInput.val(response.fee_amount);
-                    feeInput.removeClass('fee-not-configured');
-                } else {
-                    feeInput.val(0);
-                    feeInput.addClass('fee-not-configured');
-                }
-                feeInput.prop('readonly', true);
-                                
-                var settings = response.visit_settings;
-                var message = 'Last Consultation: ' + response.consultation_date + ' (' + response.days_from_consultation + ' days ago)';
-                message += ' | Revisits: ' + settings.current_revisits + '/' + settings.max_revisit_count;
-                message += ' (Remaining: ' + settings.remaining_revisits + ')';
-                
-                if (typeof toastr !== 'undefined') {
-                    toastr.success(message, 'Revisit Detected', {
-                        timeOut: 10000,
-                        closeButton: true,
-                        progressBar: true
-                    });
-                }
-                
-            } else if (response.is_followup) {
-                // Auto-select "Followup" status
-                $('#status').val('Followup');
-                $('#status').css('border-color', '#17a2b8');
-                $('#status').css('border-width', '2px');
-                $('#status').css('background-color', '#d1ecf1');
-                $('.status-warning').addClass('d-none');
-                var feeInput = $("#examplefee");
-                if (response.fee_amount > 0) {
-                    feeInput.val(response.fee_amount);
-                    feeInput.removeClass('fee-not-configured');
-                } else {
-                    feeInput.val(0);
-                    feeInput.addClass('fee-not-configured');
-                }
-                feeInput.prop('readonly', true);                
-                var settings = response.visit_settings;
-                var message = 'Last Consultation: ' + response.consultation_date + ' (' + response.days_from_consultation + ' days ago)';
-                message += ' | Followups: ' + settings.current_followups + '/' + settings.max_followup_count;
-                message += ' (Remaining: ' + settings.remaining_followups + ')';
-                
-                if (typeof toastr !== 'undefined') {
-                    toastr.info(message, 'Followup Detected', {
-                        timeOut: 10000,
-                        closeButton: true,
-                        progressBar: true
-                    });
-                }
-                
-            } else {
-                // Reset if status was previously set
-                if ($('#status').val() === 'Revisit' || $('#status').val() === 'Followup') {
-                    $('#status').val('');
-                }
-                
-                $('#status').css('border-color', '');
-                $('#status').css('border-width', '');
-                $('#status').css('background-color', '');
-                $('.status-warning').removeClass('d-none');
-                 $('#status').prop('disabled', true);
-                var currentStatus = $('#status').val();
-                if (currentStatus && currentStatus !== "Select" && currentStatus !== "") {
-                    updateFeeField(currentStatus);
-                } else {
-                    showStatusWarning();
-                    $('#examplefee').val('');
-                }
-            }
-        },
-        error: function(xhr) {
-            console.log('Error checking appointment status:', xhr.responseText);
-        }
-    });
-}
 
     // Debounce function to prevent excessive AJAX calls
     function debounce(func, wait) {
@@ -1137,25 +838,6 @@ function checkAppointmentStatus() {
             }, wait);
         };
     }
-
-    var debouncedCheck = debounce(checkAppointmentStatus, 500);
-
-    // Trigger revisit check when patient, doctor, or date changes
-    $('#mrDropdown').on('change', function() {
-        debouncedCheck();
-    });
-    
-    $('#docname').on('change', function() {
-        debouncedCheck();
-    });
-    
-    $('#exampleInputdate').on('change', function() {
-        debouncedCheck();
-    });
-    // Check on page load if fields are already set
-    setTimeout(function() {
-        checkAppointmentStatus();
-    }, 1000);
 });
     </script>
 
