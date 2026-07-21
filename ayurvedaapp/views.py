@@ -8569,7 +8569,6 @@ def insert_stock_data(request):
             return HttpResponse('Please upload a valid Excel file (with .xlsx extension).')
     
     return render(request, 'upload_excel.html')
-
 @login_required
 def storestockentry(request):
     stdesign = request.session.get('loginstaffdesign')
@@ -8587,66 +8586,328 @@ def storestockentry(request):
     try:
         staff_alloc = Staffallocation.objects.get(Staff_id=stff)
         staff_branch = staff_alloc.Branch_Name
+        staff_branch_id = staff_alloc.Branch_Name.id
     except Staffallocation.DoesNotExist:
         messages.error(request, "Staff branch allocation not found.")
         return redirect('error_page')
 
     if request.method == 'POST':
         try:
-            # Extract form data
-            medname_id = int(request.POST.get('item'))
-            storedt = request.POST.get('store')
-            spname = request.POST.get('spname')
-            mdcompany = request.POST.get('mdcompany')
-            btchno = request.POST.get('btchno')
-            mdate = request.POST.get('mdate')
-            edate = request.POST.get('edate')
-            rate = round(float(request.POST.get('rate')), 2)
-            qnty = int(request.POST.get('qnty'))
-            bsunty = request.POST.get('bsunty')
-            lastupdate = timezone.now().date()
+            # ✅ Get the list of all rows from the form
+            stores = request.POST.getlist('store[]')
+            suppliers = request.POST.getlist('spname[]')
+            companies = request.POST.getlist('mdcompany[]')
+            items = request.POST.getlist('item[]')
+            units = request.POST.getlist('bsunty[]')
+            batches = request.POST.getlist('btchno[]')
+            mfg_dates = request.POST.getlist('mdate[]')
+            expiry_dates = request.POST.getlist('edate[]')
+            purchase_rates = request.POST.getlist('purchase_rate[]')
+            wholesale_rates = request.POST.getlist('wholesale_rate[]')
+            retail_rates = request.POST.getlist('retail_rate[]')
+            quantities = request.POST.getlist('qnty[]')
 
-            # Check if identical stock already exists
-            try:
-                item = Physicalstockdetails.objects.get(
-                    itemnm_id=medname_id,
-                    Batch_no=btchno,
-                    Comapany_name_id=mdcompany,
-                    Manufacturer_date=mdate,
-                    Expiry_date=edate,
-                    unt_id=bsunty,
-                    suppliernm_id=spname,
-                    Rate=rate,
-                    stockbranch=staff_branch
-                )
-                item.qty = (item.qty or 0) + qnty
-                item.lastupdatedate = lastupdate
-                item.insertedstaffid_id = stff
-                item.save()
-                messages.success(request, "Stock quantity updated successfully.")
-            except Physicalstockdetails.DoesNotExist:
-                # Create new stock entry if no match found
-                Physicalstockdetails.objects.create(
-                    storenm_id=storedt,
-                    itemnm_id=medname_id,
-                    unt_id=bsunty,
-                    qty=qnty,
-                    Batch_no=btchno,
-                    Comapany_name_id=mdcompany,
-                    Expiry_date=edate,
-                    Manufacturer_date=mdate,
-                    Rate=rate,
-                    suppliernm_id=spname,
-                    lastupdatedate=lastupdate,
-                    insertedstaffid_id=stff,
-                    stockbranch=staff_branch
-                )
-                messages.success(request, "New stock entry created successfully.")
+            # ✅ Helper function to safely get values
+            def get_value(list_obj, index, default=''):
+                try:
+                    return list_obj[index] if index < len(list_obj) else default
+                except (IndexError, TypeError):
+                    return default
+
+            # ✅ Determine the maximum length to find total rows
+            max_rows = max(
+                len(stores), len(suppliers), len(companies), len(items),
+                len(units), len(batches), len(mfg_dates), len(expiry_dates),
+                len(purchase_rates), len(wholesale_rates), len(retail_rates),
+                len(quantities)
+            )
+
+            # ✅ Process each row
+            for i in range(max_rows):
+                try:
+                    # ✅ Safely get values
+                    storedt = get_value(stores, i)
+                    spname = get_value(suppliers, i)
+                    mdcompany = get_value(companies, i)
+                    medname_id = get_value(items, i)
+                    bsunty = get_value(units, i)
+                    btchno = get_value(batches, i)
+                    mdate = get_value(mfg_dates, i)
+                    edate = get_value(expiry_dates, i)
+                    purchase_rate_str = get_value(purchase_rates, i)
+                    wholesale_rate_str = get_value(wholesale_rates, i)
+                    retail_rate_str = get_value(retail_rates, i)
+                    qty_str = get_value(quantities, i)
+
+                    # ✅ Skip empty rows (where no item is selected)
+                    if not medname_id or medname_id == '':
+                        continue
+
+                    # ✅ Validate required fields
+                    if not storedt or storedt == '':
+                        messages.error(request, f"Row {i+1}: Store is required.")
+                        continue
+                    if not spname or spname == '':
+                        messages.error(request, f"Row {i+1}: Supplier is required.")
+                        continue
+                    if not mdcompany or mdcompany == '':
+                        messages.error(request, f"Row {i+1}: Company is required.")
+                        continue
+                    if not medname_id or medname_id == '':
+                        messages.error(request, f"Row {i+1}: Item/Medicine is required.")
+                        continue
+                    if not bsunty or bsunty == '':
+                        messages.error(request, f"Row {i+1}: Unit is required.")
+                        continue
+                    if not btchno or btchno == '':
+                        messages.error(request, f"Row {i+1}: Batch number is required.")
+                        continue
+                    if not edate or edate == '':
+                        messages.error(request, f"Row {i+1}: Expiry date is required.")
+                        continue
+
+                    # ✅ Convert IDs to integers
+                    try:
+                        medname_id = int(medname_id)
+                    except (ValueError, TypeError):
+                        messages.error(request, f"Row {i+1}: Invalid item ID.")
+                        continue
+
+                    try:
+                        storedt = int(storedt)
+                    except (ValueError, TypeError):
+                        messages.error(request, f"Row {i+1}: Invalid store ID.")
+                        continue
+
+                    try:
+                        spname = int(spname)
+                    except (ValueError, TypeError):
+                        messages.error(request, f"Row {i+1}: Invalid supplier ID.")
+                        continue
+
+                    try:
+                        mdcompany = int(mdcompany)
+                    except (ValueError, TypeError):
+                        messages.error(request, f"Row {i+1}: Invalid company ID.")
+                        continue
+
+                    try:
+                        bsunty = int(bsunty) if bsunty else None
+                    except (ValueError, TypeError):
+                        bsunty = None
+
+                    # ✅ Convert rates
+                    purchase_rate = 0.0
+                    wholesale_rate = 0.0
+                    retail_rate = 0.0
+                    
+                    try:
+                        if purchase_rate_str and purchase_rate_str != '':
+                            purchase_rate = round(float(purchase_rate_str), 2)
+                    except (ValueError, TypeError):
+                        purchase_rate = 0.0
+                        
+                    try:
+                        if wholesale_rate_str and wholesale_rate_str != '':
+                            wholesale_rate = round(float(wholesale_rate_str), 2)
+                    except (ValueError, TypeError):
+                        wholesale_rate = 0.0
+                        
+                    try:
+                        if retail_rate_str and retail_rate_str != '':
+                            retail_rate = round(float(retail_rate_str), 2)
+                    except (ValueError, TypeError):
+                        retail_rate = 0.0
+
+                    # ✅ Convert quantity
+                    try:
+                        qnty = int(qty_str) if qty_str and qty_str != '' else 0
+                    except (ValueError, TypeError):
+                        qnty = 0
+
+                    if qnty <= 0:
+                        messages.error(request, f"Row {i+1}: Quantity must be greater than 0.")
+                        continue
+
+                    lastupdate = timezone.now().date()
+
+                    # ✅ Convert expiry date from "YYYY-MM" to first day of that month
+                    try:
+                        expiry_date_obj = datetime.strptime(edate, '%Y-%m').date()
+                    except ValueError:
+                        messages.error(request, f"Row {i+1}: Invalid expiry date format. Please use YYYY-MM.")
+                        continue
+
+                    # ✅ Convert mfg date if provided
+                    mfg_date_obj = None
+                    if mdate and mdate != '':
+                        try:
+                            mfg_date_obj = datetime.strptime(mdate, '%Y-%m').date()
+                        except ValueError:
+                            try:
+                                mfg_date_obj = datetime.strptime(mdate, '%Y-%m-%d').date()
+                            except ValueError:
+                                messages.warning(request, f"Row {i+1}: Invalid manufacturing date format. Skipping.")
+                                mfg_date_obj = None
+
+                    # ✅ Validate rates
+                    staff_branch_ids_allowed = [10, 30, 31]
+                    if staff_branch_id in staff_branch_ids_allowed:
+                        if purchase_rate <= 0:
+                            messages.error(request, f"Row {i+1}: Purchase rate must be greater than 0")
+                            continue
+                        if wholesale_rate <= 0:
+                            messages.error(request, f"Row {i+1}: Wholesale rate must be greater than 0")
+                            continue
+                        if wholesale_rate < purchase_rate:
+                            messages.warning(request, f"Row {i+1}: Wholesale rate is less than purchase rate!")
+                        if retail_rate < wholesale_rate:
+                            messages.warning(request, f"Row {i+1}: Retail rate is less than wholesale rate!")
+                    else:
+                        if retail_rate <= 0:
+                            messages.error(request, f"Row {i+1}: Retail rate must be greater than 0")
+                            continue
+                        if purchase_rate == 0 and wholesale_rate == 0:
+                            wholesale_rate = retail_rate
+                            purchase_rate = 0
+
+                    # ✅ Calculate base values
+                    # base_quantity = qty * (1 unit) - you can adjust based on your unit conversion
+                    base_quantity = qnty  # Assuming 1 unit = 1 base unit
+                    base_rate = purchase_rate if purchase_rate > 0 else retail_rate
+                    total_base_quantity = base_quantity * base_rate
+
+                    # ✅ Check if identical stock already exists (excluding soft-deleted)
+                    try:
+                        stock_item = Physicalstockdetails.objects.filter(
+                            itemnm_id=medname_id,
+                            Batch_no=btchno,
+                            Comapany_name_id=mdcompany,
+                            Expiry_date=expiry_date_obj,
+                            unt_id=bsunty,
+                            suppliernm_id=spname,
+                            stockbranch=staff_branch,
+                            deleted=False  # ✅ Only check active stock
+                        ).first()
+
+                        if stock_item:
+                            old_qty = stock_item.qty
+                            
+                            # ✅ Update existing stock
+                            stock_item.qty = (stock_item.qty or 0) + qnty
+                            stock_item.lastupdatedate = lastupdate
+                            stock_item.insertedstaffid_id = stff
+                            stock_item.purchase_rate = purchase_rate
+                            stock_item.wholesale_rate = wholesale_rate
+                            stock_item.Rate = str(retail_rate)  # Store as string
+                            
+                            # ✅ Update base values
+                            stock_item.base_quantity = base_quantity
+                            stock_item.base_rate = base_rate
+                            stock_item.total_base_quantity = total_base_quantity
+                            
+                            stock_item.save()
+                            
+                            # ✅ Create audit log for update
+                            StockAuditLog.objects.create(
+                                stock=stock_item,
+                                action="UPDATE",
+                                staff=Staffdetails.objects.get(id=stff),
+                                branch=staff_branch,
+                                store=storedetails.objects.get(id=storedt),
+                                item=medicinemaster.objects.get(id=medname_id),
+                                qty=qnty,
+                                action_date=timezone.now().date(),
+                                action_time=timezone.now().time(),
+                            )
+                            
+                            messages.success(request, f"Row {i+1}: Stock quantity updated successfully from {old_qty} to {stock_item.qty}.")
+                        else:
+                            # ✅ Create new stock entry
+                            new_stock = Physicalstockdetails.objects.create(
+                                storenm_id=storedt,
+                                itemnm_id=medname_id,
+                                unt_id=bsunty,
+                                suppliernm_id=spname,
+                                Comapany_name_id=mdcompany,
+                                Manufacturer_date=mfg_date_obj,
+                                Expiry_date=expiry_date_obj,
+                                Batch_no=btchno,
+                                Rate=str(retail_rate),  # Store as string
+                                purchase_rate=purchase_rate,
+                                wholesale_rate=wholesale_rate,
+                                qty=qnty,
+                                lastupdatedate=lastupdate,
+                                insertedstaffid_id=stff,
+                                stockbranch=staff_branch,
+                                base_rate=base_rate,
+                                deleted=False
+                            )
+                            
+                            # ✅ Create audit log for new stock
+                            StockAuditLog.objects.create(
+                                stock=new_stock,
+                                action="CREATE",
+                                staff=Staffdetails.objects.get(id=stff),
+                                branch=staff_branch,
+                                store=storedetails.objects.get(id=storedt),
+                                item=medicinemaster.objects.get(id=medname_id),
+                                qty=qnty,
+                                action_date=timezone.now().date(),
+                                action_time=timezone.now().time(),
+                            )
+                            
+                            messages.success(request, f"Row {i+1}: New stock entry created successfully.")
+
+                    except Physicalstockdetails.DoesNotExist:
+                        # ✅ Create new stock entry (fallback)
+                        new_stock = Physicalstockdetails.objects.create(
+                            storenm_id=storedt,
+                            itemnm_id=medname_id,
+                            unt_id=bsunty,
+                            suppliernm_id=spname,
+                            Comapany_name_id=mdcompany,
+                            Manufacturer_date=mfg_date_obj,
+                            Expiry_date=expiry_date_obj,
+                            Batch_no=btchno,
+                            Rate=str(retail_rate),
+                            purchase_rate=purchase_rate,
+                            wholesale_rate=wholesale_rate,
+                            qty=qnty,
+                            lastupdatedate=lastupdate,
+                            insertedstaffid_id=stff,
+                            stockbranch=staff_branch,
+                            base_rate=base_rate,
+                            deleted=False
+                        )
+                        
+                        # ✅ Create audit log
+                        StockAuditLog.objects.create(
+                            stock=new_stock,
+                            action="CREATE",
+                            staff=Staffdetails.objects.get(id=stff),
+                            branch=staff_branch,
+                            store=storedetails.objects.get(id=storedt),
+                            item=medicinemaster.objects.get(id=medname_id),
+                            qty=qnty,
+                            action_date=timezone.now().date(),
+                            action_time=timezone.now().time(),
+                        )
+                        
+                        messages.success(request, f"Row {i+1}: New stock entry created successfully.")
+
+                    except Exception as e:
+                        messages.error(request, f"Row {i+1}: Error saving stock - {str(e)}")
+                        continue
+
+                except Exception as e:
+                    messages.error(request, f"Row {i+1}: Error processing - {str(e)}")
+                    continue
 
             return redirect(f"{reverse('storestockentry')}?menumanagement_id={idmngmnt}")
 
         except Exception as e:
-            messages.error(request, f"Error processing stock entry: {str(e)}")
+            messages.error(request, f"Error processing stock entries: {str(e)}")
             return redirect(f"{reverse('storestockentry')}?menumanagement_id={idmngmnt}")
 
     # GET request – load stock entry form
@@ -8672,10 +8933,11 @@ def storestockentry(request):
         'stckmgmntview': request.session.get('stockobjview'),
         'stckmgmntdelete': request.session.get('stockobjdelete'),
         'stckmgmntedit': request.session.get('stockobjedit'),
-        'idmngmnt': idmngmnt
+        'idmngmnt': idmngmnt,
+        'staff_branch_id': staff_branch_id,
     }
 
-    return render(request, "storestockentry.html", context)
+    return render(request, "storestockentry1.html", context)
 
 def delstockdetls(request):
     # 🔐 Session check
@@ -8869,6 +9131,8 @@ def editstock(request):
             mdcompany = request.POST.get('mdcompany')
             btchno = request.POST.get('btchno')
             rate = round(float(request.POST.get('rate')), 2)
+            purchase_rate = round(float(request.POST.get('purchase_rate', 0)), 2) if request.POST.get('purchase_rate') else 0.0
+            wholesale_rate = round(float(request.POST.get('wholesale_rate', 0)), 2) if request.POST.get('wholesale_rate') else 0.0
             mdate = request.POST.get('mdate')
             edate = request.POST.get('edate')
             qnty = int(request.POST.get('qnty'))
@@ -8887,6 +9151,8 @@ def editstock(request):
                     unt_id=bsunty,
                     suppliernm_id=spname,
                     Rate=rate,
+                    purchase_rate = purchase_rate,
+                    wholesale_rate = wholesale_rate,
                     stockbranch=stock_record.stockbranch,
                     deleted=False  # ✅ Only check non-deleted items
                 )
@@ -8928,6 +9194,8 @@ def editstock(request):
                     stock_record.Manufacturer_date = mdate
                     stock_record.Expiry_date = edate
                     stock_record.Rate = rate
+                    stock_record.purchase_rate = purchase_rate
+                    stock_record.wholesale_rate = wholesale_rate
                     stock_record.suppliernm_id = spname
                     stock_record.lastupdatedate = lastupdate
                     stock_record.insertedstaffid_id = stff
@@ -8956,6 +9224,8 @@ def editstock(request):
                 stock_record.Manufacturer_date = mdate
                 stock_record.Expiry_date = edate
                 stock_record.Rate = rate
+                stock_record.purchase_rate = purchase_rate
+                stock_record.wholesale_rate = wholesale_rate
                 stock_record.suppliernm_id = spname
                 stock_record.lastupdatedate = lastupdate
                 stock_record.insertedstaffid_id = stff

@@ -278,7 +278,7 @@
     
     // Define static rates as fallback
     const staticRates = {
-        'Consultation': 500,
+        'Consultation': 200,
         'Followup': 100,
         'Revisit': 0,
         'Whatsapp': 600,
@@ -288,7 +288,7 @@
     };
 
     // Define which statuses should have readonly fee field
-    const readonlyStatuses = ['Consultation', 'Followup', 'Revisit', 'Treatment Revisit'];
+    const readonlyStatuses = ['Consultation', 'Followup', 'Revisit', 'Camp'];
 
     // ==================== FEE LOOKUP FROM JSON ====================
     function getFeeFromTable(branchId, doctorId, visitType) {
@@ -362,7 +362,7 @@
             } else {
                 // Fallback to JSON data
                 const jsonFee = getFeeFromTable(branchId, doctorId, selectedStatus);
-                if (jsonFee !== null && jsonFee > 0) {
+                if (jsonFee !== null && jsonFee >= 0) {
                     feeInput.val(jsonFee);
                     feeInput.removeClass('fee-not-configured');
                 } else {

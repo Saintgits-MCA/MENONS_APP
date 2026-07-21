@@ -1,0 +1,650 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Physical Stock Entry Details</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item">
+                            {% if stckmgmntview == '1' %}
+                                <a href="{% url 'physicaltable' %}?menumanagement_id={{ idmngmnt }}">View All</a>
+                            {%endif%}
+                        </li>
+                        <li class="breadcrumb-item active">Store Stock</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title">Physical Stock Entry</h3>
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <form method="POST" action="{% url 'storestockentry' %}?menumanagement_id={{ idmngmnt }}" id="stockEntryForm">
+                        {% csrf_token %}
+                        <div class="card-body">
+                            {% if messages %}
+                                {% for message in messages %}
+                                    {% if message.tags == 'success' %}
+                                        <div class="alert alert-success">{{ message }}</div>
+                                    {% elif message.tags == 'warning' %}
+                                        <div class="alert alert-warning">{{ message }}</div>
+                                    {% elif message.tags == 'error' %}
+                                        <div class="alert alert-danger">{{ message }}</div>
+                                    {% else %}
+                                        <div class="alert alert-info">{{ message }}</div>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endif %}
+
+                            <!-- Stock Entry Table - no horizontal scroll on any screen size -->
+                            <div class="stock-entry-wrap">
+                                <table class="table table-bordered table-striped" id="stockEntryTable">
+                                    <colgroup>
+                                        <col style="width:3%">
+                                        <col style="width:7%">
+                                        <col style="width:15%">
+                                        <col style="width:15%">
+                                        <col style="width:15%">
+                                        <col style="width:7%">
+                                        <col style="width:7%">
+                                        <col style="width:13%">
+                                        <col style="width:7%">
+                                        <col style="width:7%">
+                                        <col style="width:7%">
+                                        <col style="width:6%">
+                                        <col style="width:3%">
+                                    </colgroup>
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Store <span class="text-danger">*</span></th>
+                                            <th>Supplier <span class="text-danger">*</span></th>
+                                            <th class="d-none">Contact</th>
+                                            <th>Company <span class="text-danger">*</span></th>
+                                            <th>Item <span class="text-danger">*</span></th>
+                                            <th>Unit <span class="text-danger">*</span></th>
+                                            <th>Batch <span class="text-danger">*</span></th>
+                                            <th>Expiry <span class="text-danger">*</span></th>
+                                            <th>Purchase</th>
+                                            <th>Wholesale</th>
+                                            <th>Retail <span class="text-danger">*</span></th>
+                                            <th>Qty <span class="text-danger">*</span></th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="stockEntryBody">
+                                        <!-- Row 1 (default) -->
+                                        <tr id="row_1">
+                                            <td class="text-center" data-label="ITEM">1</td>
+                                            <td data-label="Store *">
+                                                <select class="form-control select-store" name="store[]" required>
+                                                    <option selected disabled value="">Select Store</option>
+                                                    {% for i in stornm %}
+                                                        <option value="{{i.id}}">{{i.storename}}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </td>
+                                            <td data-label="Supplier *">
+                                                <select class="form-control select-supplier" name="spname[]" required>
+                                                    <option selected disabled value="">Select Supplier</option>
+                                                    {% for i in supplerdt %}
+                                                        <option value="{{i.id}}">{{i.shopname}}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </td>
+                                            <td data-label="Contact" class="d-none">
+                                                <input type="text" class="form-control supplier-contact" name="cno[]" placeholder="Contact" readonly>
+                                            </td>
+                                            <td data-label="Company *">
+                                                <select class="form-control select-company" name="mdcompany[]" required>
+                                                    <option selected disabled value="">Select Company</option>
+                                                    {% for i in companym %}
+                                                        <option value="{{i.id}}">{{i.Comapany_name}}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </td>
+                                            <td data-label="Item *">
+                                                <select class="form-control select-item" name="item[]" required>
+                                                    <option selected disabled value="">Select Item</option>
+                                                    {% for i in mdnm %}
+                                                        <option value="{{i.id}}">{{i.itemnm}}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </td>
+                                            <td data-label="Unit *">
+                                                <select class="form-control select-unit" name="bsunty[]" required>
+                                                    <option selected disabled value="">Select Unit</option>
+                                                    {% for i in unit %}
+                                                        <option value="{{i.id}}">{{i.unitname}}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </td>
+                                            <td data-label="Batch *">
+                                                <input type="text" class="form-control" name="btchno[]" placeholder="Batch No" required>
+                                            </td>
+                                    
+                                            <td data-label="Expiry *">
+                                                <input type="month" class="form-control" name="edate[]" required>
+                                            </td>
+                                            <td data-label="Purchase">
+                                                <input type="number" step="0.01" min="1" class="form-control purchase-rate" name="purchase_rate[]" placeholder="0.00" onwheel="this.blur()">
+                                            </td>
+                                            <td data-label="Wholesale">
+                                                <input type="number" step="0.01" min="1" class="form-control wholesale-rate" name="wholesale_rate[]" placeholder="0.00" onwheel="this.blur()">
+                                            </td>
+                                            <td data-label="Retail *">
+                                                <input type="number" step="0.01" min="1" class="form-control retail-rate" name="retail_rate[]" placeholder="0.00" onwheel="this.blur()" required>
+                                            </td>
+                                            <td data-label="Qty *">
+                                                <input type="number" min="1" class="form-control" name="qnty[]" placeholder="Qty" onwheel="this.blur()" required>
+                                            </td>
+                                            <td class="text-center" data-label="Action">
+                                                <button type="button" class="btn btn-danger btn-sm remove-row" disabled>
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Add Row Button -->
+                            <div class="row mt-3">
+                                <div class="col-md-12">
+                                    <button type="button" class="btn btn-success" id="addRowBtn">
+                                        <i class="fas fa-plus-circle"></i> Add Row
+                                    </button>
+                                </div>
+                            </div>
+
+                        </div><!-- /.card-body -->
+
+                        <div class="card-footer">
+                            {% if stckmgmntadd == '1' %}
+                                <button type="submit" class="btn btn-primary" id="submitBtn">
+                                    <i class="fas fa-save"></i> Submit Stock Entry
+                                </button>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+                <!-- /.card -->
+            </div>
+        </div>
+    </section>
+    <!-- /.content -->
+</div>
+<!-- /.content-wrapper -->
+
+<style>
+    /* ==========================================================
+       STORE STOCK ENTRY — RESPONSIVE, NO HORIZONTAL SCROLL
+       Strategy:
+       - >= 1200px  : real <table>, table-layout:fixed with colgroup
+                      percentages, so total width is always 100% of
+                      the container and never overflows it.
+       - <  1200px  : the table is redrawn as a stack of "cards",
+                      one per row, with each field labelled via
+                      data-label (fed from CSS content: attr()).
+                      Nothing needs to scroll sideways at any width.
+       ========================================================== */
+
+    .stock-entry-wrap {
+        width: 100%;
+        overflow-x: hidden;
+        padding: 0;
+    }
+
+    #stockEntryTable {
+        width: 100%;
+        max-width: 100%;
+        margin-bottom: 0;
+        table-layout: fixed;
+        border-collapse: collapse;
+    }
+
+    #stockEntryTable th,
+    #stockEntryTable td {
+        vertical-align: middle;
+        white-space: normal;
+        word-break: break-word;
+        padding: 6px 4px;
+        font-size: 12.5px;
+        text-align: center;
+    }
+
+    #stockEntryTable th {
+        font-size: 11.5px;
+        text-align: center;
+        padding: 8px 4px;
+    }
+
+    #stockEntryTable .form-control {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        padding: 4px 5px;
+        font-size: 12px;
+        height: 32px;
+        min-width: 0;
+    }
+
+    #stockEntryTable select.form-control {
+        padding: 4px 3px;
+        min-width: 0;
+    }
+
+    #stockEntryTable td:last-child {
+        padding: 6px 2px;
+        width: 7%;
+    }
+
+    .remove-row {
+        margin-top: 2px;
+        padding: 4px 8px;
+    }
+
+    /* ---------- >=1200px: keep the classic table look ---------- */
+    @media (min-width: 1200px) {
+        #stockEntryTable th,
+        #stockEntryTable td {
+            font-size: 13px;
+            padding: 6px 5px;
+        }
+        #stockEntryTable .form-control {
+            font-size: 13px;
+            height: 32px;
+        }
+    }
+
+    /* ---------- <1200px: stacked card layout, no scroll ---------- */
+    @media (max-width: 1199.98px) {
+
+        #stockEntryTable,
+        #stockEntryTable tbody,
+        #stockEntryTable tr,
+        #stockEntryTable td {
+            display: block;
+            width: 100% !important;
+        }
+
+        #stockEntryTable thead {
+            display: none;
+        }
+
+        #stockEntryTable tbody tr {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px 14px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 12px 14px 8px;
+            margin-bottom: 14px;
+            background: #fff;
+            box-shadow: 0 1px 4px rgba(0,0,0,.06);
+        }
+
+        #stockEntryTable tbody td {
+            padding: 0;
+            border: none !important;
+            text-align: left;
+        }
+
+        #stockEntryTable tbody td[data-label]:not([data-label=""])::before {
+            content: attr(data-label);
+            display: block;
+            font-size: 10.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .3px;
+            color: #6c757d;
+            margin-bottom: 3px;
+        }
+
+        /* Row number becomes a full-width header strip inside the card */
+        #stockEntryTable tbody td:first-child {
+            grid-column: 1 / -1;
+            display: flex;
+            align-items: center;
+            font-weight: 700;
+            color: #495057;
+            border-bottom: 1px solid #eee !important;
+            padding-bottom: 8px !important;
+            margin-bottom: 2px;
+            text-align: left;
+        }
+        #stockEntryTable tbody td:first-child::before {
+            margin-bottom: 0;
+            margin-right: 6px;
+        }
+
+        /* Action button becomes a full-width footer strip */
+        #stockEntryTable tbody td:last-child {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: flex-end;
+            border-top: 1px solid #eee !important;
+            padding-top: 8px !important;
+            margin-top: 2px;
+            text-align: right;
+        }
+
+        #stockEntryTable .form-control {
+            font-size: 13px;
+            height: 34px;
+        }
+    }
+
+    /* ---------- extra small phones: single column cards ---------- */
+    @media (max-width: 480px) {
+        #stockEntryTable tbody tr {
+            grid-template-columns: 1fr;
+            padding: 10px 12px 6px;
+        }
+        #stockEntryTable .form-control {
+            font-size: 13px;
+            height: 32px;
+        }
+        .card-footer .btn {
+            width: 100%;
+            margin-bottom: 4px;
+        }
+        .content-header h1 {
+            font-size: 20px;
+        }
+        .breadcrumb {
+            font-size: 12px;
+            padding: 6px 10px;
+        }
+    }
+
+    /* ---------- tablet fine tuning ---------- */
+    @media (min-width: 481px) and (max-width: 1199.98px) {
+        #stockEntryTable tbody tr {
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        }
+    }
+</style>
+
+<script>
+$(document).ready(function() {
+    // ====== SIDEBAR COLLAPSE ON LOAD (only for this page) ======
+    $('body').addClass('sidebar-collapse');
+
+    var staffBranchId = {{ staff_branch_id|default:0 }};
+    var showRateFields = (staffBranchId == 10 || staffBranchId == 30 || staffBranchId == 31);
+
+   
+
+    // Counter for row IDs
+    var rowCounter = 1;
+
+    // Function to update row numbers
+    function updateRowNumbers() {
+        $('#stockEntryBody tr').each(function(index) {
+            $(this).find('td:first').text(index + 1);
+            $(this).attr('id', 'row_' + (index + 1));
+        });
+        rowCounter = $('#stockEntryBody tr').length;
+
+        // Enable/disable remove buttons
+        var rowCount = $('#stockEntryBody tr').length;
+        $('#stockEntryBody .remove-row').prop('disabled', rowCount <= 1);
+    }
+
+    // Function to attach supplier contact fetch to a row
+    function attachSupplierFetch(row) {
+        row.find('.select-supplier').off('change').on('change', function() {
+            var spnameid = $(this).val();
+            var contactInput = row.find('.supplier-contact');
+            if (spnameid) {
+                $.ajax({
+                    url: '/get_supplierdetails/',
+                    type: 'GET',
+                    data: { spnameid: spnameid },
+                    success: function(response) {
+                        if (response.cno) {
+                            contactInput.val(response.cno);
+                        } else {
+                            contactInput.val('');
+                        }
+                    },
+                    error: function() {
+                        contactInput.val('');
+                    }
+                });
+            } else {
+                contactInput.val('');
+            }
+        });
+    }
+
+    // ====== ENTER KEY NAVIGATION FUNCTION ======
+    function setupEnterKeyNavigation() {
+        // Get all input fields and select elements in the table body (excluding action column and contact field)
+        var allFields = $('#stockEntryBody').find('input, select').not('.remove-row');
+        
+        // Remove existing keydown events and attach new ones
+        allFields.off('keydown.enterNav').on('keydown.enterNav', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault(); // Prevent form submission
+                
+                var currentField = $(this);
+                var currentRow = currentField.closest('tr');
+                
+                // Get all input/select fields in the current row (excluding action column and contact)
+                var allFieldsInRow = currentRow.find('input, select').not('.remove-row');
+                var currentIndex = allFieldsInRow.index(this);
+                
+                // Check if this is the last field in the current row
+                var isLastField = (currentIndex === allFieldsInRow.length - 1);
+                
+                if (isLastField) {
+                    // If it's the last field, check if there's a next row
+                    var nextRow = currentRow.next('tr');
+                    if (nextRow.length) {
+                        // Move to first field of next row (excluding contact and action)
+                        var firstFieldNextRow = nextRow.find('input, select').not('.remove-row').first();
+                        if (firstFieldNextRow.length) {
+                            firstFieldNextRow.focus().select();
+                        }
+                    } else {
+                        // No more rows - automatically add a new row
+                        $('#addRowBtn').click();
+                        // Focus on the first field of the newly added row
+                        setTimeout(function() {
+                            var newRow = $('#stockEntryBody tr:last');
+                            var firstField = newRow.find('input, select').not('.remove-row').first();
+                            if (firstField.length) {
+                                firstField.focus().select();
+                            }
+                        }, 150);
+                    }
+                } else {
+                    // Move to the next field in the same row (skip contact field if it's readonly)
+                    var nextIndex = currentIndex + 1;
+                    var nextField = allFieldsInRow.eq(nextIndex);
+                    
+                    // Skip the contact field (readonly) if it's the next field
+                    while (nextField.length && nextField.is('.supplier-contact')) {
+                        nextIndex++;
+                        nextField = allFieldsInRow.eq(nextIndex);
+                    }
+                    
+                    if (nextField.length) {
+                        nextField.focus().select();
+                    }
+                }
+            }
+        });
+    }
+
+    // Attach default row events
+    attachSupplierFetch($('#row_1'));
+    
+    // Setup enter key navigation for existing and future rows
+    setupEnterKeyNavigation();
+
+    // Add Row
+    $('#addRowBtn').on('click', function() {
+        rowCounter++;
+        var newRow = $('#row_1').clone();
+        newRow.attr('id', 'row_' + rowCounter);
+        newRow.find('td:first').text(rowCounter);
+        newRow.find('input, select').val('');
+        newRow.find('select').prop('selectedIndex', 0);
+        newRow.find('.remove-row').prop('disabled', false);
+
+        // Clear any error states
+        newRow.find('.form-control').removeClass('is-invalid');
+
+
+        // Append to table
+        $('#stockEntryBody').append(newRow);
+
+        // Attach events to new row
+        attachSupplierFetch(newRow);
+        updateRowNumbers();
+        
+        // Re-apply enter key navigation for the new row
+        setupEnterKeyNavigation();
+    });
+
+    // Remove Row (with confirmation)
+    $(document).on('click', '.remove-row', function() {
+        var rowCount = $('#stockEntryBody tr').length;
+        if (rowCount <= 1) {
+            alert('Cannot remove the last row.');
+            return;
+        }
+        if (confirm('Are you sure you want to remove this row?')) {
+            $(this).closest('tr').remove();
+            updateRowNumbers();
+            // Re-apply enter key navigation after row removal
+            setupEnterKeyNavigation();
+        }
+    });
+
+    // Form validation before submit
+    $('#stockEntryForm').on('submit', function(e) {
+        var isValid = true;
+        var errorMessages = [];
+
+        // Check each row for required fields
+        $('#stockEntryBody tr').each(function(index) {
+            var row = $(this);
+            var store = row.find('.select-store').val();
+            var supplier = row.find('.select-supplier').val();
+            var company = row.find('.select-company').val();
+            var item = row.find('.select-item').val();
+            var unit = row.find('.select-unit').val();
+            var batch = row.find('input[name="btchno[]"]').val();
+            var expiry = row.find('input[name="edate[]"]').val();
+            var retailRate = row.find('input[name="retail_rate[]"]').val();
+            var qty = row.find('input[name="qnty[]"]').val();
+
+            // Required fields check
+            if (!store) { isValid = false; errorMessages.push('Row ' + (index+1) + ': Store is required.'); }
+            if (!supplier) { isValid = false; errorMessages.push('Row ' + (index+1) + ': Supplier is required.'); }
+            if (!company) { isValid = false; errorMessages.push('Row ' + (index+1) + ': Medicine Company is required.'); }
+            if (!item) { isValid = false; errorMessages.push('Row ' + (index+1) + ': Item/Medicine is required.'); }
+            if (!unit) { isValid = false; errorMessages.push('Row ' + (index+1) + ': Unit is required.'); }
+            if (!batch) { isValid = false; errorMessages.push('Row ' + (index+1) + ': Batch Number is required.'); }
+            if (!expiry) { isValid = false; errorMessages.push('Row ' + (index+1) + ': Expiry Date is required.'); }
+
+            // Retail rate validation
+            if (retailRate !== undefined && retailRate !== '') {
+                var rr = parseFloat(retailRate);
+                if (isNaN(rr) || rr <= 0) {
+                    isValid = false;
+                    errorMessages.push('Row ' + (index+1) + ': Retail rate must be greater than 0.');
+                }
+            } else {
+                isValid = false;
+                errorMessages.push('Row ' + (index+1) + ': Retail rate is required.');
+            }
+
+            // Quantity validation
+            if (qty !== undefined && qty !== '') {
+                var q = parseInt(qty);
+                if (isNaN(q) || q <= 0) {
+                    isValid = false;
+                    errorMessages.push('Row ' + (index+1) + ': Quantity must be greater than 0.');
+                }
+            } else {
+                isValid = false;
+                errorMessages.push('Row ' + (index+1) + ': Quantity is required.');
+            }
+
+            // Rate validation for allowed branches
+            if (showRateFields) {
+                var purchaseRate = row.find('input[name="purchase_rate[]"]').val();
+                var wholesaleRate = row.find('input[name="wholesale_rate[]"]').val();
+
+                if (purchaseRate && purchaseRate !== '') {
+                    var pr = parseFloat(purchaseRate);
+                    if (isNaN(pr) || pr <= 0) {
+                        isValid = false;
+                        errorMessages.push('Row ' + (index+1) + ': Purchase rate must be greater than 0.');
+                    }
+                } else {
+                    isValid = false;
+                    errorMessages.push('Row ' + (index+1) + ': Purchase rate is required.');
+                }
+
+                if (wholesaleRate && wholesaleRate !== '') {
+                    var wr = parseFloat(wholesaleRate);
+                    if (isNaN(wr) || wr <= 0) {
+                        isValid = false;
+                        errorMessages.push('Row ' + (index+1) + ': Wholesale rate must be greater than 0.');
+                    }
+                } else {
+                    isValid = false;
+                    errorMessages.push('Row ' + (index+1) + ': Wholesale rate is required.');
+                }
+
+                // Additional validation: wholesale >= purchase
+                if (purchaseRate && wholesaleRate) {
+                    var pr = parseFloat(purchaseRate);
+                    var wr = parseFloat(wholesaleRate);
+                    if (!isNaN(pr) && !isNaN(wr) && wr < pr) {
+                        if (!confirm('Warning: Row ' + (index+1) + ' - Wholesale rate is less than purchase rate. This will result in loss on wholesale sales. Do you want to continue?')) {
+                            isValid = false;
+                            return false;
+                        }
+                    }
+                }
+            }
+        });
+
+        if (!isValid) {
+            e.preventDefault();
+            alert('Please fix the following errors:\n\n' + errorMessages.join('\n'));
+            return false;
+        }
+        return true;
+    });
+});
+</script>
+
+{% endblock %}

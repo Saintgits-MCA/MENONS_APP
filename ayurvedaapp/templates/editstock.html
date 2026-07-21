@@ -118,13 +118,12 @@
                     <input type="text" class="form-control" name="edate" value="{{ objstock.Expiry_date }}" placeholder="Enter Expiry Date" required>
                 </div>
                  -->
-                 <input type="hidden" name="mdate" id="mdate_hidden">
 <input type="hidden" name="edate" id="edate_hidden">
 
 <!-- Month/Year inputs for user selection -->
-<div class="form-group">
+<div class="form-group d-none">
     <label for="exampleInputPincode">Manufacture Month/Year</label>
-    <input type="month" class="form-control" id="manufacture_date" name="manufacture_date_display" value="{{ objstock.Manufacturer_date|date:'Y-m' }}" required>
+    <input type="month" class="form-control" id="manufacture_date" name="manufacture_date_display" value="{{ objstock.Manufacturer_date|date:'Y-m' }}">
 </div>
 <div class="form-group">
     <label for="exampleInputPincode">Expiry Month/Year</label>
@@ -132,10 +131,22 @@
 </div>
 
 
-
+ <div class="form-group">
+                                                <label for="purchase_rate">Purchase Rate</label>
+                                                <input type="number" step="0.01" min="0" class="form-control" name="purchase_rate" 
+                                                       value="{{ objstock.purchase_rate|default:'0' }}" 
+                                                       placeholder="Enter Purchase Rate">
+                                            </div>
+                                            
+                                            <div class="form-group">
+                                                <label for="wholesale_rate">Wholesale Rate</label>
+                                                <input type="number" step="0.01" min="0" class="form-control" name="wholesale_rate" 
+                                                       value="{{ objstock.wholesale_rate|default:'0' }}" 
+                                                       placeholder="Enter Wholesale Rate">
+                                            </div>
                 
             <div class="form-group">
-              <label for="exampleInputPincode">Rate</label>
+              <label for="exampleInputPincode">Retail  Rate</label>
               <input type="text" class="form-control" name="rate" value="{{objstock.Rate}}"  placeholder="Enter Price" id="exampleInputbystname" required>
             
           </div>
@@ -215,16 +226,10 @@
                 });
             });
             $('form').on('submit', function(e) {
-        let mdateVal = $('#manufacture_date').val();
         let edateVal = $('#expiry_date').val();
         
         // Validate month/year format
-        if (!mdateVal || !/^\d{4}-\d{2}$/.test(mdateVal)) {
-            alert('Please select a valid Manufacture Month/Year');
-            e.preventDefault();
-            $('#manufacture_date').focus();
-            return false;
-        }
+       
         if (!edateVal || !/^\d{4}-\d{2}$/.test(edateVal)) {
             alert('Please select a valid Expiry Month/Year');
             e.preventDefault();
@@ -233,10 +238,8 @@
         }
         
         // Set hidden fields with full date (YYYY-MM-DD)
-        $('#mdate_hidden').val(mdateVal + '-01');
         $('#edate_hidden').val(edateVal + '-01');
           // Set the formatted dates in the input fields
-  document.getElementById('mdate').value = formatDate('{{ objstock.Manufacturer_date }}');
   document.getElementById('edate').value = formatDate('{{ objstock.Expiry_date }}');
     });
         });
