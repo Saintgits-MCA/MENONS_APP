@@ -1038,4 +1038,12 @@ urlpatterns = [
     path('get-appointment-fee/', views.get_appointment_fee_ajax, name='get_appointment_fee_ajax'),
     path('visit-cycle/', views.patient_visit_cycle_list, name='patient_visit_cycle_list'),
     path('visit-cycle-detail/', views.patient_visit_cycle_detail, name='patient_visit_cycle_detail'),
+    path('advance-register-ip-detail/<int:bill_id>/', views.advance_register_ip_detail, name='advance_register_ip_detail'),
+    path('admission-discharge-bill-detail/<int:bill_id>/', views.admission_discharge_bill_detail, name='admission_discharge_bill_detail'),
+    path('admission-register-detail/<int:admission_id>/', views.admission_register_detail, name='admission_register_detail'),
+    path('cancelled-bills-detail/<int:invoice_id>/', views.cancelled_bills_detail, name='cancelled_bills_detail'),
+    path('birth-register-detail/<int:birth_id>/', views.birth_register_detail, name='birth_register_detail'),
+    path('discharge-register-detail/<int:discharge_id>/', views.discharge_register_detail, name='discharge_register_detail'),
+    path('registration-fee-invoice/', views.registration_fee_invoice, name='registration_fee_invoice'),
+
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

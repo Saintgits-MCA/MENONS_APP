@@ -136,6 +136,11 @@
                                 <input type="radio" value="online" name="consultation_type" id="consultOnline">
                                 <label for="consultOnline">Online</label>
                             </div>
+                            <div class="form-group">
+                                  <label for="exampleInputRegisterNo">Reg Fee</label>
+                                  <input type="text" class="form-control" id="reg_Fee" name="reg_Fee" placeholder="Enter Reg Fee">
+                              </div>
+                            
                                 <!-- <div class="form-group">
                                     <label for="exampleInputRegisterNo">City</label>
                                     <input type="text" class="form-control" id="exampleInputCity" name="city" placeholder="Enter City">
@@ -190,7 +195,6 @@
       </div>
     </div>
   </div>
-  {% block scripts %}
 
   <script>
   $(document).ready(function () {
@@ -206,7 +210,7 @@
           let formData = $(this).serialize();
           let patientName = $("input[name='patientname']").val().trim();
           let contactNumber = $("input[name='contactnumber']").val().trim();
-  
+          let regFee = $("input[name='reg_Fee']").val().trim();
           // Check if patient already exists
           $.ajax({
               url: "{% url 'check_patient_exists' %}",
@@ -221,7 +225,12 @@
                       alert("Patient already registered.");
                       location.reload();
                   } else {
-                      $('#confirmationModal').modal('show'); // Show modal if patient is new
+                    if (regFee && parseFloat(regFee) > 0) {
+                          submitFormWithRegFee("{% url 'registration_fee_invoice' %}");
+                      } else {
+                          $('#confirmationModal').modal('show'); // Show modal if patient is new
+                      }
+                      {% comment %} $('#confirmationModal').modal('show'); // Show modal if patient is new {% endcomment %}
                   }
               },
               error: function () {
@@ -253,9 +262,32 @@
               error: function () {
                   alert("Failed to save patient details.");
               }
+
           });
       }
+      function submitFormWithRegFee(invoiceUrl) {
+        let formData = $("#patientDetailsForm").serialize();
+
+        $.ajax({
+            url: "{% url 'patientdetails' %}?menumanagement_id={{ idmngmnt }}",
+            type: "POST",
+            data: formData,
+            dataType: 'json',  // ✅ Expect JSON response
+            success: function (response) {
+                if (response.success && response.patient_id) {
+                    window.location.href = invoiceUrl + '?patient_id=' + response.patient_id;
+                } else {
+                    alert(response.message || "Failed to save patient details.");
+                    window.location.href = "{% url 'patientdetailtable' %}?menumanagement_id={{ idmngmnt }}";
+                }
+            },
+            error: function (xhr, status, error) {
+                alert("Failed to save patient details. Please try again.");
+                console.error("Error:", error);
+                console.error("Response:", xhr.responseText);
+            }
+        });
+    }
   });
   </script>
-  {% endblock %}
   {% endblock %}

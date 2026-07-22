@@ -101,6 +101,7 @@
                                     <th style="width: 100px;">Adm.Date</th>
                                     <th style="width: 70px;" class="text-center">Days</th>
                                     <th>Remarks</th>
+                                    <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -109,7 +110,7 @@
                                     {% for date_group in date_groups %}
                                         <!-- Date Group Header -->
                                         <tr style="font-weight: bold;">
-                                            <td colspan="8">
+                                            <td colspan="9">
                                                 <strong>Dated : {{ date_group.grouper|date:"d/m/Y" }}</strong>
                                             </td>
                                         </tr>
@@ -128,12 +129,13 @@
                                             <td>{{ item.admission_date|date:"d/m/Y"|default:"-" }}</td>
                                             <td class="text-center">{{ item.days_stayed }}</td>
                                             <td>{{ item.remarks }}</td>
+                                            <td><a href="{%url 'discharge_summary'%}?ids={{item.sl_no}}" class="btn btn-primary"><i class="fas fa-eye"></i></a></td>
                                         </tr>
                                         {% endfor %}
                                     {% endfor %}
                                 {% else %}
                                     <tr>
-                                        <td colspan="8" class="text-center">No discharge records found.</td>
+                                        <td colspan="9" class="text-center">No discharge records found.</td>
                                     </tr>
                                 {% endif %}
                             </tbody>

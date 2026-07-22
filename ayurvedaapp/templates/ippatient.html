@@ -127,9 +127,9 @@
                     <label for="booking_start_date">Start Date</label>
                     <input type="date" class="form-control" id="booking_start_date" name="booking_start_date" required>
                   </div>
-                  <div class="form-group col-md-4">
+                  <div class="form-group col-md-4 d-none">
                     <label for="booking_end_date">End Date</label>
-                    <input type="date" class="form-control" id="booking_end_date" name="booking_end_date" required>
+                    <input type="date" class="form-control" id="booking_end_date" name="booking_end_date">
                   </div>
                 </div>
 
@@ -400,7 +400,7 @@ function showMessageModal(message, type) {
     }
 
     const bookingStart = document.getElementById('booking_start_date').value.trim();
-    const bookingEnd = document.getElementById('booking_end_date').value.trim();
+    {% comment %} const bookingEnd = document.getElementById('booking_end_date').value.trim(); {% endcomment %}
     if (!bookingStart) {
       isValid = false;
       errorMsg.push("Please select a Start Date.");
@@ -525,7 +525,7 @@ function showMessageModal(message, type) {
       } else {
         showMessageModal(data.error, 'error');
         document.getElementById('booking_start_date').value = '';
-        document.getElementById('booking_end_date').value = '';
+        {% comment %} document.getElementById('booking_end_date').value = ''; {% endcomment %}
         document.querySelectorAll('input[name="accommodation"]').forEach(function(r) { r.checked = false; });
         $('#roomSelection, #wardSelection').hide();
         $('#roomtype, #roommnumber, #roomfloor, #wardbedno, #wardfloor').val('');

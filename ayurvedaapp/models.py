@@ -110,7 +110,7 @@ class Patient_details(models.Model):
     deleted_date = models.DateField(null=True, blank=True) 
     zoho_contact_id = models.CharField(max_length=100, null=True, blank=True, unique=True)
     consultation_type = models.CharField(max_length=10, choices=CONSULTATION_CHOICES, default='offline')
-    
+    reg_Fee = models.DecimalField(default=0,null=True,decimal_places=2,max_digits=8)
     
     def soft_delete(self, staff):
         """Soft delete the Patient by setting deleted to True and logging the deletion."""
@@ -1714,6 +1714,7 @@ class ippatientadmission(models.Model):
     Admittedstatus=models.BooleanField(default=True)
     admittedbranch=models.ForeignKey(Branch,on_delete=models.CASCADE,default=None, null=True, blank=True)
     ipnumber=models.CharField(max_length=100,default=None, null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
 # class IPPackageextend(models.Model):
 # 	admission = models.ForeignKey(ippatientadmission,on_delete=models.CASCADE, null=True, blank=True)
 # 	mr_number = models.ForeignKey(Patient_details, on_delete=models.CASCADE)

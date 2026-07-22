@@ -103,6 +103,7 @@
                             <th>Name of the Patient</th>
                             <th class="text-right">Amount</th>
                             <th>Billing Staff</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
 
@@ -115,6 +116,14 @@
                             <td>{{ record.patient_name }}</td>
                             <td class="text-right">{{ record.amount|floatformat:2 }}</td>
                             <td>{{ record.billing_staff_name }}</td>
+
+<!-- Add this in tbody -->
+<td class="text-center">
+    <a href="{% url 'advance_register_ip_detail' record.id %}" 
+       class="btn btn-sm btn-info" title="View Details">
+        <i class="fas fa-eye"></i>
+    </a>
+</td>
                         </tr>
                         {% empty %}
                         <tr>

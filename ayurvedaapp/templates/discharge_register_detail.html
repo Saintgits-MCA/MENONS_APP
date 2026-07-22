@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="content-wrapper">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Discharge Details</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'discharge_register' %}">Discharge Register</a>
+                        </li>
+                        <li class="breadcrumb-item active">Details</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row mb-3">
+                <div class="col-12">
+                    <a href="{% url 'discharge_register' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to List
+                    </a>
+                </div>
+            </div>
+
+            <!-- Discharge Information -->
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Discharge Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-bordered table-sm">
+                                <tr>
+                                    <th style="width:40%;">IP Number</th>
+                                    <td>{{ admission.ipnumber|default:"N/A" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Patient Name</th>
+                                    <td>{{ patient.Patient_Name|default:"N/A" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>MR Number</th>
+                                    <td>{{ patient.Medical_Record_Number|default:"N/A" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Admission Date</th>
+                                    <td>{{ admission.Current_Date|date:"d/m/Y"|default:"N/A" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-bordered table-sm">
+                                <tr>
+                                    <th style="width:40%;">Discharge Date</th>
+                                    <td>{{ discharge.discharged_date|date:"d/m/Y" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Room</th>
+                                    <td>{{ room_booking.room_number.Roomno|default:"N/A" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Next Checkup</th>
+                                    <td>{{ discharge.next_checkup_date|date:"d/m/Y"|default:"-" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Doctor</th>
+                                    <td>{{ discharge.sfirst_name|default:"N/A" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Discharge Details -->
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Discharge Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <table class="table table-bordered table-sm">
+                                <tr>
+                                    <th style="width:20%;">Treatment Summary</th>
+                                    <td>{{ discharge.treatment_summary|default:"-" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Condition on Discharge</th>
+                                    <td>{{ discharge.condition_on_discharge|default:"-" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Additional Notes</th>
+                                    <td>{{ discharge.additional_notes|default:"-" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    {% if advices %}
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <h6>Advice on Discharge</h6>
+                            <ul>
+                                {% for advice in advices %}
+                                <li>{{ advice.advice_text }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if medications_procedures %}
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <h6>Medications & Procedures</h6>
+                            <table class="table table-bordered table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Internal Medication</th>
+                                        <th>Treatment Procedure</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in medications_procedures %}
+                                    <tr>
+                                        <td>{{ forloop.counter }}</td>
+                                        <td>{{ item.internal_medication|default:"-" }}</td>
+                                        <td>{{ item.treatment_procedure|default:"-" }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- IP Bills -->
+            {% if ip_bills %}
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">IP Bills</h5>
+                </div>
+                <div class="card-body table-responsive">
+                    <table class="table table-bordered table-striped table-sm">
+                        <thead>
+                            <tr>
+                                <th>Bill No</th>
+                                <th>Bill Date</th>
+                                <th class="text-right">Total Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for bill in ip_bills %}
+                            <tr>
+                                <td>{{ bill.ipinvoicenumber|default:"-" }}</td>
+                                <td>{{ bill.billing_date|date:"d/m/Y" }}</td>
+                                <td class="text-right">₹{{ bill.total_amount|floatformat:2 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+</div>
+{% endblock %}

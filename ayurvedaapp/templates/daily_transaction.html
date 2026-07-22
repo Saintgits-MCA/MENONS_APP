@@ -426,6 +426,92 @@
                 </div>
 
                   <hr>
+                  {% if reg_fee_count > 0 %}
+                  <div class="visit-summary" style="margin-top: 20px;">
+                      <h2 style="border-left-color: #6f42c1;">
+                          <i class="fas fa-registered"></i> Registration Fee Transactions
+                          <span class="badge badge-primary ml-2">{{ reg_fee_count }}</span>
+                      </h2>
+                      
+                      <!-- Registration Fee Summary Boxes -->
+                      <div class="summary-row">
+                          <div class="summary-box cash">
+                              <h4>Cash</h4>
+                              <span>₹ {{ reg_fee_totals.cash|default:0|floatformat:2 }}</span>
+                          </div>
+
+                          <div class="summary-box gpay">
+                              <h4>GPay</h4>
+                              <span>₹ {{ reg_fee_totals.gpay|default:0|floatformat:2 }}</span>
+                          </div>
+
+                          <div class="summary-box card">
+                              <h4>Card</h4>
+                              <span>₹ {{ reg_fee_totals.card|default:0|floatformat:2 }}</span>
+                          </div>
+
+                          <div class="summary-box reg-fee-total">
+                              <h4>Total Registration Fees</h4>
+                              <span>₹ {{ total_reg_fees|default:0|floatformat:2 }}</span>
+                          </div>
+                      </div>
+
+                      <!-- Registration Fee Invoices Table -->
+                      <table class="table table-bordered table-striped" id="regFeeTable" style="width:100%">
+                          <thead>
+                              <tr>
+                                  {% if is_superadmin %}<th>Branch</th>{% endif %}
+                                  <th>Invoice</th>
+                                  <th>Patient</th>
+                                  <th>MR Number</th>
+                                  {% comment %} <th>Visit Type</th> {% endcomment %}
+                                  <th>Payment Mode</th>
+                                  <th>Amount</th>
+                              </tr>
+                          </thead>
+                          <tbody>
+                              {% for inv in reg_fee_invoices %}
+                              <tr>
+                                  {% if is_superadmin %}<td>{{ inv.branch.Branch_Name }}</td>{% endif %}
+                                  <td>{{ inv.treatmentInvoicenumber }}</td>
+                                  <td>{{ inv.patientname }}</td>
+                                  <td>
+                                      {% if inv.Mrno %}
+                                          {{ inv.Mrno.Medical_Record_Number }}
+                                      {% else %}
+                                          N/A
+                                      {% endif %}
+                                  </td>
+                                  {% comment %} <td>
+                                      <span class="badge badge-info">
+                                          {{ inv.appointment_status|default:"Consultation" }}
+                                      </span>
+                                  </td> {% endcomment %}
+                                  <td>{{ inv.payementmode }}</td>
+                                  <td>₹ {{ inv.total|floatformat:2 }}</td>
+                              </tr>
+                              {% empty %}
+                              <tr>
+                                  <td colspan="{% if is_superadmin %}7{% else %}6{% endif %}" class="text-center text-muted">
+                                      No Registration Fee Transactions
+                                  </td>
+                              </tr>
+                              {% endfor %}
+                          </tbody>
+                      </table>
+                  </div>
+                  {% else %}
+                  <!-- Show message when no registration fees -->
+                  <div class="visit-summary" style="margin-top: 20px;">
+                      <h2 style="border-left-color: #6f42c1;">
+                          <i class="fas fa-registered"></i> Registration Fee Transactions
+                      </h2>
+                      <div class="alert alert-info">
+                          <i class="fas fa-info-circle"></i> No registration fee transactions found for the selected period.
+                      </div>
+                  </div>
+                  {% endif %}
+                  <hr>
 
                   <h2>Appointment Transactions</h2>
                   <div class="summary-row">

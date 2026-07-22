@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="content-wrapper">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Cancelled Bill Details</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'cancelled_bills_report' %}">Cancelled Bills Report</a>
+                        </li>
+                        <li class="breadcrumb-item active">Details</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row mb-3">
+                <div class="col-12">
+                    <a href="{% url 'cancelled_bills_report' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to List
+                    </a>
+                </div>
+            </div>
+
+            <!-- Invoice Header -->
+            <div class="card">
+                <div class="card-header {% if is_cancelled %}bg-danger{% else %}bg-success{% endif %} text-white">
+                    <h5 class="mb-0">
+                        Invoice Information
+                        {% if is_cancelled %}
+                            <span class="badge badge-light float-right">CANCELLED</span>
+                        {% else %}
+                            <span class="badge badge-light float-right">ACTIVE</span>
+                        {% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-bordered table-sm">
+                                <tr>
+                                    <th style="width:40%;">Bill No</th>
+                                    <td>{{ invoice.Invoicenumber|default:"N/A" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Bill Date</th>
+                                    <td>{{ invoice.currentdate|date:"d/m/Y" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Patient Name</th>
+                                    <td>{{ invoice.patientname|default:"N/A" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-bordered table-sm">
+                                <tr>
+                                    <th style="width:40%;">Original Amount</th>
+                                    <td class="text-right">₹{{ original_amount|floatformat:2 }}</td>
+                                </tr>
+                                {% if is_cancelled %}
+                                <tr class="text-danger">
+                                    <th>Cancelled Amount</th>
+                                    <td class="text-right">₹{{ cancelled_amount|floatformat:2 }}</td>
+                                </tr>
+                                <tr class="text-danger">
+                                    <th>Refund Amount</th>
+                                    <td class="text-right">₹{{ refund_amount|floatformat:2 }}</td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Invoice Items -->
+            {% if invoice_items %}
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Invoice Items</h5>
+                </div>
+                <div class="card-body table-responsive">
+                    <table class="table table-bordered table-striped table-sm">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Item</th>
+                                <th>Quantity</th>
+                                <th class="text-right">Rate</th>
+                                <th class="text-right">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in invoice_items %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>{{ item.particulars|default:"N/A" }}</td>
+                                <td>{{ item.quantity }}</td>
+                                <td class="text-right">{{ item.amount|floatformat:2 }}</td>
+                                <td class="text-right">{{ item.sutotal|floatformat:2 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+</div>
+{% endblock %}

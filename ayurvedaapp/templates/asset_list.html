@@ -115,7 +115,7 @@
                                                     <i class="fas fa-exchange-alt"></i> Transfer
                                                 </a>
                                             {% endif %}
-                                            {% if assetdelete == '1' and asset.status != 'disposed' %}
+                                            {% if assetdelete == '1' and asset.status != 'disposed' and asset.status != 'transferred'%}
                                                 <a href="#" onclick="confirmDispose('{{ asset.id }}', '{{ asset.asset_name|escapejs }}')" class="btn btn-danger" title="Dispose">
                                                     <i class="fas fa-trash"></i>
                                                 </a>
@@ -169,9 +169,7 @@
     </div>
 </div>
 
-{% endblock %}
 
-{% block extra_js %}
 <script>
 var disposeAssetId = null;
 

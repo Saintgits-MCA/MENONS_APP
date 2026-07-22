@@ -296,7 +296,6 @@ def appointment(request):
             branch1 = int(addbranch)
             doctor1 = int(adddocname)
             today = date.today()
-
             # ✅ Fetch Patient details (same as treatmentinvoice)
             patient_obj = Patient_details.objects.filter(id=addmrnumber).first()
             if not patient_obj:
@@ -306,7 +305,6 @@ def appointment(request):
             # ✅ Patient Name and Phone (based on your model)
             patient_name = patient_obj.Patient_Name
             patient_phone = patient_obj.contactno
-
             # ✅ Save Appointment
             objappointment = Appointments(
                 Tokenno=addtoknnumber,
@@ -3400,6 +3398,7 @@ def patientdetails(request):
         addaddress = request.POST.get('address')
         addpatientdate = request.POST.get('patient_date')
         addconsultation = request.POST.get('consultation_type') or 'offline'
+        addreg_Fee= request.POST.get('reg_Fee')
         if Patient_details.objects.filter(Patient_Name__iexact=addpatientname, contactno=addcontactnumber,deleted=False).exists():
             messages.warning(request, "A patient with the same name and contact number is already registered.")
             return redirect(f"{reverse('patientdetails')}?menumanagement_id={idmngmnt}")
@@ -3439,6 +3438,7 @@ def patientdetails(request):
                     Branch_Name_id=staffbranchid,
                     address =addaddress,
                     consultation_type=addconsultation,
+                    reg_Fee =addreg_Fee if addreg_Fee else 0
                 )
                 objpatientdetails.save()
                  
@@ -3453,7 +3453,24 @@ def patientdetails(request):
                     action_time=current_time.time(),  # ✅ Fix: Properly formatted time
                 )
                 messages.success(request, "Patient details saved successfully.")
-                return redirect(f"{reverse('patientdetails')}?menumanagement_id={idmngmnt}")
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    # ✅ Return JSON response for AJAX
+                    return JsonResponse({
+                        'success': True,
+                        'patient_id': objpatientdetails.id,
+                        'reg_fee': float(addreg_Fee) if addreg_Fee else 0,
+                        'message': 'Patient saved successfully'
+                    })
+                
+                # ✅ Regular form submission - redirect based on reg_fee
+                if addreg_Fee and float(addreg_Fee) > 0:
+                    return redirect(f"{reverse('registration_fee_invoice')}?patient_id={objpatientdetails.id}")
+                else:
+                    return redirect(f"{reverse('patientdetails')}?menumanagement_id={idmngmnt}")
+                # if addreg_Fee and float(addreg_Fee) > 0:
+                #     return redirect(f"{reverse('registration_fee_invoice')}?patient_id={objpatientdetails.id}")
+                # else:
+                #     return redirect(f"{reverse('patientdetails')}?menumanagement_id={idmngmnt}")
             except Exception as e:
                 messages.error(request, f"An error occurred while saving patient details: {str(e)}. Please contact the admin.")
                 return redirect('error_page')
@@ -3484,7 +3501,7 @@ def patientdetails(request):
             districtobj = District.objects.all()
             cityobj = City.objects.all()
             stdesign = request.session.get('loginstaffdesign')
-
+             
             context = {
                 'countryobj': countryobj,
                 'stateobj': stateobj,
@@ -3497,6 +3514,7 @@ def patientdetails(request):
                 'ptdtmngdelete': request.session.get('ptdtobjdelete'),
                 'idmngmnt': idmngmnt
             }
+            
             return render(request, "patientdetails.html", context)
 
         except ObjectDoesNotExist:
@@ -5458,8 +5476,8 @@ def discharge(request):
 
             # Update admission status
             admission.Admittedstatus = False
+            admission.end_date = discharged_date
             admission.save()
-
             # Release room/bed
             room_booking = ippatientroombooking.objects.filter(ipno=admission).first()
             if room_booking:
@@ -31690,15 +31708,18 @@ def daily_transaction_report(request):
     if is_superadmin and selected_branch_id and selected_branch_id.isdigit():
         branch_filter = Q(branch_id=int(selected_branch_id))
         appointment_branch_filter = Q(Branch_id=int(selected_branch_id))
+        patient_branch_filter = Q(Branch_Name_id=int(selected_branch_id))
     elif not is_superadmin:
         branch_filter = Q(branch_id=staff_branch_id)
         appointment_branch_filter = Q(Branch_id=staff_branch_id)
+        patient_branch_filter = Q(Branch_Name_id=staff_branch_id)
     else:
         branch_filter = Q()
         appointment_branch_filter = Q()
+        patient_branch_filter = Q()
 
-    # ---------- APPOINTMENTS INVOICES ----------
-    appointment_invoices = appointmentinvoicemaster.objects.filter(
+    # ---------- GET ALL APPOINTMENT INVOICES ----------
+    all_appointment_invoices = appointmentinvoicemaster.objects.filter(
         currentdate__range=(start_date, end_date),
         cancelstatus=False
     ).filter(branch_filter).select_related('Mrno', 'branch')
@@ -31708,13 +31729,87 @@ def daily_transaction_report(request):
         Appointment_date__range=(start_date, end_date)
     ).filter(appointment_branch_filter).select_related('MR_Number', 'Branch', 'Doctor_Name')
 
-    # Create mapping for easier lookup: patient_id + token_no -> appointment
+    # Create mappings for lookup
     appointment_dict = {}
     for app in appointments:
         key = (app.MR_Number_id, app.Tokenno)
         appointment_dict[key] = app
 
-    # ---------- PROCESS APPOINTMENT INVOICES WITH STATUS ----------
+    # ✅ Get patients with reg_Fee > 0
+    patients_with_reg_fee = Patient_details.objects.filter(
+        reg_Fee__gt=0,
+        deleted=False
+    ).filter(patient_branch_filter).values_list('id', flat=True)
+
+    # ✅ SEPARATE: Registration fee invoices vs Appointment invoices
+    # Use dictionary to track unique patients for registration fees
+    reg_fee_dict = {}  # key: patient_id, value: invoice object
+    appointment_invoices = []
+    
+    for inv in all_appointment_invoices:
+        is_reg_fee = False
+        patient_id = inv.Mrno_id
+        
+        # Method 1: Check by invoice number pattern (REGNO or REGFEE prefix)
+        if inv.treatmentInvoicenumber:
+            invoice_prefix = inv.treatmentInvoicenumber[:5] if len(inv.treatmentInvoicenumber) >= 5 else ''
+            if invoice_prefix in ['REGNO', 'REGFEE']:  # REGNO or REGFEE
+                is_reg_fee = True
+        
+        # Method 2: Check by consultationfeecumregfee field
+        elif inv.consultationfeecumregfee and 'reg' in inv.consultationfeecumregfee.lower():
+            is_reg_fee = True
+        
+        # Method 3: Check by consultationfee field
+        elif inv.consultationfee and 'reg' in inv.consultationfee.lower():
+            is_reg_fee = True
+        
+        # Method 4: Check if patient has reg_Fee and this matches
+        elif patient_id and patient_id in patients_with_reg_fee:
+            patient = Patient_details.objects.filter(id=patient_id).first()
+            if patient:
+                reg_fee_amount = float(patient.reg_Fee or 0)
+                invoice_amount = float(inv.total or 0)
+                
+                # If invoice amount matches reg_Fee
+                if reg_fee_amount > 0 and invoice_amount == reg_fee_amount:
+                    is_reg_fee = True
+        
+        if is_reg_fee:
+            # ✅ ONLY add if this patient doesn't already have a registration fee
+            if patient_id not in reg_fee_dict:
+                reg_fee_dict[patient_id] = inv
+        else:
+            appointment_invoices.append(inv)
+
+    # Convert reg_fee_dict to list for template
+    reg_fee_invoices = list(reg_fee_dict.values())
+
+    # Calculate registration fee totals
+    total_reg_fees = 0
+    reg_fee_count = len(reg_fee_invoices)
+    
+    reg_fee_totals = {
+        'cash': 0,
+        'gpay': 0,
+        'card': 0,
+        'total': 0
+    }
+
+    for inv in reg_fee_invoices:
+        fee = float(inv.total or 0)
+        total_reg_fees += fee
+        reg_fee_totals['total'] += fee
+        
+        mode = (inv.payementmode or "").lower()
+        if "cash" in mode:
+            reg_fee_totals['cash'] += fee
+        elif "gpay" in mode or "google" in mode or "upi" in mode:
+            reg_fee_totals['gpay'] += fee
+        elif "card" in mode:
+            reg_fee_totals['card'] += fee
+
+    # ---------- PROCESS APPOINTMENT INVOICES (ONLY NON-REG FEES) ----------
     appointment_list = []
     appointment_fees_by_status = {
         "consultation": 0.0,
@@ -31723,13 +31818,12 @@ def daily_transaction_report(request):
         "whatsapp": 0.0,
         "camp": 0.0,
         "treatment": 0.0,
-        "zoho online consultation": 0.0,      # ← NEW
-        "zoho online revisit": 0.0,           # ← NEW
-        "whatsapp revisit": 0.0,              # ← NEW
-        "": 0.0  # For invoices without appointment or status
+        "zoho online consultation": 0.0,
+        "zoho online revisit": 0.0,
+        "whatsapp revisit": 0.0,
+        "": 0.0
     }
     
-    # Also track counts by status
     appointment_counts_by_status = {
         "consultation": 0,
         "followup": 0,
@@ -31737,9 +31831,9 @@ def daily_transaction_report(request):
         "whatsapp": 0,
         "camp": 0,
         "treatment": 0,
-        "zoho online consultation": 0,        # ← NEW
-        "zoho online revisit": 0,             # ← NEW
-        "whatsapp revisit": 0,                # ← NEW
+        "zoho online consultation": 0,
+        "zoho online revisit": 0,
+        "whatsapp revisit": 0,
         "": 0
     }
 
@@ -31749,19 +31843,47 @@ def daily_transaction_report(request):
         status = ""
         
         if inv.Mrno_id and inv.treatmentInvoicenumber:
-            key = (inv.Mrno_id, inv.treatmentInvoicenumber)
-            appointment = appointment_dict.get(key)
+            token_no = inv.treatmentInvoicenumber
+            # Clean token number
+            if token_no.startswith('TKNO'):
+                token_no = token_no.replace('TKNO', '')
+            
+            key1 = (inv.Mrno_id, inv.treatmentInvoicenumber)
+            appointment = appointment_dict.get(key1)
+            
+            if not appointment and token_no != inv.treatmentInvoicenumber:
+                key2 = (inv.Mrno_id, token_no)
+                appointment = appointment_dict.get(key2)
+        
+        if not appointment and inv.Mrno_id and inv.currentdate:
+            patient_appointments = appointments.filter(
+                MR_Number_id=inv.Mrno_id,
+                Appointment_date=inv.currentdate
+            )
+            if patient_appointments.count() == 1:
+                appointment = patient_appointments.first()
+            elif patient_appointments.count() > 1:
+                for app in patient_appointments:
+                    if app.Tokenno in inv.treatmentInvoicenumber:
+                        appointment = app
+                        break
+                if not appointment:
+                    appointment = patient_appointments.first()
+        
+        if not appointment and inv.treatmentInvoicenumber:
+            token_part = inv.treatmentInvoicenumber
+            if token_part.startswith('TKNO'):
+                token_part = token_part.replace('TKNO', '')
+            if token_part.isdigit():
+                app_match = appointments.filter(
+                    Tokenno=token_part,
+                    Appointment_date=inv.currentdate
+                ).first()
+                if app_match:
+                    appointment = app_match
         
         if appointment:
             status = (appointment.status or "").strip().lower()
-        else:
-            # If no appointment found, check if MR number matches any appointment on the same date
-            matching_app = appointments.filter(
-                MR_Number_id=inv.Mrno_id,
-                Appointment_date=inv.currentdate
-            ).first()
-            if matching_app:
-                status = (matching_app.status or "").strip().lower()
         
         # Add status to invoice object for display
         inv.appointment_status = status.capitalize() if status else "N/A"
@@ -31774,26 +31896,32 @@ def daily_transaction_report(request):
             appointment_fees_by_status[status] += fee
             appointment_counts_by_status[status] += 1
         else:
-            # For unknown statuses, add to empty string category
             appointment_fees_by_status[""] += fee
             appointment_counts_by_status[""] += 1
         
         appointment_list.append(inv)
 
     # ---------- CALCULATE APPOINTMENT TOTALS BY PAYMENT MODE ----------
-    appointment_totals = appointment_invoices.aggregate(
-        cash=Sum('total', filter=Q(payementmode__iexact='cash')),
-        gpay=Sum('total', filter=Q(payementmode__iexact='gpay')),
-        card=Sum('total', filter=Q(payementmode__iexact='card')),
-        total=Sum('total')
-    )
+    appointment_totals = {
+        'cash': 0,
+        'gpay': 0,
+        'card': 0,
+        'total': 0
+    }
+    
+    for inv in appointment_invoices:
+        fee = float(inv.total or 0)
+        appointment_totals['total'] += fee
+        
+        mode = (inv.payementmode or "").lower()
+        if "cash" in mode:
+            appointment_totals['cash'] += fee
+        elif "gpay" in mode or "google" in mode or "upi" in mode:
+            appointment_totals['gpay'] += fee
+        elif "card" in mode:
+            appointment_totals['card'] += fee
 
-    appointment_totals['cash'] = appointment_totals['cash'] or 0
-    appointment_totals['gpay'] = appointment_totals['gpay'] or 0
-    appointment_totals['card'] = appointment_totals['card'] or 0
-    appointment_totals['total'] = appointment_totals['total'] or 0
-
-    # ---------- PHARMACY (MIXED PAYMENTS POSSIBLE) ----------
+    # ---------- PHARMACY ----------
     pharmacy_qs = newInvoiceMaster.objects.filter(
         currentdate__range=(start_date, end_date),
         restockstatus=True
@@ -31819,7 +31947,7 @@ def daily_transaction_report(request):
 
     # ---------- CALCULATE TOTAL VISITS ----------
     total_visits = sum(appointment_counts_by_status.values())
-
+    
     # ---------- CONTEXT ----------
     context = {
         "start_date": start_date,
@@ -31840,9 +31968,9 @@ def daily_transaction_report(request):
         "whatsapp_count": appointment_counts_by_status["whatsapp"],
         "camp_count": appointment_counts_by_status["camp"],
         "treatment_count": appointment_counts_by_status["treatment"],
-        "zoho_online_consultation_count": appointment_counts_by_status["zoho online consultation"],  # ← NEW
-        "zoho_online_revisit_count": appointment_counts_by_status["zoho online revisit"],            # ← NEW
-        "whatsapp_revisit_count": appointment_counts_by_status["whatsapp revisit"],                  # ← NEW
+        "zoho_online_consultation_count": appointment_counts_by_status["zoho online consultation"],
+        "zoho_online_revisit_count": appointment_counts_by_status["zoho online revisit"],
+        "whatsapp_revisit_count": appointment_counts_by_status["whatsapp revisit"],
         
         # Visit type fees
         "consultation_fee": appointment_fees_by_status["consultation"],
@@ -31851,13 +31979,19 @@ def daily_transaction_report(request):
         "whatsapp_fee": appointment_fees_by_status["whatsapp"],
         "camp_fee": appointment_fees_by_status["camp"],
         "treatment_fee": appointment_fees_by_status["treatment"],
-        "zoho_online_consultation_fee": appointment_fees_by_status["zoho online consultation"],      
-        "zoho_online_revisit_fee": appointment_fees_by_status["zoho online revisit"],                
-        "whatsapp_revisit_fee": appointment_fees_by_status["whatsapp revisit"],                      
+        "zoho_online_consultation_fee": appointment_fees_by_status["zoho online consultation"],
+        "zoho_online_revisit_fee": appointment_fees_by_status["zoho online revisit"],
+        "whatsapp_revisit_fee": appointment_fees_by_status["whatsapp revisit"],
         
-        # Other (for invoices without clear status)
+        # Other
         "other_count": appointment_counts_by_status[""],
         "other_fee": appointment_fees_by_status[""],
+        
+        # Registration fees - ONLY UNIQUE PATIENTS
+        "reg_fee_count": reg_fee_count,
+        "total_reg_fees": total_reg_fees,
+        "reg_fee_totals": reg_fee_totals,
+        "reg_fee_invoices": reg_fee_invoices,
     }
 
     return render(request, "daily_transaction.html", context)
@@ -39592,7 +39726,6 @@ def admission_register(request):
             'patient_details': patient_details,
             'doctor_complaint': doctor_complaint,
             'room': room_display,
-            'shift': room_display,  # Using room as shift for now
             'discharge': discharge_date,
             'user': user_name,
             'admission_id': admission.id,
@@ -39667,9 +39800,7 @@ def cancelled_bills_report(request):
     
     # ========== FETCH CANCELLED INVOICES ==========
     # Get cancelled invoices (restockstatus=False means cancelled)
-    invoices_query = newInvoiceMaster.objects.filter(
-        restockstatus=False
-    ).select_related(
+    invoices_query = newInvoiceMaster.objects.filter(restockstatus__in=[0, 1]).select_related(
         'Mrno',
         'branch',
         'preparedby',
@@ -39722,17 +39853,27 @@ def cancelled_bills_report(request):
             cancelled_by = f"{invoice.preparedby.Staff.Staff_firstname} {invoice.preparedby.Staff.Staff_lastname}".strip()
         
         # Calculate amounts
-        original_amount = float(invoice.total or 0)
-        cancelled_amount = original_amount  # Full amount is cancelled
-        refund_amount = original_amount  # Full refund for cancelled bills
-        
-        
-        
+        cancelled_amount = 0
+        refund_amount = 0
+        original_amount = 0
+        if invoice.restockstatus == 0:  # Active invoice (restockstatus = False/0)
+            cancelled_amount = 0
+            refund_amount = 0
+            original_amount = float(invoice.total or 0)
+            total_original += original_amount
+        else:  
+            cancelled_amount = float(invoice.total or 0)
+            refund_amount = float(invoice.total or 0)
+            original_amount=0
+            total_cancelled += float(invoice.total or 0)
+            total_refund += float(invoice.total or 0)
+
         total_original += original_amount
         total_cancelled += cancelled_amount
         total_refund += refund_amount
         
         invoices.append({
+            'id':invoice.id,
             'sl_no': sl_no,
             'bill_no': invoice.Invoicenumber or f"BILL-{invoice.id}",
             'patient_name': patient_name,
@@ -39955,7 +40096,7 @@ def discharge_register(request):
     all_discharge_data = discharge_data.copy()
     
     # Pagination - 20 items per page
-    paginator = Paginator(discharge_data, 20)
+    paginator = Paginator(discharge_data, 10)
     page = request.GET.get('page', 1)
     
     try:
@@ -40273,9 +40414,6 @@ def sales_return_report(request):
     elif not from_date and to_date:
         from_date = date.today().replace(day=1).strftime('%Y-%m-%d')
         credit_notes = credit_notes.filter(creditnote_date__range=[from_date, to_date])
-    else:
-        from_date = date.today().replace(day=1).strftime('%Y-%m-%d')
-        to_date = date.today().strftime('%Y-%m-%d')
 
     
     # Apply bill type filter (if needed)
@@ -40322,7 +40460,7 @@ def sales_return_report(request):
     all_sales_returns = sales_returns.copy()  # All data for print
     
     # Pagination - 25 items per page (for view)
-    paginator = Paginator(sales_returns, 10)
+    paginator = Paginator(sales_returns, 5)
     page = request.GET.get('page', 1)
     
     try:
@@ -40373,9 +40511,6 @@ def purchase_statement_report(request):
     elif not from_date and to_date:
         from_date = date.today().replace(day=1).strftime('%Y-%m-%d')
         purchase_invoices = purchase_invoices.filter(invoice_date__range=[from_date, to_date])
-    else:
-        from_date = date.today().replace(day=1).strftime('%Y-%m-%d')
-        to_date = date.today().strftime('%Y-%m-%d')
     
     # Apply supplier filter
     if supplier_filter:
@@ -40484,9 +40619,6 @@ def sales_statement_report(request):
     elif not from_date and to_date:
         from_date = date.today().replace(day=1).strftime('%Y-%m-%d')
         sales_invoices = sales_invoices.filter(currentdate__range=[from_date, to_date])
-    else:
-        from_date = date.today().replace(day=1).strftime('%Y-%m-%d')
-        to_date = date.today().strftime('%Y-%m-%d')
 
     # Apply patient filter
     if patient_filter:
@@ -40872,16 +41004,29 @@ def doctorwise_op_registration(request):
     total_count = 0
     
     for appt in appointments.order_by('Appointment_date', '-id'):
-        reg_fees = float(appt.Fee or 0) if appt.status and 'consultation' in appt.status.lower() else 0
-        cons_fees = float(appt.Fee or 0) if appt.status and 'followup' in appt.status.lower() else 0
+        patient = appt.MR_Number
+        
+        # ✅ Get registration fee from Patient_details table
+        reg_fees = 0
+        cons_fees = 0
+        
+        if patient:
+            # ✅ Use reg_Fee from Patient_details
+            reg_fees = float(patient.reg_Fee or 0)
+            
+            # For follow-up, use fee from appointment
+            if appt.status and 'followup' in appt.status.lower():
+                cons_fees = float(appt.Fee or 0)
+            else:
+                cons_fees = 0
         
         reg_data.append({
             'sl_no': len(reg_data) + 1,
             'doctor_name': f"{appt.Doctor_Name.Staff_firstname} {appt.Doctor_Name.Staff_lastname}".strip() if appt.Doctor_Name else 'N/A',
-            'op_number': appt.MR_Number.Medical_Record_Number if appt.MR_Number else '-',
-            'time': appt.visit_start_time if appt.visit_start_time else '-',
+            'op_number': patient.Medical_Record_Number if patient else '-',
+            'date': appt.Appointment_date if appt.Appointment_date else '-',
             'token': appt.Tokenno,
-            'patient_details': f"{appt.MR_Number.Patient_Name if appt.MR_Number else 'N/A'} ({appt.MR_Number.Gender if appt.MR_Number else 'N/A'}/{appt.MR_Number.Age if appt.MR_Number else '0'} Y)" if appt.MR_Number else 'N/A',
+            'patient_details': f"{patient.Patient_Name if patient else 'N/A'} ({patient.Gender if patient else 'N/A'}/{patient.Age if patient else '0'} Y)" if patient else 'N/A',
             'reg_fees': reg_fees,
             'cons_fees': cons_fees
         })
@@ -40889,7 +41034,6 @@ def doctorwise_op_registration(request):
         total_cons_fees += cons_fees
         total_count += 1
     
-
     context = {
         'reg_data': reg_data,
         'total_count': total_count,
@@ -43870,3 +44014,515 @@ def patient_visit_cycle_detail(request):
         'appointments': appointments,
     }
     return render(request, 'patient_visit_cycle_detail.html', context)
+
+
+def advance_register_ip_detail(request, bill_id):
+    """
+    Detail view for a specific IP advance payment
+    Table: IPBill, ippatientadmission, Patient_details
+    """
+    staff_design_id = request.session.get('loginstaffdesign')
+    if not staff_design_id:
+        return redirect('staff_login')
+    
+    try:
+        # Get the bill with all related data
+        bill = get_object_or_404(
+            IPBill.objects.select_related(
+                'ip_admission',
+                'ip_admission__MR_Number',
+                'ip_admission__MR_Number__Branch_Name',
+                'billingstaff',
+                'billingstaff__Staff',
+                'discharge'
+            ),
+            id=bill_id
+        )
+        
+        # ✅ Check if bill exists and has ip_admission
+        if not bill:
+            messages.error(request, "Bill record not found.")
+            return redirect('advance_register_ip')
+        
+        # ✅ Get admission details with error handling
+        admission = bill.ip_admission
+        if not admission:
+            messages.error(request, "No admission record found for this bill.")
+            return redirect('advance_register_ip')
+        
+        # ✅ Get patient with error handling
+        patient = admission.MR_Number if admission else None
+        if not patient:
+            messages.warning(request, "Patient information not found for this admission.")
+        
+        # Get room booking details
+        try:
+            room_booking = ippatientroombooking.objects.filter(ipno=admission).first() if admission else None
+        except Exception as e:
+            logger.warning(f"Error fetching room booking: {str(e)}")
+            room_booking = None
+        
+        # Get expanded bill details
+        try:
+            expanded_medicines = ipexpandedbillmedicinedetail.objects.filter(
+                ipbilldt=bill
+            ).select_related('physicalstock', 'physicalstock__itemnm')
+        except Exception as e:
+            logger.warning(f"Error fetching medicines: {str(e)}")
+            expanded_medicines = []
+        
+        try:
+            expanded_treatments = ipexpandedbilltreatmentdetail.objects.filter(
+                ipbilldt=bill
+            ).select_related('tratmntid')
+        except Exception as e:
+            logger.warning(f"Error fetching treatments: {str(e)}")
+            expanded_treatments = []
+        
+        try:
+            expanded_rooms = IPExpandedBillRoomDetail.objects.filter(
+                ipbill=bill
+            ).select_related('room')
+        except Exception as e:
+            logger.warning(f"Error fetching rooms: {str(e)}")
+            expanded_rooms = []
+        
+        try:
+            expanded_other_expenses = ipexpandedbillotherexpensesdetail.objects.filter(
+                ipbilldt=bill
+            )
+        except Exception as e:
+            logger.warning(f"Error fetching other expenses: {str(e)}")
+            expanded_other_expenses = []
+        
+        # Get discharge details if available
+        try:
+            discharge = PatientDischarge.objects.filter(ipptno=admission).first() if admission else None
+        except Exception as e:
+            logger.warning(f"Error fetching discharge: {str(e)}")
+            discharge = None
+        
+        # Calculate totals with null safety
+        try:
+            subtotal = float(bill.subtotal or 0)
+            tax = float(bill.tax or 0)
+            discount = float(bill.discount or 0)
+            total_amount = float(bill.total_amount or 0)
+        except (ValueError, TypeError) as e:
+            logger.warning(f"Error calculating totals: {str(e)}")
+            subtotal = 0
+            tax = 0
+            discount = 0
+            total_amount = 0
+        
+        context = {
+            'bill': bill,
+            'admission': admission,
+            'patient': patient,
+            'room_booking': room_booking,
+            'expanded_medicines': expanded_medicines,
+            'expanded_treatments': expanded_treatments,
+            'expanded_rooms': expanded_rooms,
+            'expanded_other_expenses': expanded_other_expenses,
+            'discharge': discharge,
+            'subtotal': subtotal,
+            'tax': tax,
+            'discount': discount,
+            'total_amount': total_amount,
+            'stdesign': staff_design_id,
+            'disable_datatables': True,  # ✅ Disable DataTables
+        }
+        
+        return render(request, 'advance_register_ip_details.html', context)
+        
+    except IPBill.DoesNotExist:
+        messages.error(request, "Bill record not found.")
+        return redirect('advance_register_ip')
+        
+    except Exception as e:
+        logger.error(f"Error in advance_register_ip_detail: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        messages.error(request, f"Error loading bill details: {str(e)}")
+        return redirect('advance_register_ip')
+
+
+# ==================== ADMISSION DISCHARGE BILL DETAIL ====================
+
+def admission_discharge_bill_detail(request, bill_id):
+    """
+    Detail view for a specific admission discharge bill
+    Table: IPBill, ippatientadmission, PatientDischarge, ippatientroombooking
+    """
+    staff_design_id = request.session.get('loginstaffdesign')
+    if not staff_design_id:
+        return redirect('staff_login')
+    
+    try:
+        bill = get_object_or_404(
+            IPBill.objects.select_related(
+                'ip_admission',
+                'ip_admission__MR_Number',
+                'ip_admission__MR_Number__Branch_Name',
+                'billingstaff',
+                'billingstaff__Staff',
+                'discharge'
+            ),
+            id=bill_id
+        )
+        
+        admission = bill.ip_admission
+        patient = admission.MR_Number if admission else None
+        
+        # Get room booking
+        room_booking = ippatientroombooking.objects.filter(ipno=admission).first() if admission else None
+        
+        # Get discharge details
+        discharge = bill.discharge
+        
+        # Get all expanded details
+        expanded_medicines = ipexpandedbillmedicinedetail.objects.filter(
+            ipbilldt=bill
+        ).select_related('physicalstock', 'physicalstock__itemnm')
+        
+        expanded_treatments = ipexpandedbilltreatmentdetail.objects.filter(
+            ipbilldt=bill
+        ).select_related('tratmntid')
+        
+        expanded_rooms = IPExpandedBillRoomDetail.objects.filter(
+            ipbill=bill
+        ).select_related('room')
+        
+        expanded_other_expenses = ipexpandedbillotherexpensesdetail.objects.filter(
+            ipbilldt=bill
+        )
+        
+        context = {
+            'bill': bill,
+            'admission': admission,
+            'patient': patient,
+            'room_booking': room_booking,
+            'discharge': discharge,
+            'expanded_medicines': expanded_medicines,
+            'expanded_treatments': expanded_treatments,
+            'expanded_rooms': expanded_rooms,
+            'expanded_other_expenses': expanded_other_expenses,
+            'subtotal': float(bill.subtotal or 0),
+            'tax': float(bill.tax or 0),
+            'discount': float(bill.discount or 0),
+            'total_amount': float(bill.total_amount or 0),
+            'stdesign': staff_design_id,
+        }
+        
+        return render(request, 'admission_discharge_bill_detail.html', context)
+        
+    except Exception as e:
+        logger.error(f"Error in admission_discharge_bill_detail: {str(e)}")
+        messages.error(request, f"Error loading bill details: {str(e)}")
+        return redirect('admission_discharge_bill_register')
+
+
+# ==================== ADMISSION REGISTER DETAIL ====================
+
+def admission_register_detail(request, admission_id):
+    """
+    Detail view for a specific patient admission
+    Table: ippatientadmission, Patient_details, ippatientroombooking, PatientDischarge
+    """
+    staff_design_id = request.session.get('loginstaffdesign')
+    if not staff_design_id:
+        return redirect('staff_login')
+    
+    try:
+        admission = get_object_or_404(
+            ippatientadmission.objects.select_related(
+                'MR_Number',
+                'MR_Number__Branch_Name',
+                'admittedbranch'
+            ),
+            id=admission_id
+        )
+        
+        patient = admission.MR_Number
+        
+        # Get room booking
+        room_booking = ippatientroombooking.objects.filter(ipno=admission).first()
+        
+        # Get discharge details
+        discharge = PatientDischarge.objects.filter(ipptno=admission).first()
+        
+        # Get all discharge advices
+        advices = AdviceOnDischarge.objects.filter(discharge=discharge) if discharge else []
+        
+        # Get medications and procedures
+        medications_procedures = DischargeMedicationProcedure.objects.filter(
+            discharge=discharge
+        ) if discharge else []
+        
+        # Get IP bills for this admission
+        ip_bills = IPBill.objects.filter(ip_admission=admission)
+        
+        # Get doctor details
+        doctor_name = "N/A"
+        if room_booking and room_booking.admitteddoctor:
+            doctor_name = f"{room_booking.admitteddoctor.Staff.Staff_firstname} {room_booking.admitteddoctor.Staff.Staff_lastname}".strip()
+        
+        context = {
+            'admission': admission,
+            'patient': patient,
+            'room_booking': room_booking,
+            'discharge': discharge,
+            'advices': advices,
+            'medications_procedures': medications_procedures,
+            'ip_bills': ip_bills,
+            'doctor_name': doctor_name,
+            'stdesign': staff_design_id,
+        }
+        
+        return render(request, 'admission_register_detail.html', context)
+        
+    except Exception as e:
+        logger.error(f"Error in admission_register_detail: {str(e)}")
+        messages.error(request, f"Error loading admission details: {str(e)}")
+        return redirect('admission_register')
+
+
+# ==================== CANCELLED BILLS DETAIL ====================
+def cancelled_bills_detail(request, invoice_id):
+    """
+    Detail view for a specific cancelled invoice
+    Table: newInvoiceMaster, Patient_details, newInvoiceChild, newInvoiceMaster
+    """
+    staff_design_id = request.session.get('loginstaffdesign')
+    if not staff_design_id:
+        return redirect('staff_login')
+    
+    try:
+        invoice = get_object_or_404(
+            newInvoiceMaster.objects.select_related(
+                'Mrno',
+                'branch',
+                'preparedby',
+                'preparedby__Staff'
+            ),
+            id=invoice_id
+        )
+        
+        # Get invoice items
+        invoice_items = newInvoiceChild.objects.filter(
+            invmasterid=invoice
+        ).select_related('suppid')
+        
+        # Calculate amounts
+        original_amount = float(invoice.total or 0)
+        
+        if invoice.restockstatus == 1:  # Cancelled
+            cancelled_amount = original_amount
+            refund_amount = original_amount
+        else:
+            cancelled_amount = 0
+            refund_amount = 0
+        
+        context = {
+            'invoice': invoice,
+            'id': invoice.id,
+            'invoice_items': invoice_items,
+            'original_amount': original_amount,
+            'cancelled_amount': cancelled_amount,
+            'refund_amount': refund_amount,
+            'is_cancelled': invoice.restockstatus == 1,
+            'stdesign': staff_design_id,
+        }
+        
+        return render(request, 'cancelled_bills_detail.html', context)
+        
+    except Exception as e:
+        logger.error(f"Error in cancelled_bills_detail: {str(e)}")
+        messages.error(request, f"Error loading invoice details: {str(e)}")
+        return redirect('cancelled_bills_report')
+
+
+# ==================== BIRTH REGISTER DETAIL ====================
+def birth_register_detail(request, birth_id):
+    """
+    Detail view for a specific birth registration
+    Table: BirthRegister, Patient_details, Staffdetails
+    """
+    staff_design_id = request.session.get('loginstaffdesign')
+    if not staff_design_id:
+        return redirect('staff_login')
+    
+    try:
+        birth_record = get_object_or_404(
+            BirthRegister.objects.select_related(
+                'mother',
+                'created_by'
+            ),
+            id=birth_id
+        )
+        
+        context = {
+            'birth_record': birth_record,
+            'stdesign': staff_design_id,
+        }
+        
+        return render(request, 'birth_register_details.html', context)
+        
+    except Exception as e:
+        logger.error(f"Error in birth_register_detail: {str(e)}")
+        messages.error(request, f"Error loading birth record details: {str(e)}")
+        return redirect('birth_register_report')
+
+
+# ==================== DISCHARGE REGISTER DETAIL ====================
+def discharge_register_detail(request, discharge_id):
+    """
+    Detail view for a specific discharge record
+    Table: PatientDischarge, ippatientadmission, Patient_details, ippatientroombooking
+    """
+    staff_design_id = request.session.get('loginstaffdesign')
+    if not staff_design_id:
+        return redirect('staff_login')
+    
+    try:
+        discharge = get_object_or_404(
+            PatientDischarge.objects.select_related(
+                'ipptno',
+                'ipptno__MR_Number',
+                'dischargedstaff',
+                'dischargedstaff__Staff'
+            ),
+            id=discharge_id
+        )
+        
+        admission = discharge.ipptno
+        patient = admission.MR_Number if admission else None
+        
+        # Get room booking
+        room_booking = ippatientroombooking.objects.filter(ipno=admission).first() if admission else None
+        
+        # Get advices
+        advices = AdviceOnDischarge.objects.filter(discharge=discharge)
+        
+        # Get medications and procedures
+        medications_procedures = DischargeMedicationProcedure.objects.filter(discharge=discharge)
+        
+        # Get IP bills
+        ip_bills = IPBill.objects.filter(ip_admission=admission)
+        
+        context = {
+            'discharge': discharge,
+            'admission': admission,
+            'patient': patient,
+            'room_booking': room_booking,
+            'advices': advices,
+            'medications_procedures': medications_procedures,
+            'ip_bills': ip_bills,
+            'stdesign': staff_design_id,
+        }
+        
+        return render(request, 'discharge_register_detail.html', context)
+        
+    except Exception as e:
+        logger.error(f"Error in discharge_register_detail: {str(e)}")
+        messages.error(request, f"Error loading discharge details: {str(e)}")
+        return redirect('discharge_register')
+
+
+def registration_fee_invoice(request):
+    """Generate invoice for registration fee from Patient_details"""
+    
+    # Get patient ID from request
+    patient_id = request.GET.get('patient_id')
+    if not patient_id:
+        messages.error(request, "Patient ID is required.")
+        return redirect('daily_transaction_report')
+    
+    try:
+        patient = Patient_details.objects.get(id=patient_id)
+    except Patient_details.DoesNotExist:
+        messages.error(request, "Patient not found.")
+        return redirect('daily_transaction_report')
+    
+    # Check if patient has registration fee
+    if patient.reg_Fee <= 0:
+        messages.error(request, "No registration fee found for this patient.")
+        return redirect('daily_transaction_report')
+    
+    # Get hospital details
+    objhospt = Hospitaldetails.objects.first()
+    if not objhospt:
+        messages.error(request, "Hospital details not found.")
+        return redirect('daily_transaction_report')
+    
+    # Get branch details from patient
+    brname = patient.Branch_Name
+    if not brname:
+        messages.error(request, "Branch details not found.")
+        return redirect('daily_transaction_report')
+    
+    # Get staff who created the patient (if available)
+    staff_name = "System"
+    # Generate invoice number
+    today = date.today().strftime("%Y%m%d")
+    last_invoice = appointmentinvoicemaster.objects.filter(
+        treatmentInvoicenumber__startswith=f"REGNO{today}"
+    ).order_by('-id').first()
+    
+    if last_invoice and last_invoice.treatmentInvoicenumber:
+        try:
+            last_num = int(last_invoice.treatmentInvoicenumber[-4:])
+            new_num = last_num + 1
+        except:
+            new_num = 1
+    else:
+        new_num = 1
+    
+    invoice_number = f"REGNO{today}{new_num:04d}"
+    
+    # Get doctor name (if available from patient's appointments)
+    doctor_name = "N/A"
+    last_appointment = Appointments.objects.filter(
+        MR_Number=patient
+    ).order_by('-Appointment_date').first()
+    
+    if last_appointment and last_appointment.Doctor_Name:
+        doctor_name = f"Dr. {last_appointment.Doctor_Name.Staff_firstname} {last_appointment.Doctor_Name.Staff_lastname}".strip()
+    
+    # Create or get invoice record
+    invoice, created = appointmentinvoicemaster.objects.get_or_create(
+        Mrno=patient,
+        currentdate=date.today(),
+        treatmentInvoicenumber=invoice_number,
+        defaults={
+            'hospitalname': objhospt,
+            'branch': brname,
+            'patientname': patient.Patient_Name,
+            'patientphno': patient.contactno,
+            'subtotal': float(patient.reg_Fee),
+            'tax': 0,
+            'shipping': 0,
+            'total': float(patient.reg_Fee),
+            'consultationfee': str(float(patient.reg_Fee)),
+            'consultationfeecumregfee': str(float(patient.reg_Fee)),
+            'cancelstatus': False,
+            'preparedby': None
+        }
+    )
+    
+    # Convert total to words
+    from num2words import num2words
+    amount_in_words = num2words(float(patient.reg_Fee), to="currency", lang="en_IN").title()
+    amount_in_words = amount_in_words.replace("euro", "Rupees").replace("cents", "Paise") + " Only"
+    
+    context = {
+        'lsinvoice': invoice,
+        'objhospt': objhospt,
+        'brname': brname,
+        'patient': patient,
+        'doctor_name': doctor_name,
+        'amount_in_words': amount_in_words,
+        'registration_fee': float(patient.reg_Fee),
+    }
+    
+    return render(request, 'registration_fee_invoice.html', context)

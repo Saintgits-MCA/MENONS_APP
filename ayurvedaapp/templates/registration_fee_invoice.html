@@ -1,0 +1,279 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<style>
+  .invoice-container {
+    background: #fff;
+    padding: 15px;
+    max-width: 700px;
+    margin: 20px auto;
+    box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+  }
+
+  h4 {
+    text-align: center;
+    margin: 10px 0;
+  }
+
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .box {
+    width: 48%;
+    border: 1px solid #000;
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  .order-details table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    word-break: break-word;
+  }
+
+  .order-details th,
+  .order-details td {
+    border: 1px solid black;
+    padding: 6px;
+    font-size: 12px;
+    text-align: left;
+    vertical-align: top;
+    word-wrap: break-word;
+  }
+
+  .order-details th:nth-child(2),
+  .order-details td:nth-child(2) {
+    width: 120px;
+  }
+
+  .total {
+    text-align: right;
+    font-weight: bold;
+    margin-bottom: 10px;
+  }
+
+  .amount-words {
+    font-weight: bold;
+  }
+
+  .top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-bottom: 20px;
+  }
+
+  .logo img {
+    width: 100px;
+  }
+
+  .header-center {
+    flex: 1;
+    text-align: center;
+    font-size: 14px;
+  }
+
+  .header-center h6 {
+    margin: 0;
+    font-size: 16px;
+    color: green;
+  }
+
+  .emergency-box {
+    background-color: red;
+    color: white;
+    font-weight: bold;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+
+  .page-break {
+    page-break-after: always;
+  }
+
+  @media print {
+    .page-number:after {
+      content: "Page " counter(page) " of " counter(pages);
+      position: fixed;
+      bottom: 10mm;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-size: 12px;
+      color: #000;
+    }
+
+    html {
+      counter-reset: page;
+    }
+
+    body {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .header-center h6 {
+      color: green;
+    }
+
+    .print-btn {
+      display: none !important;
+    }
+
+    @page {
+      size: A4 portrait;
+      margin: 15mm 10mm 20mm 10mm;
+    }
+
+    .invoice-container {
+      box-shadow: none !important;
+      margin: 0 auto !important;
+      width: 100% !important;
+      padding: 0 !important;
+    }
+
+    .top-row,
+    .info-row,
+    .total,
+    .footer {
+      page-break-inside: avoid;
+    }
+  }
+</style>
+
+<div id="invoice" class="invoice-container">
+  <div class="top-row">
+    <div class="logo">
+      {% if objhospt and objhospt.Logo %}
+        <img src="{{ objhospt.Logo.url }}" alt="{{ objhospt.Name }}">
+      {% endif %}
+    </div>
+
+    <div class="header-center">
+      <h6>{{ objhospt.Name }}</h6>
+      <div>{{ objhospt.Address }}</div>
+      <div>
+        {{ objhospt.Contact_no }}
+        {% if objhospt.Email %}
+          | ✉ {{ objhospt.Email }}
+        {% endif %}
+        {% if objhospt.GST and objhospt.GST|lower != "none" %}
+          | GST NO : {{ objhospt.GST }}
+        {% endif %}
+      </div>
+      <div>{{ brname.Branch_Address }}</div>
+      {% if brname.Branch_contactno %}
+        <div>Branch Ph : {{ brname.Branch_contactno }}</div>
+      {% endif %}
+    </div>
+
+    <div class="emergency-box">
+      EMERGENCY ☎ {{ objhospt.Contact_no }}
+    </div>
+  </div>
+
+  <h4>REGISTRATION INVOICE</h4>
+
+  <div class="info-row">
+    <div class="box">
+      <p><strong>Patient Name:</strong> {{ patient.Patient_Name }}</p>
+      <p><strong>MR Number:</strong> {{ patient.Medical_Record_Number }}</p>
+      <p><strong>Phone:</strong> {{ patient.contactno }}</p>
+      <p><strong>Gender:</strong> {{ patient.Gender }}</p>
+      <p><strong>Age:</strong> {{ patient.Age }}</p>
+    </div>
+    <div class="box">
+      <strong>Bill Details:</strong><br />
+      <p><strong>Invoice Number:</strong> {{ lsinvoice.treatmentInvoicenumber }}</p>
+      <p><strong>Date:</strong> {{ lsinvoice.currentdate|date:"d/m/Y" }}</p>
+      <p><strong>Branch:</strong> {{ brname.Branch_Name }}</p>
+      <p><strong>Doctor:</strong> {{ doctor_name }}</p>
+    </div>
+  </div>
+
+  <div class="order-details">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:8%;">SL No</th>
+          <th style="width:35%;">Description</th>
+          <th style="width:22%;">Doctor</th>
+          <th style="width:20%;">Date</th>
+          <th style="width:15%;">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td>Registration Fee</td>
+          <td>{{ doctor_name }}</td>
+          <td>{{ lsinvoice.currentdate|date:"d/m/Y" }}</td>
+          <td>₹{{ registration_fee|floatformat:2 }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="total">
+    <p><strong>Registration Fee: ₹{{ registration_fee|floatformat:2 }}</strong></p>
+    <p><strong>Total Amount: ₹{{ lsinvoice.total|floatformat:2 }}</strong></p>
+  </div>
+
+  <div class="amount-words">In Words: {{ amount_in_words }}</div>
+  <p style="margin-top:10px; font-size:12px; color:#666;">
+    This is a computer-generated statement and requires no signature.
+  </p>
+  <p style="font-size:12px; color:#666;">
+    This receipt is valid for an employer or insurer, who is contractually
+    obligated to reimburse the medical expenses.
+  </p>
+
+  <div class="footer">
+    <p style="font-size:12px; color:#666;">
+      For billing and general queries, please mail:
+      <a href="mailto:{{ objhospt.Email }}">{{ objhospt.Email }}</a>
+    </p>
+  </div>
+
+  <div class="print-btn" style="margin-top:15px;">
+    <button onclick="printInvoice()" class="btn btn-primary">
+      <i class="fas fa-print"></i> Print Invoice
+    </button>
+    <a href="{% url 'daily_transaction_report' %}" class="btn btn-secondary">
+      <i class="fas fa-arrow-left"></i> Back
+    </a>
+  </div>
+
+  <div class="page-number"></div>
+</div>
+
+<script>
+  function printInvoice() {
+    var invoiceContent = document.getElementById("invoice").outerHTML;
+    var styles = Array.from(document.querySelectorAll("style"))
+      .map((style) => style.innerHTML)
+      .join("\n");
+
+    var printWindow = window.open("", "_blank");
+    printWindow.document.write(
+      "<html><head><title>Registration Fee Invoice</title><style>" +
+        styles +
+        "</style></head><body>" +
+        invoiceContent +
+        "</body></html>"
+    );
+    printWindow.document.close();
+    printWindow.print();
+  }
+</script>
+
+{% endblock %}

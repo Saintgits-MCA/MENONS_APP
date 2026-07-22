@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="content-wrapper">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Birth Registration Details</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'birth_register_report' %}">Birth Register</a>
+                        </li>
+                        <li class="breadcrumb-item active">Details</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row mb-3">
+                <div class="col-12">
+                    <a href="{% url 'birth_register_report' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to List
+                    </a>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Birth Registration Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-bordered table-sm">
+                                <tr>
+                                    <th style="width:40%;">Child OP</th>
+                                    <td>{{ birth_record.child_op|default:"N/A" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Birth Date</th>
+                                    <td>{{ birth_record.date_time_of_birth|date:"d/m/Y"|default:"N/A" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Birth Time</th>
+                                    <td>{{ birth_record.date_time_of_birth|date:"h:i A"|default:"N/A" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Gender</th>
+                                    <td>{{ birth_record.gender|default:"N/A" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Weight</th>
+                                    <td>{{ birth_record.weight|default:"N/A" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Blood Group</th>
+                                    <td>{{ birth_record.blood_group|default:"N/A" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-bordered table-sm">
+                                <tr>
+                                    <th style="width:40%;">Mother's Name</th>
+                                    <td>{{ birth_record.mother.Patient_Name|default:"N/A" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Mother's OP</th>
+                                    <td>{{ birth_record.mother.Medical_Record_Number|default:"N/A" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Guardian Phone</th>
+                                    <td>{{ birth_record.guardian_phone|default:"N/A" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Address</th>
+                                    <td>{{ birth_record.guardian_address|default:"N/A" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Created By</th>
+                                    <td>{{ birth_record.created_by.Staff_firstname|default:"System" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Created At</th>
+                                    <td>{{ birth_record.created_at|date:"d/m/Y H:i" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
