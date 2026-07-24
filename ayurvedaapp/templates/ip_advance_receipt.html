@@ -1,0 +1,325 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<style>
+  .invoice-container {
+    background: #fff;
+    padding: 15px;
+    max-width: 700px;
+    margin: 20px auto;
+    box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+  }
+
+  h4 {
+    text-align: center;
+    margin: 10px 0;
+  }
+
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .box {
+    width: 48%;
+    border: 1px solid #000;
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  .box p {
+    margin: 3px 0;
+  }
+
+  .top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-bottom: 20px;
+  }
+
+  .logo img {
+    width: 100px;
+  }
+
+  .header-center {
+    flex: 1;
+    text-align: center;
+    font-size: 14px;
+  }
+
+  .header-center h6 {
+    margin: 0;
+    font-size: 16px;
+    color: green;
+  }
+
+  .emergency-box {
+    background-color: red;
+    color: white;
+    font-weight: bold;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+
+  .amount-in-words-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 10px;
+    border: 1px solid #000;
+    margin: 5px 0;
+  }
+
+  .amount-in-words-row .label {
+    font-weight: bold;
+  }
+
+  .payment-mode-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 10px;
+    border: 1px solid #000;
+    border-top: none;
+  }
+
+  .payment-mode-row .label {
+    font-weight: bold;
+  }
+
+  .remark {
+    font-weight: bold;
+    font-size: 14px;
+    margin: 15px 0;
+    padding: 10px;
+  }
+
+  .receipt-printed-info {
+    margin-top: 10px;
+    text-align: center;
+    font-size: 11px;
+    color: #666;
+    border-top: 1px dashed #ccc;
+    padding-top: 10px;
+  }
+
+  .print-btn {
+    text-align: center;
+    margin-top: 20px;
+  }
+
+  .footer {
+    margin-top: 15px;
+    border-top: 1px solid #ddd;
+    padding-top: 10px;
+    text-align: center;
+    font-size: 12px;
+    color: #666;
+  }
+
+  .page-number {
+    text-align: center;
+    font-size: 10px;
+    color: #999;
+    margin-top: 10px;
+  }
+
+  @media print {
+    body {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .print-btn {
+      display: none !important;
+    }
+
+    .receipt-printed-info {
+      border-top: 1px dashed #000 !important;
+    }
+
+    .invoice-container {
+      box-shadow: none !important;
+      margin: 0 auto !important;
+      width: 100% !important;
+      padding: 0 !important;
+    }
+
+    .top-row,
+    .info-row,
+    .footer {
+      page-break-inside: avoid;
+    }
+
+    .page-number:after {
+      content: "Page " counter(page) " of " counter(pages);
+      position: fixed;
+      bottom: 10mm;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-size: 12px;
+      color: #000;
+    }
+
+    html {
+      counter-reset: page;
+    }
+
+    @page {
+      size: A4 portrait;
+      margin: 15mm 10mm 20mm 10mm;
+    }
+  }
+</style>
+
+<div id="receipt" class="invoice-container">
+  <!-- Top Row with Logo, Hospital Details, Emergency -->
+  <div class="top-row">
+    <div class="logo">
+      {% if objhospt and objhospt.Logo %}
+        <img src="{{ objhospt.Logo.url }}" alt="{{ objhospt.Name }}">
+      {% endif %}
+    </div>
+
+    <div class="header-center">
+      <h6>{{ objhospt.Name }}</h6>
+      <div>{{ objhospt.Address }}</div>
+      <div>
+        {{ objhospt.Contact_no }}
+        {% if objhospt.Email %}
+          | ✉ {{ objhospt.Email }}
+        {% endif %}
+        {% if objhospt.GST and objhospt.GST|lower != "none" %}
+          | GST NO : {{ objhospt.GST }}
+        {% endif %}
+      </div>
+      <div>{{ brname.Branch_Address }}</div>
+      {% if brname.Branch_contactno %}
+        <div>Branch Ph : {{ brname.Branch_contactno }}</div>
+      {% endif %}
+    </div>
+
+    <div class="emergency-box">
+      EMERGENCY ☎ {{ objhospt.Contact_no }}
+    </div>
+  </div>
+
+  <h4>IP ADVANCE PAYMENT RECEIPT</h4>
+
+  <!-- Patient and Bill Details -->
+  <div class="info-row">
+    <div class="box">
+      <p><strong>Patient Details:</strong></p>
+      <p>Name: {{ patient.Patient_Name }}</p>
+      <p>MR Number: {{ patient.Medical_Record_Number }}</p>
+      <p>IP Number: {{ admission.ipnumber }}</p>
+      <p>Contact: {{ patient.contactno|default:"N/A" }}</p>
+    </div>
+    <div class="box">
+      <p><strong>Receipt Details:</strong></p>
+      <p>Receipt No: {{ payment.receipt_number }}</p>
+      <p>Date: {{ payment.created_at|date:"d/m/Y h:i:s A" }}</p>
+      <p>Admission Date: {{ admission.Current_Date|date:"d/m/Y" }}</p>
+      <p>Status: ✓ PAID</p>
+    </div>
+  </div>
+
+  <!-- Amount in Words and Payment Mode Section -->
+  <div style="margin: 10px 0;">
+    <div class="amount-in-words-row">
+      <span class="label">Received the sum of Rupees</span>
+      <span><strong>₹ {{ payment.amount|floatformat:2 }}</strong></span>
+    </div>
+    <div class="amount-in-words-row" style="border-top: none;">
+      <span class="label">In Words</span>
+      <span><strong>{{ amount_in_words }}</strong></span>
+    </div>
+    <div class="payment-mode-row">
+      <span class="label">Towards</span>
+      <span><strong>In Patient Advance Payment</strong></span>
+    </div>
+    <div class="payment-mode-row" style="border-top: none;">
+      <span class="label">Mode</span>
+      <span>
+        <strong>
+          {% if payment.payment_method == 'cash' %}Cash
+          {% elif payment.payment_method == 'card' %}Card
+          {% elif payment.payment_method == 'upi' %}UPI
+          {% elif payment.payment_method == 'bank_transfer' %}Bank Transfer
+          {% elif payment.payment_method == 'cheque' %}Cheque
+          {% else %}Other
+          {% endif %}
+        </strong>
+        {% if payment.transaction_id %}
+          <br><small>Transaction ID: {{ payment.transaction_id }}</small>
+        {% endif %}
+      </span>
+    </div>
+  </div>
+
+  <!-- Footer Note -->
+  <div class="remark">
+    <center><b>⚠️ Please keep this receipt carefully for reference at the time of final settlement</b></center>
+  </div>
+
+  <!-- Receipt Printed Info -->
+  <div class="receipt-printed-info">
+    Receipt printed by: 
+    {% if received_by %}
+      {{ received_by.Staff_firstname }} {{ received_by.Staff_lastname }}
+    {% else %}
+      System
+    {% endif %}
+    on {% now "d/m/Y h:i:s A" %}
+  </div>
+
+  <!-- Print Button -->
+  <div class="print-btn">
+    <button onclick="printReceipt()" class="btn btn-primary">
+      <i class="fas fa-print"></i> Print Receipt
+    </button>
+    <a href="{% url 'ip_advance_payment' %}?admission_id={{ admission.id }}&menumanagement_id={{ idmngmnt }}" class="btn btn-secondary">
+      <i class="fas fa-arrow-left"></i> Back
+    </a>
+  </div>
+
+  <div class="page-number"></div>
+</div>
+
+<script>
+  function printReceipt() {
+    var receiptContent = document.getElementById("receipt").outerHTML;
+    var styles = Array.from(document.querySelectorAll("style"))
+      .map((style) => style.innerHTML)
+      .join("\n");
+
+    var printWindow = window.open("", "_blank");
+    printWindow.document.write(
+      "<html><head><title>IP Advance Payment Receipt</title><style>" +
+        styles +
+        "</style></head><body>" +
+        receiptContent +
+        "</body></html>"
+    );
+    printWindow.document.close();
+    printWindow.print();
+  }
+
+  // Auto-print if 'print' parameter is in URL
+  document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('print') === 'true') {
+      setTimeout(function() {
+        printReceipt();
+      }, 500);
+    }
+  });
+</script>
+
+{% endblock %}

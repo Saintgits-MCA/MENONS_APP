@@ -126,7 +126,7 @@
                 <td>{{ bill.discharge_date|date:"d/m/Y"|default:"-" }}</td>
                 <td>{{ bill.bill_no }}</td>
                 <td class="text-center">
-    <a href="{% url 'admission_discharge_bill_detail' bill.id %}" 
+    <a href="{% url 'admission_discharge_bill_detail'  %}?ids={{bill.id}}" 
        class="btn btn-sm btn-info" title="View Details">
         <i class="fas fa-eye"></i>
     </a>

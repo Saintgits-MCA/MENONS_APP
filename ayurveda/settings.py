@@ -88,7 +88,7 @@ WSGI_APPLICATION = 'ayurveda.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'menonsdblive',
+        'NAME': 'menonshospitallive',
         'USER': 'root',
         'PASSWORD':'root',
         'HOST': 'localhost',

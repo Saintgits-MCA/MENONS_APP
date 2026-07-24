@@ -196,7 +196,7 @@
       <p><strong>Invoice Number:</strong> {{ lsinvoice.treatmentInvoicenumber }}</p>
       <p><strong>Date:</strong> {{ lsinvoice.currentdate|date:"d/m/Y" }}</p>
       <p><strong>Branch:</strong> {{ brname.Branch_Name }}</p>
-      <p><strong>Doctor:</strong> {{ doctor_name }}</p>
+    
     </div>
   </div>
 
@@ -206,7 +206,7 @@
         <tr>
           <th style="width:8%;">SL No</th>
           <th style="width:35%;">Description</th>
-          <th style="width:22%;">Doctor</th>
+       
           <th style="width:20%;">Date</th>
           <th style="width:15%;">Amount</th>
         </tr>
@@ -215,7 +215,7 @@
         <tr>
           <td>1</td>
           <td>Registration Fee</td>
-          <td>{{ doctor_name }}</td>
+        
           <td>{{ lsinvoice.currentdate|date:"d/m/Y" }}</td>
           <td>₹{{ registration_fee|floatformat:2 }}</td>
         </tr>

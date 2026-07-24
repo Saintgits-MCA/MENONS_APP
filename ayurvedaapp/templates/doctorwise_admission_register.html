@@ -162,6 +162,7 @@
                 <th>Age / Sex / Time</th>
                 <th>Room</th>
                 <th>Status</th>
+                <th>Action</th>
               </tr>
             </thead>
 
@@ -184,6 +185,11 @@
                       {{ item.status }}
                     </span>
                   </td>
+                   <td>
+      <a href="{% url 'doctorwise_admission_register_detail' %}?ids={{ item.id }}" class="btn btn-sm btn-info" title="View Details">
+        <i class="fas fa-eye"></i>
+      </a>
+    </td>
                 </tr>
                 {% endfor %}
               {% else %}

@@ -259,8 +259,8 @@ def indexadmin(request) :
 
     
 
- 
 from decimal import Decimal
+import json
 
 @login_required
 def appointment(request):
@@ -268,7 +268,7 @@ def appointment(request):
     request.session['appmngid'] = idmngmnt
     # Also store in online key as a fallback
     request.session['onlineappmngid'] = idmngmnt
-    
+
     if not idmngmnt:
         messages.error(request, "Unable to retrieve Menu Management details. Please contact the admin for access.")
         return redirect('error_page')
@@ -279,6 +279,45 @@ def appointment(request):
     except Exception:
         messages.error(request, f"Invalid menu management ID: {idmngmnt}")
         return redirect('error_page')
+
+    # ================================================================
+    # PRE-FILL DATA FROM PRE-BOOKING (GET parameters)
+    # ================================================================
+    pre_mrnum = request.GET.get('mrnum', '')
+    pre_branch = request.GET.get('branch', '')
+    pre_docname = request.GET.get('docname', '')
+    pre_apntdate = request.GET.get('apntdate', '')
+    pre_status = request.GET.get('status', '')
+    pre_contactnum = request.GET.get('contactnum', '')
+    pre_remarks = request.GET.get('remarks', '')
+    pre_deptname = request.GET.get('deptname', '')
+    pre_desgname = request.GET.get('desgname', '')
+    prebooking_id = request.GET.get('prebooking_id', '')
+    pre_apnttime = request.GET.get('apnttime', '')  # NEW: Pre-filled appointment time
+
+    pre_booking = {
+        'mrnum': pre_mrnum,
+        'branch': pre_branch,
+        'docname': pre_docname,
+        'apntdate': pre_apntdate,
+        'apnttime': pre_apnttime,  # NEW: Store pre-filled time
+        'status': pre_status,
+        'contactnum': pre_contactnum,
+        'remarks': pre_remarks,
+        'deptname': pre_deptname,
+        'desgname': pre_desgname,
+        'prebooking_id': prebooking_id,
+    }
+
+    # If coming from pre-booking, also fetch patient name for display
+    pre_patient_display = ''
+    if pre_mrnum:
+        try:
+            pre_patient_obj = Patient_details.objects.filter(id=pre_mrnum).first()
+            if pre_patient_obj:
+                pre_patient_display = f"{pre_patient_obj.Medical_Record_Number} - {pre_patient_obj.Patient_Name}"
+        except Exception:
+            pass
 
     # ----------------- POST (Save Appointment) -----------------
     if request.method == 'POST':
@@ -296,6 +335,16 @@ def appointment(request):
             branch1 = int(addbranch)
             doctor1 = int(adddocname)
             today = date.today()
+            
+            # ✅ NEW: Get appointment time from POST
+            addappointmenttime = request.POST.get('apnttime')
+            appointment_time_obj = None
+            if addappointmenttime:
+                try:
+                    appointment_time_obj = datetime.strptime(addappointmenttime, "%H:%M").time()
+                except ValueError:
+                    appointment_time_obj = None
+
             # ✅ Fetch Patient details (same as treatmentinvoice)
             patient_obj = Patient_details.objects.filter(id=addmrnumber).first()
             if not patient_obj:
@@ -305,6 +354,37 @@ def appointment(request):
             # ✅ Patient Name and Phone (based on your model)
             patient_name = patient_obj.Patient_Name
             patient_phone = patient_obj.contactno
+
+            # ✅ Validate time slot if appointment time is provided
+            if appointment_time_obj and addappoinmentdate:
+                try:
+                    appointment_date_obj = datetime.strptime(addappoinmentdate, "%Y-%m-%d").date()
+                    start_datetime = datetime.combine(appointment_date_obj, appointment_time_obj)
+                    end_datetime = start_datetime + timedelta(minutes=30)  # Default duration
+                    
+                    # Overlap check for the same doctor
+                    overlapping_appointments = Appointments.objects.filter(
+                        Doctor_Name_id=doctor1,
+                        Appointment_date=appointment_date_obj,
+                        visit_start_time__isnull=False,
+                        visit_end_time__isnull=False
+                    ).exclude(status__in=['Cancelled', 'Completed'])
+                    
+                    for appt in overlapping_appointments:
+                        appt_start = datetime.combine(appointment_date_obj, appt.visit_start_time)
+                        appt_end = datetime.combine(appointment_date_obj, appt.visit_end_time)
+                        
+                        if start_datetime < appt_end and end_datetime > appt_start:
+                            messages.error(
+                                request,
+                                f"Doctor already has an appointment from "
+                                f"{appt.visit_start_time.strftime('%I:%M %p')} to {appt.visit_end_time.strftime('%I:%M %p')}."
+                            )
+                            return redirect(f"{reverse('appointment')}?menumanagement_id={idmngmnt}")
+                except Exception as e:
+                    # Don't block appointment if time validation fails
+                    print(f"Time validation warning: {e}")
+
             # ✅ Save Appointment
             objappointment = Appointments(
                 Tokenno=addtoknnumber,
@@ -313,6 +393,8 @@ def appointment(request):
                 Doctor_Name_id=doctor1,
                 Appointment_date=addappoinmentdate,
                 contactno=addcontactnumber,
+                visit_start_time=appointment_time_obj,  # NEW: Save appointment time
+                visit_end_time=None,  # Will be auto-calculated if needed
                 status=status,
                 Fee=fee,
                 Remark=addremarks,
@@ -320,8 +402,18 @@ def appointment(request):
             )
             objappointment.save()
 
+            # ✅ Mark pre-booking as converted if applicable
+            post_prebooking_id = request.POST.get('prebooking_id')
+            if post_prebooking_id:
+                try:
+                    from .models import PreAppointmentBooking
+                    pre_booking_obj = PreAppointmentBooking.objects.get(id=post_prebooking_id)
+                    pre_booking_obj.is_converted = True
+                    pre_booking_obj.save()
+                except Exception:
+                    pass  # Silently ignore if pre-booking not found
+
             try:
-                
                 cycle_log = save_visit_cycle_log(
                     patient_id=addmrnumber,
                     doctor_id=adddocname,
@@ -427,9 +519,13 @@ def appointment(request):
             mgnedit = request.session.get('mngedit')
             mgndelete = request.session.get('mngdelete')
             brnmae = request.session.get('branchid')
-            appointment_status=AppointmentStatus.objects.filter(is_active="1")
+            appointment_status = AppointmentStatus.objects.filter(is_active="1")
+
+            # ✅ Get today's date for the time input min attribute
+            today_str = today.strftime('%Y-%m-%d')
+
             context = {
-                'appointment_status':appointment_status,
+                'appointment_status': appointment_status,
                 'idmngmnt': idmngmnt,
                 'tk_id': tk_id,
                 'mrnoobj': mrnoobj,
@@ -443,7 +539,11 @@ def appointment(request):
                 'mngedit': mgnedit,
                 'mngdelete': mgndelete,
                 'brnmae': brnmae,
-                'appointment_fees_json': json.dumps(appointment_fees)  # Add this line
+                'appointment_fees_json': json.dumps(appointment_fees),
+                # ✅ Pre-booking data (including time)
+                'pre_booking': pre_booking,
+                'pre_patient_display': pre_patient_display,
+                'today_str': today_str,  # For time input min attribute
             }
             return render(request, "appointment.html", context)
 
@@ -456,17 +556,11 @@ def appointmentinvoice(request):
     invoice_id = request.GET.get('invoice_id')
     lsinvoice = get_object_or_404(appointmentinvoicemaster, id=invoice_id)
     objhospt = Hospitaldetails.objects.first()
-
-    # ✅ Fetch appointment related to this invoice (using MR and Token number)
     appointment = Appointments.objects.filter(
         MR_Number_id=lsinvoice.Mrno_id,
         Tokenno=lsinvoice.treatmentInvoicenumber
     ).select_related("Doctor_Name").first()
-
     doctor_name = appointment.Doctor_Name.Staff_firstname if appointment else ""
-
-    # Convert total to words
-    from num2words import num2words
     amount_in_words = num2words(lsinvoice.total, to="cardinal", lang="en").title() + " Only"
     st_id= request.session['loginstaff'] 
     staff_branch=Staffallocation.objects.get(id=st_id)
@@ -658,7 +752,9 @@ def appointmentafterreg(request):
             ptdt = Patient_details.objects.filter(
                 Branch_Name=brnmae   # assuming you track who created the patient
             ).order_by('-id').first() 
+            appointment_status=AppointmentStatus.objects.filter(is_active="1")
             context={
+                'appointment_status':appointment_status,
                 'brnmae':brnmae,
                 'mgnedit':mgnedit,
                 'branchobj':branchobj,
@@ -680,7 +776,8 @@ def appointmentafterreg(request):
         except Exception as e:
             messages.error(request, f"Unable to retrieve Menu Management details: {str(e)}. Please contact the admin for assistance.")
             return redirect('error_page')     
-   
+
+  
      
 from django.http import JsonResponse
 from django.db.models import Q
@@ -1295,7 +1392,12 @@ def editappointment(request):
             addcontactnumber = request.POST.get('contactnum')
             addbranch = request.POST.get('branch')
             addremarks = request.POST.get('remarks')
-
+            addappointmenttime = request.POST.get('apnttime')
+            if addappointmenttime:
+                addappointmenttime = datetime.strptime(
+                addappointmenttime,
+                "%H:%M"
+            ).time()
             # ----------------------------
             # Appointment Date validation
             # ----------------------------
@@ -1313,7 +1415,7 @@ def editappointment(request):
                 doctor_allocation = Staffallocation.objects.filter(
                     Branch_Name_id=branch_to_check,
                     Staff_id=adddocname,
-                    Designation_Name_id__in=[2, 3],  # CMO and Associate Doctors only
+                    Designation_Name_id__in=[2, 3,13],  # CMO and Associate Doctors only
                     Status='Active'
                 ).exists()
                 
@@ -1330,6 +1432,9 @@ def editappointment(request):
             if addappoinmentdate:
                 objappointment.Appointment_date = addappoinmentdate
             
+            if addappointmenttime:
+                objappointment.visit_start_time = addappointmenttime
+         
             # FIXED: Allow empty string or any format for contact number
             if addcontactnumber is not None:  # This will accept empty string as well
                 objappointment.contactno = addcontactnumber
@@ -1468,7 +1573,7 @@ def editappointment(request):
             # Get all active CMO and Associate Doctors for this branch
             allocations = Staffallocation.objects.filter(
                 Branch_Name_id=objedappo.Branch_id,
-                Designation_Name_id__in=[2, 3],  # CMO (2) and Associate Doctors (3) only
+                Designation_Name_id__in=[2, 3,13],  # CMO (2) and Associate Doctors (3) only
                 Status='Active'
             ).select_related('Staff', 'Designation_Name', 'Department_Name').order_by(
                 'Designation_Name_id',  # CMO first (2), then Associate (3)
@@ -3670,6 +3775,154 @@ def patientdetailtable(request):
     }
 
     return render(request, "patientdetailtable.html", context)
+
+
+
+@login_required 
+def editpatientdetails(request):
+    if request.method == 'POST':
+        # Handle form submission
+        idpatnt = request.POST.get('patientid')
+        if not idpatnt:
+            messages.error(request, "Patient ID is missing.")
+            return redirect('error_page')
+        objpatientdetails = get_object_or_404(Patient_details, id=idpatnt)
+        # Collect and clean form data
+        addpatientname = request.POST.get('patientname')
+        addage = request.POST.get('age')
+        addgender = request.POST.get('gender')
+        # addhousename = request.POST.get('housename')
+        # addpincode = request.POST.get('pincode')
+        addemail = request.POST.get('email')
+        addcontactnumber = request.POST.get('contactnumber')
+        addcountry = request.POST.get('country') or None
+        addstate = request.POST.get('state') or None
+        adddistrict = request.POST.get('district') or None
+        # addcity = request.POST.get('city')
+        adddate = request.POST.get('date')
+        addstatus = request.POST.get('status')
+        # Generate Medical Record Number
+        todate = timezone.now().strftime("%Y%m%d")
+        addaddress = request.POST.get('address')
+        addconsultation = request.POST.get('consultation_type') or 'offline'
+
+        idmngmnt = request.session.get('ptdtobjmngid')
+        if not idmngmnt:
+            messages.error(request, "Invalid Menu Management ID provided. Please contact the admin to grant you the necessary menu permissions.")
+            return redirect('error_page')
+        
+        try:
+            # Update patient details
+            objpatientdetails=Patient_details.objects.get(id=idpatnt)
+            objpatientdetails.Patient_Name = addpatientname
+           
+            objpatientdetails.Age = addage
+            objpatientdetails.Gender = addgender
+            # objpatientdetails.Housename = addhousename
+            # objpatientdetails.Pincode = addpincode
+            objpatientdetails.Email = addemail
+            objpatientdetails.contactno = addcontactnumber
+            objpatientdetails.country_id = addcountry
+            objpatientdetails.state_id = addstate
+            objpatientdetails.district = adddistrict
+            # objpatientdetails.city = addcity
+            objpatientdetails.Date = adddate
+            # objpatientdetails.Status = addstatus
+            objpatientdetails.address =addaddress
+            objpatientdetails.consultation_type = addconsultation
+            if request.session.get("loginstaffdesign") == 9:
+                objpatientdetails.Branch_Name_id = request.POST.get("branch")
+
+            objpatientdetails.save()
+             # 🔹 Insert into Patient Audit Log
+            current_time = timezone.now()
+            PatientAuditLog.objects.create(
+                mrno=objpatientdetails.Medical_Record_Number,
+                patientid_id=objpatientdetails.id,
+                action="EDIT",
+                staff_id=request.session.get('staffid'),
+                branch_id=request.session.get('branchid'),
+                action_date=current_time.date(),
+                action_time=current_time.time(),
+            )
+
+            messages.success(request, "Patient details edited successfully!")
+            return redirect(f"{reverse('patientdetails')}?menumanagement_id={idmngmnt}")
+        except ObjectDoesNotExist:
+            messages.error(request, "Patient not found.")
+        except ValueError:
+            messages.error(request, "Invalid data provided.")
+        except Exception as e:
+            messages.error(request, f"An error occurred: {str(e)}")
+        return redirect(f"{reverse('patientdetails')}?menumanagement_id={idmngmnt}")
+
+    else:
+        # Handle GET request
+        try:
+            idmngmnt = request.session.get('ptdtobjmngid')
+            if not idmngmnt:
+                messages.error(request, "Invalid Menu Management ID provided. Please contact the admin to grant you the necessary menu permissions.")
+                return redirect('error_page')
+
+            countryobj = Country.objects.all()
+            stateobj = State.objects.all()
+            districtobj = District.objects.all()
+            cityobj = City.objects.all()
+
+            idenq = request.GET.get('ids')
+            if not idenq:
+                messages.error(request, "Patient ID is missing.")
+                return redirect('error_page')
+
+            objedpatint = get_object_or_404(Patient_details, id=idenq)
+            branchobj = Branch.objects.all()
+            
+            stdesign = request.session.get('loginstaffdesign')
+            if not stdesign:
+                return redirect('staff_login')
+			
+            context = {
+                'idmngmnt': idmngmnt,
+                'countryobj': countryobj,
+                'stateobj': stateobj,
+                'districtobj': districtobj,
+                'cityobj': cityobj,
+                'objedpatint': objedpatint,
+                'stdesign': stdesign,
+               'branchobj': branchobj,
+            }
+            return render(request, "patientdetailsedit.html", context)
+
+        except Exception as e:
+            messages.error(request, f"An error occurred: {str(e)}")
+            return redirect('error_page')
+
+@login_required
+def patientdetailtable(request):
+    staff_id = request.session.get('loginstaff')
+    if not staff_id:
+        messages.error(request, "You are not logged in.")
+        return redirect('staff_login')
+
+    idmngmnt = request.GET.get('menumanagement_id')
+    if not idmngmnt:
+        messages.error(request, "Menu Management details not found.")
+        return redirect('error_page')
+
+    stdesign = request.session.get('loginstaffdesign')
+    if not stdesign:
+        return redirect('staff_login')
+
+    context = {
+        'idmngmnt': idmngmnt,
+        'ptdtmngview': request.session.get('ptdtobjview'),
+        'ptdtmngadd': request.session.get('ptdtobjadd'),
+        'ptdtmngedit': request.session.get('ptdtobjedit'),
+        'ptdtmngdelete': request.session.get('ptdtobjdelete'),
+        'stdesign': stdesign
+    }
+
+    return render(request, "patientdetailtable.html", context)
     
 from django.http import JsonResponse
 from django.db.models import Q
@@ -5450,7 +5703,9 @@ def discharge(request):
                 additional_notes=request.POST.get('additional', ''),
                 sfirst_name=request.POST.get('firstname1', ''),
                 dischargedstaff_id=st_id,
+                discharge_summary_notes =request.POST.get('discharge_summary_note'),
                 condition_on_discharge=request.POST.get('condtnondischarge', ''),
+                physical_examinations=request.POST.get('condtnondischarge', ''),
                 accomadationtype=request.POST.get('accommodation_typeid', ''),
                 bedno=request.POST.get('bedid', ''),
                 floorno=request.POST.get('floorid', ''),
@@ -6341,13 +6596,20 @@ def invoiceprint(request):
 @login_required
 def search_company(request):
     if request.method == 'GET' and 'term' in request.GET:
-        term = request.GET.get('term')
-        # Perform search in Itemaster model
-        results = Comapany.objects.filter(Comapany_name__icontains=term)
-        # Serialize results to JSON
-        data = [{'id': item.id, 'name': item.Comapany_name} for item in results]
-        return JsonResponse(data, safe=False)
+        term = request.GET.get('term', '').strip()
+        if term:
+            results = Comapany.objects.filter(Comapany_name__icontains=term)
+            data = [
+                {
+                    'id': item.id, 
+                    'Comapany_name': item.Comapany_name,
+                    'name': item.Comapany_name
+                } 
+                for item in results
+            ]
+            return JsonResponse(data, safe=False)
     return JsonResponse([], safe=False)
+
 
 @login_required
 def fetch_medicines_by_company(request):
@@ -6434,12 +6696,21 @@ def prescriptionsearch_medicine(request):
 @login_required
 def search_unit(request):
     if request.method == 'GET' and 'term' in request.GET:
-        search_term = request.GET.get('term')
-        unit = unitdt.objects.filter(unitname__icontains=search_term)
-        data = [{'unit_id': undt.id, 'unit_name': undt.unitname} for undt in unit]
-
-        return JsonResponse(data, safe=False)
+        search_term = request.GET.get('term', '').strip()
+        if search_term:
+            units = unitdt.objects.filter(unitname__icontains=search_term)
+            data = [
+                {
+                    'id': unit.id, 
+                    'unitname': unit.unitname,
+                    'name': unit.unitname,
+                    'basequantity': unit.basequantity
+                } 
+                for unit in units
+            ]
+            return JsonResponse(data, safe=False)
     return JsonResponse([], safe=False)
+
 @login_required
 def get_companies(request, medicine_id):
     companies = Physicalstockdetails.objects.filter(Batch_no=medicine_id).values('Comapany_name__Comapany_name', 'id')
@@ -17695,6 +17966,9 @@ def ippatient(request):
         diagns = request.POST.get('diagnosis') or 'Not specified'
         address = request.POST.get('address') or 'Not provided'
         gender = request.POST.get('gender') or 'Not disclosed'
+        department_id = request.POST.get('department')
+        doctor_id = request.POST.get('admitted_doctor')
+        
         # Get staff branch
         try:
             staff_branch = Staffallocation.objects.get(id=staff_id)
@@ -17753,6 +18027,9 @@ def ippatient(request):
                         Admittedstatus=True,
                         admittedbranch_id = branch_id,
                         ipnumber=ip_invoice_number,
+                        department_id=department_id if department_id else None,  # Add department
+                        admitted_doctor_id=doctor_id if doctor_id else None,
+
                     )
                     _save_ip_patient_room_booking(admission, request, branch_id, contactnumber)
             except ValueError as exc:
@@ -17792,6 +18069,9 @@ def ippatient(request):
         stdesign = request.session.get('loginstaffdesign')
         if not stdesign:
                 return redirect('staff_login')
+        # Get departments excluding the specified IDs (12,13,14,11,10,9,6,8,3)
+        excluded_departments = [12, 13, 14, 11, 10, 9, 6, 8, 3,21]
+        departments = Department.objects.exclude(id__in=excluded_departments)
         context={
         'stdesign':stdesign,
         'pktdt':pktdt,
@@ -17801,6 +18081,8 @@ def ippatient(request):
             'stdesign': request.session['loginstaffdesign'],
             'ipadd': ipobj.add,
             'ipview': ipobj.view,
+
+            'departments': departments,  
         }
         return render(request, "ippatient.html", context)
 
@@ -18306,7 +18588,7 @@ def search_ipptmrno(request):
         filters &= Q(Branch_Name_id=staff_branch) & Q(deleted=False)
 
     matching_mrnos = Patient_details.objects.filter(filters).values(
-        'id', 'Medical_Record_Number', 'Patient_Name', 'contactno', 'Age', 'Gender'
+        'id', 'Medical_Record_Number', 'Patient_Name', 'contactno', 'Age', 'Gender','address'
     )[:10]
 
     return JsonResponse(list(matching_mrnos), safe=False)
@@ -18794,7 +19076,6 @@ def ipbillsearch_mrno(request):
         return JsonResponse({"error": str(e)}, status=500)
 from django.db.models import Q, Max
 from django.db.models import Sum, F
-
 def search_ip_patient_details(request):
     query = request.GET.get("query", "").strip()
     if not query:
@@ -18928,6 +19209,18 @@ def search_ip_patient_details(request):
 
         total_cost = room_rent_total + medicine_cost + treatment_cost
 
+        try:
+            # Use the patient object (which is ippatientadmission) to filter
+            total_advance = IPAdvancePayment.objects.filter(
+                ip_admission=patient  # ✅ Correct - patient is ippatientadmission
+            ).aggregate(total=Sum('amount'))['total'] or 0
+        except Exception as e:
+            logger.warning(f"Advance payment error: {str(e)}")
+            total_advance = 0
+            
+        # Also check if admission.total_advance has value
+        if total_advance == 0 and patient.total_advance:
+            total_advance = float(patient.total_advance)
         data.append({
             "ip_id": patient.id,
             "patientid": patient.MR_Number_id,
@@ -18947,57 +19240,116 @@ def search_ip_patient_details(request):
             "medicine_cost": round(medicine_cost, 2),
             "total_cost": round(total_cost, 2),
             "Discharge_Date": discharge.discharged_date.strftime("%Y-%m-%d") if discharge.discharged_date else None,
-            "dischargeid": discharge.id
+            "dischargeid": discharge.id,
+             "total_advance": float(total_advance),
           })
             
 
     return JsonResponse(data, safe=False)
-          
 def ipbill(request):
     if request.method == "POST":
         st = request.session.get('loginstaff')
         if not st:
-                messages.error(request, "You are not logged in.")
-                return redirect('staff_login')
-        ip_admission_id = request.POST.get("mrnum")  # Selected patient MR Number
+            messages.error(request, "You are not logged in.")
+            return redirect('staff_login')
+        
+        ip_admission_id = request.POST.get("mrnum")
         admission = get_object_or_404(ippatientadmission, id=ip_admission_id)
-
+        
         discharge_id = request.POST.get("discharge_id")
         discharge = PatientDischarge.objects.filter(id=discharge_id).first()
+        
         def to_float(value):
-            return float(value) if value and value.strip() else 0.0  
-        room_rate = to_float(request.POST.get("room_rate"))
-        days_stayed = int(request.POST.get("days_stayed", 1))
+            return float(value) if value and value.strip() else 0.0
+        
+        # Get all billing amounts
         room_charges = to_float(request.POST.get("roomRentTotal"))
-        tax = to_float(request.POST.get("tax"))  
+        tax = to_float(request.POST.get("tax"))
         medicine_charges = to_float(request.POST.get("medicine_total"))
         treatment_charges = to_float(request.POST.get("treatment_total"))
         other_expenses = to_float(request.POST.get("expense"))
         discount = to_float(request.POST.get("discount"))
         food_total = to_float(request.POST.get("food_total"))
-        # Calculate total amount
-        subtotal = room_charges + medicine_charges + treatment_charges + other_expenses+ food_total
+        
+        # Get payment mode amounts
+        cash_amount = to_float(request.POST.get("cashAmount"))
+        card_amount = to_float(request.POST.get("cardAmount"))
+        upi_amount = to_float(request.POST.get("upiAmount"))
+        bank_amount = to_float(request.POST.get("bankAmount"))
+        
+        # Get payment method
+        payment_method = request.POST.get("paymentMethod", "cash")
+        
+        # Get advance amount from admission
+        advance_amount = float(admission.total_advance) if admission.total_advance else 0
+        
+        # Calculate bill totals
+        subtotal = room_charges + medicine_charges + treatment_charges + other_expenses + food_total
         tax_amount = (subtotal * tax) / 100
-        total_amount = subtotal + tax_amount - discount
-
+        grand_total = subtotal + tax_amount - discount
+        
+        # Total collected from all payment modes (recorded, not part of refund calc)
+        total_collected = cash_amount + card_amount + upi_amount + bank_amount
+        
+        # ============================================================
+        # NET / REFUND CALCULATION - same approach as ipbillexpand()
+        # net_amount = grand_total - advance_amount
+        # If advance alone exceeds grand_total, the excess is a refund
+        # ============================================================
+        net_amount = grand_total - advance_amount
+        refund_amount = 0
+        if net_amount < 0:
+            refund_amount = abs(net_amount)
+            net_amount = 0
+        
+        balance_amount = net_amount
+        
+        if refund_amount > 0:
+            payment_status = 'REFUND'
+        elif balance_amount == 0 and grand_total > 0:
+            payment_status = 'PAID'
+        elif total_collected > 0:
+            payment_status = 'PARTIAL'
+        else:
+            payment_status = 'PENDING'
+        
         # Save the bill record
         ip_bill = IPBill.objects.create(
             ip_admission=admission,
             discharge=discharge,
-            room_charges=room_charges,
-            medicine_charges=medicine_charges,
-            treatment_charges=treatment_charges,
-            other_expenses=other_expenses,
-            discount=discount,
-            tax=tax,
-            total_amount=total_amount,
+            room_charges=round(room_charges, 2),
+            medicine_charges=round(medicine_charges, 2),
+            treatment_charges=round(treatment_charges, 2),
+            other_expenses=round(other_expenses, 2),
+            discount=round(discount, 2),
+            tax=round(tax, 2),
+            total_amount=round(grand_total, 2),
             billing_date=date.today(),
-            food_expenses=food_total,
-            subtotal=subtotal,
-              billingstaff_id=st
+            food_expenses=round(food_total, 2),
+            subtotal=round(subtotal, 2),
+            billingstaff_id=st,
+            advance_paid=round(advance_amount, 2),
+            balance_amount=round(balance_amount, 2),
+            refundamount=round(refund_amount, 2),
         )
+        
+        # Build success message with payment details
+        success_msg = f"Bill #{ip_bill.ipinvoicenumber} generated successfully!\n"
+        success_msg += f"Grand Total: ₹{grand_total:.2f}\n"
+        success_msg += f"Advance Paid: ₹{advance_amount:.2f}\n"
+        success_msg += f"Payment Method: {payment_method.upper().replace('_', ' ')}\n"
+        success_msg += f"Amount Collected: ₹{total_collected:.2f}\n"
+        
+        if refund_amount > 0:
+            success_msg += f"Refund Due: ₹{refund_amount:.2f}"
+        else:
+            success_msg += f"Balance Due: ₹{balance_amount:.2f}"
+        
+        messages.success(request, success_msg)
         return redirect('ipnew')
-    return render(request,"ipbill.html")
+    
+    return render(request, "ipbill.html")
+
 
 @login_required  
 def ipinvoiceprint(request):
@@ -19428,6 +19780,17 @@ def search_ip_expanded(request):
         # print(treatments)
         # Total Cost Calculation
         total_cost =  room_rent_total + medicine_cost + treatment_cost
+        try:
+            total_advance = IPAdvancePayment.objects.filter(
+                ip_admission=patient  # patient is ippatientadmission object
+            ).aggregate(total=Sum('amount'))['total'] or 0
+        except Exception as e:
+            logger.warning(f"Advance payment error for patient {patient.id}: {str(e)}")
+            total_advance = 0
+        
+        # If admission has total_advance field, use it as fallback
+        if total_advance == 0 and hasattr(patient, 'total_advance') and patient.total_advance:
+            total_advance = float(patient.total_advance)
         # Append patient data (Only latest discharge, excluding deleted patients)
         data.append({
             "ip_id": patient.id,
@@ -19453,6 +19816,7 @@ def search_ip_expanded(request):
             "dischargeid": discharge.id,
             "medicine_details": medicine_details,
 "treatment_details": treatment_details,
+   "total_advance": float(total_advance),
 
         })
     return JsonResponse(data, safe=False)  
@@ -19460,21 +19824,16 @@ def search_ip_expanded(request):
 
 def ipbill_detail_view(request):
     bill_id=request.GET.get('bill_id')
-   
     bill = get_object_or_404(IPBill, id=bill_id)
-    
     # Fetch related expanded details
     medicine_details = ipexpandedbillmedicinedetail.objects.filter(ipbilldt=bill)
     treatment_details = ipexpandedbilltreatmentdetail.objects.filter(ipbilldt=bill)
     room_details = IPExpandedBillRoomDetail.objects.filter(ipbill=bill)
     other_expenses_details = ipexpandedbillotherexpensesdetail.objects.filter(ipbilldt=bill)
-    
     # Hospital info (assuming only one)
     hospital = Hospitaldetails.objects.all()
-
     # Convert total to words (example utility function)
-     # If you have a utility function
-    
+    # If you have a utility function
     amount_in_words = ""
     if bill and bill.total_amount is not None:
         amount_in_words = num2words(bill.total_amount, to='currency', lang='en_IN')
@@ -19489,10 +19848,9 @@ def ipbill_detail_view(request):
         'amount_in_words': amount_in_words,
         'objhospt': hospital,
     })
-  
-from decimal import Decimal
+from json import loads 
 logger = logging.getLogger(__name__)
-@csrf_exempt  # Only for debugging or if CSRF token is not sent. Use cautiously!
+@csrf_exempt
 def ipbillexpand(request):
     if request.method == 'POST':
         try:
@@ -19506,23 +19864,69 @@ def ipbillexpand(request):
                 except ippatientadmission.DoesNotExist:
                     return JsonResponse({"success": False, "error": f"No admission found for IP ID {ipno_id}"})
 
-                # Create main bill
+                # Get total advance from IPAdvancePayment table
+                total_advance = IPAdvancePayment.objects.filter(
+                    ip_admission=ip_admission
+                ).aggregate(total=Sum('amount'))['total'] or 0
+                
+                # Update admission's total_advance field
+                ip_admission.total_advance = total_advance
+                ip_admission.save(update_fields=['total_advance'])
+
+                # Get values from POST
+                subtotal = Decimal(request.POST.get('sub_total', 0))
+                tax = Decimal(request.POST.get('tax', 0) or 0)
+                discount = Decimal(request.POST.get('discount', 0) or 0)
+                advance_paid = Decimal(total_advance)
+                
+                # Calculate grand total (before advance deduction)
+                grand_total = subtotal + tax - discount
+                
+                # Calculate net amount (after advance deduction)
+                net_amount = grand_total - advance_paid
+                
+                # Calculate refund amount if advance exceeds grand total
+                refund_amount = Decimal(0)
+                if net_amount < 0:
+                    refund_amount = abs(net_amount)  # Amount to refund
+                    net_amount = 0  # Net amount becomes 0
+                
+                # Amount collected is what the patient pays (net amount)
+                amount_collected = net_amount
+                
+                # Get payment method and amounts from POST
+                payment_method = request.POST.get('payment_method', 'cash')
+                cash_amount = Decimal(request.POST.get('cash_amount', 0) or 0)
+                card_amount = Decimal(request.POST.get('card_amount', 0) or 0)
+                upi_amount = Decimal(request.POST.get('upi_amount', 0) or 0)
+                bank_amount = Decimal(request.POST.get('bank_amount', 0) or 0)
+                
+                # Determine payment status
+                
+                # Create main bill with all payment fields
                 bill = IPBill.objects.create(
                     ip_admission=ip_admission,
                     room_charges=Decimal(request.POST.get('room_rent_total', 0)),
                     medicine_charges=Decimal(request.POST.get('medicine_total', 0)),
                     treatment_charges=Decimal(request.POST.get('treatment_total', 0)),
-                    subtotal=Decimal(request.POST.get('sub_total', 0)),
+                    subtotal=subtotal,
                     other_expenses=Decimal(request.POST.get('service_total', 0)),
-                    tax=Decimal(request.POST.get('tax', 0) or 0),
-                    discount=Decimal(request.POST.get('discount', 0) or 0),
-                    total_amount=Decimal(request.POST.get('grand_total', 0)),
+                    tax=tax,
+                    discount=discount,
+                    total_amount=grand_total,
                     food_expenses=Decimal(request.POST.get('totalfoodamount', 0) or 0),
                     billingstaff_id=request.session.get('loginstaff'),
+                    advance_paid=advance_paid,
+                    balance_amount=net_amount,  # This is the amount due
+                    refundamount=refund_amount,  # Refund amount if overpaid
+                    payment_method=payment_method,
+                    cash_amount=cash_amount,
+                    card_amount=card_amount,
+                    upi_amount=upi_amount,
+                    bank_amount=bank_amount,
                 )
 
                 # Parse and save medicine details
-                from json import loads
                 medicines = loads(request.POST.get('medicine_details', '[]'))
                 for m in medicines:
                     ipexpandedbillmedicinedetail.objects.create(
@@ -19574,18 +19978,72 @@ def ipbillexpand(request):
                     )
 
                 return JsonResponse({
-                "success": True,
-                "message": "Bill saved successfully.",
-                "redirect_url": f"{reverse('ipbill_detail_view')}?bill_id={bill.id}"
-            })
-
+                    "success": True,
+                    "message": "Bill saved successfully.",
+                    "redirect_url": f"{reverse('ipbill_detail_view')}?bill_id={bill.id}"
+                })
 
         except Exception as e:
             print("ERROR:", e)
             return JsonResponse({"success": False, "error": str(e)})
 
-    return render(request,"ipbillexpanded.html")
-
+    # GET request - show the bill details page
+    bill_id = request.GET.get('bill_id')
+    if bill_id:
+        bill = get_object_or_404(IPBill, id=bill_id)
+        
+        # Get all details
+        medicine_details = ipexpandedbillmedicinedetail.objects.filter(ipbilldt=bill)
+        treatment_details = ipexpandedbilltreatmentdetail.objects.filter(ipbilldt=bill)
+        room_details = IPExpandedBillRoomDetail.objects.filter(ipbill=bill)
+        other_expenses_details = ipexpandedbillotherexpensesdetail.objects.filter(ipbilldt=bill)
+        
+        # Get values
+        total_advance = bill.advance_paid or 0
+        discount = bill.discount or 0
+        gross_total = bill.total_amount or 0
+        net_amount = bill.balance_amount or 0
+        refund_amount = bill.refundamount or 0
+        amount_collected = net_amount  # This is what patient pays
+        
+        # Calculate payment summary for display
+        total_collected = (bill.cash_amount or 0) + (bill.card_amount or 0) + (bill.upi_amount or 0) + (bill.bank_amount or 0)
+        
+        # Convert amount to words (using net amount)
+        try:
+            from num2words import num2words
+            amount_in_words = num2words(net_amount, lang='en_IN').title()
+            if net_amount == int(net_amount):
+                amount_in_words = f"Rupees {amount_in_words} Only"
+            else:
+                rupees = int(net_amount)
+                paise = int(round((net_amount - rupees) * 100))
+                rupees_words = num2words(rupees, lang='en_IN').title()
+                paise_words = num2words(paise, lang='en_IN').title()
+                amount_in_words = f"Rupees {rupees_words} and {paise_words} Paise Only"
+        except:
+            amount_in_words = f"{net_amount:.2f} Only"
+        
+        context = {
+            'bill': bill,
+            'medicine_details': medicine_details,
+            'treatment_details': treatment_details,
+            'room_details': room_details,
+            'other_expenses_details': other_expenses_details,
+            'total_advance': total_advance,
+            'discount_amount': discount,
+            'gross_total': gross_total,
+            'net_amount': net_amount,
+            'refund_amount': refund_amount,
+            'amount_collected': amount_collected,
+            'total_collected': total_collected,
+            'amount_in_words': amount_in_words,
+            'objhospt': Hospitaldetails.objects.all(),
+        }
+        return render(request, "ipbillexpanded.html", context)
+    
+    return render(request, "ipbillexpanded.html")
+    
 def delete_treatment_plan(request):
     if request.method == "DELETE":
         try:
@@ -19994,10 +20452,6 @@ def edit_ippatient(request):
         return redirect('error_page')
         
 def discharge_summary(request):
-    idmngmnt = request.session.get('dischrgobjid')
-    if not idmngmnt:
-        messages.error(request, "Menu Management ID not provided. Please contact the admin to grant you the necessary menu permissions.")
-        return redirect('error_page')
 
     stdesign = request.session.get('loginstaffdesign')
     if not stdesign:
@@ -20025,7 +20479,7 @@ def discharge_summary(request):
 
     except PatientDischarge.DoesNotExist:
         messages.error(request, "Discharge record not found.")
-        return redirect(f"{reverse('discharge')}?menumanagement_id={idmngmnt}")
+        return redirect(f"{reverse('discharge')}")
     
 @require_POST
 @login_required
@@ -31674,6 +32128,7 @@ def appinvoiceditform(request):
         'is_superadmin': is_superadmin,
     })
 
+
 def daily_transaction_report(request):
     # ---------- SESSION ----------
     staff_design_id = request.session.get('loginstaffdesign')
@@ -31995,7 +32450,8 @@ def daily_transaction_report(request):
     }
 
     return render(request, "daily_transaction.html", context)
-    
+
+
 from django.db.models import Sum, F, DecimalField, ExpressionWrapper
 from decimal import Decimal, ROUND_HALF_UP
 def gst_report(request):
@@ -38866,6 +39322,8 @@ def generate_purchase_invoice_number(branch_id):
             new_no = 1
 
         return f"{prefix}{str(new_no).zfill(4)}"
+
+
 def purchase_invoice(request):
     """Main purchase invoice form view"""
     branch_id = request.session.get('branchid')
@@ -38881,7 +39339,6 @@ def purchase_invoice(request):
         'invoice_number':invoice_number
     }
     return render(request, 'purchaseinvoice.html', context)
-
 @transaction.atomic
 def save_purchase_invoice(request):
     """Save purchase invoice and optionally update stock based on user choice"""
@@ -39197,7 +39654,6 @@ def get_supplier_details(request):
         return JsonResponse({'supplier': supplier_data})
     except supplier.DoesNotExist:
         return JsonResponse({'error': 'Supplier not found'}, status=404)
-
 def purchase_invoice_list(request):
     """List all purchase invoices with totals - handles both initial load and AJAX"""
     
@@ -39261,7 +39717,6 @@ def purchase_invoice_list(request):
         'to_date': to_date or '',
     }
     return render(request, 'purchase_invoice_list.html', context)
-
 def purchase_invoice_detail(request):
     """View single invoice details"""
     invoice_id=request.GET.get('ids')
@@ -39269,7 +39724,6 @@ def purchase_invoice_detail(request):
     invoice.amount_in_words = number_to_words(invoice.grand_total)
     context = {'invoice': invoice}
     return render(request, 'purchase_invoice_detail.html', context)
-
 
 def get_medicine_details(request):
     """Get medicine details including company and unit"""
@@ -39430,10 +39884,10 @@ def advance_register_ip(request):
             'receipt_no': bill.ipinvoicenumber or f"REC-{bill.id}",
             'ip_number': ip_number,
             'patient_name': patient.Patient_Name if patient else "N/A",
-            'amount': float(bill.total_amount or 0),
+            'amount': float(bill.advance_paid or 0),
             'billing_staff_name': billing_staff_name,
         })
-        total_amount += float(bill.total_amount or 0)
+        total_amount += float(bill.advance_paid or 0)
     
     # Format dates for display
     display_from_date = from_date
@@ -40193,6 +40647,7 @@ def deaths_during_admission(request):
         death_datetime = record.death_datetime.strftime('%d/%m/%Y %H:%M') if record.death_datetime else 'N/A'
         
         death_data.append({
+            'id': record.id,
             'sl_no': index,
             'ip_number': ip_number,
             'patient_name': patient_name,
@@ -40446,7 +40901,8 @@ def sales_return_report(request):
                 'product_name': item.particulars or 'N/A',
                 'batch': item.invoice_child.batchno if item.invoice_child else '',
                 'quantity': item.quantity,
-                'amount': amount
+                'amount': amount,
+                'credit_note_id':credit_note.id
             })
             total_amount += amount
             day_total += amount
@@ -40454,7 +40910,10 @@ def sales_return_report(request):
         # Store day-wise total
         if credit_note.creditnote_date:
             date_str = credit_note.creditnote_date.strftime('%d/%m/%Y')
-            day_totals[date_str] = day_total
+            if date_str in day_totals:
+                day_totals[date_str] += day_total
+            else:
+                day_totals[date_str] = day_total
     
     # ALL DATA (for print) - use the same data
     all_sales_returns = sales_returns.copy()  # All data for print
@@ -40526,7 +40985,8 @@ def purchase_statement_report(request):
         items = PurchaseInvoiceItem.objects.filter(invoice=invoice)
         invoice_total = 0
         invoice_qty = 0
-        
+        invoice_id = invoice.id
+
         for item in items:
             qty = float(item.quantity or 0)
             rate = float(item.unit_price or 0)
@@ -40543,7 +41003,8 @@ def purchase_statement_report(request):
                 'qty': qty,
                 'free_qty': free_qty,
                 'rate': rate,
-                'amount': amount
+                'amount': amount,
+                'invoice_id': invoice_id,
             })
             
             invoice_total += amount
@@ -40555,7 +41016,8 @@ def purchase_statement_report(request):
         invoice_totals[invoice.invoice_number] = {
             'total': invoice_total,
             'qty': invoice_qty,
-            'date': invoice.invoice_date
+            'date': invoice.invoice_date,
+            'invoice_id': invoice_id,
         }
     
     # Get all suppliers for filter dropdown
@@ -40647,7 +41109,7 @@ def sales_statement_report(request):
         items = newInvoiceChild.objects.filter(invmasterid=invoice)
         invoice_total = 0
         invoice_qty = 0
-        
+        invoice_id = invoice.id
         # Get patient name
         patient_name = invoice.patientname or 'N/A'
         if invoice.Mrno:
@@ -40668,7 +41130,8 @@ def sales_statement_report(request):
                 'rate': rate,
                 'amount': amount,
                 'is_discount': False,
-                'discount_amount': 0
+                'discount_amount': 0,
+                'invoice_id': invoice_id
             })
             
             invoice_total += amount
@@ -40689,7 +41152,8 @@ def sales_statement_report(request):
                 'rate': 0,
                 'amount': -discount_amount,
                 'is_discount': True,
-                'discount_amount': discount_amount
+                'discount_amount': discount_amount,
+                'invoice_id':invoice_id
             })
             invoice_total -= discount_amount
         
@@ -40698,7 +41162,8 @@ def sales_statement_report(request):
             'total': invoice_total,
             'qty': invoice_qty,
             'date': invoice.currentdate,
-            'patient': patient_name
+            'patient': patient_name,
+            'invoice_id': invoice_id,
         }
     
     # Get all patients for filter dropdown
@@ -40791,6 +41256,7 @@ def detailed_bill_register(request):
         
         all_bills.append({
             'sl_no': len(all_bills) + 1,
+            'bill_id':inv.id,
             'bill_number': inv.Invoicenumber,
             'bill_type': 'PHARMACY',
             'patient_name': inv.patientname or (inv.Mrno.Patient_Name if inv.Mrno else 'N/A'),
@@ -40826,6 +41292,7 @@ def detailed_bill_register(request):
         
         all_bills.append({
             'sl_no': len(all_bills) + 1,
+            'bill_id':inv.id,
             'bill_number': inv.invoiceno,
             'bill_type': 'LAB BILL',
             'patient_name': inv.patient.Patient_Name if inv.patient else 'N/A',
@@ -40853,6 +41320,7 @@ def detailed_bill_register(request):
         
         all_bills.append({
             'sl_no': len(all_bills) + 1,
+            'bill_id':inv.id,
             'bill_number': inv.invoice_number,
             'bill_type': 'PURCHASE',
             'patient_name': inv.supplier.shopname if inv.supplier else 'N/A',
@@ -40888,6 +41356,7 @@ def detailed_bill_register(request):
         
         all_bills.append({
             'sl_no': len(all_bills) + 1,
+            'bill_id':inv.id,
             'bill_number': inv.treatmentInvoicenumber,
             'bill_type': 'APPOINTMENT',
             'patient_name': inv.patientname or (inv.Mrno.Patient_Name if inv.Mrno else 'N/A'),
@@ -40923,6 +41392,7 @@ def detailed_bill_register(request):
         
         all_bills.append({
             'sl_no': len(all_bills) + 1,
+            'bill_id':inv.id,
             'bill_number': inv.treatmentInvoicenumber,
             'bill_type': 'TREATMENT',
             'patient_name': inv.patientname or (inv.Mrno.Patient_Name if inv.Mrno else 'N/A'),
@@ -41004,36 +41474,25 @@ def doctorwise_op_registration(request):
     total_count = 0
     
     for appt in appointments.order_by('Appointment_date', '-id'):
-        patient = appt.MR_Number
-        
-        # ✅ Get registration fee from Patient_details table
-        reg_fees = 0
-        cons_fees = 0
-        
-        if patient:
-            # ✅ Use reg_Fee from Patient_details
-            reg_fees = float(patient.reg_Fee or 0)
-            
-            # For follow-up, use fee from appointment
-            if appt.status and 'followup' in appt.status.lower():
-                cons_fees = float(appt.Fee or 0)
-            else:
-                cons_fees = 0
+        reg_fees = float(appt.Fee or 0) if appt.status and 'consultation' in appt.status.lower() else 0
+        cons_fees = float(appt.Fee or 0) if appt.status and 'followup' in appt.status.lower() else 0
         
         reg_data.append({
             'sl_no': len(reg_data) + 1,
             'doctor_name': f"{appt.Doctor_Name.Staff_firstname} {appt.Doctor_Name.Staff_lastname}".strip() if appt.Doctor_Name else 'N/A',
-            'op_number': patient.Medical_Record_Number if patient else '-',
+            'op_number': appt.MR_Number.Medical_Record_Number if appt.MR_Number else '-',
             'date': appt.Appointment_date if appt.Appointment_date else '-',
             'token': appt.Tokenno,
-            'patient_details': f"{patient.Patient_Name if patient else 'N/A'} ({patient.Gender if patient else 'N/A'}/{patient.Age if patient else '0'} Y)" if patient else 'N/A',
+            'patient_details': f"{appt.MR_Number.Patient_Name if appt.MR_Number else 'N/A'} ({appt.MR_Number.Gender if appt.MR_Number else 'N/A'}/{appt.MR_Number.Age if appt.MR_Number else '0'} Y)" if appt.MR_Number else 'N/A',
             'reg_fees': reg_fees,
-            'cons_fees': cons_fees
+            'cons_fees': cons_fees,
+            'id':appt.id,
         })
         total_reg_fees += reg_fees
         total_cons_fees += cons_fees
         total_count += 1
     
+
     context = {
         'reg_data': reg_data,
         'total_count': total_count,
@@ -41152,6 +41611,7 @@ def doctorwise_bill_analysis(request):
         amount = float(inv.total or 0)
         bill_type = 'APPOINTMENT'
         bill_details.append({
+            'id': inv.id,
             'bill_number': inv.treatmentInvoicenumber,
             'bill_type': bill_type,
             'patient_name': inv.patientname or (inv.Mrno.Patient_Name if inv.Mrno else 'N/A'),
@@ -41166,6 +41626,7 @@ def doctorwise_bill_analysis(request):
         amount = float(inv.total or 0)
         bill_type = 'TREATMENT'
         bill_details.append({
+            'id': inv.id,
             'bill_number': inv.treatmentInvoicenumber,
             'bill_type': bill_type,
             'patient_name': inv.patientname or (inv.Mrno.Patient_Name if inv.Mrno else 'N/A'),
@@ -41180,6 +41641,7 @@ def doctorwise_bill_analysis(request):
         amount = float(inv.total or 0)
         bill_type = 'PHARMACY'
         bill_details.append({
+            'id': inv.id,
             'bill_number': inv.Invoicenumber,
             'bill_type': bill_type,
             'patient_name': inv.patientname or (inv.Mrno.Patient_Name if inv.Mrno else 'N/A'),
@@ -41194,6 +41656,7 @@ def doctorwise_bill_analysis(request):
         amount = float(inv.total or 0)
         bill_type = 'LAB BILL'
         bill_details.append({
+            'id': inv.id,
             'bill_number': inv.invoiceno,
             'bill_type': bill_type,
             'patient_name': inv.patient.Patient_Name if inv.patient else 'N/A',
@@ -41388,6 +41851,7 @@ def occupancy_list(request):
             doctor_name = f"{booking.admitteddoctor.Staff.Staff_firstname} {booking.admitteddoctor.Staff.Staff_lastname}".strip()
         
         occupancy_data.append({
+            'id': booking.id,
             'sl_no': sl_no,
             'room': room_display,
             'patient_details': patient_details,
@@ -41471,6 +41935,7 @@ def doctors_op_ip_collection(request):
         
         if doc_id not in doctor_collection:
             doctor_collection[doc_id] = {
+                'doctor_id': doc_id,
                 'name': doc_name,
                 'op_count': 0,
                 'reg_fees': 0,
@@ -41520,6 +41985,7 @@ def doctors_op_ip_collection(request):
     for idx, (doc_id, data) in enumerate(doctor_collection.items(), 1):
         total = data['reg_fees'] + data['cons_fees'] + data['ip_amount']
         collection_data.append({
+             'id': doc_id,
             'sl_no': idx,
             'doctor_name': data['name'],
             'op_count': data['op_count'],
@@ -41676,6 +42142,7 @@ def doctorwise_admission_register(request):
             doctor_name = f"{room_booking.admitteddoctor.Staff.Staff_firstname} {room_booking.admitteddoctor.Staff.Staff_lastname}".strip()
         
         admission_data.append({
+            'id': admission.id, 
             'sl_no': sl_no,
             'date': admission.Current_Date,
             'ip_number': admission.ipnumber or '-',
@@ -43671,36 +44138,27 @@ def get_staff_by_department_ajax(request):
     """
     if request.method != 'GET':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
-    
     department_id = request.GET.get('department_id')
     
     if not department_id:
         return JsonResponse({'error': 'Department ID is required'}, status=400)
-    
     try:
         # Get staff members from Staffallocation
         staff_allocations = Staffallocation.objects.filter(
             Department_Name_id=department_id,
             Status='active'
         ).select_related('Staff')
-        
         staff_list = []
         for allocation in staff_allocations:
             staff = allocation.Staff
             if staff and not staff.deleted:
                 staff_list.append({
                     'id': staff.id,
+                    'docid':allocation.id,  
                     'name': f"{staff.Staff_firstname} {staff.Staff_lastname}".strip()
                 })
-        
-        # Log for debugging
-        print(f"Department ID: {department_id}")
-        print(f"Staff found: {len(staff_list)}")
-        
         return JsonResponse(staff_list, safe=False)
-        
     except Exception as e:
-        print(f"Error in get_staff_by_department_ajax: {str(e)}")
         return JsonResponse({'error': str(e)}, status=500)
 
 # ============================================
@@ -44016,11 +44474,12 @@ def patient_visit_cycle_detail(request):
     return render(request, 'patient_visit_cycle_detail.html', context)
 
 
-def advance_register_ip_detail(request, bill_id):
+def advance_register_ip_detail(request):
     """
     Detail view for a specific IP advance payment
     Table: IPBill, ippatientadmission, Patient_details
     """
+    bill_id=request.GET.get('ids')
     staff_design_id = request.session.get('loginstaffdesign')
     if not staff_design_id:
         return redirect('staff_login')
@@ -44101,13 +44560,12 @@ def advance_register_ip_detail(request, bill_id):
         except Exception as e:
             logger.warning(f"Error fetching discharge: {str(e)}")
             discharge = None
-        
+        subtotal = 0
+        tax = 0
+        discount = 0
         # Calculate totals with null safety
         try:
-            subtotal = float(bill.subtotal or 0)
-            tax = float(bill.tax or 0)
-            discount = float(bill.discount or 0)
-            total_amount = float(bill.total_amount or 0)
+            total_amount = float(bill.advance_paid or 0)
         except (ValueError, TypeError) as e:
             logger.warning(f"Error calculating totals: {str(e)}")
             subtotal = 0
@@ -44149,11 +44607,12 @@ def advance_register_ip_detail(request, bill_id):
 
 # ==================== ADMISSION DISCHARGE BILL DETAIL ====================
 
-def admission_discharge_bill_detail(request, bill_id):
+def admission_discharge_bill_detail(request):
     """
     Detail view for a specific admission discharge bill
     Table: IPBill, ippatientadmission, PatientDischarge, ippatientroombooking
     """
+    bill_id=request.GET.get('ids')
     staff_design_id = request.session.get('loginstaffdesign')
     if not staff_design_id:
         return redirect('staff_login')
@@ -44224,11 +44683,12 @@ def admission_discharge_bill_detail(request, bill_id):
 
 # ==================== ADMISSION REGISTER DETAIL ====================
 
-def admission_register_detail(request, admission_id):
+def admission_register_detail(request):
     """
     Detail view for a specific patient admission
     Table: ippatientadmission, Patient_details, ippatientroombooking, PatientDischarge
     """
+    admission_id=request.GET.get('ids')
     staff_design_id = request.session.get('loginstaffdesign')
     if not staff_design_id:
         return redirect('staff_login')
@@ -44288,11 +44748,12 @@ def admission_register_detail(request, admission_id):
 
 
 # ==================== CANCELLED BILLS DETAIL ====================
-def cancelled_bills_detail(request, invoice_id):
+def cancelled_bills_detail(request):
     """
     Detail view for a specific cancelled invoice
     Table: newInvoiceMaster, Patient_details, newInvoiceChild, newInvoiceMaster
     """
+    invoice_id=request.GET.get('ids')
     staff_design_id = request.session.get('loginstaffdesign')
     if not staff_design_id:
         return redirect('staff_login')
@@ -44343,11 +44804,12 @@ def cancelled_bills_detail(request, invoice_id):
 
 
 # ==================== BIRTH REGISTER DETAIL ====================
-def birth_register_detail(request, birth_id):
+def birth_register_detail(request):
     """
     Detail view for a specific birth registration
     Table: BirthRegister, Patient_details, Staffdetails
     """
+    birth_id = request.GET.get('ids')
     staff_design_id = request.session.get('loginstaffdesign')
     if not staff_design_id:
         return redirect('staff_login')
@@ -44375,11 +44837,12 @@ def birth_register_detail(request, birth_id):
 
 
 # ==================== DISCHARGE REGISTER DETAIL ====================
-def discharge_register_detail(request, discharge_id):
+def discharge_register_detail(request):
     """
     Detail view for a specific discharge record
     Table: PatientDischarge, ippatientadmission, Patient_details, ippatientroombooking
     """
+    discharge_id = request.GET.get('ids')
     staff_design_id = request.session.get('loginstaffdesign')
     if not staff_design_id:
         return redirect('staff_login')
@@ -44427,7 +44890,765 @@ def discharge_register_detail(request, discharge_id):
         logger.error(f"Error in discharge_register_detail: {str(e)}")
         messages.error(request, f"Error loading discharge details: {str(e)}")
         return redirect('discharge_register')
+from django.shortcuts import render, get_object_or_404, redirect
+from django.http import JsonResponse
+from django.contrib import messages
+from django.db import transaction
+from django.db.models import Sum, Q
+from django.urls import reverse
+from decimal import Decimal
+from datetime import datetime
+import json
+import csv
+from django.http import HttpResponse
+import logging
 
+logger = logging.getLogger(__name__)
+
+
+def generate_advance_receipt_number(branch_id=None):
+    """Generate unique receipt number for IP advance payments"""
+    today = datetime.now().strftime("%Y%m%d")
+    
+    # Get branch code
+    branch_code = "000"
+    if branch_id:
+        try:
+            branch = Branch.objects.get(id=branch_id)
+            branch_code = branch.Branch_Name[:3].upper()
+        except Branch.DoesNotExist:
+            pass
+    
+    prefix = f"IPADV-{branch_code}-{today}"
+    
+    last_payment = IPAdvancePayment.objects.filter(
+        receipt_number__startswith=prefix
+    ).order_by('-receipt_number').first()
+    
+    if last_payment and last_payment.receipt_number:
+        try:
+            last_number = int(last_payment.receipt_number[-4:])
+            new_number = last_number + 1
+        except (ValueError, IndexError):
+            new_number = 1
+    else:
+        new_number = 1
+    
+    receipt_number = f"{prefix}-{new_number:04d}"
+    
+    while IPAdvancePayment.objects.filter(receipt_number=receipt_number).exists():
+        new_number += 1
+        receipt_number = f"{prefix}-{new_number:04d}"
+    
+    return receipt_number
+
+
+def get_ip_admission_details(request):
+    """AJAX view to fetch IP admission details by IP number or MR number"""
+    staff_id = request.session.get('loginstaff')
+    if not staff_id:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    search_term = request.GET.get('search', '').strip()
+    branch_id = request.session.get('branchid')
+    
+    if not search_term:
+        return JsonResponse({'error': 'Search term required'}, status=400)
+    
+    try:
+        # Search by IP number or MR number
+        admissions = ippatientadmission.objects.filter(
+            Q(ipnumber__icontains=search_term) |
+            Q(MR_Number__Medical_Record_Number__icontains=search_term) |
+            Q(MR_Number__Patient_Name__icontains=search_term) |
+            Q(MR_Number__contactno__icontains=search_term),
+            Admittedstatus=True,
+            admittedbranch_id=branch_id
+        ).select_related('MR_Number', 'department', 'admitted_doctor', 'admitted_doctor__Staff').order_by('-Current_Date')[:10]
+        
+        if not admissions.exists():
+            return JsonResponse({'error': 'No IP admission found'}, status=404)
+        
+        results = []
+        for admission in admissions:
+            # Calculate total advance paid
+            total_advance = IPAdvancePayment.objects.filter(
+                ip_admission=admission
+            ).aggregate(total=Sum('amount'))['total'] or 0
+            
+            # Get department name
+            dept_name = admission.department.Department_Name if admission.department else 'N/A'
+            
+            # Get doctor name - access through Staff relationship
+            doctor_name = 'N/A'
+            if admission.admitted_doctor:
+                staff = admission.admitted_doctor.Staff
+                if staff:
+                    doctor_name = f"{staff.Staff_firstname} {staff.Staff_lastname}".strip()
+            
+            results.append({
+                'id': admission.id,
+                'ip_number': admission.ipnumber,
+                'mr_number': admission.MR_Number.Medical_Record_Number,
+                'patient_name': admission.MR_Number.Patient_Name,
+                'contact': admission.MR_Number.contactno or 'N/A',
+                'admission_date': admission.Current_Date.strftime('%d-%m-%Y'),
+                'age': admission.age,
+                'gender': admission.MR_Number.Gender,
+                'diagnosis': admission.reasonforadmission,
+                'total_advance': float(total_advance),
+                'department': dept_name,
+                'doctor': doctor_name
+            })
+        
+        return JsonResponse({'success': True, 'data': results})
+        
+    except Exception as e:
+        logger.error(f"Error in get_ip_admission_details: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
+
+def get_total_advance(admission):
+    """Get total advance amount for an admission"""
+    from django.db.models import Sum
+    total = IPAdvancePayment.objects.filter(
+        ip_admission=admission
+    ).aggregate(total=Sum('amount'))['total'] or 0
+    return total
+
+def update_admission_total_advance(admission):
+    """Update the total_advance field in admission"""
+    total = get_total_advance(admission)
+    admission.total_advance = total
+    admission.save(update_fields=['total_advance'])
+    return total
+def ip_advance_payment(request):
+    """Main advance payment view with patient search"""
+    staff_id = request.session.get('loginstaff')
+    if not staff_id:
+        return redirect('staff_login')
+    
+    admission_id = request.GET.get('admission_id') or request.POST.get('admission_id')
+    idmngmnt = request.GET.get('menumanagement_id')
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+    
+    # If no admission selected, show search form
+    if not admission_id:
+        context = {
+            'idmngmnt': idmngmnt,
+            'admission': None,
+            'payment_methods': IPAdvancePayment._meta.get_field('payment_method').choices,
+            'show_search': True,
+        }
+        return render(request, "ip_advance_payment.html", context)
+    
+    # Get the admission details
+    admission = get_object_or_404(ippatientadmission, id=admission_id)
+    branch_id = request.session.get('branchid')
+    
+    if request.method == 'POST':
+        try:
+            amount = Decimal(request.POST.get('amount', 0))
+            payment_method = request.POST.get('payment_method')
+            transaction_id = request.POST.get('transaction_id', '')
+            notes = request.POST.get('notes', '')
+            
+            if amount <= 0:
+                if is_ajax:
+                    return JsonResponse({'success': False, 'error': 'Please enter a valid amount.'})
+                messages.error(request, "Please enter a valid amount.")
+                return redirect(f"{reverse('ip_advance_payment')}?admission_id={admission_id}&menumanagement_id={idmngmnt}")
+            
+            if not payment_method:
+                if is_ajax:
+                    return JsonResponse({'success': False, 'error': 'Please select a payment method.'})
+                messages.error(request, "Please select a payment method.")
+                return redirect(f"{reverse('ip_advance_payment')}?admission_id={admission_id}&menumanagement_id={idmngmnt}")
+            
+            # Get staff details
+            staff_allocation = Staffallocation.objects.get(id=staff_id)
+            staff = staff_allocation.Staff
+            
+            # Generate receipt number
+            receipt_number = generate_advance_receipt_number(branch_id)
+            
+            with transaction.atomic():
+                # Create advance payment
+                payment = IPAdvancePayment.objects.create(
+                    ip_admission=admission,
+                    receipt_number=receipt_number,
+                    amount=amount,
+                    payment_method=payment_method,
+                    transaction_id=transaction_id,
+                    notes=notes,
+                    received_by=staff,
+                    branch_id=branch_id
+                )
+                
+                # Update admission total advance using helper function
+                total_advance = update_admission_total_advance(admission)
+                
+                # Create history entry
+                IPAdvancePaymentHistory.objects.create(
+                    ip_admission=admission,
+                    payment=payment,
+                    type='advance',
+                    amount=amount,
+                    balance=total_advance,
+                    description=f"Advance payment received via {payment_method}"
+                )
+                
+                if is_ajax:
+                    return JsonResponse({
+                        'success': True,
+                        'receipt_number': receipt_number,
+                        'total_advance': float(total_advance),
+                        'redirect': f"{reverse('ip_advance_receipt')}?paymentid={payment.id}&menumanagement_id={idmngmnt}"
+                    })
+                
+                messages.success(request, f"Advance payment of ₹{amount} received successfully. Receipt: {payment.receipt_number}")
+                # ✅ FIXED: Added & between parameters
+                return redirect(f"{reverse('ip_advance_receipt')}?paymentid={payment.id}&menumanagement_id={idmngmnt}")
+                
+        except Staffallocation.DoesNotExist:
+            if is_ajax:
+                return JsonResponse({'success': False, 'error': 'Staff allocation not found.'})
+            messages.error(request, "Staff allocation not found.")
+            return redirect(f"{reverse('ip_advance_payment')}?admission_id={admission_id}&menumanagement_id={idmngmnt}")
+        except Exception as e:
+            logger.error(f"Error in ip_advance_payment: {str(e)}")
+            if is_ajax:
+                return JsonResponse({'success': False, 'error': str(e)})
+            messages.error(request, f"Error processing payment: {str(e)}")
+            return redirect(f"{reverse('ip_advance_payment')}?admission_id={admission_id}&menumanagement_id={idmngmnt}")
+    
+    # GET request - show payment form with admission details
+    existing_payments = IPAdvancePayment.objects.filter(ip_admission=admission)
+    total_advance = existing_payments.aggregate(total=Sum('amount'))['total'] or 0
+    
+    # Get doctor name
+    doctor_name = 'N/A'
+    if admission.admitted_doctor:
+        try:
+            staff = admission.admitted_doctor.Staff
+            if staff:
+                doctor_name = f"{staff.Staff_firstname} {staff.Staff_lastname}".strip()
+        except:
+            doctor_name = 'N/A'
+    
+    context = {
+        'admission': admission,
+        'patient': admission.MR_Number,
+        'payment_methods': IPAdvancePayment._meta.get_field('payment_method').choices,
+        'existing_payments': existing_payments,
+        'total_advance': total_advance,
+        'idmngmnt': idmngmnt,
+        'show_search': False,
+        'doctor_name': doctor_name,
+    }
+    return render(request, "ip_advance_payment.html", context)
+
+def ip_advance_payment_detail(request, admission_id):
+    """
+    Alternative view for advance payment with admission_id in URL
+    This is the view that your URL pattern is calling
+    """
+    staff_id = request.session.get('loginstaff')
+    if not staff_id:
+        return redirect('staff_login')
+    
+    idmngmnt = request.GET.get('menumanagement_id')
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+    
+    # Get the admission details
+    admission = get_object_or_404(ippatientadmission, id=admission_id)
+    branch_id = request.session.get('branchid')
+    
+    if request.method == 'POST':
+        try:
+            amount = Decimal(request.POST.get('amount', 0))
+            payment_method = request.POST.get('payment_method')
+            transaction_id = request.POST.get('transaction_id', '')
+            notes = request.POST.get('notes', '')
+            
+            if amount <= 0:
+                if is_ajax:
+                    return JsonResponse({'success': False, 'error': 'Please enter a valid amount.'})
+                messages.error(request, "Please enter a valid amount.")
+                return redirect(f"{reverse('ip_advance_payment_detail', args=[admission_id])}?menumanagement_id={idmngmnt}")
+            
+            if not payment_method:
+                if is_ajax:
+                    return JsonResponse({'success': False, 'error': 'Please select a payment method.'})
+                messages.error(request, "Please select a payment method.")
+                return redirect(f"{reverse('ip_advance_payment_detail', args=[admission_id])}?menumanagement_id={idmngmnt}")
+            
+            # Get staff details
+            staff_allocation = Staffallocation.objects.get(id=staff_id)
+            staff = staff_allocation.Staff
+            
+            # Generate receipt number
+            receipt_number = generate_advance_receipt_number(branch_id)
+            
+            with transaction.atomic():
+                # Create advance payment
+                payment = IPAdvancePayment.objects.create(
+                    ip_admission=admission,
+                    receipt_number=receipt_number,
+                    amount=amount,
+                    payment_method=payment_method,
+                    transaction_id=transaction_id,
+                    notes=notes,
+                    received_by=staff,
+                    branch_id=branch_id
+                )
+                
+                # Update admission total advance
+                total_advance = IPAdvancePayment.objects.filter(
+                    ip_admission=admission
+                ).aggregate(total=Sum('amount'))['total'] or 0
+                
+                if is_ajax:
+                    return JsonResponse({
+                        'success': True,
+                        'receipt_number': receipt_number,
+                        # ✅ FIXED: Added & between parameters
+                        'redirect': f"{reverse('ip_advance_receipt')}?paymentid={payment.id}&menumanagement_id={idmngmnt}"
+                    })
+                
+                messages.success(request, f"Advance payment of ₹{amount} received successfully. Receipt: {payment.receipt_number}")
+                # ✅ FIXED: Added & between parameters
+                return redirect(f"{reverse('ip_advance_receipt')}?paymentid={payment.id}&menumanagement_id={idmngmnt}")
+                
+        except Staffallocation.DoesNotExist:
+            if is_ajax:
+                return JsonResponse({'success': False, 'error': 'Staff allocation not found.'})
+            messages.error(request, "Staff allocation not found.")
+            return redirect(f"{reverse('ip_advance_payment_detail', args=[admission_id])}?menumanagement_id={idmngmnt}")
+        except Exception as e:
+            logger.error(f"Error in ip_advance_payment_detail: {str(e)}")
+            if is_ajax:
+                return JsonResponse({'success': False, 'error': str(e)})
+            messages.error(request, f"Error processing payment: {str(e)}")
+            return redirect(f"{reverse('ip_advance_payment_detail', args=[admission_id])}?menumanagement_id={idmngmnt}")
+    
+    # GET request - show payment form with admission details
+    existing_payments = IPAdvancePayment.objects.filter(ip_admission=admission)
+    total_advance = existing_payments.aggregate(total=Sum('amount'))['total'] or 0
+    
+    # Get doctor name from Staffallocation -> Staff
+    doctor_name = 'N/A'
+    if admission.admitted_doctor:
+        staff = admission.admitted_doctor.Staff
+        if staff:
+            doctor_name = f"{staff.Staff_firstname} {staff.Staff_lastname}".strip()
+    
+    context = {
+        'admission': admission,
+        'patient': admission.MR_Number,
+        'payment_methods': IPAdvancePayment._meta.get_field('payment_method').choices,
+        'existing_payments': existing_payments,
+        'total_advance': total_advance,
+        'idmngmnt': idmngmnt,
+        'show_search': False,
+        'doctor_name': doctor_name,
+    }
+    return render(request, "ip_advance_payment.html", context)
+def ip_advance_receipt(request):
+    """View for printing advance payment receipt"""
+    staff_id = request.session.get('loginstaff')
+    if not staff_id:
+        return redirect('staff_login')
+    
+    payment_id = request.GET.get('paymentid')
+    idmngmnt = request.GET.get('menumanagement_id')
+    
+    # Log the request for debugging
+    logger.info(f"ip_advance_receipt called with paymentid: {payment_id}, menumanagement_id: {idmngmnt}")
+    
+    if not payment_id:
+        messages.error(request, "Payment ID is missing.")
+        return redirect(f"{reverse('ip_advance_payment')}?menumanagement_id={idmngmnt}")
+    
+    try:
+        payment_id_int = int(payment_id)
+        logger.info(f"Searching for payment with ID: {payment_id_int}")
+    except (ValueError, TypeError):
+        messages.error(request, "Invalid Payment ID format.")
+        return redirect(f"{reverse('ip_advance_payment')}?menumanagement_id={idmngmnt}")
+    
+    try:
+        payment = IPAdvancePayment.objects.get(id=payment_id_int)
+        logger.info(f"Found payment: {payment.id} - {payment.receipt_number}")
+    except IPAdvancePayment.DoesNotExist:
+        logger.error(f"Payment with ID {payment_id_int} NOT FOUND in database.")
+        
+        # Get all payment IDs for debugging
+        all_payments = IPAdvancePayment.objects.all().values_list('id', flat=True)
+        logger.info(f"Available payment IDs: {list(all_payments)}")
+        
+        messages.error(request, f"Payment #{payment_id_int} not found. Available payment IDs: {list(all_payments)[:5]}...")
+        
+        # Try to redirect back with admission_id if available
+        admission_id = request.GET.get('admission_id')
+        if admission_id:
+            return redirect(f"{reverse('ip_advance_payment')}?admission_id={admission_id}&menumanagement_id={idmngmnt}")
+        return redirect(f"{reverse('ip_advance_payment')}?menumanagement_id={idmngmnt}")
+    
+    # Rest of your view...
+    objhospt = Hospitaldetails.objects.first()
+    
+    # Get all payments for this admission to show running balance
+    all_payments = IPAdvancePayment.objects.filter(ip_admission=payment.ip_admission)
+    total_advance = all_payments.aggregate(total=Sum('amount'))['total'] or 0
+    
+    # Get staff name for received_by
+    received_by_name = 'N/A'
+    if payment.received_by:
+        received_by_name = f"{payment.received_by.Staff_firstname} {payment.received_by.Staff_lastname}".strip()
+    
+    # Get branch name
+    branch_name = None
+    if payment.branch:
+        branch_name = payment.branch
+    
+    # Convert amount to words
+    amount_in_words = ""
+    if payment.amount is not None:
+        try:
+            from num2words import num2words
+            amount_in_words = num2words(payment.amount, lang='en_IN').title()
+            if payment.amount == int(payment.amount):
+                amount_in_words = f"Rupees {amount_in_words} Only"
+            else:
+                rupees = int(payment.amount)
+                paise = int(round((payment.amount - rupees) * 100))
+                if rupees > 0:
+                    rupees_words = num2words(rupees, lang='en_IN').title()
+                    paise_words = num2words(paise, lang='en_IN').title()
+                    amount_in_words = f"Rupees {rupees_words} and {paise_words} Paise Only"
+                else:
+                    amount_in_words = f"Rupees {amount_in_words} Only"
+        except Exception as e:
+            logger.error(f"Error converting amount to words: {str(e)}")
+            amount_in_words = f"Rupees {payment.amount:.2f} Only"
+    
+    context = {
+        'payment': payment,
+        'admission': payment.ip_admission,
+        'patient': payment.ip_admission.MR_Number,
+        'received_by': payment.received_by,
+        'received_by_name': received_by_name,
+        'branch': payment.branch,
+        'brname': branch_name,
+        'idmngmnt': idmngmnt,
+        'total_advance': total_advance,
+        'payment_count': all_payments.count(),
+        'objhospt': objhospt,
+        'amount_in_words': amount_in_words,
+    }
+    return render(request, "ip_advance_receipt.html", context)
+
+
+def number_to_words(number):
+    """Convert number to words (simple implementation)"""
+    try:
+        # Simple implementation - you can use a library like num2words
+        from num2words import num2words
+        return num2words(number, lang='en_IN').title()
+    except:
+        return f"{number:.2f} Only"
+def ip_advance_payment_history(request):
+    """View to show payment history and manage balance"""
+    staff_id = request.session.get('loginstaff')
+    if not staff_id:
+        return redirect('staff_login')
+    
+    # Get parameters from query string
+    admission_id = request.GET.get('admission_id')
+    idmngmnt = request.GET.get('menumanagement_id')
+    
+    if not admission_id:
+        messages.error(request, "Admission ID is required.")
+        return redirect(f"{reverse('ip_advance_payment')}?menumanagement_id={idmngmnt}")
+    
+    try:
+        admission = get_object_or_404(ippatientadmission, id=admission_id)
+    except (ValueError, TypeError):
+        messages.error(request, "Invalid Admission ID format.")
+        return redirect(f"{reverse('ip_advance_payment')}?menumanagement_id={idmngmnt}")
+    
+    payments = IPAdvancePayment.objects.filter(ip_admission=admission).order_by('-created_at')
+    total_advance = payments.aggregate(total=Sum('amount'))['total'] or 0
+    
+    context = {
+        'admission': admission,
+        'patient': admission.MR_Number,
+        'payments': payments,
+        'total_advance': total_advance,
+        'idmngmnt': idmngmnt,
+    }
+    return render(request, "ip_advance_payment_history.html", context)
+def get_ip_patient_advances(request, admission_id):
+    """AJAX view to get advance payments for a patient"""
+    staff_id = request.session.get('loginstaff')
+    if not staff_id:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    try:
+        admission = get_object_or_404(ippatientadmission, id=admission_id)
+        payments = IPAdvancePayment.objects.filter(ip_admission=admission).values(
+            'id', 'receipt_number', 'amount', 'payment_date', 'payment_method',
+            'transaction_id', 'notes'
+        )
+        
+        total = IPAdvancePayment.objects.filter(ip_admission=admission).aggregate(
+            total=Sum('amount')
+        )['total'] or 0
+        
+        # Format payment date for display
+        payment_list = []
+        for payment in payments:
+            payment_list.append({
+                'id': payment['id'],
+                'receipt_number': payment['receipt_number'],
+                'amount': str(payment['amount']),
+                'payment_date': payment['payment_date'].strftime('%d/%m/%Y %H:%M'),
+                'payment_method': payment['payment_method'],
+                'transaction_id': payment['transaction_id'] or 'N/A',
+                'notes': payment['notes'] or ''
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'payments': payment_list,
+            'total': str(total),
+            'count': len(payment_list)
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in get_ip_patient_advances: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+def delete_ip_advance_payment(request, payment_id):
+    """View to delete/void an advance payment"""
+    staff_id = request.session.get('loginstaff')
+    if not staff_id:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    try:
+        payment = get_object_or_404(IPAdvancePayment, id=payment_id)
+        admission_id = payment.ip_admission.id
+        
+        with transaction.atomic():
+            # Delete the payment
+            payment.delete()
+            
+            # Update total advance
+            total_advance = IPAdvancePayment.objects.filter(
+                ip_admission_id=admission_id
+            ).aggregate(total=Sum('amount'))['total'] or 0
+        
+        return JsonResponse({
+            'success': True, 
+            'message': 'Payment voided successfully',
+            'total_advance': str(total_advance)
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in delete_ip_advance_payment: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+def export_advance_payments(request, admission_id):
+    """Export advance payments for a specific admission"""
+    staff_id = request.session.get('loginstaff')
+    if not staff_id:
+        return redirect('staff_login')
+    
+    admission = get_object_or_404(ippatientadmission, id=admission_id)
+    payments = IPAdvancePayment.objects.filter(ip_admission=admission)
+    
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="advance_payments_{admission.ipnumber}.csv"'
+    
+    writer = csv.writer(response)
+    writer.writerow([
+        'Receipt Number', 'Date', 'Amount', 'Payment Method', 
+        'Transaction ID', 'Received By', 'Notes'
+    ])
+    
+    for payment in payments:
+        # Get received by name from Staffdetails
+        received_by_name = 'N/A'
+        if payment.received_by:
+            received_by_name = f"{payment.received_by.Staff_firstname} {payment.received_by.Staff_lastname}".strip()
+        
+        writer.writerow([
+            payment.receipt_number,
+            payment.created_at.strftime('%d/%m/%Y %H:%M'),
+            f"{payment.amount:.2f}",
+            payment.get_payment_method_display(),
+            payment.transaction_id or 'N/A',
+            received_by_name,
+            payment.notes or ''
+        ])
+    
+    # Add total row
+    total = payments.aggregate(total=Sum('amount'))['total'] or 0
+    writer.writerow([])
+    writer.writerow(['TOTAL', '', f"{total:.2f}", '', '', '', ''])
+    
+    return response
+
+
+def pre_appointment_booking(request):
+    idmngmnt = request.GET.get('menumanagement_id')
+    if not idmngmnt:
+        messages.error(request, "Invalid Menu Management ID.")
+        return redirect('error_page')
+    
+    if request.method == 'POST':
+        addmrnumber = request.POST.get('mrnum')
+        addbranch = request.POST.get('branch')
+        adddocname = request.POST.get('docname')
+        addappoinmentdate = request.POST.get('apntdate')
+        addremarks = request.POST.get('remarks')
+        addcontactnumber = request.POST.get('contactnum')
+        status = request.POST.get('status')
+        adddept = request.POST.get('deptname')
+        adddesg = request.POST.get('desgname')
+        
+        patient_obj = Patient_details.objects.filter(id=addmrnumber).first()
+        if not patient_obj:
+            messages.error(request, "Patient not found.")
+            return redirect(f"{reverse('pre_appointment_booking')}?menumanagement_id={idmngmnt}")
+            
+        PreAppointmentBooking.objects.create(
+            patient=patient_obj,
+            branch_id=addbranch,
+            doctor_id=adddocname,
+            department_id=adddept,
+            designation_id=adddesg,
+            appointment_date=addappoinmentdate,
+            status=status,
+            contactno=addcontactnumber,
+            remarks=addremarks,
+        )
+        messages.success(request, "Pre-appointment booked successfully!")
+        return redirect(f"{reverse('pre_appointment_booking_list')}?menumanagement_id={idmngmnt}")
+        
+    # GET Request
+    branchobj = Branch.objects.all()
+    departmentobj = Department.objects.filter(flag=1)
+    designobj = Designation.objects.all()
+    appointment_status = AppointmentStatus.objects.filter(is_active="1")
+    
+    context = {
+        'idmngmnt': idmngmnt,
+        'branchobj': branchobj,
+        'departmentobj': departmentobj,
+        'designobj': designobj,
+        'appointment_status': appointment_status,
+    }
+    return render(request, "pre_appointment_booking.html", context)
+
+
+def pre_appointment_booking_list(request):
+    idmngmnt = request.GET.get('menumanagement_id')
+    
+    # Fetch ALL bookings (both pending and converted) ordered by date
+    bookings = PreAppointmentBooking.objects.all().order_by('-appointment_date')
+    
+    context = {
+        'idmngmnt': idmngmnt,
+        'bookings': bookings,
+    }
+    return render(request, "pre_appointment_booking_list.html", context)
+
+
+def take_appointment_from_prebooking(request, booking_id):
+    booking = get_object_or_404(PreAppointmentBooking, id=booking_id)
+    idmngmnt = request.GET.get('menumanagement_id')
+    
+    # Redirect to actual appointment page with pre-filled GET parameters
+    url = reverse('appointment') + f"?menumanagement_id={idmngmnt}"
+    url += f"&mrnum={booking.patient.id}"
+    url += f"&branch={booking.branch.id}"
+    url += f"&docname={booking.doctor.id}"
+    url += f"&apntdate={booking.appointment_date.strftime('%Y-%m-%d')}"
+    url += f"&status={booking.status}"
+    url += f"&contactnum={booking.contactno or ''}"
+    url += f"&remarks={booking.remarks or ''}"
+    url += f"&deptname={booking.department.id if booking.department else ''}"
+    url += f"&desgname={booking.designation.id if booking.designation else ''}"
+    url += f"&prebooking_id={booking.id}" # Hidden ID to mark as converted later
+    
+    return redirect(url)
+
+@login_required
+def delete_pre_appointment(request, booking_id):
+    idmngmnt = request.GET.get('menumanagement_id')
+    booking = get_object_or_404(PreAppointmentBooking, id=booking_id)
+    booking.delete()
+    messages.success(request, "Pre-booking deleted successfully.")
+    return redirect(f"{reverse('pre_appointment_booking_list')}?menumanagement_id={idmngmnt}")    
+
+
+def search_supplier(request):
+    """
+    Search suppliers by name, code, or contact - used in purchase invoice form
+    """
+    if request.method == 'GET' and 'term' in request.GET:
+        search_term = request.GET.get('term', '').strip()
+        if search_term:
+            suppliers = supplier.objects.filter(
+                Q(shopname__icontains=search_term) |
+                Q(suppliercode__icontains=search_term) |
+                Q(contactnumber__icontains=search_term)
+            )[:10]
+            
+            data = [
+                {
+                    'id': supp.id,
+                    'shopname': supp.shopname,
+                    'name': supp.shopname,
+                    'suppliercode': supp.suppliercode or '',
+                    'contactnumber': supp.contactnumber or '',
+                    'address': supp.address or '',
+                    'email': supp.email or ''
+                }
+                for supp in suppliers
+            ]
+            return JsonResponse(data, safe=False)
+    return JsonResponse([], safe=False)
+
+
+
+def search_store(request):
+    """
+    Search stores by name - used in purchase invoice form
+    """
+    if request.method == 'GET' and 'term' in request.GET:
+        search_term = request.GET.get('term', '').strip()
+        if search_term:
+            stores = storedetails.objects.filter(
+                storename__icontains=search_term
+            )[:10]
+            
+            data = [
+                {
+                    'id': store.id, 
+                    'storename': store.storename,
+                    'name': store.storename
+                } 
+                for store in stores
+            ]
+            return JsonResponse(data, safe=False)
+    return JsonResponse([], safe=False)
 
 def registration_fee_invoice(request):
     """Generate invoice for registration fee from Patient_details"""
@@ -44526,3 +45747,1060 @@ def registration_fee_invoice(request):
     }
     
     return render(request, 'registration_fee_invoice.html', context)
+
+def sales_return_detail(request):
+    """
+    Sales Return Detail View - Shows complete details of a single credit note
+    """
+    # Get the credit note ID from request
+    credit_note_id = request.GET.get('ids')
+    
+    if not credit_note_id:
+        messages.error(request, "Credit Note ID is required.")
+        return redirect('sales_return_report')
+    
+    try:
+        # Get the credit note master
+        credit_note = get_object_or_404(CreditNoteMaster, id=credit_note_id)
+        
+        # Get all items for this credit note
+        credit_items = CreditNoteChild.objects.filter(
+            creditnote_master=credit_note
+        ).select_related('invoice_child')
+        
+        # Calculate totals
+        subtotal = 0
+        tax_total = 0
+        grand_total = 0
+        
+        for item in credit_items:
+            item_amount = float(item.total or item.amount or 0)
+            subtotal += item_amount
+            
+            # Get tax from invoice child if available
+            if item.invoice_child:
+                tax = float(item.invoice_child.tax or 0)
+                # tax_total += (item_amount * tax / 100) if tax else 0
+        
+        grand_total = subtotal + tax_total
+        
+        # Get hospital details
+        hospital = Hospitaldetails.objects.first()
+        
+        # Get branch details
+        branch = credit_note.branch if credit_note.branch else None
+        
+        # Get patient details
+        patient = None
+        if credit_note.invoicemaster and credit_note.invoicemaster.Mrno:
+            patient = credit_note.invoicemaster.Mrno
+        
+        context = {
+            'credit_note': credit_note,
+            'credit_items': credit_items,
+            'subtotal': subtotal,
+            'tax_total': tax_total,
+            'grand_total': grand_total,
+            'hospital': hospital,
+            'branch': branch,
+            'patient': patient,
+        }
+        
+        return render(request, 'sales_return_detail.html', context)
+        
+    except Exception as e:
+        messages.error(request, f"Error loading credit note details: {str(e)}")
+        return redirect('sales_return_report')
+
+def purchase_statement_detail(request):
+    """
+    Purchase Statement Detail View - Shows complete details of a single purchase invoice
+    """
+    # Get the invoice ID from request
+    invoice_id = request.GET.get('ids')
+    
+    if not invoice_id:
+        messages.error(request, "Invoice ID is required.")
+        return redirect('purchase_statement_report')
+    
+    try:
+        # Get the purchase invoice
+        invoice = get_object_or_404(PurchaseInvoice, id=invoice_id)
+        
+        # Get all items for this invoice
+        items = PurchaseInvoiceItem.objects.filter(invoice=invoice).select_related('medicine', 'company', 'unt')
+        
+        # Calculate totals
+        subtotal = 0
+        gst_total = 0
+        discount_total = 0
+        grand_total = 0
+        total_qty = 0
+        
+        for item in items:
+            qty = float(item.quantity or 0)
+            rate = float(item.unit_price or 0)
+            amount = qty * rate
+            subtotal += amount
+            total_qty += qty
+            
+            # Calculate GST
+            gst_percent = float(item.gst_percent or 0)
+            gst_amount = amount * gst_percent / 100 if gst_percent else 0
+            gst_total += gst_amount
+            
+            # Calculate discount
+            discount_percent = float(item.discount_percent or 0)
+            discount_amount = amount * discount_percent / 100 if discount_percent else 0
+            discount_total += discount_amount
+        
+        grand_total = subtotal + gst_total - discount_total
+        
+        # Get hospital details
+        hospital = Hospitaldetails.objects.first()
+        
+        # Get supplier details
+        supplier = invoice.supplier if invoice.supplier else None
+        
+        # Get branch details
+        branch = invoice.branch if invoice.branch else None
+        
+        # Get store details
+        store = invoice.store if invoice.store else None
+        
+        context = {
+            'invoice': invoice,
+            'items': items,
+            'subtotal': subtotal,
+            'gst_total': gst_total,
+            'discount_total': discount_total,
+            'grand_total': grand_total,
+            'total_qty': total_qty,
+            'hospital': hospital,
+            'supplier': supplier,
+            'branch': branch,
+            'store': store,
+        }
+        
+        return render(request, 'purchase_statement_detail.html', context)
+        
+    except Exception as e:
+        messages.error(request, f"Error loading purchase invoice details: {str(e)}")
+        return redirect('purchase_statement_report')
+
+def sales_statement_detail(request):
+    """
+    Sales Statement Detail View - Shows complete details of a single sales invoice
+    """
+    # Get the invoice ID from request
+    invoice_id = request.GET.get('ids')
+    
+    if not invoice_id:
+        messages.error(request, "Invoice ID is required.")
+        return redirect('sales_statement_report')
+    
+    try:
+        # Get the sales invoice
+        invoice = get_object_or_404(newInvoiceMaster, id=invoice_id)
+        
+        # Get all items for this invoice
+        items = newInvoiceChild.objects.filter(invmasterid=invoice)
+        
+        # Calculate totals
+        subtotal = 0
+        tax_total = 0
+        discount_amount = 0
+        grand_total = 0
+        total_qty = 0
+        
+        for item in items:
+            qty = float(item.quantity or 0)
+            amount = float(item.sutotal or item.amount or 0)
+            subtotal += amount
+            total_qty += qty
+            
+            # Calculate tax
+            # tax_percent = float(item.tax or 0)
+            # tax_amount = amount * tax_percent / 100 if tax_percent else 0
+            # tax_total += tax_amount
+        
+        grand_total = subtotal
+        
+        # Apply discount if exists
+        if invoice.discount:
+            discount_amount = float(invoice.discount)
+            grand_total -= discount_amount
+        
+        # Get patient details
+        patient = None
+        if invoice.Mrno:
+            patient = invoice.Mrno
+        
+        # Get hospital details
+        hospital = Hospitaldetails.objects.first()
+        
+        # Get branch details
+        branch = invoice.branch if invoice.branch else None
+        
+        # Get staff details
+        staff = invoice.preparedby if invoice.preparedby else None
+        
+        context = {
+            'invoice': invoice,
+            'items': items,
+            'subtotal': subtotal,
+            'tax_total': tax_total,
+            'discount_amount': discount_amount,
+            'grand_total': grand_total,
+            'total_qty': total_qty,
+            'patient': patient,
+            'hospital': hospital,
+            'branch': branch,
+            'staff': staff,
+        }
+        
+        return render(request, 'sales_statement_detail.html', context)
+        
+    except Exception as e:
+        messages.error(request, f"Error loading sales invoice details: {str(e)}")
+        return redirect('sales_statement_report')
+
+def doctorwise_op_registration_detail(request):
+    """
+    Doctor Wise OP Registration Detail - Shows complete details of a single OP registration
+    """
+    # Get the appointment ID from request
+    appointment_id = request.GET.get('ids')
+    
+    if not appointment_id:
+        messages.error(request, "Appointment ID is required.")
+        return redirect('doctorwise_op_registration')
+    
+    try:
+        # Get the appointment
+        appointment = get_object_or_404(
+            Appointments.objects.select_related('MR_Number', 'Doctor_Name', 'Branch'),
+            id=appointment_id
+        )
+        
+        # Get hospital details
+        hospital = Hospitaldetails.objects.first()
+        
+        # Get patient details
+        patient = appointment.MR_Number if appointment.MR_Number else None
+        
+        # Get doctor details
+        doctor = appointment.Doctor_Name if appointment.Doctor_Name else None
+        
+        # Get branch details
+        branch = appointment.Branch if appointment.Branch else None
+        
+        # Calculate fees
+        reg_fee = float(appointment.Fee or 0) if appointment.status and 'consultation' in appointment.status.lower() else 0
+        cons_fee = float(appointment.Fee or 0) if appointment.status and 'followup' in appointment.status.lower() else 0
+        
+        # Get previous appointments for this patient (history)
+        previous_appointments = Appointments.objects.filter(
+            MR_Number=appointment.MR_Number
+        ).exclude(
+            id=appointment.id
+        ).select_related('Doctor_Name', 'Branch').order_by('-Appointment_date')[:5]
+        
+        context = {
+            'appointment': appointment,
+            'patient': patient,
+            'doctor': doctor,
+            'branch': branch,
+            'hospital': hospital,
+            'reg_fee': reg_fee,
+            'cons_fee': cons_fee,
+            'previous_appointments': previous_appointments,
+        }
+        
+        return render(request, 'doctorwise_opregistration_detail.html', context)
+        
+    except Exception as e:
+        messages.error(request, f"Error loading appointment details: {str(e)}")
+        return redirect('doctorwise_op_registration')
+
+def doctorwise_bill_detail(request):
+    """Doctor Wise Bill Detail - Shows detailed information for a specific bill"""
+    staff_design_id = request.session.get('loginstaffdesign')
+    if not staff_design_id:
+        return redirect('staff_login')
+    
+    bill_id = request.GET.get('ids')
+    bill_type = request.GET.get('type')
+    
+    if not bill_id or not bill_type:
+        messages.error(request, "Bill ID and Type are required")
+        return redirect('doctorwise_bill_analysis')
+    
+    bill_data = None
+    bill_items = []
+    hospital = Hospitaldetails.objects.first()
+    
+    try:
+        if bill_type == 'APPOINTMENT':
+            bill = appointmentinvoicemaster.objects.filter(
+                id=bill_id, 
+                cancelstatus=False
+            ).select_related('Mrno', 'branch', 'preparedby').first()
+            
+            if bill:
+                bill_data = {
+                    'bill_number': bill.treatmentInvoicenumber,
+                    'bill_type': 'APPOINTMENT',
+                    'patient_name': bill.patientname or (bill.Mrno.Patient_Name if bill.Mrno else 'N/A'),
+                    'amount': float(bill.total or 0),
+                    'date': bill.currentdate,
+                    'subtotal': float(bill.subtotal or 0),
+                    'tax': float(bill.tax or 0),
+                    'discount': float(bill.discount or 0),
+                    'payment_mode': bill.payementmode,
+                    'prepared_by': bill.preparedby.Staff.Staff_firstname if bill.preparedby else 'N/A',
+                    'branch': bill.branch.Branch_Name if bill.branch else 'N/A',
+                    'consultation_fee': float(bill.consultationfee or 0),
+                    'status': 'Completed'
+                }
+                # Get appointment details
+                appointment = Appointments.objects.filter(
+                    MR_Number=bill.Mrno,
+                    Tokenno=bill.treatmentInvoicenumber
+                ).first()
+                if appointment:
+                    bill_data['doctor'] = appointment.Doctor_Name.Staff_firstname if appointment.Doctor_Name else 'N/A'
+                    bill_data['appointment_date'] = appointment.Appointment_date
+                    bill_data['status'] = appointment.status or 'Completed'
+                
+                # Get child items
+                # appointmentinvoicemaster doesn't have child table, so we use treatmentinvoicechild
+                items = treatmentinvoicechild.objects.filter(
+                    invmasterid__treatmentInvoicenumber=bill.treatmentInvoicenumber,
+                    currentdate=bill.currentdate
+                ).values('particulars', 'quantity', 'amount', 'sutotal')
+                
+                for item in items:
+                    bill_items.append({
+                        'particulars': item['particulars'],
+                        'quantity': item['quantity'],
+                        'rate': float(item['amount'] or 0) / float(item['quantity'] or 1),
+                        'amount': float(item['sutotal'] or 0)
+                    })
+        
+        elif bill_type == 'TREATMENT':
+            bill = treatmentinvoicemaster.objects.filter(
+                id=bill_id,
+                cancelstatus=False
+            ).select_related('Mrno', 'branch', 'preparedby').first()
+            
+            if bill:
+                bill_data = {
+                    'bill_number': bill.treatmentInvoicenumber,
+                    'bill_type': 'TREATMENT',
+                    'patient_name': bill.patientname or (bill.Mrno.Patient_Name if bill.Mrno else 'N/A'),
+                    'amount': float(bill.total or 0),
+                    'date': bill.currentdate,
+                    'subtotal': float(bill.subtotal or 0),
+                    'tax': float(bill.tax or 0),
+                    'discount': float(bill.discount or 0),
+                    'payment_mode': bill.paymentmode or 'Cash',
+                    'prepared_by': bill.preparedby.Staff.Staff_firstname if bill.preparedby else 'N/A',
+                    'branch': bill.branch.Branch_Name if bill.branch else 'N/A',
+                    'consultation_fee': float(bill.consultationfee or 0),
+                    'status': 'Completed'
+                }
+                
+                # Get child items
+                items = treatmentinvoicechild.objects.filter(
+                    invmasterid=bill
+                ).values('particulars', 'quantity', 'amount', 'sutotal')
+                
+                for item in items:
+                    bill_items.append({
+                        'particulars': item['particulars'],
+                        'quantity': item['quantity'],
+                        'rate': float(item['amount'] or 0) / float(item['quantity'] or 1),
+                        'amount': float(item['sutotal'] or 0)
+                    })
+        
+        elif bill_type == 'PHARMACY':
+            bill = newInvoiceMaster.objects.filter(
+                id=bill_id,
+                restockstatus=True
+            ).select_related('Mrno', 'branch', 'preparedby').first()
+            
+            if bill:
+                bill_data = {
+                    'bill_number': bill.Invoicenumber,
+                    'bill_type': 'PHARMACY',
+                    'patient_name': bill.patientname or (bill.Mrno.Patient_Name if bill.Mrno else 'N/A'),
+                    'amount': float(bill.total or 0),
+                    'date': bill.currentdate,
+                    'subtotal': float(bill.subtotal or 0),
+                    'tax': float(bill.tax or 0),
+                    'discount': float(bill.discount or 0),
+                    'payment_mode': bill.payementmode or 'Cash',
+                    'prepared_by': bill.preparedby.Staff.Staff_firstname if bill.preparedby else 'N/A',
+                    'branch': bill.branch.Branch_Name if bill.branch else 'N/A',
+                    'status': 'Completed'
+                }
+                
+                # Get child items
+                items = newInvoiceChild.objects.filter(
+                    invmasterid=bill
+                ).values('particulars', 'quantity', 'amount', 'sutotal')
+                
+                for item in items:
+                    bill_items.append({
+                        'particulars': item['particulars'],
+                        'quantity': item['quantity'],
+                        'rate': float(item['amount'] or 0) / float(item['quantity'] or 1),
+                        'amount': float(item['sutotal'] or 0)
+                    })
+        
+        elif bill_type == 'LAB BILL':
+            bill = LabInvoiceMaster.objects.filter(
+                id=bill_id,
+                is_cancelled=False
+            ).select_related('patient').first()
+            
+            if bill:
+                bill_data = {
+                    'bill_number': bill.invoiceno,
+                    'bill_type': 'LAB BILL',
+                    'patient_name': bill.patient.Patient_Name if bill.patient else 'N/A',
+                    'amount': float(bill.total or 0),
+                    'date': bill.date,
+                    'subtotal': float(bill.subtotal or 0),
+                    'tax': float(bill.tax_amount or 0),
+                    'discount': float(bill.discount or 0),
+                    'payment_mode': 'Cash' if bill.cash_amount > 0 else 'Other',
+                    'prepared_by': bill.created_by.Staff_firstname if bill.created_by else 'N/A',
+                    'branch': bill.branch.Branch_Name if bill.branch else 'N/A',
+                    'consultation_fee': float(bill.consultation_fee or 0),
+                    'registration_fee': float(bill.registration_fee or 0),
+                    'status': 'Completed'
+                }
+                
+                # Get child items
+                items = LabInvoiceChild.objects.filter(
+                    invoice=bill
+                ).values('testname', 'qty', 'rate', 'amount')
+                
+                for item in items:
+                    bill_items.append({
+                        'particulars': item['testname'],
+                        'quantity': float(item['qty'] or 0),
+                        'rate': float(item['rate'] or 0),
+                        'amount': float(item['amount'] or 0)
+                    })
+    
+    except Exception as e:
+        messages.error(request, f"Error loading bill details: {str(e)}")
+        return redirect('doctorwise_bill_analysis')
+    
+    if not bill_data:
+        messages.error(request, "Bill not found")
+        return redirect('doctorwise_bill_analysis')
+    
+    context = {
+        'bill': bill_data,
+        'bill_items': bill_items,
+        'hospital': hospital,
+        'stdesign': staff_design_id,
+    }
+    return render(request, 'doctorwise_bill_detail.html', context)
+
+
+def occupancy_detail(request):
+    """Occupancy Detail - Shows detailed information for a specific occupancy"""
+    staff_design_id = request.session.get('loginstaffdesign')
+    if not staff_design_id:
+        return redirect('staff_login')
+    
+    occupancy_id = request.GET.get('ids')
+    
+    if not occupancy_id:
+        messages.error(request, "Occupancy ID is required")
+        return redirect('occupancy_list')
+    
+    try:
+        booking = ippatientroombooking.objects.filter(
+            id=occupancy_id,
+            bookingcancel=False
+        ).select_related(
+            'ipno',
+            'ipno__MR_Number',
+            'room_number',
+            'bed_number',
+            'roomdt',
+            'admitteddoctor',
+            'admitteddoctor__Staff',
+            'admitteddoctor__Branch_Name'
+        ).first()
+        
+        if not booking:
+            messages.error(request, "Occupancy record not found")
+            return redirect('occupancy_list')
+        
+        patient = booking.ipno.MR_Number if booking.ipno else None
+        
+        # Get room/ward details
+        room_display = '-'
+        accommodation_type = booking.accommodation_type or 'Room'
+        floor_number = booking.floor_number or ''
+        room_type = booking.room_type or ''
+        
+        if accommodation_type == 'Room':
+            if booking.room_number:
+                room_display = booking.room_number.Roomno
+            elif booking.roomdt:
+                room_display = booking.roomdt.Roomno
+            if room_type and room_display != '-':
+                room_display = f"{room_display} ({room_type})"
+        else:
+            if booking.bed_number:
+                bed_no = booking.bed_number.wardbedno
+                ward_room = ''
+                if booking.room_number:
+                    ward_room = booking.room_number.Roomno
+                elif booking.roomdt:
+                    ward_room = booking.roomdt.Roomno
+                if ward_room:
+                    room_display = f"Ward {ward_room} - Bed {bed_no}"
+                else:
+                    room_display = f"Bed {bed_no}"
+            elif booking.room_number:
+                room_display = f"Ward {booking.room_number.Roomno}"
+            elif booking.roomdt:
+                room_display = f"Ward {booking.roomdt.Roomno}"
+        
+        if floor_number and room_display != '-':
+            room_display = f"{room_display} (Floor {floor_number})"
+        
+        # Get doctor name
+        doctor_name = "N/A"
+        if booking.admitteddoctor and booking.admitteddoctor.Staff:
+            doctor_name = f"{booking.admitteddoctor.Staff.Staff_firstname} {booking.admitteddoctor.Staff.Staff_lastname}".strip()
+        
+        # Get discharge details if available
+        discharge = PatientDischarge.objects.filter(ipptno=booking.ipno).first()
+        is_discharged = discharge is not None
+        
+        # Get IP Bill if available
+        ip_bill = IPBill.objects.filter(ip_admission=booking.ipno).first()
+        
+        bill_amount = float(ip_bill.total_amount or 0) if ip_bill else 0
+        
+        occupancy_data = {
+            'id': booking.id,
+            'ip_number': booking.ipno.ipnumber if booking.ipno else '-',
+            'date': booking.Admission_Date,
+            'time': booking.admissiontime.strftime('%I:%M %p') if booking.admissiontime else '-',
+            'room': room_display,
+            'accommodation_type': accommodation_type,
+            'floor_number': floor_number,
+            'room_type': room_type,
+            'doctor': doctor_name,
+            'patient_name': patient.Patient_Name if patient else 'N/A',
+            'op_number': patient.Medical_Record_Number if patient else '-',
+            'gender': patient.Gender if patient else 'N/A',
+            'age': patient.Age if patient else '0',
+            'address': patient.address if patient else '',
+            'phone': patient.contactno if patient else '',
+            'email': patient.Email if patient else '',
+            'emergency_contact': booking.emergencycontact if hasattr(booking, 'emergencycontact') else '',
+            'reason_for_admission': booking.ipno.reasonforadmission if booking.ipno else '',
+            'status': 'Discharged' if is_discharged else 'Admitted',
+            'bill_amount': bill_amount,
+            'discharge_date': discharge.discharged_date if discharge else None,
+            'discharge_summary': discharge.treatment_summary if discharge else ''
+        }
+        
+        # Get IP treatment history
+        treatments = iptreatmentdetails.objects.filter(
+            ipno=booking.ipno,
+            deletedstatus=False
+        ).select_related('tratmntid')
+        
+        treatment_history = []
+        for treatment in treatments:
+            treatment_history.append({
+                'date': treatment.treatment_date,
+                'treatment_name': treatment.tratmntid.Treatment_name if treatment.tratmntid else 'N/A',
+                'count': treatment.treatmentcount,
+                'handled_by': treatment.handled_by or '',
+                'given_by': treatment.given_by or ''
+            })
+        
+        # Get IP medicine history
+        medicines = ipdailymedicine.objects.filter(
+            ipno=booking.ipno
+        ).select_related('medicinename')
+        
+        medicine_history = []
+        for med in medicines:
+            medicine_history.append({
+                'date': med.Current_Date,
+                'medicine_name': med.medicinename.itemnm if med.medicinename else 'N/A',
+                'count': med.count,
+                'dosage': med.dosage,
+                'time': med.medicinegiventime
+            })
+        
+        hospital = Hospitaldetails.objects.first()
+        
+        context = {
+            'occupancy': occupancy_data,
+            'treatment_history': treatment_history,
+            'medicine_history': medicine_history,
+            'hospital': hospital,
+            'stdesign': staff_design_id,
+        }
+        return render(request, 'occupancy_detail.html', context)
+        
+    except Exception as e:
+        messages.error(request, f"Error loading occupancy details: {str(e)}")
+        return redirect('occupancy_list')
+
+
+# ==================== COLLECTION DETAIL ====================
+def collection_detail(request):
+    """Collection Detail - Shows detailed collection for a specific doctor"""
+    staff_design_id = request.session.get('loginstaffdesign')
+    if not staff_design_id:
+        return redirect('staff_login')
+    
+    doctor_id = request.GET.get('ids')
+    from_date = request.GET.get('from_date', '')
+    to_date = request.GET.get('to_date', '')
+    
+    if not doctor_id:
+        messages.error(request, "Doctor ID is required")
+        return redirect('doctors_op_ip_collection')
+    
+    if not from_date:
+        from_date = date.today().replace(day=1).strftime('%Y-%m-%d')
+    if not to_date:
+        to_date = date.today().strftime('%Y-%m-%d')
+    
+    try:
+        doctor = Staffdetails.objects.filter(id=doctor_id).first()
+        if not doctor:
+            messages.error(request, "Doctor not found")
+            return redirect('doctors_op_ip_collection')
+        
+        doctor_name = f"{doctor.Staff_firstname} {doctor.Staff_lastname}".strip()
+        
+        # ============================================================
+        # GET OP APPOINTMENTS FOR THIS DOCTOR
+        # ============================================================
+        op_appointments = Appointments.objects.filter(
+            Doctor_Name_id=doctor_id,
+            Appointment_date__range=[from_date, to_date]
+        ).select_related('MR_Number')
+        
+        op_data = []
+        total_reg_fees = 0
+        total_cons_fees = 0
+        
+        for appt in op_appointments:
+            fee = float(appt.Fee or 0)
+            if appt.status and ('consultation' in appt.status.lower() or 'new' in appt.status.lower()):
+                fee_type = 'Registration Fee'
+                total_reg_fees += fee
+            else:
+                fee_type = 'Consultation Fee'
+                total_cons_fees += fee
+            
+            op_data.append({
+                'date': appt.Appointment_date,
+                'patient_name': appt.MR_Number.Patient_Name if appt.MR_Number else 'N/A',
+                'status': appt.status or '-',
+                'fee': fee,
+                'fee_type': fee_type,
+                'token': appt.Tokenno
+            })
+        
+        # ============================================================
+        # GET IP ADMISSIONS FOR THIS DOCTOR
+        # ============================================================
+        ip_admissions = ippatientadmission.objects.filter(
+            ippatientroombooking__admitteddoctor__Staff_id=doctor_id,
+            Current_Date__range=[from_date, to_date],
+            Admittedstatus=True
+        ).distinct()
+        
+        ip_data = []
+        total_ip_amount = 0
+        
+        for admission in ip_admissions:
+            room_booking = ippatientroombooking.objects.filter(ipno=admission).first()
+            ip_bill = IPBill.objects.filter(ip_admission=admission).first()
+            bill_amount = float(ip_bill.total_amount or 0) if ip_bill else 0
+            total_ip_amount += bill_amount
+            
+            ip_data.append({
+                'date': admission.Current_Date,
+                'patient_name': admission.MR_Number.Patient_Name if admission.MR_Number else 'N/A',
+                'ip_number': admission.ipnumber or '-',
+                'room': room_booking.room_number.Roomno if room_booking and room_booking.room_number else '-',
+                'bill_amount': bill_amount,
+                'status': 'Admitted'
+            })
+        
+        # Get discharge counts for this doctor
+        discharged_count = PatientDischarge.objects.filter(
+            ipptno__ippatientroombooking__admitteddoctor__Staff_id=doctor_id,
+            discharged_date__range=[from_date, to_date]
+        ).count()
+        
+        admitted_count = ip_admissions.count() - discharged_count
+        
+        hospital = Hospitaldetails.objects.first()
+        
+        context = {
+            'doctor_name': doctor_name,
+            'doctor_id': doctor_id,
+            'from_date': from_date,
+            'to_date': to_date,
+            'op_data': op_data,
+            'ip_data': ip_data,
+            'total_reg_fees': total_reg_fees,
+            'total_cons_fees': total_cons_fees,
+            'total_ip_amount': total_ip_amount,
+            'total_amount': total_reg_fees + total_cons_fees + total_ip_amount,
+            'admitted_count': admitted_count,
+            'discharged_count': discharged_count,
+            'op_count': len(op_data),
+            'ip_count': len(ip_data),
+            'hospital': hospital,
+            'stdesign': staff_design_id,
+        }
+        return render(request, 'collection_detail.html', context)
+        
+    except Exception as e:
+        messages.error(request, f"Error loading collection details: {str(e)}")
+        return redirect('doctors_op_ip_collection')
+
+def death_during_admission_detail(request):
+    """Death During Admission Detail - Shows detailed information for a specific death record"""
+    staff_design_id = request.session.get('loginstaffdesign')
+    if not staff_design_id:
+        return redirect('staff_login')
+    
+    death_id = request.GET.get('ids')
+    
+    if not death_id:
+        messages.error(request, "Death record ID is required")
+        return redirect('deaths_during_admission')
+    
+    try:
+        # Get the death record
+        death_record = DeathRegister.objects.select_related(
+            'patient', 
+            'created_by',
+            'consulting_doctor',
+            'consulting_doctor__Staff'
+        ).filter(id=death_id).first()
+        
+        if not death_record:
+            messages.error(request, "Death record not found")
+            return redirect('deaths_during_admission')
+        
+        # Get patient details based on registration type
+        if death_record.registration_type == 'registered' and death_record.patient:
+            patient = death_record.patient
+            patient_name = patient.Patient_Name
+            ip_number = patient.Medical_Record_Number or 'N/A'
+            gender = patient.Gender or 'N/A'
+            age = patient.Age or 'N/A'
+            address = patient.address or 'N/A'
+            phone = patient.contactno or 'N/A'
+            email = patient.Email or 'N/A'
+            registration_type = 'Registered Patient'
+        else:
+            patient_name = death_record.unregistered_name or 'N/A'
+            ip_number = 'N/A'
+            gender = death_record.unregistered_gender or 'N/A'
+            age = death_record.unregistered_age or 'N/A'
+            address = death_record.unregistered_address or 'N/A'
+            phone = death_record.unregistered_phone or 'N/A'
+            email = 'N/A'
+            registration_type = 'Unregistered Patient'
+        
+        # Get doctor details
+        doctor_name = "N/A"
+        if death_record.consulting_doctor and death_record.consulting_doctor.Staff:
+            doctor_name = f"{death_record.consulting_doctor.Staff.Staff_firstname} {death_record.consulting_doctor.Staff.Staff_lastname}".strip()
+        
+        # Get created by details
+        created_by_name = "N/A"
+        if death_record.created_by:
+            created_by_name = f"{death_record.created_by.Staff_firstname} {death_record.created_by.Staff_lastname}".strip()
+        
+        # Format dates
+        admission_datetime = death_record.admission_datetime.strftime('%d/%m/%Y %H:%M') if death_record.admission_datetime else 'N/A'
+        death_datetime = death_record.death_datetime.strftime('%d/%m/%Y %H:%M') if death_record.death_datetime else 'N/A'
+        registration_date = death_record.registration_date.strftime('%d/%m/%Y') if death_record.registration_date else 'N/A'
+        visit_date = death_record.visit_date.strftime('%d/%m/%Y') if death_record.visit_date else 'N/A'
+        created_at = death_record.created_at.strftime('%d/%m/%Y %H:%M') if death_record.created_at else 'N/A'
+        
+        # Get additional details
+        additional_details = {
+            'booking_number': death_record.booking_number or 'N/A',
+            'citizen_id': death_record.citizen_id or 'N/A',
+            'uhid_no': death_record.uhid_no or 'N/A',
+            'customer_type': death_record.customer_type or 'N/A',
+            'insurance_ref': death_record.insurance_ref or 'N/A',
+            'corporate_company': death_record.corporate_company or 'N/A',
+            'staff_id': death_record.staff_id or 'N/A',
+            'privileged_customer_id': death_record.privileged_customer_id or 'N/A',
+            'aadhaar_number': death_record.aadhaar_number or 'N/A',
+        }
+        
+        # Check if photo exists
+        photo_url = death_record.photo.url if death_record.photo else None
+        
+        # Get IP admission details if available
+        ip_admission = None
+        ip_room = "N/A"
+        ip_doctor = "N/A"
+        ip_bill_amount = 0
+        
+        if death_record.registration_type == 'registered' and death_record.patient:
+            # Try to find IP admission for this patient
+            ip_admission = ippatientadmission.objects.filter(
+                MR_Number=death_record.patient,
+                Admittedstatus=True
+            ).order_by('-Current_Date').first()
+            
+            if ip_admission:
+                # Get room booking
+                room_booking = ippatientroombooking.objects.filter(ipno=ip_admission).first()
+                if room_booking:
+                    if room_booking.room_number:
+                        ip_room = room_booking.room_number.Roomno
+                    elif room_booking.roomdt:
+                        ip_room = room_booking.roomdt.Roomno
+                    
+                    if room_booking.admitteddoctor and room_booking.admitteddoctor.Staff:
+                        ip_doctor = f"{room_booking.admitteddoctor.Staff.Staff_firstname} {room_booking.admitteddoctor.Staff.Staff_lastname}".strip()
+                
+                # Get IP bill
+                ip_bill = IPBill.objects.filter(ip_admission=ip_admission).first()
+                if ip_bill:
+                    ip_bill_amount = float(ip_bill.total_amount or 0)
+        
+        # Get hospital details
+        hospital = Hospitaldetails.objects.first()
+        
+        context = {
+            'death_record': {
+                'id': death_record.id,
+                'patient_name': patient_name,
+                'ip_number': ip_number,
+                'gender': gender,
+                'age': age,
+                'address': address,
+                'phone': phone,
+                'email': email,
+                'registration_type': registration_type,
+                'room': death_record.room or 'N/A',
+                'admission_datetime': admission_datetime,
+                'death_datetime': death_datetime,
+                'doctor': doctor_name,
+                'created_by': created_by_name,
+                'created_at': created_at,
+                'registration_date': registration_date,
+                'visit_date': visit_date,
+                'photo_url': photo_url,
+                'additional_details': additional_details,
+                'ip_room': ip_room,
+                'ip_doctor': ip_doctor,
+                'ip_bill_amount': ip_bill_amount,
+            },
+            'hospital': hospital,
+            'stdesign': staff_design_id,
+        }
+        return render(request, 'death_during_admission_detail.html', context)
+        
+    except Exception as e:
+        messages.error(request, f"Error loading death record details: {str(e)}")
+        return redirect('deaths_during_admission')
+
+
+def doctorwise_admission_register_detail(request):
+    """Admission Register Detail - Shows detailed information for a specific admission"""
+    staff_design_id = request.session.get('loginstaffdesign')
+    if not staff_design_id:
+        return redirect('staff_login')
+    
+    admission_id = request.GET.get('ids')
+    
+    if not admission_id:
+        messages.error(request, "Admission ID is required")
+        return redirect('doctorwise_admission_register')
+    
+    try:
+        # Get the admission record
+        admission = ippatientadmission.objects.filter(
+            id=admission_id
+        ).select_related('MR_Number').first()
+        
+        if not admission:
+            messages.error(request, "Admission record not found")
+            return redirect('doctorwise_admission_register')
+        
+        patient = admission.MR_Number
+        
+        # Get room booking
+        room_booking = ippatientroombooking.objects.filter(ipno=admission).first()
+        
+        # Get discharge details
+        discharge = PatientDischarge.objects.filter(ipptno=admission).first()
+        
+        # Get IP Bill
+        ip_bill = IPBill.objects.filter(ip_admission=admission).first()
+        
+        # Get room/ward details
+        room_display = '-'
+        accommodation_type = 'Room'
+        floor_number = '-'
+        room_type = '-'
+        
+        if room_booking:
+            accommodation_type = room_booking.accommodation_type or 'Room'
+            floor_number = room_booking.floor_number or '-'
+            room_type = room_booking.room_type or '-'
+            
+            if accommodation_type == 'Room':
+                if room_booking.room_number:
+                    room_display = room_booking.room_number.Roomno
+                elif room_booking.roomdt:
+                    room_display = room_booking.roomdt.Roomno
+                if room_type and room_display != '-':
+                    room_display = f"{room_display} ({room_type})"
+            else:  # Ward
+                if room_booking.bed_number:
+                    bed_no = room_booking.bed_number.wardbedno
+                    ward_room = room_booking.room_number.Roomno if room_booking.room_number else ''
+                    if ward_room:
+                        room_display = f"Ward {ward_room} - Bed {bed_no}"
+                    else:
+                        room_display = f"Bed {bed_no}"
+                elif room_booking.room_number:
+                    room_display = f"Ward {room_booking.room_number.Roomno}"
+                elif room_booking.roomdt:
+                    room_display = f"Ward {room_booking.roomdt.Roomno}"
+            
+            if floor_number and floor_number != '-' and room_display != '-':
+                room_display = f"{room_display} (Floor {floor_number})"
+        
+        # Get doctor name
+        doctor_name = "N/A"
+        if room_booking and room_booking.admitteddoctor and room_booking.admitteddoctor.Staff:
+            doctor_name = f"{room_booking.admitteddoctor.Staff.Staff_firstname} {room_booking.admitteddoctor.Staff.Staff_lastname}".strip()
+        
+        # Get treatments
+        treatments = iptreatmentdetails.objects.filter(
+            ipno=admission,
+            deletedstatus=False
+        ).select_related('tratmntid')
+        
+        treatment_list = []
+        for treatment in treatments:
+            treatment_list.append({
+                'date': treatment.treatment_date,
+                'treatment_name': treatment.tratmntid.Treatment_name if treatment.tratmntid else 'N/A',
+                'count': treatment.treatmentcount,
+                'handled_by': treatment.handled_by or '',
+                'given_by': treatment.given_by or ''
+            })
+        
+        # Get medicines
+        medicines = ipdailymedicine.objects.filter(ipno=admission).select_related('medicinename')
+        medicine_list = []
+        for med in medicines:
+            medicine_list.append({
+                'date': med.Current_Date,
+                'medicine_name': med.medicinename.itemnm if med.medicinename else 'N/A',
+                'count': med.count,
+                'dosage': med.dosage,
+                'time': med.medicinegiventime
+            })
+        
+        # Get IP expanded bill details
+        room_details = []
+        medicine_details = []
+        treatment_details = []
+        other_expense_details = []
+        
+        if ip_bill:
+            # Get expanded room details
+            room_details = IPExpandedBillRoomDetail.objects.filter(ipbill=ip_bill).select_related('room')
+            
+            # Get expanded medicine details
+            medicine_details = ipexpandedbillmedicinedetail.objects.filter(ipbilldt=ip_bill)
+            
+            # Get expanded treatment details
+            treatment_details = ipexpandedbilltreatmentdetail.objects.filter(ipbilldt=ip_bill)
+            
+            # Get other expense details
+            other_expense_details = ipexpandedbillotherexpensesdetail.objects.filter(ipbilldt=ip_bill, deletedstatus=False)
+        
+        # Build admission data
+        admission_data = {
+            'id': admission.id,
+            'ip_number': admission.ipnumber or '-',
+            'admission_date': admission.Current_Date,
+            'admission_time': room_booking.admissiontime.strftime('%I:%M %p') if room_booking and room_booking.admissiontime else '-',
+            'patient_name': patient.Patient_Name if patient else 'N/A',
+            'op_number': patient.Medical_Record_Number if patient else '-',
+            'gender': patient.Gender if patient else 'N/A',
+            'age': patient.Age if patient else '0',
+            'address': patient.address if patient else '',
+            'phone': patient.contactno if patient else '',
+            'email': patient.Email if patient else '',
+            'reason_for_admission': admission.reasonforadmission or '',
+            'blood_group': admission.bloodgroup or '',
+            'doctor': doctor_name,
+            'room': room_display,
+            'accommodation_type': accommodation_type,
+            'floor_number': floor_number,
+            'room_type': room_type,
+            'status': 'Discharged' if discharge else 'Admitted',
+            'discharge_date': discharge.discharged_date if discharge else None,
+            'discharge_summary': discharge.treatment_summary if discharge else '',
+            'discharge_condition': discharge.condition_on_discharge if discharge else '',
+            'next_checkup_date': discharge.next_checkup_date if discharge else '',
+            'bill_amount': float(ip_bill.total_amount or 0) if ip_bill else 0,
+            'room_charges': float(ip_bill.room_charges or 0) if ip_bill else 0,
+            'medicine_charges': float(ip_bill.medicine_charges or 0) if ip_bill else 0,
+            'treatment_charges': float(ip_bill.treatment_charges or 0) if ip_bill else 0,
+            'food_expenses': float(ip_bill.food_expenses or 0) if ip_bill else 0,
+            'other_expenses': float(ip_bill.other_expenses or 0) if ip_bill else 0,
+            'subtotal': float(ip_bill.subtotal or 0) if ip_bill else 0,
+            'tax': float(ip_bill.tax or 0) if ip_bill else 0,
+            'discount': float(ip_bill.discount or 0) if ip_bill else 0,
+        }
+        
+        hospital = Hospitaldetails.objects.first()
+        
+        context = {
+            'admission': admission_data,
+            'treatments': treatment_list,
+            'medicines': medicine_list,
+            'room_details': room_details,
+            'medicine_details': medicine_details,
+            'treatment_details': treatment_details,
+            'other_expense_details': other_expense_details,
+            'hospital': hospital,
+            'stdesign': staff_design_id,
+        }
+        return render(request, 'doctorwise_admission_register_detail.html', context)
+        
+    except Exception as e:
+        messages.error(request, f"Error loading admission details: {str(e)}")
+        return redirect('doctorwise_admission_register')

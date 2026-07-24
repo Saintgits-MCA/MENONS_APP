@@ -1,0 +1,708 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<style>
+  .billing-summary-card {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 10px;
+  }
+  .summary-label {
+    font-weight: 600;
+    color: #495057;
+    font-size: 14px;
+  }
+  .summary-value {
+    font-weight: 700;
+    font-size: 16px;
+  }
+  .advance-amount {
+    color: #28a745;
+  }
+  .balance-amount {
+    color: #007bff;
+    font-size: 18px;
+  }
+  .grand-total {
+    color: #dc3545;
+    font-size: 18px;
+  }
+  .zero-balance {
+    color: #28a745;
+    font-weight: 700;
+  }
+  .negative-balance {
+    color: #dc3545;
+    font-weight: 700;
+  }
+  .positive-balance {
+    color: #007bff;
+    font-weight: 700;
+  }
+  .room-breakdown-header {
+    background: #e9ecef;
+    font-weight: 600;
+  }
+  .total-room-rent {
+    background: #f1f3f5;
+    font-weight: 700;
+  }
+  .print-btn {
+    margin-top: 15px;
+  }
+  .advance-deduction-row {
+    background: #fff3cd;
+    border-left: 4px solid #ffc107;
+    padding: 10px 15px;
+    margin: 5px 0;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .advance-deduction-row .label {
+    font-weight: 600;
+    color: #856404;
+  }
+  .advance-deduction-row .value {
+    font-weight: 700;
+    color: #dc3545;
+    font-size: 16px;
+  }
+  .final-balance-row {
+    background: #d4edda;
+    border-left: 4px solid #28a745;
+    padding: 12px 15px;
+    margin: 5px 0;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .final-balance-row .label {
+    font-weight: 700;
+    color: #155724;
+    font-size: 16px;
+  }
+  .final-balance-row .value {
+    font-weight: 700;
+    color: #28a745;
+    font-size: 20px;
+  }
+  .deduction-arrow {
+    color: #dc3545;
+    font-size: 20px;
+    margin: 0 10px;
+  }
+  .summary-divider {
+    border-top: 2px dashed #dee2e6;
+    margin: 10px 0;
+  }
+  @media print {
+    .no-print {
+      display: none !important;
+    }
+    .card {
+      box-shadow: none !important;
+      border: 1px solid #ddd !important;
+    }
+    .advance-deduction-row {
+      background: #fff3cd !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .final-balance-row {
+      background: #d4edda !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+  }
+</style>
+
+<div class="content-wrapper">
+  <section class="content">
+    <div class="container-fluid">
+      <div class="card card-primary shadow-lg">
+        <div class="card-header">
+          <h3 class="card-title"><i class="fas fa-file-invoice"></i> Inpatient Billing Form</h3>
+          <div class="card-tools">
+            <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+              <i class="fas fa-minus"></i>
+            </button>
+          </div>
+        </div>
+        <form method="POST" action="{% url 'ipbill' %}" id="billingForm">
+          {% csrf_token %}
+          <div class="card-body">
+            <!-- Patient Information -->
+            <h4 class="mb-3 text-primary"><i class="fas fa-user-injured"></i> Patient Information</h4>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="mrSearch"><i class="fas fa-search"></i> MR Number / Phone / Name</label>
+                  <div class="input-group">
+                    <input type="text" id="mrSearch" class="form-control" placeholder="Type to search...">
+                    <div class="input-group-append">
+                      <button id="searchBtn" class="btn btn-primary"><i class="fas fa-search"></i> Search</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="form-group mt-2">
+                  <label for="mrDropdown"><i class="fas fa-id-card"></i> Selected Patient</label>
+                  <select class="form-control" name="mrnum" id="mrDropdown" required>
+                    <option selected disabled value="">-- Select Patient --</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label><i class="fas fa-address-card"></i> Patient Details</label>
+                  <input type="text" id="exampleInputAddress" class="form-control" readonly placeholder="Patient details will appear here">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="admission-date"><i class="fas fa-calendar-plus"></i> Admission Date</label>
+                  <input type="date" id="admission-date" class="form-control" name="admission_date" readonly>
+                </div>
+                <div class="form-group">
+                  <label for="discharge-date"><i class="fas fa-calendar-check"></i> Discharge Date</label>
+                  <input type="hidden" id="discharge-id" class="form-control" name="discharge_id">
+                  <input type="date" id="discharge-date" class="form-control" name="discharge_date" readonly>
+                </div>
+              </div>
+            </div>
+
+            <!-- Room Charges -->
+            <h4 class="mb-3 text-primary"><i class="fas fa-bed"></i> Room Charges</h4>
+            <h5><i class="fas fa-history"></i> Room/Ward Accommodation History</h5>
+            <div class="table-responsive">
+              <table class="table table-bordered table-hover" id="roomBreakdownTable">
+                <thead class="room-breakdown-header">
+                  <tr>
+                    <th>Type</th>
+                    <th>Room/Ward No</th>
+                    <th>Floor</th>
+                    <th>Doctor</th>
+                    <th>Rate/Day</th>
+                    <th>Days</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr id="noRoomData">
+                    <td colspan="7" class="text-center text-muted">No room data available</td>
+                  </tr>
+                </tbody>
+                <tfoot>
+                  <tr class="total-room-rent">
+                    <td colspan="6" class="text-end font-weight-bold">Total Room Rent</td>
+                    <td>
+                      <input type="text" id="roomRentTotal" class="form-control form-control-sm" value="0.00" name="roomRentTotal" readonly>
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            <!-- Charges -->
+            <h4 class="mb-3 text-primary"><i class="fas fa-hand-holding-usd"></i> Charges</h4>
+            <div class="table-responsive">
+              <table class="table table-bordered table-hover">
+                <thead class="room-breakdown-header">
+                  <tr>
+                    <th>Treatment Amount</th>
+                    <th>Medicine Amount</th>
+                    <th>Food Charges</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><input type="number" step="0.01" id="treatment-total" class="form-control" name="treatment_total" placeholder="0.00"></td>
+                    <td><input type="number" step="0.01" id="medicine-total" class="form-control" name="medicine_total" placeholder="0.00"></td>
+                    <td><input type="number" step="0.01" id="food-total" class="form-control" name="food_total" placeholder="0.00"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Billing Summary -->
+            <h4 class="mb-3 text-primary"><i class="fas fa-calculator"></i> Billing Summary</h4>
+            <div class="row">
+              <div class="col-md-4">
+                <div class="form-group">
+                  <label><i class="fas fa-plus-circle"></i> Other Expense</label>
+                  <input type="number" step="0.01" id="expense" class="form-control" name="expense" placeholder="0.00">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-group">
+                  <label><i class="fas fa-percent"></i> Tax (%)</label>
+                  <input type="number" step="0.01" id="tax" class="form-control" name="tax" placeholder="0.00">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-group">
+                  <label><i class="fas fa-tags"></i> Discount</label>
+                  <input type="number" step="0.01" id="discount" class="form-control" name="discount" placeholder="0.00">
+                </div>
+              </div>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="row billing-summary-card">
+              <div class="col-md-3">
+                <div class="form-group">
+                  <label class="summary-label"><i class="fas fa-calculator"></i> Subtotal</label>
+                  <input type="number" step="0.01" id="sub-total" class="form-control" name="sub_total" readonly placeholder="0.00">
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="form-group">
+                  <label class="summary-label grand-total"><i class="fas fa-money-bill"></i> Grand Total</label>
+                  <input type="number" step="0.01" id="grand-total" class="form-control" name="grand_total" readonly placeholder="0.00">
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="form-group">
+                  <label class="summary-label advance-amount"><i class="fas fa-hand-holding-usd"></i> Advance Paid</label>
+                  <input type="number" step="0.01" id="advance-amount" class="form-control" name="advance_amount" readonly placeholder="0.00">
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="form-group">
+                  <label class="summary-label balance-amount"><i class="fas fa-rupee-sign"></i> Balance Amount</label>
+                  <input type="number" step="0.01" id="balance-amount" class="form-control" name="balance_amount" readonly placeholder="0.00">
+                </div>
+              </div>
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- ADVANCE DEDUCTION SUMMARY - CLEAR VISUAL DISPLAY               -->
+            <!-- ============================================================ -->
+            <div class="row mt-3">
+              <div class="col-md-12">
+                <div class="card" style="border: 2px solid #007bff; border-radius: 8px;">
+                  <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-receipt"></i> Payment Summary</h5>
+                  </div>
+                  <div class="card-body">
+                    <!-- Grand Total -->
+                    <div class="row">
+                      <div class="col-md-6">
+                        <label class="summary-label">Grand Total (Before Advance)</label>
+                      </div>
+                      <div class="col-md-6 text-right">
+                        <span class="grand-total" id="displayGrandTotal">₹ 0.00</span>
+                      </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <!-- Advance Deduction -->
+                    <div class="advance-deduction-row">
+                      <span class="label"><i class="fas fa-minus-circle"></i> Advance Paid Deduction</span>
+                      <span class="value" id="displayAdvanceDeduction">- ₹ 0.00</span>
+                    </div>
+                    
+                    <!-- Final Balance -->
+                    <div class="final-balance-row">
+                      <span class="label"><i class="fas fa-rupee-sign"></i> Final Balance Amount</span>
+                      <span class="value" id="displayFinalBalance">₹ 0.00</span>
+                    </div>
+                    
+                    <!-- Status Message -->
+                    <div id="paymentStatus" class="text-center mt-2" style="font-weight: 600; font-size: 14px;">
+                      <span id="statusMessage">Waiting for patient selection</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="row mt-3">
+              <div class="col-md-12 text-center">
+                <button type="submit" class="btn btn-success btn-lg">
+                  <i class="fas fa-file-invoice"></i> Generate Bill
+                </button>
+                <button type="button" id="resetBtn" class="btn btn-warning btn-lg">
+                  <i class="fas fa-undo"></i> Reset
+                </button>
+               
+                <a href="{% url 'ippatient' %}?menumanagement_id={{ idmngmnt }}" class="btn btn-secondary btn-lg">
+                  <i class="fas fa-arrow-left"></i> Back
+                </a>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Search Modal -->
+<div class="modal fade" id="searchModal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="searchModalLabel"><i class="fas fa-search"></i> Search Results</h5>
+        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+          <span>&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="table-responsive">
+          <table id="searchResultsTable" class="table table-bordered table-hover">
+            <thead>
+              <tr>
+                <th>MR Number</th>
+                <th>Patient Name</th>
+                <th>Address</th>
+                <th>Contact No</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Message Modal -->
+<div class="modal fade" id="messageModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header" id="messageModalHeader">
+        <h5 class="modal-title" id="messageModalLabel">Notification</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span>&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" id="messageBody"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+$(document).ready(function () {
+    // Initialize DataTable
+    const table = $("#searchResultsTable").DataTable({
+        paging: true,
+        searching: true,
+        info: true,
+        lengthChange: true,
+        pageLength: 10,
+        language: {
+            emptyTable: "No data available",
+            zeroRecords: "No matching records found"
+        }
+    });
+
+    // Search button click
+    $("#searchBtn").on("click", function (e) {
+        e.preventDefault();
+        const query = $("#mrSearch").val().trim();
+        if (!query) {
+            showMessage("Please enter a search term.", "warning");
+            return;
+        }
+        
+        table.clear().draw();
+        $("#searchModal").modal("show");
+        
+        fetch(`/search_ip_patient_details?query=${encodeURIComponent(query)}`)
+            .then(res => res.json())
+            .then(data => {
+                if (!data.length) {
+                    showMessage("No records found.", "info");
+                    table.clear().draw();
+                    return;
+                }
+                data.forEach(item => {
+                    const btn = `<button class="btn btn-primary btn-sm select-btn" data-patient='${JSON.stringify(item)}'>Select</button>`;
+                    table.row.add([
+                        item.Medical_Record_Number || "N/A",
+                        item.Patient_Name || "N/A",
+                        item.address || "N/A",
+                        item.contactno || "N/A",
+                        btn
+                    ]).draw(false);
+                });
+            }).catch(err => {
+                console.error(err);
+                showMessage("Error fetching data. Please try again.", "error");
+            });
+    });
+
+    // Enter key for search
+    $("#mrSearch").on("keypress", function(e) {
+        if (e.which === 13) {
+            $("#searchBtn").click();
+        }
+    });
+
+    // Select patient from search results
+    $("#searchResultsTable tbody").on("click", ".select-btn", function () {
+        const data = JSON.parse($(this).attr("data-patient"));
+        const admissionDate = new Date(data.Admission_Date);
+        const dischargeDate = data.Discharge_Date ? new Date(data.Discharge_Date) : null;
+        
+        if (!dischargeDate) {
+            showMessage("Patient not yet discharged. Billing cannot proceed.", "error");
+            return;
+        }
+
+        const stayDays = Math.max(1, Math.ceil((dischargeDate - admissionDate) / (1000 * 60 * 60 * 24)));
+
+        // Populate patient details
+        $("#mrDropdown").html(`<option value="${data.ip_id}" selected>${data.Medical_Record_Number} - ${data.Patient_Name}</option>`);
+        $("#exampleInputAddress").val(`${data.Medical_Record_Number} - ${data.Patient_Name} (${data.contactno})`);
+        $("#admission-date").val(data.Admission_Date);
+        $("#discharge-id").val(data.dischargeid || "");
+        $("#discharge-date").val(data.Discharge_Date);
+        
+        // Populate advance amount
+        const advanceAmount = parseFloat(data.total_advance) || 0;
+        $("#advance-amount").val(advanceAmount.toFixed(2));
+        
+        // Populate treatment and medicine costs
+        $("#treatment-total").val(parseFloat(data.treatment_cost || 0).toFixed(2));
+        $("#medicine-total").val(parseFloat(data.medicine_cost || 0).toFixed(2));
+        $("#food-total").val(0);
+
+        // Populate room breakdown
+        const tbody = $("#roomBreakdownTable tbody");
+        tbody.empty();
+        let totalRent = 0;
+
+        if (data.room_charges_breakdown && data.room_charges_breakdown.length > 0) {
+            data.room_charges_breakdown.forEach(row => {
+                const rate = parseFloat(row["Rate per Day"]) || 0;
+                const days = parseInt(row["No of Days"]) || stayDays;
+                const rent = rate * days;
+                totalRent += rent;
+
+                const isWard = row["Ward"] === "Yes";
+                const label = isWard ? "Ward" : "Room";
+                const rowClass = isWard ? "table-warning" : "table-info";
+                const roomNumber = row["Room/Bed No"] || row["Room_No"] || row["Bed_No"] || "-";
+                const floor = row["Floor No"] || "-";
+
+                tbody.append(`
+                    <tr class="${rowClass}" data-rate="${rate}">
+                        <td>${label}</td>
+                        <td>${roomNumber}</td>
+                        <td>${floor}</td>
+                        <td>${data.doctor || "-"}</td>
+                        <td>${rate.toFixed(2)}</td>
+                        <td><input type="number" class="form-control form-control-sm room-days" value="${days}" min="1"></td>
+                        <td class="room-rent">${rent.toFixed(2)}</td>
+                    </tr>
+                `);
+            });
+        } else {
+            const rate = parseFloat(data.room_rate || 0);
+            const rent = rate * stayDays;
+            totalRent = rent;
+
+            const roomNumber = data.room_number || "-";
+            const floor = data.floor_number || "-";
+            const label = data.ward ? "Ward" : "Room";
+
+            tbody.append(`
+                <tr data-rate="${rate}">
+                    <td>${label}</td>
+                    <td>${roomNumber}</td>
+                    <td>${floor}</td>
+                    <td>${data.doctor || "-"}</td>
+                    <td>${rate.toFixed(2)}</td>
+                    <td><input type="number" class="form-control form-control-sm room-days" value="${stayDays}" min="1"></td>
+                    <td class="room-rent">${rent.toFixed(2)}</td>
+                </tr>
+            `);
+        }
+
+        $("#roomRentTotal").val(totalRent.toFixed(2));
+        updateBillingTotal();
+        $("#searchModal").modal("hide");
+    });
+
+    // Trigger calculation on input changes
+    $(document).on("input", "#treatment-total, #medicine-total, #food-total, #expense, #discount, #tax, .room-days, #advance-amount", updateBillingTotal);
+
+    // Billing total calculation with advance deduction
+    function updateBillingTotal() {
+        let roomRent = 0;
+
+        // Calculate room rent based on room-days inputs
+        $("#roomBreakdownTable tbody tr").each(function () {
+            const $row = $(this);
+            const rate = parseFloat($row.attr("data-rate")) || 0;
+            const days = parseInt($row.find(".room-days").val()) || 1;
+            const rent = rate * days;
+            $row.find(".room-rent").text(rent.toFixed(2));
+            roomRent += rent;
+        });
+
+        $("#roomRentTotal").val(roomRent.toFixed(2));
+
+        // Calculate all amounts
+        const medicine = parseFloat($("#medicine-total").val()) || 0;
+        const treatment = parseFloat($("#treatment-total").val()) || 0;
+        const food = parseFloat($("#food-total").val()) || 0;
+        const expense = parseFloat($("#expense").val()) || 0;
+        const tax = parseFloat($("#tax").val()) || 0;
+        const discount = parseFloat($("#discount").val()) || 0;
+        const advance = parseFloat($("#advance-amount").val()) || 0;
+
+        // Calculate subtotal
+        const subTotal = roomRent + medicine + treatment + food + expense;
+        
+        // Calculate tax amount
+        const taxAmount = (subTotal * tax) / 100;
+        
+        // Calculate grand total (before advance deduction)
+        const grandTotal = subTotal + taxAmount - discount;
+        
+        // Calculate balance amount (after advance deduction)
+        const balanceAmount = grandTotal - advance;
+        const finalBalance = balanceAmount < 0 ? 0 : balanceAmount;
+
+        // Update form fields
+        $("#sub-total").val(subTotal.toFixed(2));
+        $("#grand-total").val(grandTotal.toFixed(2));
+        $("#balance-amount").val(finalBalance.toFixed(2));
+        
+        // Update display fields
+        $("#displayGrandTotal").text('₹ ' + grandTotal.toFixed(2));
+        $("#displayAdvanceDeduction").text('- ₹ ' + advance.toFixed(2));
+        $("#displayFinalBalance").text('₹ ' + finalBalance.toFixed(2));
+        
+        // Color code balance amount
+        const balanceField = $("#balance-amount");
+        const displayBalance = $("#displayFinalBalance");
+        
+        if (finalBalance === 0) {
+            balanceField.css('color', '#28a745');
+            displayBalance.css('color', '#28a745');
+            $("#statusMessage").html('<span class="badge badge-success">✓ FULLY PAID</span>');
+        } else if (balanceAmount < 0) {
+            balanceField.css('color', '#dc3545');
+            displayBalance.css('color', '#dc3545');
+            $("#statusMessage").html('<span class="badge badge-warning">⚠ ADVANCE EXCEEDS TOTAL - Please refund</span>');
+        } else if (advance > 0) {
+            balanceField.css('color', '#007bff');
+            displayBalance.css('color', '#007bff');
+            $("#statusMessage").html('<span class="badge badge-info">ℹ PARTIALLY PAID - Balance due</span>');
+        } else {
+            balanceField.css('color', '#495057');
+            displayBalance.css('color', '#007bff');
+            $("#statusMessage").html('<span class="badge badge-secondary">⏳ Waiting for payment</span>');
+        }
+    }
+
+    // Handle discharge date change
+    $("#discharge-date").on("change", function () {
+        const admission = new Date($("#admission-date").val());
+        const discharge = new Date($(this).val());
+        if (!isNaN(admission) && !isNaN(discharge)) {
+            const daysStayed = Math.max(1, Math.ceil((discharge - admission) / (1000 * 60 * 60 * 24)));
+            $("#roomBreakdownTable tbody tr .room-days").val(daysStayed);
+            updateBillingTotal();
+        }
+    });
+
+    // Reset form
+    $("#resetBtn").on("click", function() {
+        if (confirm("Are you sure you want to reset all fields?")) {
+            $("#roomBreakdownTable tbody").html(`<tr id="noRoomData"><td colspan="7" class="text-center text-muted">No room data available</td></tr>`);
+            $("#roomRentTotal").val("0.00");
+            $("#treatment-total").val("");
+            $("#medicine-total").val("");
+            $("#food-total").val("");
+            $("#expense").val("");
+            $("#tax").val("");
+            $("#discount").val("");
+            $("#sub-total").val("");
+            $("#grand-total").val("");
+            $("#advance-amount").val("");
+            $("#balance-amount").val("").css('color', '#495057');
+            $("#displayGrandTotal").text('₹ 0.00');
+            $("#displayAdvanceDeduction").text('- ₹ 0.00');
+            $("#displayFinalBalance").text('₹ 0.00');
+            $("#statusMessage").html('<span class="badge badge-secondary">Waiting for patient selection</span>');
+            $("#mrDropdown").html('<option selected disabled value="">-- Select Patient --</option>');
+            $("#exampleInputAddress").val("");
+            $("#admission-date").val("");
+            $("#discharge-date").val("");
+            $("#discharge-id").val("");
+        }
+    });
+
+    // Form submission validation
+    $("#billingForm").on("submit", function(e) {
+        const balance = parseFloat($("#balance-amount").val()) || 0;
+        const grandTotal = parseFloat($("#grand-total").val()) || 0;
+        const advance = parseFloat($("#advance-amount").val()) || 0;
+        
+        if (advance > grandTotal) {
+            e.preventDefault();
+            showMessage("Advance amount cannot exceed the grand total. Please adjust.", "error");
+            return false;
+        }
+        
+        const mrnum = $("#mrDropdown").val();
+        if (!mrnum || mrnum === "-- Select Patient --") {
+            e.preventDefault();
+            showMessage("Please select a patient.", "warning");
+            return false;
+        }
+        
+        // Show loading state
+        const submitBtn = $(this).find('button[type="submit"]');
+        submitBtn.html('<i class="fas fa-spinner fa-spin"></i> Processing...');
+        submitBtn.prop('disabled', true);
+        
+        return true;
+    });
+
+    // Function to show messages
+    function showMessage(message, type) {
+        let title = 'Notification';
+        let bgClass = 'bg-secondary';
+        if (type === 'success') {
+            title = 'Success';
+            bgClass = 'bg-success text-white';
+        } else if (type === 'error') {
+            title = 'Error';
+            bgClass = 'bg-danger text-white';
+        } else if (type === 'warning') {
+            title = 'Warning';
+            bgClass = 'bg-warning';
+        } else if (type === 'info') {
+            title = 'Information';
+            bgClass = 'bg-info text-white';
+        }
+        $('#messageModalLabel').text(title);
+        $('#messageBody').html(message);
+        $('#messageModalHeader').className = 'modal-header ' + bgClass;
+        $('#messageModal').modal('show');
+    }
+
+    // Initial display
+    $("#displayGrandTotal").text('₹ 0.00');
+    $("#displayAdvanceDeduction").text('- ₹ 0.00');
+    $("#displayFinalBalance").text('₹ 0.00');
+    $("#statusMessage").html('<span class="badge badge-secondary">Waiting for patient selection</span>');
+});
+</script>
+{% endblock %}

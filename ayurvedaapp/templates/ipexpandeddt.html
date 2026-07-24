@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block content %}
-  <style>
+<style>
    .invoice-container {
     background: #fff;
     padding: 15px;
@@ -10,42 +10,49 @@
     box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
     border-radius: 5px;
   }
-    h2 {
-      text-align: center;
-      margin: 10px 0;
-    }
-    .info-row {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 20px;
-    }
-    .box {
-      width: 48%;
-      border: 1px solid #000;
-      padding: 10px;
-      font-size: 14px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 20px;
-    }
-    table, th, td {
-      border: 1px solid black;
-    }
-    th, td {
-      padding: 8px;
-      text-align: left;
-    }
-    .total {
-      text-align: right;
-      font-weight: bold;
-      margin-bottom: 10px;
-    }
-    .amount-words {
-      font-weight: bold;
-    }
-    .top-row {
+  h2 {
+    text-align: center;
+    margin: 10px 0;
+  }
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .box {
+    width: 48%;
+    border: 1px solid #000;
+    padding: 10px;
+    font-size: 14px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+  }
+  table, th, td {
+    border: 1px solid black;
+  }
+  th, td {
+    padding: 8px;
+    text-align: left;
+  }
+  .total {
+    text-align: right;
+    font-weight: bold;
+    margin-bottom: 10px;
+  }
+  .total p {
+    margin: 5px 0;
+  }
+  .amount-words {
+    font-weight: bold;
+    margin: 15px 0;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 4px;
+  }
+  .top-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -61,10 +68,10 @@
     text-align: center;
     font-size: 14px;
   }
-  .header-center h6{
+  .header-center h6 {
     margin: 0;
     font-size: 16px;
-    color:green;
+    color: green;
   }
   .emergency-box {
     background-color: red;
@@ -75,92 +82,178 @@
     font-size: 14px;
     white-space: nowrap;
   }
+  .payment-summary {
+    margin-top: 15px;
+    border-top: 2px solid #000;
+    padding-top: 15px;
+  }
+  .payment-summary h4 {
+    color: #2c3e50;
+    margin-bottom: 10px;
+  }
+  .payment-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0;
+    border-bottom: 1px dashed #dee2e6;
+  }
+  .payment-row.total-row {
+    font-weight: 700;
+    font-size: 16px;
+    border-bottom: 2px solid #000;
+    padding: 10px 0;
+  }
+  .payment-row.refund-row {
+    color: #dc3545;
+    font-weight: 700;
+    background: #f8d7da;
+    padding: 8px 10px;
+    border-radius: 4px;
+    margin-top: 5px;
+  }
+  .payment-row.balance-row {
+    color: #007bff;
+    font-weight: 700;
+  }
+  .payment-row.advance-row {
+    color: #28a745;
+    font-weight: 600;
+  }
+  .payment-label {
+    font-weight: 600;
+  }
+  .payment-value {
+    font-weight: 700;
+  }
+  .grand-total-value {
+    color: #dc3545;
+    font-size: 18px;
+  }
+  .refund-value {
+    color: #dc3545;
+  }
+  .status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .status-paid {
+    background: #d4edda;
+    color: #155724;
+  }
+  .status-partial {
+    background: #cce5ff;
+    color: #004085;
+  }
+  .status-pending {
+    background: #f8d7da;
+    color: #721c24;
+  }
+  .status-refund {
+    background: #fff3cd;
+    color: #856404;
+  }
+  .payment-method-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    background: #e9ecef;
+  }
   
   @media print {
-  body {
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+    body {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .header-center h6 {
+      margin: 0;
+      font-size: 16px;
+      color: green;
+    }
+    .print-btn {
+      display: none !important;
+    }
+    .no-print {
+      display: none !important;
+    }
+    @page {
+      size: A4 portrait;
+      margin: 15mm;
+    }
+    .invoice-container {
+      box-shadow: none !important;
+      margin: 0 auto !important;
+      width: 100% !important;
+      padding: 0 !important;
+    }
+    .top-row, .info-row, .total, .footer {
+      page-break-inside: avoid;
+    }
+    .print-page-break {
+      page-break-before: always;
+    }
+    .payment-row.refund-row {
+      background: #f8d7da !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    .status-paid {
+      background: #d4edda !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    .status-partial {
+      background: #cce5ff !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    .status-refund {
+      background: #fff3cd !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
   }
-  .header-center h6{
-    margin: 0;
-    font-size: 16px;
-    color:green;
-  }
-  .print-btn {
-    display: none !important;
-  }
-  .no-print {
-    display: none !important;
-  }
-
-  @page {
-    size: A4 portrait;
-    margin: 15mm;
-  }
-
-  .invoice-container {
-    box-shadow: none !important;
-    margin: 0 auto !important;
-    width: 100% !important;
-    padding: 0 !important;
-  }
-
-  .top-row, .info-row, .total, .footer {
-    page-break-inside: avoid;
-  }
-
-  .print-page-break {
-    page-break-before: always;
-  }
-}
-
 </style>
 
 <div id="invoice" class="invoice-container">
  
 <div class="top-row">
   {% for i in objhospt %}
-  <!-- Logo Left -->
   <div class="logo">
     <img src="{{ i.Logo.url }}" alt="{{ i.Name }} Logo">
   </div>
-
-  <!-- Centered Hospital Info -->
- 
   <div class="header-center">
     <h6>{{ i.Name }}</h6>
     <div>{{ i.Address }}</div>
-    <div>Phone: {{ i.Contact_no }} | Email: {{ i.Email }}|| GST NO: {{ i.GST }}</div>
-   
+    <div>Phone: {{ i.Contact_no }} | Email: {{ i.Email }} || GST NO: {{ i.GST }}</div>
   </div>
- 
-  <!-- Emergency Box -->
   <div class="emergency-box">
-    EMERGENCY ☎  {{ i.Contact_no }} 
+    EMERGENCY ☎ {{ i.Contact_no }} 
   </div>
-   {% endfor %}
+  {% endfor %}
 </div>
 
-  <!-- Title -->
   <h2>INPATIENT BILL</h2>
 
   <!-- Patient and Bill Info -->
   <div class="info-row">
     <div class="box">
       <strong>Patient Details:</strong><br>
-      {{bill.ip_admission.MR_Number.Patient_Name }}<br>
-      Contact Number:{{ bill.ip_admission.contactnumber }}<br>
-  
-         {{ bill.ip_admission.MR_Number.Medical_Record_Number }}
+      Name: {{ bill.ip_admission.MR_Number.Patient_Name }}<br>
+      Contact: {{ bill.ip_admission.contactnumber }}<br>
+      MR No: {{ bill.ip_admission.MR_Number.Medical_Record_Number }}
     </div>
     <div class="box">
       <strong>Bill Details:</strong><br>
-      IP No:{{ bill.ip_admission.id}}<br>
-     
-      Bill No: RCR4879<br>
+      IP No: {{ bill.ip_admission.id }}<br>
+      Bill No: {{ bill.ipinvoicenumber }}<br>
       Bill Date: {{ bill.billing_date }}<br>
-      Admission: {{ bill.ipptno.Current_Date}}<br>
-      Discharge: {{ bill.discharge.discharged_date}}
+      Admission: {{ bill.ip_admission.Current_Date|date:"d/m/Y" }}<br>
+      Discharge: {{ bill.discharge.discharged_date|date:"d/m/Y" }}
     </div>
   </div>
 
@@ -170,7 +263,6 @@
     <thead>
       <tr>
         <th>Medicine</th>
-     
         <th>Count</th>
         <th>Rate</th>
         <th>Total</th>
@@ -180,15 +272,15 @@
       {% for med in medicine_details %}
       <tr>
         <td>{{ med.medicinename }}</td>
-     
         <td>{{ med.count }}</td>
-        <td>{{ med.rate_per_medicine }}</td>
-        <td>{{ med.totalmedicine }}</td>
+        <td>₹ {{ med.rate_per_medicine|floatformat:2 }}</td>
+        <td>₹ {{ med.totalmedicine|floatformat:2 }}</td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
-  {%endif%}
+  {% endif %}
+
   {% if treatment_details.exists %}
   <h4>Treatment Details</h4>
   <table>
@@ -205,13 +297,14 @@
       <tr>
         <td>{{ treat.tratmntid.Treatment_name }}</td>
         <td>{{ treat.treatmentcount }}</td>
-        <td>{{ treat.rate_per_treatment }}</td>
-        <td>{{ treat.total_treatmentrate }}</td>
+        <td>₹ {{ treat.rate_per_treatment|floatformat:2 }}</td>
+        <td>₹ {{ treat.total_treatmentrate|floatformat:2 }}</td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
-  {%endif%}
+  {% endif %}
+
   {% if room_details.exists %}
   <h4>Room Details</h4>
   <table>
@@ -227,21 +320,22 @@
       {% for room in room_details %}
       <tr>
         <td>
-            {% if room.room.wardorroom == "ward" %}
-              Ward: {{ room.room.Blockno }} - Bed {{ room.room.wardbedno }}
-            {% else %}
-              Room: {{ room.room.Roomno }} ({{ room.room.Room_type }})
-            {% endif %}
-          </td>
+          {% if room.room.wardorroom == "ward" %}
+            Ward: {{ room.room.Blockno }} - Bed {{ room.room.wardbedno }}
+          {% else %}
+            Room: {{ room.room.Roomno }} ({{ room.room.Room_type }})
+          {% endif %}
+        </td>
         <td>{{ room.no_of_days }}</td>
-        <td>{{ room.rate_per_day }}</td>
-        <td>{{ room.total_rent }}</td>
+        <td>₹ {{ room.rate_per_day|floatformat:2 }}</td>
+        <td>₹ {{ room.total_rent|floatformat:2 }}</td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
   {% endif %}
-  {% if  other_expenses_details.exists %}
+
+  {% if other_expenses_details.exists %}
   <h4>Other Services</h4>
   <table>
     <thead>
@@ -256,63 +350,132 @@
       <tr>
         <td>{{ other.service }}</td>
         <td>{{ other.details }}</td>
-        <td>{{ other.charges }}</td>
+        <td>₹ {{ other.charges|floatformat:2 }}</td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
-  {%endif%}
+  {% endif %}
         
   <!-- Charges Table -->
   <table class="print-page-break">
     <thead>
       <tr>
         <th>Service Name</th>
-        <th>Amount (Rs.)</th>
+        <th>Amount (₹)</th>
       </tr>
     </thead>
     <tbody>
       <tr>
-        <td>Treatment Amount</td>
-        <td>{{ bill.treatment_charges }}</td>
+        <td>Treatment Charges</td>
+        <td>₹ {{ bill.treatment_charges|floatformat:2 }}</td>
       </tr>
       <tr>
-        <td>Medicine Amount</td>
-        <td>{{ bill.medicine_charges }}</td>
+        <td>Medicine Charges</td>
+        <td>₹ {{ bill.medicine_charges|floatformat:2 }}</td>
       </tr>
       <tr>
         <td>Room Rent</td>
-        <td>{{ bill.room_charges }}</td>
+        <td>₹ {{ bill.room_charges|floatformat:2 }}</td>
       </tr>
       <tr>
         <td>Food Charges</td>
-        <td>{{ bill.food_expenses}}</td>
+        <td>₹ {{ bill.food_expenses|floatformat:2 }}</td>
       </tr>
       <tr>
         <td>Other Expenses</td>
-        <td>{{ bill.other_expenses}}</td>
+        <td>₹ {{ bill.other_expenses|floatformat:2 }}</td>
       </tr>
     </tbody>
   </table>
 
-  <!-- Total Amount -->
-  <div class="total">
-    <p><strong>Subtotal:</strong>{{ bill.subtotal }}</p>
-    <p><strong>Tax:</strong>{{ bill.tax }}</p>
-    <p><strong>Discount:</strong>{{ bill.discount }}</p>Total Amount:{{ bill.total_amount }}</div>
+  <!-- Payment Summary -->
+  <div class="payment-summary">
+    <h4>Payment Summary</h4>
+    
+    <div class="payment-row">
+      <span class="payment-label">Subtotal</span>
+      <span class="payment-value">₹ {{ bill.subtotal|floatformat:2 }}</span>
+    </div>
+    
+    <div class="payment-row">
+      <span class="payment-label">Tax ({{ bill.tax|floatformat:0 }}%)</span>
+      <span class="payment-value">₹ {{ bill.tax_amount|floatformat:2 }}</span>
+    </div>
+    
+    <div class="payment-row">
+      <span class="payment-label">Discount</span>
+      <span class="payment-value" style="color: #28a745;">- ₹ {{ bill.discount|floatformat:2 }}</span>
+    </div>
+    
+    <div class="payment-row total-row">
+      <span class="payment-label" style="font-size: 18px; color: #dc3545;">Grand Total</span>
+      <span class="payment-value grand-total-value">₹ {{ bill.total_amount|floatformat:2 }}</span>
+    </div>
+    
+    <div class="payment-row advance-row">
+      <span class="payment-label"><i class="fas fa-hand-holding-usd"></i> Advance Paid</span>
+      <span class="payment-value" style="color: #28a745;">₹ {{ bill.advance_paid|floatformat:2 }}</span>
+    </div>
+    
+    <!-- Payment Method -->
+    <div class="payment-row">
+      <span class="payment-label">Payment Method</span>
+      <span class="payment-value">
+        <span class="payment-method-badge">
+          {{ bill.payment_method|default:"Cash"|upper }}
+        </span>
+      </span>
+    </div>
+    
+    <!-- Payment Mode Breakdown (if multiple modes used) -->
+    {% if bill.cash_amount > 0 or bill.card_amount > 0 or bill.upi_amount > 0 or bill.bank_amount > 0 %}
+    <div class="payment-row" style="border-bottom: none; padding-left: 20px; font-size: 13px;">
+      <span class="payment-label" style="font-weight: 400;">Cash</span>
+      <span class="payment-value">₹ {{ bill.cash_amount|floatformat:2 }}</span>
+    </div>
+    <div class="payment-row" style="border-bottom: none; padding-left: 20px; font-size: 13px;">
+      <span class="payment-label" style="font-weight: 400;">Card</span>
+      <span class="payment-value">₹ {{ bill.card_amount|floatformat:2 }}</span>
+    </div>
+    <div class="payment-row" style="border-bottom: none; padding-left: 20px; font-size: 13px;">
+      <span class="payment-label" style="font-weight: 400;">UPI</span>
+      <span class="payment-value">₹ {{ bill.upi_amount|floatformat:2 }}</span>
+    </div>
+    <div class="payment-row" style="border-bottom: 1px dashed #dee2e6; padding-left: 20px; font-size: 13px;">
+      <span class="payment-label" style="font-weight: 400;">Bank Transfer</span>
+      <span class="payment-value">₹ {{ bill.bank_amount|floatformat:2 }}</span>
+    </div>
+    <div class="payment-row">
+      <span class="payment-label">Total Collected</span>
+      <span class="payment-value" style="color: #28a745;">₹ {{ total_collected|floatformat:2 }}</span>
+    </div>
+    {% endif %}
+    
+    <!-- Refund Amount (if refund due) -->
+    {% if bill.refundamount and bill.refundamount > 0 %}
+    <div class="payment-row refund-row">
+      <span class="payment-label"><i class="fas fa-undo-alt"></i> Refund Amount</span>
+      <span class="payment-value refund-value">₹ {{ bill.refundamount|floatformat:2 }}</span>
+    </div>
+    {% endif %}
+    
+    <!-- Final Balance -->
+    <div class="payment-row balance-row" style="border-bottom: none; font-size: 18px; padding-top: 10px;">
+      <span class="payment-label" style="font-weight: 700;">Balance Amount</span>
+      <span class="payment-value" style="font-weight: 700; color: {% if bill.balance_amount == 0 %}#28a745{% elif bill.refundamount > 0 %}#dc3545{% else %}#007bff{% endif %};">
+        ₹ {{ bill.balance_amount|floatformat:2 }}
+      </span>
+    </div>
+    
+  </div>
 
   <!-- Amount in Words -->
-  <div class="amount-words">In Words: {{ amount_in_words }}</div>
-
-  <p>This is a computer-generated statement and requires no signature.</p>
-  <p>This receipt is valid for an employer or insurer, who is contractually obligated to reimburse the medical expenses.</p>
-
-  <div class="footer">
-    <p>For billing and general queries, please mail:  {% for i in objhospt %}<a href="mailto:{{ i.Email }}">{{ i.Email }}</a>
-        {%endfor%}</p>
+  <div class="amount-words">
+    <strong>Amount in Words:</strong> {{ amount_in_words }}
   </div>
+
  
-  
   <!-- Print Button -->
   <div class="print-btn">
     <button onclick="printInvoice()" class="btn btn-primary">Print Invoice</button>
@@ -320,25 +483,15 @@
 </div>
 
 <script>
-    function printInvoice() {
-        // Get the HTML content of the invoice div
-        var invoiceContent = document.getElementById('invoice').outerHTML;
-  
-        // Get the internal CSS styles from the parent document
-        var styles = Array.from(document.querySelectorAll('style'))
-            .map(style => style.innerHTML)
-            .join('\n');
-  
-        // Open a new window
-        var printWindow = window.open('', '_blank');
-        
-        // Set the HTML content of the new window along with the internal CSS styles
-        printWindow.document.write('<html><head><title>Invoice</title><style>' + styles + '</style></head><body>' + invoiceContent + '</body></html>');
-        printWindow.document.close();
-  
-        // Print the new window
-        printWindow.print();
-        
-    }
-  </script>
-  {% endblock %}
+  function printInvoice() {
+    var invoiceContent = document.getElementById('invoice').outerHTML;
+    var styles = Array.from(document.querySelectorAll('style'))
+      .map(style => style.innerHTML)
+      .join('\n');
+    var printWindow = window.open('', '_blank');
+    printWindow.document.write('<html><head><title>IP Bill - {{ bill.ipinvoicenumber }}</title><style>' + styles + '</style></head><body>' + invoiceContent + '</body></html>');
+    printWindow.document.close();
+    printWindow.print();
+  }
+</script>
+{% endblock %}

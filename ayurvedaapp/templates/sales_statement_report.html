@@ -89,6 +89,7 @@
                                             <th style="width: 55px;" class="text-right">Qty</th>
                                             <th style="width: 65px;" class="text-right">Rate</th>
                                             <th style="width: 85px;" class="text-right">Amount (₹)</th>
+                                            <th>Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -97,7 +98,7 @@
                                             {% for invoice_group in invoice_list %}
                                                 <!-- Invoice Header Row -->
                                                 <tr style="font-weight: bold;">
-                                                    <td colspan="9" style="font-size: 13px; text-align: left;">
+                                                    <td colspan="10" style="font-size: 13px; text-align: left;">
                                                         <i class="fas fa-file-invoice"></i> 
                                                         <strong>Bill: {{ invoice_group.grouper }}</strong>
                                                         <span style="margin-left: 15px;">
@@ -106,6 +107,14 @@
                                                         <span style="margin-left: 15px;">
                                                             Patient: {{ invoice_group.list.0.patient }}
                                                         </span>
+                                                        <div class="float-right">
+           {% with first_item=invoice_group.list|first %}
+                <a href="{% url 'sales_statement_detail' %}?ids={{ first_item.invoice_id }}" 
+                   class="btn btn-sm btn-info">
+                    <i class="fas fa-eye"></i> View
+                </a>
+            {% endwith %}
+        </div>
                                                     </td>
                                                 </tr>
                                                 <!-- Items for this Invoice -->
@@ -120,6 +129,7 @@
                                                     <td class="text-right">{{ item.qty|floatformat:2 }}</td>
                                                     <td class="text-right">{{ item.rate|floatformat:2 }}</td>
                                                     <td class="text-right">{{ item.amount|floatformat:2 }}</td>
+                                                     <td></td>
                                                 </tr>
                                                 {% endfor %}
                                                 <!-- Invoice Total Row -->
@@ -134,6 +144,7 @@
                                                             {% endif %}
                                                         {% endfor %}
                                                     </td>
+                                                    <td></td>
                                                 </tr>
                                             {% endfor %}
                                         {% else %}
@@ -149,6 +160,7 @@
                                         <tr style="font-weight: bold; font-size: 14px;">
                                             <th colspan="8" class="text-right">Grand Total:</th>
                                             <th class="text-right">₹ {{ total_amount|floatformat:2 }}</th>
+                                            <th></th>
                                         </tr>
                                     </tfoot>
                                 </table>

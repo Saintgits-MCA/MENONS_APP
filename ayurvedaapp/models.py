@@ -134,8 +134,9 @@ class Patient_details(models.Model):
             action="RESTORE",
             staff=staff,
             branch=self.Branch_Name,
-            timestamp=timezone.now()
-        )
+            timestamp=timezone.now())
+
+
         
 class PatientAuditLog(models.Model):
     ACTION_CHOICES = [
@@ -289,6 +290,7 @@ class Patient_history(models.Model):
     Blood_group=models.CharField(max_length = 30)
 
 
+
 class Appointments(models.Model):
     Tokenno = models.CharField(max_length=300)
     Doctor_Name = models.ForeignKey(Staffdetails, on_delete=models.CASCADE, default=None)
@@ -306,20 +308,6 @@ class Appointments(models.Model):
     visit_end_time = models.TimeField(null=True, blank=True, verbose_name="Visit End Time")
     visit_duration = models.IntegerField(default=30, verbose_name="Duration (minutes)")
     
-    def save(self, *args, **kwargs):
-        # Auto-calculate end time if start time is provided
-        if self.visit_start_time and not self.visit_end_time:
-            # Convert start time to datetime, add duration minutes
-            start_datetime = datetime.datetime.combine(
-                self.Appointment_date if self.Appointment_date else datetime.date.today(), 
-                self.visit_start_time
-            )
-            end_datetime = start_datetime + datetime.timedelta(minutes=self.visit_duration)
-            self.visit_end_time = end_datetime.time()
-        super().save(*args, **kwargs) 
-
-
-
 
 class AppointmentFee(models.Model):
     VISIT_TYPE_CHOICES = [
@@ -1715,6 +1703,46 @@ class ippatientadmission(models.Model):
     admittedbranch=models.ForeignKey(Branch,on_delete=models.CASCADE,default=None, null=True, blank=True)
     ipnumber=models.CharField(max_length=100,default=None, null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
+    department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, blank=True, related_name='ip_admissions')
+    admitted_doctor = models.ForeignKey(Staffallocation, on_delete=models.SET_NULL, null=True, blank=True, related_name='ip_admissions')
+    # Optional: Add total advance field to track total payments
+    total_advance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    
+class IPAdvancePayment(models.Model):
+    """Model for IP patient advance payments"""
+    ip_admission = models.ForeignKey('ippatientadmission', on_delete=models.CASCADE, related_name='advance_payments')
+    receipt_number = models.CharField(max_length=50, unique=True)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_date = models.DateTimeField(auto_now_add=True)
+    payment_method = models.CharField(max_length=50, choices=[
+        ('cash', 'Cash'),
+        ('card', 'Card'),
+        ('bank_transfer', 'Bank Transfer'),
+        ('upi', 'UPI'),
+        ('cheque', 'Cheque'),
+        ('other', 'Other')
+    ])
+    transaction_id = models.CharField(max_length=100, blank=True, null=True)
+    notes = models.TextField(blank=True, null=True)
+    received_by = models.ForeignKey('Staffdetails', on_delete=models.SET_NULL, null=True)
+    branch = models.ForeignKey('Branch', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+   
+class IPAdvancePaymentHistory(models.Model):
+    """Track advance payment history and balance"""
+    ip_admission = models.ForeignKey('ippatientadmission', on_delete=models.CASCADE, related_name='payment_history')
+    payment = models.ForeignKey(IPAdvancePayment, on_delete=models.CASCADE, null=True, blank=True)
+    type = models.CharField(max_length=20, choices=[
+        ('advance', 'Advance Payment'),
+        ('adjustment', 'Adjustment'),
+        ('refund', 'Refund')
+    ])
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    balance = models.DecimalField(max_digits=10, decimal_places=2)
+    description = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+  
 # class IPPackageextend(models.Model):
 # 	admission = models.ForeignKey(ippatientadmission,on_delete=models.CASCADE, null=True, blank=True)
 # 	mr_number = models.ForeignKey(Patient_details, on_delete=models.CASCADE)
@@ -1801,7 +1829,6 @@ class ipdailymedicine(models.Model):
     physicalstock = models.ForeignKey(Physicalstockdetails, on_delete=models.CASCADE, null=True, blank=True)
 
 
-    
 class PatientDischarge(models.Model):
     ipptno = models.ForeignKey(ippatientadmission, on_delete=models.CASCADE, default=None, null=True, blank=True)
     treatment_summary = models.TextField()
@@ -1816,7 +1843,10 @@ class PatientDischarge(models.Model):
     roomno=  models.TextField(default=None, null=True, blank=True)
     bedno=  models.TextField(default=None, null=True, blank=True)
     floorno = models.TextField(default=None, null=True, blank=True)
-    # admittedroomdt = models.ForeignKey(ippatientroombooking, on_delete=models.CASCADE, default=None,null=True, blank=True)
+    discharge_summary_notes = models.TextField(default=None,null=True, blank=True)
+    physical_examinations = models.TextField(default=None,null=True, blank=True)
+
+ # admittedroomdt = models.ForeignKey(ippatientroombooking, on_delete=models.CASCADE, default=None,null=True, blank=True)
 
 class AdviceOnDischarge(models.Model):
     discharge = models.ForeignKey(PatientDischarge, on_delete=models.CASCADE, related_name='advices')
@@ -1849,6 +1879,15 @@ class IPBill(models.Model):
     billing_date = models.DateField(default=datetime.date.today)
     food_expenses = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, null=True, blank=True)
     billingstaff=models.ForeignKey(Staffallocation,on_delete=models.CASCADE, null=True, blank=True)
+    advance_paid = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    balance_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    refundamount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    payment_method = models.CharField(max_length=50, default='cash', blank=True, null=True)
+    cash_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    card_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    upi_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    bank_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    
     def save(self, *args, **kwargs):
         if not self.ipinvoicenumber:
             today = date.today().strftime("%Y%m%d")  # Format: YYYYMMDD
@@ -3503,3 +3542,20 @@ class PatientVisitCycleAppointment(models.Model):
     
     def __str__(self):
         return f"{self.cycle.patient.Patient_Name} - {self.status} - {self.appointment.Appointment_date}"
+
+class PreAppointmentBooking(models.Model):
+    patient = models.ForeignKey(Patient_details, on_delete=models.CASCADE)
+    branch = models.ForeignKey(Branch, on_delete=models.CASCADE)
+    doctor = models.ForeignKey(Staffdetails, on_delete=models.CASCADE)
+    department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, blank=True)
+    designation = models.ForeignKey(Designation, on_delete=models.SET_NULL, null=True, blank=True)
+    appointment_date = models.DateField()
+    status = models.CharField(max_length=100)
+    contactno = models.CharField(max_length=100, null=True, blank=True)
+    remarks = models.CharField(max_length=300, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_converted = models.BooleanField(default=False) # To track if actual appointment is taken
+
+    def __str__(self):
+        return f"Pre-Booking: {self.patient.Patient_Name} on {self.appointment_date}"
+

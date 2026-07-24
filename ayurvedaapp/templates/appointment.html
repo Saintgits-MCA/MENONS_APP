@@ -16,6 +16,22 @@
     border-color: #ffc107 !important;
     box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25) !important;
 }
+.pre-booking-banner {
+    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+    border-left: 5px solid #2e7d32;
+    padding: 12px 20px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+}
+.pre-booking-banner h5 {
+    color: #2e7d32;
+    margin: 0;
+}
+.pre-booking-banner p {
+    margin: 4px 0 0 0;
+    color: #33691e;
+    font-size: 0.9em;
+}
 </style>
 
 <!-- Safe JSON Injection -->
@@ -43,6 +59,7 @@
             </div>
         </div>
     </section>
+
     <!-- Main content -->
     <section class="content">
         <div class="row">
@@ -52,13 +69,27 @@
                         <h3 class="card-title">Appointments</h3>
                         <div class="card-tools">
                             <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
-                                <!-- <i class="fas fa-minus"></i> -->
                             </button>
                         </div>
                     </div>
                     <form method="POST" action="{% url 'appointment' %}?menumanagement_id={{idmngmnt}}" id="appointmentForm">
                         {% csrf_token %}
+
+                        <!-- ✅ Hidden field to carry prebooking_id through POST -->
+                        {% if pre_booking.prebooking_id %}
+                        <input type="hidden" name="prebooking_id" value="{{ pre_booking.prebooking_id }}">
+                        {% endif %}
+
+                        <!-- ✅ Pre-Booking Banner -->
+                        {% if pre_booking.prebooking_id %}
+                        <div class="pre-booking-banner mx-3 mt-3">
+                            <h5><i class="fas fa-calendar-check mr-2"></i> Converting Pre-Booking to Appointment</h5>
+                            <p>This appointment is being created from a pre-booking. Fields have been pre-filled. Complete payment to confirm.</p>
+                        </div>
+                        {% endif %}
+
                         <div class="row">
+                            <!-- ==================== LEFT COLUMN ==================== -->
                             <div class="col-md-6">
                                 <div class="card">
                                     <div class="card-body">
@@ -66,17 +97,20 @@
                                             <label for="tkno">Token Number</label>
                                             <input type="text" class="form-control" name="tokennumber" value="{{tk_id}}" readonly>
                                         </div>
-                                        
+
                                         <!-- Search patient -->
                                         <div class="row">
                                             <div class="col-md-8">
                                                 <div class="form-group">
                                                     <label for="mrSearch">MR Number/PhoneNo/Name</label>
-                                                    <input type="text" id="mrSearch" class="form-control" placeholder="Type MR Number">
+                                                    <input type="text" id="mrSearch" class="form-control" placeholder="Type MR Number"
+                                                           value="{% if pre_booking.mrnum %}{{ pre_patient_display }}{% endif %}"
+                                                           {% if pre_booking.mrnum %}readonly{% endif %}>
                                                 </div>
                                             </div>
-                                            <div class="col-md-4 mt-4"> 
-                                                <a id="searchBtn" class="btn btn-primary text-white text-decoration-none">Search</a>
+                                            <div class="col-md-4 mt-4">
+                                                <a id="searchBtn" class="btn btn-primary text-white text-decoration-none"
+                                                   {% if pre_booking.mrnum %}style="display:none;"{% endif %}>Search</a>
                                             </div>
                                         </div>
 
@@ -84,18 +118,35 @@
                                         <div class="form-group">
                                             <label for="mrDropdown">Selected MR Number/Patient</label>
                                             <select class="form-control" name="mrnum" id="mrDropdown" required>
-                                                <option selected disabled value="">Select</option>
+                                                {% if pre_booking.mrnum %}
+                                                    <option value="{{ pre_booking.mrnum }}" selected>{{ pre_patient_display }}</option>
+                                                {% else %}
+                                                    <option selected disabled value="">Select</option>
+                                                {% endif %}
                                             </select>
                                         </div>
+
                                         <!-- Patient details -->
                                         <div class="form-group">
                                             <label for="ptdt">Patient Details</label>
-                                            <input type="text" id="exampleInputAddress" class="form-control" readonly>
+                                            <input type="text" id="exampleInputAddress" class="form-control" readonly
+                                                   value="{% if pre_booking.mrnum %}{{ pre_patient_display }}{% endif %}">
                                         </div>
+
                                         <div class="form-group">
                                             <label for="exampleInputappdate">Appointment Date</label>
-                                            <input type="date" class="form-control" id="exampleInputdate" name="apntdate" required>
+                                            <input type="date" class="form-control" id="exampleInputdate" name="apntdate" required
+                                                   value="{{ pre_booking.apntdate }}">
                                         </div>
+
+                                        <!-- ✅ NEW: Appointment Time Field -->
+                                        <div class="form-group">
+                                            <label for="exampleInputtime">Appointment Time</label>
+                                            <input type="time" class="form-control" id="exampleInputtime" name="apnttime"
+                                                   value="{{ pre_booking.apnttime }}" step="900">
+                                            <small class="form-text text-muted">Optional - Select a time slot for the appointment</small>
+                                        </div>
+
                                         <!-- 🧾 Previous Visit History Section -->
                                         <div class="mt-4">
                                             <h5 class="fw-bold text-center mb-3 text-primary">
@@ -155,7 +206,6 @@
                                                         </button>
                                                     </div>
                                                     <div class="modal-body">
-                                                        <!-- DataTable for displaying search results -->
                                                         <table id="searchResultsTable" class="display table table-bordered">
                                                             <thead>
                                                                 <tr>
@@ -167,7 +217,6 @@
                                                                 </tr>
                                                             </thead>
                                                             <tbody>
-                                                                <!-- Results will be appended here -->
                                                             </tbody>
                                                         </table>
                                                     </div>
@@ -180,53 +229,69 @@
                                     </div>
                                 </div>
                             </div>
-                            <!-- /.card-body -->
+
+                            <!-- ==================== RIGHT COLUMN ==================== -->
                             <div class="col-md-6">
                                 <div class="card">
                                     <div class="card-body">
+                                        <!-- Department -->
                                         <div class="form-group">
-    <label for="inputdept">Department</label>
-    <select class="form-control" name="deptname" id="inputdept" required>
-        <option selected disabled value="">Select</option>
-        {% for i in departmentobj %}
-            <option value="{{i.id}}">{{i.Department_Name}}</option>
-        {% endfor %}
-    </select>
-</div>
+                                            <label for="inputdept">Department</label>
+                                            <select class="form-control" name="deptname" id="inputdept" required>
+                                                <option value="" disabled {% if not pre_booking.deptname %}selected{% endif %}>Select</option>
+                                                {% for i in departmentobj %}
+                                                    <option value="{{i.id}}" {% if pre_booking.deptname == i.id|stringformat:"s" %}selected{% endif %}>{{i.Department_Name}}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+
+                                        <!-- Designation -->
                                         <div class="form-group">
                                             <label for="exampleInputRegisterNo">Designation Name</label>
                                             <select class="form-control" name="desgname" id="inputdesgn" required>
-                                                <option selected disabled value="">Select</option>
+                                                <option value="" disabled {% if not pre_booking.desgname %}selected{% endif %}>Select</option>
                                                 {% for i in designobj %}
-                                                    <option value="{{i.id}}">{{i.Designation_Name}}</option>
+                                                    <option value="{{i.id}}" {% if pre_booking.desgname == i.id|stringformat:"s" %}selected{% endif %}>{{i.Designation_Name}}</option>
                                                 {% endfor %}
                                             </select>
-                                            <input type="hidden" class="form-control" value="{{brnmae}}" name="branch" id="brch">
+                                            <input type="hidden" class="form-control" value="{{ pre_booking.branch|default:brnmae }}" name="branch" id="brch">
                                         </div>
+
+                                        <!-- Doctor Name -->
                                         <div class="form-group">
                                             <label for="docname">Doctor Name</label>
                                             <select class="form-control" name="docname" id="docname" required>
                                                 <option selected disabled value="">Select</option>
                                             </select>
+                                            <!-- Hidden field to hold pre-selected doctor for JS -->
+                                            <input type="hidden" id="pre_selected_doctor" value="{{ pre_booking.docname }}">
                                         </div>
+
+                                        <!-- Status -->
                                         <div class="form-group">
                                             <label for="exampleInputRegisterNo">Status</label>
                                             <select type="text" class="form-control" id="status" name="status" required>
-                                              <option value="" selected disabled>Select</option>
-                                               {%for i in appointment_status%}
-                                               <option value="{{i.status_name}}">{{i.status_name}}</option>
-                                               {%endfor%}
-                                            </select> 
+                                                <option value="" disabled {% if not pre_booking.status %}selected{% endif %}>Select</option>
+                                                {% for i in appointment_status %}
+                                                    <option value="{{i.status_name}}" {% if pre_booking.status == i.status_name %}selected{% endif %}>{{i.status_name}}</option>
+                                                {% endfor %}
+                                            </select>
                                         </div>
+
+                                        <!-- Appointment Fee -->
                                         <div class="form-group">
                                             <label for="exampleInputContactNo">Appointment Fee</label>
                                             <input type="text" class="form-control" id="examplefee" name="fee" placeholder="Fee will auto-fill" readonly>
                                         </div>
 
+                                        <!-- Contact No -->
                                         <div class="form-group">
                                             <label for="exampleInputContactNo">Contact No</label>
-                                            <input type="text" class="form-control" id="exampleInputContactNo" name="contactnum" placeholder="Enter Contact No" >
+                                            <input type="text" class="form-control" id="exampleInputContactNo" name="contactnum" placeholder="Enter Contact No"
+                                                   value="{{ pre_booking.contactnum }}">
                                         </div>
+
+                                        <!-- Payment Status -->
                                         <div class="form-group">
                                             <label for="exampleInputRegisterNo">Payment Status</label>
                                             <select class="form-control" id="pstatus" name="pstatus" required>
@@ -235,10 +300,13 @@
                                                 <option value="Card">Card</option>
                                             </select>
                                         </div>
+
                                         <div class="form-group">
                                             <label for="exampleInputemail">Remarks</label>
-                                            <input type="text" class="form-control" id="exampleInputRemarks" name="remarks" placeholder="Enter Remarks" >
+                                            <input type="text" class="form-control" id="exampleInputRemarks" name="remarks" placeholder="Enter Remarks"
+                                                   value="{{ pre_booking.remarks }}">
                                         </div>
+
                                         <!-- 🧬 Previous Vitals -->
                                         <div class="mt-4">
                                             <h5 class="fw-bold text-center mb-3 text-success">
@@ -252,256 +320,262 @@
                                 </div>
                             </div>
                         </div>
+
+                        <div class="card-footer">
+                            {% if messages %}
+                                {% for message in messages %}
+                                    <p style="color:green;">{{message}}</p>
+                                {% endfor %}
+                            {% endif %}
+                            <button type="submit" class="btn btn-primary" id="submitBtn">
+                                <span id="submitText">Submit</span>
+                                <span id="submitLoader" class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="display: none;"></span>
+                            </button>
+                        </div>
+                    </form>
                 </div>
-                <div class="card-footer">
-                    {% if messages %}
-                        {% for message in messages %}
-                            <p style="color:green;">{{message}}</p> 
-                        {% endfor %}
-                    {% endif %}
-                    <button type="submit" class="btn btn-primary" id="submitBtn">
-                        <span id="submitText">Submit</span>
-                        <span id="submitLoader" class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="display: none;"></span>
-                    </button>
-                </div>
-                </form>
             </div>
         </div>
     </section>
-   
-   <script>
-  $(document).ready(function () {
-    // ==================== FEE DATA FROM DATABASE ====================
-    const appointmentFees = JSON.parse(document.getElementById('appointmentFeesData').textContent);
-    
-    console.log('Appointment Fees Loaded:', appointmentFees);
-    
-    // Define static rates as fallback
-    const staticRates = {
-        'Consultation': '',
-        'Followup': '',
-        'Revisit': '',
-        'Whatsapp': '',
-        'Camp': '',
-        'Treatment': '',
-        'Treatment Revisit': ''
-    };
 
-    // Define which statuses should have readonly fee field
-    const readonlyStatuses = ['Consultation', 'Followup', 'Revisit', 'Camp'];
+    <!-- ============================================================ -->
+    <!-- SCRIPTS                                                       -->
+    <!-- ============================================================ -->
 
-    // ==================== FEE LOOKUP FROM JSON ====================
-    function getFeeFromTable(branchId, doctorId, visitType) {
-        if (!branchId || !doctorId || !visitType) {
-            return null;
-        }
-        
-        const branchNum = parseInt(branchId, 10);
-        const doctorNum = parseInt(doctorId, 10);
-        
-        const fee = appointmentFees.find(function(f) {
-            return (
-                parseInt(f.branch_id, 10) === branchNum && 
-                parseInt(f.doctor_id, 10) === doctorNum && 
-                f.visit_type.toLowerCase() === visitType.toLowerCase()
-            );
-        });
-        
-        return fee ? fee.fee_amount : null;
-    }
-
-    // ==================== FEE LOOKUP FROM BACKEND ====================
-    function getFeeFromBackend(doctorId, status, branchId) {
-        return new Promise(function(resolve, reject) {
-            if (!doctorId || !status) {
-                resolve(0);
-                return;
-            }
-            
-            $.ajax({
-                url: "{% url 'get_appointment_fee_ajax' %}",
-                type: 'GET',
-                data: {
-                    doctor_id: doctorId,
-                    status: status,
-                    branch_id: branchId || ''
-                },
-                success: function(response) {
-                    if (response.success) {
-                        resolve(response.fee_amount);
-                    } else {
-                        resolve(0);
-                    }
-                },
-                error: function() {
-                    resolve(0);
-                }
-            });
-        });
-    }
-
-    // ==================== UPDATE FEE FUNCTION ====================
-    async function updateFeeField(selectedStatus) {
-        var feeInput = $("#examplefee");
-        var branchId = $('#brch').val();
-        var doctorId = $('#docname').val();
-        
-        if (selectedStatus && selectedStatus !== "Select" && selectedStatus !== "") {
-            
-            // Try to get fee from database via AJAX
-            var dbFee = 0;
-            try {
-                dbFee = await getFeeFromBackend(doctorId, selectedStatus, branchId);
-            } catch(e) {
-                console.log('Error fetching fee from backend:', e);
-            }
-            
-            if (dbFee > 0) {
-                feeInput.val(dbFee);
-                feeInput.removeClass('fee-not-configured');
-            } else {
-                // Fallback to JSON data
-                const jsonFee = getFeeFromTable(branchId, doctorId, selectedStatus);
-                if (jsonFee !== null && jsonFee >= 0) {
-                    feeInput.val(jsonFee);
-                    feeInput.removeClass('fee-not-configured');
-                } else {
-                    // Fallback to static rates
-                    if (staticRates[selectedStatus] !== undefined) {
-                        feeInput.val(staticRates[selectedStatus]);
-                        feeInput.removeClass('fee-not-configured');
-                    } else {
-                        feeInput.val(0);
-                        feeInput.addClass('fee-not-configured');
-                    }
-                }
-            }
-            
-            // Set readonly property based on status
-            if (readonlyStatuses.includes(selectedStatus)) {
-                feeInput.prop('readonly', false);
-            } else {
-                feeInput.prop('readonly', true);
-            }
-            
-            // Clear any previous warning
-            $("#status").css('border-color', '');
-            if ($("#status").parent().find('.status-warning').length > 0) {
-                $("#status").parent().find('.status-warning').remove();
-            }
-            
-        } else {
-            // If no status selected, show warning and clear fee
-            feeInput.val(""); 
-            feeInput.prop('readonly', false);
-            showStatusWarning();
-        }
-    }
-
-    // ==================== SHOW STATUS WARNING ====================
-    function showStatusWarning() {
-        var statusSelect = $("#status");
-        var parentDiv = statusSelect.parent();
-        
-        
-        if (parentDiv.find('.status-warning').length > 0) {
-            parentDiv.find('.status-warning').remove();
-        }
-        
-        parentDiv.append(`
-            <div class="status-warning" style="color: #dc3545; font-size: 0.875em; margin-top: 5px;">
-                <i class="fas fa-exclamation-triangle"></i> Please select a status
-            </div>
-        `);
-    }
-
-    // ==================== CHECK REVISIT STATUS ====================
-
-    // ==================== DEBOUNCE FUNCTION ====================
-    function debounce(func, wait) {
-        var timeout;
-        return function() {
-            var context = this;
-            var args = arguments;
-            clearTimeout(timeout);
-            timeout = setTimeout(function() {
-                func.apply(context, args);
-            }, wait);
-        };
-    }
-
-    // ==================== EVENT HANDLERS ====================
-    
-    // Status change
-    $("#status").change(function() {
-        var selectedStatus = $(this).val();
-        updateFeeField(selectedStatus);
-    });
-    
-    // Doctor change
-    $('#docname').change(function() {
-        var selectedStatus = $("#status").val();
-        if (selectedStatus && selectedStatus !== "Select" && selectedStatus !== "") {
-            updateFeeField(selectedStatus);
-        } else {
-            showStatusWarning();
-            $('#examplefee').val('');
-        }
-    });
-    
-   
-
-    // ==================== FORM SUBMIT VALIDATION ====================
-    $('#appointmentForm').on('submit', function(e) {
-        var selectedStatus = $("#status").val();
-        
-        if (!selectedStatus || selectedStatus === "" || selectedStatus === "Select") {
-            e.preventDefault();
-            showStatusWarning();
-            alert("Please select a status before submitting.");
-            return false;
-        }
-        
-        var feeValue = $("#examplefee").val();
-        if (!feeValue || feeValue.trim() === "") {
-            e.preventDefault();
-            $("#examplefee").css('border-color', '#dc3545');
-            alert("Fee amount is required. Please select a valid status.");
-            return false;
-        }
-        
-        $('#submitBtn').prop('disabled', true);
-        $('#submitText').hide();
-        $('#submitLoader').show();
-        
-        return true;
-    });
-
-    // ==================== INITIALIZATION ====================
-    $("#status").on('focus', function() {
-        $(this).css('border-color', '');
-        $(this).parent().find('.status-warning').remove();
-    });
-
-    $("#examplefee").on('keydown', function(e) {
-        if ($(this).prop('readonly')) {
-            e.preventDefault();
-            return false;
-        }
-    });
-
-    // Show warning on page load
-    showStatusWarning();
-
-    // Check revisit on page load
-    setTimeout(function() {
-    }, 1000);
-});
-    </script>
-
+    <!-- ===== FEE LOGIC ===== -->
     <script>
     $(document).ready(function () {
-        $('#brch,#deptname, #inputdesgn').on('change', function() {
+        // ==================== FEE DATA FROM DATABASE ====================
+        const appointmentFees = JSON.parse(document.getElementById('appointmentFeesData').textContent);
+
+        console.log('Appointment Fees Loaded:', appointmentFees);
+
+        // Define static rates as fallback
+        const staticRates = {
+            'Consultation': 0,
+            'Followup': '',
+            'Revisit': 0,
+            'Whatsapp': 0,
+            'Camp': '',
+            'Treatment': 0,
+            'Treatment Revisit': 0
+        };
+
+        // Define which statuses should have readonly fee field
+        const readonlyStatuses = ['Consultation', 'Followup', 'Revisit', 'Camp'];
+
+        // ==================== FEE LOOKUP FROM JSON ====================
+        function getFeeFromTable(branchId, doctorId, visitType) {
+            if (!branchId || !doctorId || !visitType) {
+                return null;
+            }
+
+            const branchNum = parseInt(branchId, 10);
+            const doctorNum = parseInt(doctorId, 10);
+
+            const fee = appointmentFees.find(function(f) {
+                return (
+                    parseInt(f.branch_id, 10) === branchNum &&
+                    parseInt(f.doctor_id, 10) === doctorNum &&
+                    f.visit_type.toLowerCase() === visitType.toLowerCase()
+                );
+            });
+
+            return fee ? fee.fee_amount : null;
+        }
+
+        // ==================== FEE LOOKUP FROM BACKEND ====================
+        function getFeeFromBackend(doctorId, status, branchId) {
+            return new Promise(function(resolve, reject) {
+                if (!doctorId || !status) {
+                    resolve(0);
+                    return;
+                }
+
+                $.ajax({
+                    url: "{% url 'get_appointment_fee_ajax' %}",
+                    type: 'GET',
+                    data: {
+                        doctor_id: doctorId,
+                        status: status,
+                        branch_id: branchId || ''
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            resolve(response.fee_amount);
+                        } else {
+                            resolve(0);
+                        }
+                    },
+                    error: function() {
+                        resolve(0);
+                    }
+                });
+            });
+        }
+
+        // ==================== UPDATE FEE FUNCTION ====================
+        async function updateFeeField(selectedStatus) {
+            var feeInput = $("#examplefee");
+            var branchId = $('#brch').val();
+            var doctorId = $('#docname').val();
+
+            if (selectedStatus && selectedStatus !== "Select" && selectedStatus !== "") {
+
+                // Try to get fee from database via AJAX
+                var dbFee = 0;
+                try {
+                    dbFee = await getFeeFromBackend(doctorId, selectedStatus, branchId);
+                } catch(e) {
+                    console.log('Error fetching fee from backend:', e);
+                }
+
+                if (dbFee > 0) {
+                    feeInput.val(dbFee);
+                    feeInput.removeClass('fee-not-configured');
+                } else {
+                    // Fallback to JSON data
+                    const jsonFee = getFeeFromTable(branchId, doctorId, selectedStatus);
+                    if (jsonFee !== null && jsonFee >= 0) {
+                        feeInput.val(jsonFee);
+                        feeInput.removeClass('fee-not-configured');
+                    } else {
+                        // Fallback to static rates
+                        if (staticRates[selectedStatus] !== undefined) {
+                            feeInput.val(staticRates[selectedStatus]);
+                            feeInput.removeClass('fee-not-configured');
+                        } else {
+                            feeInput.val(0);
+                            feeInput.addClass('fee-not-configured');
+                        }
+                    }
+                }
+
+                // Set readonly property based on status
+                if (readonlyStatuses.includes(selectedStatus)) {
+                    feeInput.prop('readonly', false);
+                } else {
+                    feeInput.prop('readonly', true);
+                }
+
+                // Clear any previous warning
+                $("#status").css('border-color', '');
+                if ($("#status").parent().find('.status-warning').length > 0) {
+                    $("#status").parent().find('.status-warning').remove();
+                }
+
+            } else {
+                // If no status selected, show warning and clear fee
+                feeInput.val("");
+                feeInput.prop('readonly', false);
+                showStatusWarning();
+            }
+        }
+
+        // ==================== SHOW STATUS WARNING ====================
+        function showStatusWarning() {
+            var statusSelect = $("#status");
+            var parentDiv = statusSelect.parent();
+
+            if (parentDiv.find('.status-warning').length > 0) {
+                parentDiv.find('.status-warning').remove();
+            }
+
+            parentDiv.append(`
+                <div class="status-warning" style="color: #dc3545; font-size: 0.875em; margin-top: 5px;">
+                    <i class="fas fa-exclamation-triangle"></i> Please select a status
+                </div>
+            `);
+        }
+
+        // ==================== DEBOUNCE FUNCTION ====================
+        function debounce(func, wait) {
+            var timeout;
+            return function() {
+                var context = this;
+                var args = arguments;
+                clearTimeout(timeout);
+                timeout = setTimeout(function() {
+                    func.apply(context, args);
+                }, wait);
+            };
+        }
+
+        // ==================== EVENT HANDLERS ====================
+
+        // Status change
+        $("#status").change(function() {
+            var selectedStatus = $(this).val();
+            updateFeeField(selectedStatus);
+        });
+
+        // Doctor change
+        $('#docname').change(function() {
+            var selectedStatus = $("#status").val();
+            if (selectedStatus && selectedStatus !== "Select" && selectedStatus !== "") {
+                updateFeeField(selectedStatus);
+            } else {
+                showStatusWarning();
+                $('#examplefee').val('');
+            }
+        });
+
+        // ==================== FORM SUBMIT VALIDATION ====================
+        $('#appointmentForm').on('submit', function(e) {
+            var selectedStatus = $("#status").val();
+
+            if (!selectedStatus || selectedStatus === "" || selectedStatus === "Select") {
+                e.preventDefault();
+                showStatusWarning();
+                alert("Please select a status before submitting.");
+                return false;
+            }
+
+            var feeValue = $("#examplefee").val();
+            if (!feeValue || feeValue.trim() === "") {
+                e.preventDefault();
+                $("#examplefee").css('border-color', '#dc3545');
+                alert("Fee amount is required. Please select a valid status.");
+                return false;
+            }
+
+            $('#submitBtn').prop('disabled', true);
+            $('#submitText').hide();
+            $('#submitLoader').show();
+
+            return true;
+        });
+
+        // ==================== INITIALIZATION ====================
+        $("#status").on('focus', function() {
+            $(this).css('border-color', '');
+            $(this).parent().find('.status-warning').remove();
+        });
+
+        $("#examplefee").on('keydown', function(e) {
+            if ($(this).prop('readonly')) {
+                e.preventDefault();
+                return false;
+            }
+        });
+
+        // Show warning on page load only if no status pre-selected
+        var initialStatus = $("#status").val();
+        if (!initialStatus || initialStatus === "" || initialStatus === "Select") {
+            showStatusWarning();
+        } else {
+            // If status is pre-filled from pre-booking, trigger fee calculation
+            updateFeeField(initialStatus);
+        }
+    });
+    </script>
+
+    <!-- ===== DOCTOR DROPDOWN AJAX ===== -->
+    <script>
+    $(document).ready(function () {
+        var preDoctor = $('#pre_selected_doctor').val();
+
+        function loadDoctors(selectFirstIfNoPreDoctor) {
             var brch = $('#brch').val();
             var desg = $('#inputdesgn').val();
             var dept = $('#inputdept').val();
@@ -513,19 +587,28 @@
                 $.ajax({
                     type: 'GET',
                     url: "{% url 'get_staff_by_branch_and_designation' %}",
-                    data: { branch: brch, designation: desg , department: dept},
+                    data: { branch: brch, designation: desg, department: dept },
                     success: function(data) {
                         dropdown.empty().append('<option selected disabled>Select</option>');
                         if (data.length > 0) {
                             data.forEach(function(item) {
                                 dropdown.append(`<option value="${item.Staff_id}">${item.Staff_firstname} ${item.Staff_lastname} - ${item.deprt}</option>`);
                             });
-                            dropdown.val(data[0].Staff_id);  // Select the first staff member by default
-                            // Trigger change to update fee when doctor is auto-selected
-                            dropdown.trigger('change');
+
+                            // ✅ If there's a pre-selected doctor from pre-booking, select it
+                            if (preDoctor) {
+                                dropdown.val(preDoctor);
+                                dropdown.trigger('change');
+                                preDoctor = null; // Only use once
+                            } else if (selectFirstIfNoPreDoctor) {
+                                dropdown.val(data[0].Staff_id);
+                                dropdown.trigger('change');
+                            }
                         } else {
                             dropdown.append('<option selected disabled value="">No staff found for this Branch</option>');
-                            alert("No staff found for this branch. Please register staff before proceeding.");
+                            if (!preDoctor) {
+                                alert("No staff found for this branch. Please register staff before proceeding.");
+                            }
                         }
                     },
                     error: function(xhr) {
@@ -534,13 +617,30 @@
                     }
                 });
             }
-        });
-    });
-    </script> 
+        }
 
+        // Bind change events
+        $('#brch, #inputdept, #inputdesgn').on('change', function() {
+            loadDoctors(true);
+        });
+
+        // ✅ On page load: if pre-booking has dept + desg filled, auto-trigger doctor load
+        var preDept = $('#inputdept').val();
+        var preDesg = $('#inputdesgn').val();
+        var preBrch = $('#brch').val();
+
+        if (preDept && preDesg && preBrch) {
+            // Small delay to ensure DOM is ready
+            setTimeout(function() {
+                loadDoctors(false);
+            }, 300);
+        }
+    });
+    </script>
+
+    <!-- ===== PATIENT SEARCH MODAL ===== -->
     <script>
     $(document).ready(function() {
-        // Initialize DataTable (without data initially)
         let table = $('#searchResultsTable').DataTable({
             paging: true,
             searching: true,
@@ -549,7 +649,6 @@
             pageLength: 10,
         });
 
-        // Event listener for the search button click
         $('#searchBtn').on('click', function() {
             let query = $('#mrSearch').val();
 
@@ -565,9 +664,9 @@
                 .then(data => {
                     if (data.length > 0) {
                         data.forEach(item => {
-                            let actionBtn = `<a class="btn btn-primary select-btn text-decoration-none text-white" data-id="${item.id}" 
-                                                data-name="${item.Patient_Name}" 
-                                                data-mrno="${item.Medical_Record_Number}" 
+                            let actionBtn = `<a class="btn btn-primary select-btn text-decoration-none text-white" data-id="${item.id}"
+                                                data-name="${item.Patient_Name}"
+                                                data-mrno="${item.Medical_Record_Number}"
                                                 data-contact="${item.contactno}"
                                                 data-address="${item.Housename}">
                                               Select
@@ -592,22 +691,22 @@
                 });
         });
 
-        // Event delegation to handle clicks on dynamically generated "Select" buttons
         $('#searchResultsTable tbody').on('click', '.select-btn', function() {
             let id = $(this).data('id');
             let mrno = $(this).data('mrno');
             let name = $(this).data('name');
             let contact = $(this).data('contact');
             let address = $(this).data('address');
-            
+
             $('#mrDropdown').html(`<option value="${id}" selected>${mrno} - ${name}</option>`);
             $('#exampleInputAddress').val(`${mrno} - ${name} (${contact})`);
+            $('#exampleInputContactNo').val(contact);
             $('#searchModal').modal('hide');
-            {% comment %} $('#searchBtn').hide(); {% endcomment %}
         });
     });
     </script>
 
+    <!-- ===== VISIT HISTORY ===== -->
     <script>
     document.addEventListener("DOMContentLoaded", function () {
         const mrDropdown = document.getElementById("mrDropdown");
@@ -649,9 +748,9 @@
                         data.history.forEach(v => {
                             total += parseFloat(v.amount || 0);
                         });
-                        
+
                         const lastVisit = data.history[0];
-                        
+
                         visitCount.textContent = data.history.length;
                         lastVisitDate.textContent = lastVisit.date || '—';
                         lastVisitStatus.textContent = lastVisit.status || '—';
@@ -671,10 +770,10 @@
                                         </tr>
                                     </thead>
                                     <tbody>`;
-                        
+
                         data.history.forEach((v, i) => {
                             const rowClass = i === 0 ? 'table-success' : '';
-                            
+
                             html += `
                                 <tr class="${rowClass}">
                                     <td>${v.date}</td>
@@ -690,7 +789,7 @@
                                     </td>
                                 </tr>`;
                         });
-                        
+
                         html += `
                                 </tbody>
                                 <tfoot class="table-warning">
@@ -701,7 +800,7 @@
                                 </tfoot>
                             </table>
                         </div>`;
-                        
+
                         historyDiv.innerHTML = html;
                     } else {
                         historyDiv.innerHTML = `
@@ -736,9 +835,15 @@
             if (patientId) loadVisitHistory(patientId);
         });
         observer.observe(mrDropdown, { childList: true, subtree: true });
+
+        // ✅ Auto-load visit history if patient is pre-selected
+        if (mrDropdown.value) {
+            loadVisitHistory(mrDropdown.value);
+        }
     });
     </script>
 
+    <!-- ===== VITALS HISTORY ===== -->
     <script>
     document.addEventListener("DOMContentLoaded", function () {
         const mrDropdown = document.getElementById("mrDropdown");
@@ -800,9 +905,15 @@
             if (mrDropdown.value) loadVitalsHistory(mrDropdown.value);
         });
         observer.observe(mrDropdown, { childList: true, subtree: true });
+
+        // ✅ Auto-load vitals if patient is pre-selected
+        if (mrDropdown.value) {
+            loadVitalsHistory(mrDropdown.value);
+        }
     });
     </script>
 
+    <!-- ===== DATE DEFAULT ===== -->
     <script>
     document.addEventListener("DOMContentLoaded", function () {
         const dateInput = document.getElementById("exampleInputdate");
@@ -816,29 +927,48 @@
 
             dateInput.setAttribute("min", formattedToday);
 
+            // ✅ Only set default if no pre-filled date from pre-booking
             if (!dateInput.value) {
                 dateInput.value = formattedToday;
             }
         }
     });
-
-    $(document).ready(function() {
-    // Function to check revisit status
-    // ==================== CHECK APPOINTMENT STATUS ====================
-
-    // Debounce function to prevent excessive AJAX calls
-    function debounce(func, wait) {
-        var timeout;
-        return function() {
-            var context = this;
-            var args = arguments;
-            clearTimeout(timeout);
-            timeout = setTimeout(function() {
-                func.apply(context, args);
-            }, wait);
-        };
-    }
-});
     </script>
 
+    <!-- ===== TIME INPUT DEFAULT (optional pre-fill from pre-booking) ===== -->
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const timeInput = document.getElementById("exampleInputtime");
+        if (timeInput) {
+            // If no pre-filled time from pre-booking, set to current time rounded to nearest 15 min
+            if (!timeInput.value) {
+                const now = new Date();
+                const minutes = Math.ceil(now.getMinutes() / 15) * 15;
+                const hours = now.getHours();
+                const formattedHours = String(hours).padStart(2, '0');
+                const formattedMinutes = String(minutes === 60 ? 0 : minutes).padStart(2, '0');
+                const formattedTime = `${formattedHours}:${formattedMinutes}`;
+                timeInput.value = formattedTime;
+            }
+        }
+    });
+    </script>
+
+    <!-- ===== DOCUMENT READY INITIALIZATION ===== -->
+    <script>
+    $(document).ready(function() {
+        // If doctor is pre-selected from pre-booking, trigger fee update
+        var preDoctor = $('#pre_selected_doctor').val();
+        if (preDoctor) {
+            // Wait a moment for the doctor dropdown to load
+            setTimeout(function() {
+                var selectedStatus = $("#status").val();
+                if (selectedStatus && selectedStatus !== "Select" && selectedStatus !== "") {
+                    updateFeeField(selectedStatus);
+                }
+            }, 500);
+        }
+    });
+    </script>
+</div>
 {% endblock %}

@@ -114,7 +114,7 @@
                         <table class="table table-bordered table-striped" id="example1">
                             <thead>
                                 <tr>
-                                    <th>Sl.No</th>
+                                    {% comment %} <th>Sl.No</th> {% endcomment %}
                                     <th>Doctor Name</th>
                                     <th>MR No</th>
                                     <th>Date</th>
@@ -122,6 +122,7 @@
                                     <th>Patient Details</th>
                                     <th class="text-right">Reg.Fees</th>
                                     <th class="text-right">Cons.Fees</th>
+                                    <th>Action</th>
                                 </tr>
                             </thead>
 
@@ -129,7 +130,7 @@
                                 {% if reg_data %}
                                     {% for item in reg_data %}
                                     <tr>
-                                        <td>{{ forloop.counter }}</td>
+                                        {% comment %} <td>{{ forloop.counter }}</td> {% endcomment %}
                                         <td>{{ item.doctor_name }}</td>
                                         <td>{{ item.op_number }}</td>
                                         <td>{{ item.date }}</td>
@@ -137,6 +138,12 @@
                                         <td>{{ item.patient_details }}</td>
                                         <td class="text-right">{{ item.reg_fees|floatformat:2 }}</td>
                                         <td class="text-right">{{ item.cons_fees|floatformat:2 }}</td>
+                                        <td>
+                <a href="{% url 'doctorwise_op_registration_detail' %}?ids={{ item.id }}" 
+                   class="btn btn-sm btn-info">
+                    <i class="fas fa-eye"></i>
+                </a>
+            </td>
                                     </tr>
                                     {% endfor %}
                                 {% else %}
@@ -150,11 +157,11 @@
 
                             <tfoot>
                                 <tr class="font-weight-bold">
-                                    <td colspan="5">
-                                        Sub Total
+                                    <td colspan="4">
+                                        Total
                                     </td>
                                     <td class="text-center">
-                                        {{ total_count }}
+                                        {% comment %} Count: {{ total_count }} {% endcomment %}
                                     </td>
                                     <td class="text-right">
                                         {{ total_reg_fees|floatformat:2 }}
@@ -162,6 +169,7 @@
                                     <td class="text-right">
                                         {{ total_cons_fees|floatformat:2 }}
                                     </td>
+                                    <td></td>
                                 </tr>
                             </tfoot>
 

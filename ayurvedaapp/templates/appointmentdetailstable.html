@@ -85,6 +85,7 @@
                     <th>Branch</th>
                     <th>Doctor</th>
                     <th>Appointment Date</th>
+                    <th>Appointment Time</th>
                     <th>Status</th>
                     <th>Fee</th>
                     <th>Contact</th>
@@ -111,6 +112,7 @@
                       <span class="badge badge-info ml-2">Upcoming</span>
                       {% endif %}
                     </td>
+                    <td> {{ i.visit_start_time}}</td>
                     <td>
                       <span class="badge 
                         {% if i.status == 'Consultation' %}badge-info

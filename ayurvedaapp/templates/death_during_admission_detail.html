@@ -1,0 +1,230 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<style>
+  .detail-header {
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+  }
+  .detail-header h2 { margin: 0; font-weight: 600; }
+  .detail-header .sub-info { font-size: 14px; opacity: 0.9; margin-top: 5px; }
+  .detail-card { border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; margin-bottom: 15px; background: #f8f9fa; }
+  .detail-card .label { font-weight: 600; color: #555; font-size: 13px; }
+  .detail-card .value { font-weight: 500; font-size: 15px; }
+  .section-title { font-weight: 600; color: #3538dc; border-bottom: 2px solid #2987f1; padding-bottom: 5px; margin-bottom: 15px; }
+  .badge-registered { background: #28a745; color: white; padding: 5px 15px; border-radius: 20px; }
+  .badge-unregistered { background: #dc3545; color: white; padding: 5px 15px; border-radius: 20px; }
+  .photo-container { text-align: center; margin-bottom: 15px; }
+  .photo-container img { max-width: 150px; border-radius: 8px; border: 2px solid #ddd; }
+  .info-box { background: white; padding: 10px 15px; border-radius: 6px; border-left: 4px solid #0aa06e; margin-bottom: 8px; }
+  .info-box .label { font-size: 12px; color: #888; }
+  .info-box .value { font-size: 16px; font-weight: 500; }
+  .table-sm th { background: #e9ecef; }
+</style>
+
+<div class="content-wrapper">
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Death Record Details</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="{% url 'deaths_during_admission' %}">Deaths During Admission</a></li>
+            <li class="breadcrumb-item active">Details</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="content">
+    <div class="container-fluid">
+      <!-- Back Button -->
+      <a href="{% url 'deaths_during_admission' %}" class="btn btn-secondary btn-sm mb-3">
+        <i class="fas fa-arrow-left"></i> Back to List
+      </a>
+
+      <!-- Header -->
+      <div class="detail-header bg-primary">
+        <div class="row">
+          <div class="col-md-8">
+            <h2><i class="fas fa-user-injured"></i> {{ death_record.patient_name }}</h2>
+            <div class="sub-info">
+              <strong>IP Number:</strong> {{ death_record.ip_number }} |
+              <strong>Registration Type:</strong>
+              <span class="badge {% if death_record.registration_type == 'Registered Patient' %}badge-registered{% else %}badge-unregistered{% endif %}">
+                {{ death_record.registration_type }}
+              </span>
+            </div>
+          </div>
+          <div class="col-md-4 text-right">
+            <div style="font-size: 16px;">
+              <i class="fas fa-calendar"></i> {{ death_record.death_datetime }}
+            </div>
+            <div class="sub-info">Death Date & Time</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Photo (if available) -->
+      {% if death_record.photo_url %}
+      <div class="photo-container">
+        <img src="{{ death_record.photo_url }}" alt="Patient Photo" class="img-fluid">
+      </div>
+      {% endif %}
+
+      <!-- Patient Information -->
+      <div class="row">
+        <div class="col-md-6">
+          <div class="detail-card">
+            <h6 class="section-title">Patient Information</h6>
+            <div class="row">
+              <div class="col-6"><span class="label">Patient Name</span><div class="value">{{ death_record.patient_name }}</div></div>
+              <div class="col-6"><span class="label">IP Number</span><div class="value">{{ death_record.ip_number }}</div></div>
+            </div>
+            <div class="row mt-2">
+              <div class="col-6"><span class="label">Gender</span><div class="value">{{ death_record.gender }}</div></div>
+              <div class="col-6"><span class="label">Age</span><div class="value">{{ death_record.age }}</div></div>
+            </div>
+            <div class="row mt-2">
+              <div class="col-12"><span class="label">Address</span><div class="value">{{ death_record.address }}</div></div>
+            </div>
+            <div class="row mt-2">
+              <div class="col-6"><span class="label">Phone</span><div class="value">{{ death_record.phone }}</div></div>
+              <div class="col-6"><span class="label">Email</span><div class="value">{{ death_record.email }}</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="detail-card">
+            <h6 class="section-title">Death Details</h6>
+            <div class="row">
+              <div class="col-6"><span class="label">Admission Date/Time</span><div class="value">{{ death_record.admission_datetime }}</div></div>
+              <div class="col-6"><span class="label">Death Date/Time</span><div class="value">{{ death_record.death_datetime }}</div></div>
+            </div>
+            <div class="row mt-2">
+              <div class="col-6"><span class="label">Room/Ward</span><div class="value">{{ death_record.room }}</div></div>
+              <div class="col-6"><span class="label">Consulting Doctor</span><div class="value">{{ death_record.doctor }}</div></div>
+            </div>
+            <div class="row mt-2">
+              <div class="col-6"><span class="label">Registration Date</span><div class="value">{{ death_record.registration_date }}</div></div>
+              <div class="col-6"><span class="label">Visit Date</span><div class="value">{{ death_record.visit_date }}</div></div>
+            </div>
+            <div class="row mt-2">
+              <div class="col-6"><span class="label">Created By</span><div class="value">{{ death_record.created_by }}</div></div>
+              <div class="col-6"><span class="label">Created At</span><div class="value">{{ death_record.created_at }}</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Additional Details -->
+      <div class="card">
+        <div class="card-header bg-primary">
+          <h5 class="card-title"><i class="fas fa-info-circle"></i> Additional Details</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-4">
+              <div class="info-box">
+                <div class="label">Booking Number</div>
+                <div class="value">{{ death_record.additional_details.booking_number }}</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="info-box">
+                <div class="label">Citizen ID</div>
+                <div class="value">{{ death_record.additional_details.citizen_id }}</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="info-box">
+                <div class="label">UHID No</div>
+                <div class="value">{{ death_record.additional_details.uhid_no }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-4">
+              <div class="info-box">
+                <div class="label">Customer Type</div>
+                <div class="value">{{ death_record.additional_details.customer_type }}</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="info-box">
+                <div class="label">Insurance Reference</div>
+                <div class="value">{{ death_record.additional_details.insurance_ref }}</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="info-box">
+                <div class="label">Corporate Company</div>
+                <div class="value">{{ death_record.additional_details.corporate_company }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-4">
+              <div class="info-box">
+                <div class="label">Staff ID</div>
+                <div class="value">{{ death_record.additional_details.staff_id }}</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="info-box">
+                <div class="label">Privileged Customer ID</div>
+                <div class="value">{{ death_record.additional_details.privileged_customer_id }}</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="info-box">
+                <div class="label">Aadhaar Number</div>
+                <div class="value">{{ death_record.additional_details.aadhaar_number }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- IP Admission Details (if available) -->
+      {% if death_record.ip_room != 'N/A' %}
+      <div class="card">
+        <div class="card-header" style="background: #28a745; color: white;">
+          <h5 class="card-title"><i class="fas fa-hospital"></i> IP Admission Details</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-4">
+              <div class="info-box" style="border-left-color: #28a745;">
+                <div class="label">IP Room</div>
+                <div class="value">{{ death_record.ip_room }}</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="info-box" style="border-left-color: #28a745;">
+                <div class="label">IP Doctor</div>
+                <div class="value">{{ death_record.ip_doctor }}</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="info-box" style="border-left-color: #28a745;">
+                <div class="label">IP Bill Amount</div>
+                <div class="value">₹ {{ death_record.ip_bill_amount|floatformat:2 }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+  </section>
+</div>
+
+{% endblock %}

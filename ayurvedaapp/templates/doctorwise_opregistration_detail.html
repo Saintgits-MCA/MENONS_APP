@@ -1,0 +1,320 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    .detail-card {
+        background: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        padding: 25px;
+        margin-bottom: 20px;
+    }
+    .detail-header {
+        border-bottom: 2px solid #007bff;
+        padding-bottom: 15px;
+        margin-bottom: 20px;
+    }
+    .detail-header h3 {
+        color: #007bff;
+        font-weight: 700;
+    }
+    .info-row {
+        display: flex;
+        padding: 8px 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+    .info-label {
+        font-weight: 600;
+        width: 200px;
+        color: #495057;
+    }
+    .info-value {
+        flex: 1;
+        color: #212529;
+    }
+    .status-badge {
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-weight: 600;
+    }
+    .status-consultation {
+        background: #d4edda;
+        color: #155724;
+    }
+    .status-followup {
+        background: #cce5ff;
+        color: #004085;
+    }
+    .status-revisit {
+        background: #fff3cd;
+        color: #856404;
+    }
+    .status-default {
+        background: #e2e3e5;
+        color: #383d41;
+    }
+    .fee-box {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        padding: 15px;
+        text-align: center;
+    }
+    .fee-box .amount {
+        font-size: 24px;
+        font-weight: 700;
+        color: #28a745;
+    }
+    .fee-box .label {
+        font-size: 14px;
+        color: #6c757d;
+    }
+    @media print {
+        .no-print { display: none !important; }
+        .detail-card { box-shadow: none !important; border: 1px solid #ddd; }
+    }
+</style>
+
+<div class="content-wrapper">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>OP Registration Details</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'doctorwise_op_registration' %}">Doctor Wise OP Registration</a>
+                        </li>
+                        <li class="breadcrumb-item active">Details</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-user-md"></i> Registration Details
+                        </h3>
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- Hospital Info -->
+                        {% if hospital %}
+                        <div class="row mb-3">
+                            <div class="col-md-12 text-center">
+                                <h4>{{ hospital.Name }}</h4>
+                                <p>{{ hospital.Address }} | Phone: {{ hospital.Contact_no }}</p>
+                                <p>GST: {{ hospital.GST }} | Email: {{ hospital.Email }}</p>
+                            </div>
+                        </div>
+                        <hr>
+                        {% endif %}
+
+                        <!-- Status & Fees Summary -->
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="fee-box">
+                                    <div class="label">Registration Fee</div>
+                                    <div class="amount">₹ {{ reg_fee|floatformat:2 }}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="fee-box">
+                                    <div class="label">Consultation Fee</div>
+                                    <div class="amount">₹ {{ cons_fee|floatformat:2 }}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="fee-box">
+                                    <div class="label">Status</div>
+                                    <div>
+                                        <span class="status-badge 
+                                            {% if appointment.status|lower == 'consultation' %}status-consultation
+                                            {% elif appointment.status|lower == 'followup' %}status-followup
+                                            {% elif appointment.status|lower == 'revisit' %}status-revisit
+                                            {% else %}status-default{% endif %}">
+                                            {{ appointment.status|default:"N/A" }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Patient Information -->
+                        <h5 class="text-primary"><i class="fas fa-user"></i> Patient Information</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="info-row">
+                                    <span class="info-label">Patient Name:</span>
+                                    <span class="info-value">{{ patient.Patient_Name|default:"N/A" }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">MR Number:</span>
+                                    <span class="info-value">{{ patient.Medical_Record_Number|default:"N/A" }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Age:</span>
+                                    <span class="info-value">{{ patient.Age|default:"N/A" }} years</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-row">
+                                    <span class="info-label">Gender:</span>
+                                    <span class="info-value">{{ patient.Gender|default:"N/A" }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Contact:</span>
+                                    <span class="info-value">{{ patient.contactno|default:"N/A" }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Address:</span>
+                                    <span class="info-value">{{ patient.address|default:"N/A" }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Appointment Information -->
+                        <h5 class="text-success"><i class="fas fa-calendar-check"></i> Appointment Information</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="info-row">
+                                    <span class="info-label">Token Number:</span>
+                                    <span class="info-value"><strong>{{ appointment.Tokenno|default:"N/A" }}</strong></span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Appointment Date:</span>
+                                    <span class="info-value">{{ appointment.Appointment_date|date:"d/m/Y"|default:"N/A" }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Appointment Time:</span>
+                                    <span class="info-value">
+                                        {% if appointment.appointment_time %}
+                                            {{ appointment.appointment_time|time:"h:i A" }}
+                                        {% elif appointment.visit_start_time %}
+                                            {{ appointment.visit_start_time|time:"h:i A" }}
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-row">
+                                    <span class="info-label">Doctor:</span>
+                                    <span class="info-value">
+                                        <strong>
+                                            {% if doctor %}
+                                                Dr. {{ doctor.Staff_firstname }} {{ doctor.Staff_lastname }}
+                                            {% else %}
+                                                N/A
+                                            {% endif %}
+                                        </strong>
+                                    </span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Branch:</span>
+                                    <span class="info-value">{{ branch.Branch_Name|default:"N/A" }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Fee:</span>
+                                    <span class="info-value">₹ {{ appointment.Fee|default:"0" }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Remarks -->
+                        {% if appointment.Remark %}
+                        <div class="mt-3">
+                            <h6><strong>Remarks:</strong></h6>
+                            <p class="border p-2 bg-light">{{ appointment.Remark }}</p>
+                        </div>
+                        {% endif %}
+
+                        <!-- Previous Appointments History -->
+                        {% if previous_appointments %}
+                        <hr>
+                        <h5 class="text-warning"><i class="fas fa-history"></i> Previous Appointments</h5>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Date</th>
+                                        <th>Token</th>
+                                        <th>Doctor</th>
+                                        <th>Status</th>
+                                        <th>Branch</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for prev in previous_appointments %}
+                                    <tr>
+                                        <td>{{ forloop.counter }}</td>
+                                        <td>{{ prev.Appointment_date|date:"d/m/Y" }}</td>
+                                        <td>{{ prev.Tokenno }}</td>
+                                        <td>
+                                            {% if prev.Doctor_Name %}
+                                                Dr. {{ prev.Doctor_Name.Staff_firstname }} {{ prev.Doctor_Name.Staff_lastname }}
+                                            {% else %}
+                                                N/A
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge 
+                                                {% if prev.status|lower == 'consultation' %}badge-success
+                                                {% elif prev.status|lower == 'followup' %}badge-info
+                                                {% elif prev.status|lower == 'revisit' %}badge-warning
+                                                {% else %}badge-secondary{% endif %}">
+                                                {{ prev.status|default:"N/A" }}
+                                            </span>
+                                        </td>
+                                        <td>{{ prev.Branch.Branch_Name|default:"N/A" }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% endif %}
+
+                        <!-- Footer -->
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <p><strong>Registered On:</strong> 
+                                    {{ appointment.Current_Date|date:"d/m/Y"|default:"N/A" }}
+                                </p>
+                            </div>
+                            <div class="col-md-6 text-right">
+                                <p><strong>Record ID:</strong> #{{ appointment.id }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="mt-3">
+                            <a href="{% url 'doctorwise_op_registration' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Report
+                            </a>
+                            {% comment %} <button onclick="window.print()" class="btn btn-primary float-right">
+                                <i class="fas fa-print"></i> Print / PDF
+                            </button> {% endcomment %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

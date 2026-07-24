@@ -1,0 +1,453 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<style>
+    .patient-card {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+        border-left: 4px solid #007bff;
+    }
+    .patient-card .label {
+        font-weight: bold;
+        color: #555;
+        width: 120px;
+        display: inline-block;
+    }
+    .payment-summary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    .payment-summary .amount {
+        font-size: 28px;
+        font-weight: bold;
+    }
+    .payment-history {
+        max-height: 350px;
+        overflow-y: auto;
+    }
+    .search-result-item {
+        cursor: pointer;
+        transition: all 0.3s;
+        border: 1px solid #dee2e6;
+        margin-bottom: 5px;
+        padding: 10px;
+        border-radius: 4px;
+    }
+    .search-result-item:hover {
+        background: #e9ecef;
+        border-color: #007bff;
+    }
+    .no-results {
+        text-align: center;
+        padding: 40px;
+        color: #6c757d;
+    }
+    .no-results i {
+        font-size: 48px;
+        margin-bottom: 15px;
+    }
+    .badge-advance {
+        background: #28a745;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 4px;
+    }
+    .receipt-link {
+        color: #007bff;
+        text-decoration: none;
+    }
+    .receipt-link:hover {
+        text-decoration: underline;
+    }
+</style>
+
+<div class="content-wrapper">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>IP Advance Payment</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'ippatient' %}?menumanagement_id={{ idmngmnt }}">IP Admission</a>
+                        </li>
+                        <li class="breadcrumb-item active">Advance Payment</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="row">
+            <div class="col-md-12">
+                <!-- Search Section -->
+                <div class="card card-primary" id="searchSection" {% if admission %}style="display: none;"{% endif %}>
+                    <div class="card-header">
+                        <h3 class="card-title">Search IP Patient</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-10">
+                                <input type="text" id="searchIPPatient" class="form-control" 
+                                       placeholder="Search by IP Number, MR Number, Name or Phone">
+                            </div>
+                            <div class="col-md-2">
+                                <button type="button" id="searchIPBtn" class="btn btn-primary w-100">
+                                    <i class="fas fa-search"></i> Search
+                                </button>
+                            </div>
+                        </div>
+                        <div id="searchResults" class="mt-3"></div>
+                    </div>
+                </div>
+
+                <!-- Patient Details and Payment Form -->
+                {% if admission %}
+                <div id="paymentSection">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="card card-primary">
+                                <div class="card-header">
+                                    <h3 class="card-title">Make Advance Payment</h3>
+                                    <div class="card-tools">
+                                        <button type="button" class="btn btn-tool" onclick="window.location.reload();">
+                                            <i class="fas fa-sync-alt"></i> New Search
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Patient Information -->
+                                <div class="patient-card">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div><span class="label">IP Number:</span> <strong>{{ admission.ipnumber }}</strong></div>
+                                            <div><span class="label">MR Number:</span> <strong>{{ patient.Medical_Record_Number }}</strong></div>
+                                            <div><span class="label">Patient Name:</span> <strong>{{ patient.Patient_Name }}</strong></div>
+                                            <div><span class="label">Age/Gender:</span> {{ admission.age }} / {{ patient.Gender }}</div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div><span class="label">Contact:</span> {{ patient.contactno|default:"N/A" }}</div>
+                                            <div><span class="label">Admission Date:</span> {{ admission.Current_Date|date:"d-m-Y" }}</div>
+                                            <div><span class="label">Department:</span> {{ admission.department.Department_Name|default:"N/A" }}</div>
+                                            <div><span class="label">Doctor:</span> 
+                                                {% if admission.admitted_doctor %}
+                                                    {{ admission.admitted_doctor.Staff_firstname }} {{ admission.admitted_doctor.Staff_lastname }}
+                                                {% else %}
+                                                    N/A
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <form method="POST" id="advancePaymentForm">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="admission_id" value="{{ admission.id }}">
+                                    <div class="card-body">
+                                        <div class="form-row">
+                                            <div class="form-group col-md-6">
+                                                <label for="amount">Amount (₹) <span class="text-danger">*</span></label>
+                                                <input type="number" step="0.01" class="form-control" id="amount" 
+                                                       name="amount" placeholder="Enter amount" required min="0.01">
+                                            </div>
+                                            <div class="form-group col-md-6">
+                                                <label for="payment_method">Payment Method <span class="text-danger">*</span></label>
+                                                <select class="form-control" id="payment_method" name="payment_method" required>
+                                                    <option value="">Select Payment Method</option>
+                                                    {% for value, label in payment_methods %}
+                                                    <option value="{{ value }}">{{ label }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-row" id="transactionIdField" style="display: none;">
+                                            <div class="form-group col-md-6">
+                                                <label for="transaction_id">Transaction ID</label>
+                                                <input type="text" class="form-control" id="transaction_id" 
+                                                       name="transaction_id" placeholder="Enter transaction ID">
+                                            </div>
+                                        </div>
+
+                                        <div class="form-row">
+                                            <div class="form-group col-md-12">
+                                                <label for="notes">Notes</label>
+                                                <textarea class="form-control" id="notes" name="notes" rows="2" 
+                                                          placeholder="Any additional notes (optional)"></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer text-right">
+                                        <a href="{% url 'ippatient' %}?menumanagement_id={{ idmngmnt }}" class="btn btn-secondary">
+                                            <i class="fas fa-times"></i> Cancel
+                                        </a>
+                                        <button type="submit" class="btn btn-success">
+                                            <i class="fas fa-money-bill-wave"></i> Process Payment
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <!-- Payment Summary -->
+                            <div class="payment-summary">
+                                <h5><i class="fas fa-wallet"></i> Total Advance</h5>
+                                <div class="amount">₹ {{ total_advance|floatformat:2 }}</div>
+                                <small>Total advance amount paid by patient</small>
+                            </div>
+
+                            <!-- Payment History -->
+                            <div class="card">
+                                <div class="card-header bg-info">
+                                    <h3 class="card-title">
+                                        <i class="fas fa-history"></i> Payment History
+                                        <span class="badge badge-light float-right">{{ existing_payments|length }}</span>
+                                    </h3>
+                                </div>
+                                <div class="card-body payment-history">
+                                    {% if existing_payments %}
+                                    <table class="table table-sm table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Receipt</th>
+                                                <th>Amount</th>
+                                                <th>Method</th>
+                                                <th>Date</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for payment in existing_payments %}
+                                            <tr>
+                                                <td>
+                                                  <a href="{% url 'ip_advance_receipt' %}?paymentid={{payment.id}}&menumanagement_id={{ idmngmnt }}" 
+                                                       target="_blank" class="receipt-link">
+                                                        {{ payment.receipt_number|truncatechars:12 }}
+                                                    </a>
+                                                </td>
+                                                <td>₹ {{ payment.amount|floatformat:2 }}</td>
+                                                <td>{{ payment.get_payment_method_display }}</td>
+                                                <td>{{ payment.created_at|date:"d/m/y H:i" }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                        <tfoot>
+                                            <tr style="font-weight: bold; background: #e9ecef;">
+                                                <td>Total</td>
+                                                <td colspan="3">₹ {{ total_advance|floatformat:2 }}</td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                    {% else %}
+                                    <div class="text-center text-muted py-3">
+                                        <i class="fas fa-inbox fa-2x"></i>
+                                        <p>No advance payments recorded yet.</p>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Quick Actions -->
+                           <!-- Quick Actions -->
+<div class="card">
+    <div class="card-header bg-secondary">
+        <h3 class="card-title"><i class="fas fa-tasks"></i> Quick Actions</h3>
+    </div>
+    <div class="card-body">
+        <div class="btn-group-vertical w-100">
+            <!-- FIXED: Using query parameter instead of path parameter -->
+            <a href="{% url 'ip_advance_payment_history' %}?admission_id={{ admission.id }}&menumanagement_id={{ idmngmnt }}" 
+               class="btn btn-outline-info mb-2">
+                <i class="fas fa-chart-bar"></i> View Full History
+            </a>
+            <a href="{% url 'ippatient' %}?menumanagement_id={{ idmngmnt }}" 
+               class="btn btn-outline-primary mb-2">
+                <i class="fas fa-arrow-left"></i> Back to Admissions
+            </a>
+            <button onclick="window.print()" class="btn btn-outline-secondary">
+                <i class="fas fa-print"></i> Print Summary
+            </button>
+        </div>
+    </div>
+</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Message Modal -->
+<div class="modal fade" id="messageModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header" id="messageModalHeader">
+                <h5 class="modal-title" id="messageModalLabel">Notification</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="messageBody"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    // Show/hide transaction ID field
+    $('#payment_method').on('change', function() {
+        var method = $(this).val();
+        if (['card', 'bank_transfer', 'upi'].includes(method)) {
+            $('#transactionIdField').show();
+        } else {
+            $('#transactionIdField').hide();
+            $('#transaction_id').val('');
+        }
+    });
+
+    // Search patient
+    $('#searchIPBtn').on('click', function() {
+        var searchTerm = $('#searchIPPatient').val().trim();
+        if (!searchTerm) {
+            showMessageModal('Please enter a search term.', 'error');
+            return;
+        }
+
+        $('#searchResults').html('<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Searching...</div>');
+
+        $.ajax({
+            url: "{% url 'get_ip_admission_details' %}",
+            method: 'GET',
+            data: { search: searchTerm },
+            success: function(response) {
+                if (response.success) {
+                    displaySearchResults(response.data);
+                } else {
+                    $('#searchResults').html(`
+                        <div class="no-results">
+                            <i class="fas fa-user-slash"></i>
+                            <h5>No IP admissions found</h5>
+                            <p class="text-muted">Try searching with IP Number, MR Number, Name or Phone</p>
+                        </div>
+                    `);
+                }
+            },
+            error: function(xhr) {
+                var error = xhr.responseJSON && xhr.responseJSON.error ? xhr.responseJSON.error : 'Error searching patients';
+                $('#searchResults').html(`
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle"></i> ${error}
+                    </div>
+                `);
+            }
+        });
+    });
+
+    // Enter key for search
+    $('#searchIPPatient').on('keypress', function(e) {
+        if (e.which === 13) {
+            $('#searchIPBtn').click();
+        }
+    });
+
+    // Display search results
+    function displaySearchResults(results) {
+        var html = '<div class="list-group">';
+        results.forEach(function(admission) {
+            var totalAdvance = admission.total_advance || 0;
+            html += `
+                <div class="search-result-item" onclick="selectAdmission(${admission.id})">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <strong>IP: ${admission.ip_number}</strong><br>
+                            <small>MR: ${admission.mr_number}</small>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>${admission.patient_name}</strong><br>
+                            <small>${admission.age} yrs | ${admission.gender}</small>
+                        </div>
+                        <div class="col-md-3">
+                            <i class="fas fa-phone"></i> ${admission.contact}<br>
+                            <i class="fas fa-calendar"></i> ${admission.admission_date}
+                        </div>
+                        <div class="col-md-3 text-right">
+                            <span class="badge-advance">
+                                Advance: ₹ ${totalAdvance.toFixed(2)}
+                            </span>
+                            <br>
+                            <small class="text-muted">${admission.department}</small>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+        $('#searchResults').html(html);
+    }
+
+    // Select admission and redirect
+    window.selectAdmission = function(admissionId) {
+        var url = "{% url 'ip_advance_payment' %}?admission_id=" + admissionId + 
+                  "&menumanagement_id={{ idmngmnt }}";
+        window.location.href = url;
+    };
+
+    // Form validation
+    $('#advancePaymentForm').on('submit', function(e) {
+        var amount = parseFloat($('#amount').val());
+        if (isNaN(amount) || amount <= 0) {
+            e.preventDefault();
+            showMessageModal('Please enter a valid amount greater than 0.', 'error');
+            return false;
+        }
+        
+        var method = $('#payment_method').val();
+        if (!method) {
+            e.preventDefault();
+            showMessageModal('Please select a payment method.', 'error');
+            return false;
+        }
+        
+        return true;
+    });
+
+    // Show message modal
+    window.showMessageModal = function(message, type) {
+        var title = 'Notification';
+        var bgClass = 'bg-secondary';
+        if (type === 'success') {
+            title = 'Success';
+            bgClass = 'bg-success text-white';
+        } else if (type === 'error') {
+            title = 'Error';
+            bgClass = 'bg-danger text-white';
+        }
+        $('#messageModalLabel').text(title);
+        $('#messageBody').html(message);
+        $('#messageModalHeader').className = 'modal-header ' + bgClass;
+        $('#messageModal').modal('show');
+    };
+
+    // Handle messages from Django
+    {% if messages %}
+        {% for message in messages %}
+            showMessageModal("{{ message|escapejs }}", "{{ message.tags }}");
+        {% endfor %}
+    {% endif %}
+});
+</script>
+{% endblock %}

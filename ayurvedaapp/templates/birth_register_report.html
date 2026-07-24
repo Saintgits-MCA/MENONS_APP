@@ -100,7 +100,7 @@
                                     <td>{{ record.gender }}</td>
                                     <td>{{ record.area }}</td>
                                     <td class="text-center">
-    <a href="{% url 'birth_register_detail' record.id %}" 
+    <a href="{% url 'birth_register_detail' %}?ids={{ record.id}}" 
        class="btn btn-sm btn-info" title="View Details">
         <i class="fas fa-eye"></i>
     </a>
@@ -108,7 +108,7 @@
                                 </tr>
                                 {% empty %}
                                 <tr>
-                                    <td colspan="9" class="text-center">No birth records found</td>
+                                    <td colspan="11" class="text-center">No birth records found</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>

@@ -127,7 +127,7 @@
                                     <td class="text-right text-success">{{ invoice.refund_amount|floatformat:2 }}</td>
                                     <td>{{ invoice.cancelled_by }}</td>
                                      <td class="text-center">
-    <a href="{% url 'cancelled_bills_detail' invoice.id %}" 
+    <a href="{% url 'cancelled_bills_detail'  %}?ids={{invoice.id}}" 
        class="btn btn-sm btn-info" title="View Details">
         <i class="fas fa-eye"></i>
     </a>

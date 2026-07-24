@@ -141,7 +141,7 @@
             <table class="table table-bordered table-striped" id="example1">
               <thead>
                 <tr>
-                  <th>Sl.No</th>
+                  {% comment %} <th>Sl.No</th> {% endcomment %}
                   <th>Bill Number</th>
                   <th>Bill Type</th>
                   <th>Patient/Party Name</th>
@@ -149,6 +149,7 @@
                   <th class="text-right">Gross</th>
                   <th class="text-right">Cash</th>
                   <th class="text-right">Credit</th>
+                  <th>Action</th>
                 </tr>
               </thead>
 
@@ -156,7 +157,7 @@
                 {% if bill_data %}
                   {% for bill in bill_data %}
                   <tr>
-                    <td>{{ forloop.counter0 }}</td>
+                    {% comment %} <td>{{ forloop.counter }}</td> {% endcomment %}
                     <td>{{ bill.bill_number }}</td>
                     <td>
                       <span class="badge 
@@ -174,6 +175,36 @@
                     <td class="text-right">{{ bill.gross|floatformat:2 }}</td>
                     <td class="text-right">{{ bill.cash|floatformat:2 }}</td>
                     <td class="text-right">{{ bill.credit|floatformat:2 }}</td>
+                    <td> {% if bill.bill_type == 'APPOINTMENT' %}
+        <a href="{% url 'appointmentinvoice' %}?invoice_id={{ bill.bill_id }}" 
+           class="btn btn-primary btn-sm" title="View Appointment Invoice">
+            <i class="fas fa-eye"></i>
+        </a>
+    {% elif bill.bill_type == 'PHARMACY' %}
+        <a href="{% url 'newtaxinvview' %}?ids={{ bill.bill_id }}" 
+           class="btn btn-success btn-sm" title="View Pharmacy Invoice">
+            <i class="fas fa-eye"></i>
+        </a>
+    {% elif bill.bill_type == 'LAB BILL' %}
+        <a href="{% url 'lab_invoice_detail' %}?invoice_id={{ bill.bill_id }}" 
+           class="btn btn-info btn-sm" title="View Lab Invoice">
+            <i class="fas fa-eye"></i>
+        </a>
+    {% elif bill.bill_type == 'PURCHASE' %}
+        <a href="{% url 'purchase_invoice_detail' %}?ids={{ bill.bill_id }}" 
+           class="btn btn-warning btn-sm" title="View Purchase Invoice">
+            <i class="fas fa-eye"></i>
+        </a>
+    {% elif bill.bill_type == 'TREATMENT' %}
+        <a href="{% url 'treatmentinvprint' %}?ids={{ bill.bill_id }}" 
+           class="btn btn-danger btn-sm" title="View Treatment Invoice">
+            <i class="fas fa-eye"></i>
+        </a>
+    {% else %}
+        <a href="#" class="btn btn-secondary btn-sm" title="View Details">
+            <i class="fas fa-eye"></i>
+        </a>
+    {% endif %}</td>
                   </tr>
                   {% endfor %}
                 {% else %}
@@ -187,10 +218,11 @@
 
               <tfoot class="font-weight-bold bg-light">
                 <tr>
-                  <td colspan="5" class="text-right">TOTAL</td>
+                  <td colspan="4" class="text-right">TOTAL</td>
                   <td class="text-right">{{ total_gross|floatformat:2 }}</td>
                   <td class="text-right">{{ total_cash|floatformat:2 }}</td>
                   <td class="text-right">{{ total_credit|floatformat:2 }}</td>
+                  <td></td>
                 </tr>
               </tfoot>
             </table>

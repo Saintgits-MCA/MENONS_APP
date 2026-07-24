@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<style>
+  .detail-header {
+    background: linear-gradient(135deg, #00796b, #004d40);
+    color: white;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+  }
+  .detail-header h2 { margin: 0; font-weight: 600; }
+  .detail-header .sub-info { font-size: 14px; opacity: 0.9; margin-top: 5px; }
+  .detail-card { border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; margin-bottom: 15px; background: #f8f9fa; }
+  .detail-card .label { font-weight: 600; color: #555; font-size: 13px; }
+  .detail-card .value { font-weight: 500; font-size: 15px; }
+  .badge-admitted { background: #28a745; color: white; padding: 5px 12px; border-radius: 20px; }
+  .badge-discharged { background: #dc3545; color: white; padding: 5px 12px; border-radius: 20px; }
+</style>
+
+<div class="content-wrapper">
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6"><h1>Occupancy Details</h1></div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="{% url 'occupancy_list' %}">Occupancy List</a></li>
+            <li class="breadcrumb-item active">Details</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="content">
+    <div class="container-fluid">
+      <a href="{% url 'occupancy_list' %}" class="btn btn-secondary btn-sm mb-3">
+        <i class="fas fa-arrow-left"></i> Back to List
+      </a>
+
+      <!-- Header -->
+      <div class="detail-header">
+        <div class="row">
+          <div class="col-md-8">
+            <h2><i class="fas fa-bed"></i> {{ occupancy.patient_name }}</h2>
+            <div class="sub-info">
+              <strong>IP Number:</strong> {{ occupancy.ip_number }} |
+              <strong>Room:</strong> {{ occupancy.room }} |
+              <strong>Status:</strong>
+              <span class="badge {% if occupancy.status == 'Admitted' %}badge-admitted{% else %}badge-discharged{% endif %}">
+                {{ occupancy.status }}
+              </span>
+            </div>
+          </div>
+          <div class="col-md-4 text-right">
+            <div style="font-size: 24px; font-weight: 700;">₹ {{ occupancy.bill_amount|floatformat:2 }}</div>
+            <div class="sub-info">Total Bill Amount</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Patient Details -->
+      <div class="row">
+        <div class="col-md-6">
+          <div class="detail-card">
+            <h6 class="font-weight-bold text-primary">Patient Information</h6>
+            <hr>
+            <div class="row">
+              <div class="col-6"><span class="label">Patient Name</span><div class="value">{{ occupancy.patient_name }}</div></div>
+              <div class="col-6"><span class="label">OP Number</span><div class="value">{{ occupancy.op_number }}</div></div>
+            </div>
+            <div class="row mt-2">
+              <div class="col-6"><span class="label">Gender</span><div class="value">{{ occupancy.gender }}</div></div>
+              <div class="col-6"><span class="label">Age</span><div class="value">{{ occupancy.age }}</div></div>
+            </div>
+            <div class="row mt-2">
+              <div class="col-12"><span class="label">Address</span><div class="value">{{ occupancy.address }}</div></div>
+            </div>
+            <div class="row mt-2">
+              <div class="col-6"><span class="label">Phone</span><div class="value">{{ occupancy.phone }}</div></div>
+              <div class="col-6"><span class="label">Email</span><div class="value">{{ occupancy.email }}</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="detail-card">
+            <h6 class="font-weight-bold text-primary">Admission Details</h6>
+            <hr>
+            <div class="row">
+              <div class="col-6"><span class="label">Admission Date</span><div class="value">{{ occupancy.date|date:"d/m/Y" }}</div></div>
+              <div class="col-6"><span class="label">Admission Time</span><div class="value">{{ occupancy.time }}</div></div>
+            </div>
+            <div class="row mt-2">
+              <div class="col-6"><span class="label">Doctor</span><div class="value">{{ occupancy.doctor }}</div></div>
+              <div class="col-6"><span class="label">Room/Ward</span><div class="value">{{ occupancy.room }}</div></div>
+            </div>
+            <div class="row mt-2">
+              <div class="col-6"><span class="label">Accommodation Type</span><div class="value">{{ occupancy.accommodation_type }}</div></div>
+              <div class="col-6"><span class="label">Floor</span><div class="value">{{ occupancy.floor_number }}</div></div>
+            </div>
+            <div class="row mt-2">
+              <div class="col-12"><span class="label">Reason for Admission</span><div class="value">{{ occupancy.reason_for_admission }}</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Discharge Details (if discharged) -->
+      {% if occupancy.status == 'Discharged' %}
+      <div class="row">
+        <div class="col-md-12">
+          <div class="detail-card" style="border-left: 4px solid #dc3545;">
+            <h6 class="font-weight-bold text-danger">Discharge Details</h6>
+            <hr>
+            <div class="row">
+              <div class="col-6"><span class="label">Discharge Date</span><div class="value">{{ occupancy.discharge_date|date:"d/m/Y" }}</div></div>
+            </div>
+            <div class="row mt-2">
+              <div class="col-12"><span class="label">Treatment Summary</span><div class="value">{{ occupancy.discharge_summary }}</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Treatments -->
+      <div class="card">
+        <div class="card-header"><h5 class="card-title"><i class="fas fa-notes-medical"></i> Treatment History</h5></div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-bordered table-sm">
+              <thead><tr><th>Date</th><th>Treatment</th><th>Count</th><th>Handled By</th><th>Given By</th></tr></thead>
+              <tbody>
+                {% for treatment in treatment_history %}
+                <tr>
+                  <td>{{ treatment.date|date:"d/m/Y" }}</td>
+                  <td>{{ treatment.treatment_name }}</td>
+                  <td>{{ treatment.count }}</td>
+                  <td>{{ treatment.handled_by }}</td>
+                  <td>{{ treatment.given_by }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center text-muted">No treatments found</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Medicines -->
+      <div class="card">
+        <div class="card-header"><h5 class="card-title"><i class="fas fa-pills"></i> Medicine History</h5></div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-bordered table-sm">
+              <thead><tr><th>Date</th><th>Medicine</th><th>Count</th><th>Dosage</th><th>Time</th></tr></thead>
+              <tbody>
+                {% for medicine in medicine_history %}
+                <tr>
+                  <td>{{ medicine.date|date:"d/m/Y" }}</td>
+                  <td>{{ medicine.medicine_name }}</td>
+                  <td>{{ medicine.count }}</td>
+                  <td>{{ medicine.dosage }}</td>
+                  <td>{{ medicine.time }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center text-muted">No medicines found</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+</div>
+
+{% endblock %}

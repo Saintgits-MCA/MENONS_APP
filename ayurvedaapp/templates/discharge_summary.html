@@ -177,8 +177,8 @@
     }
     
     .medication-table thead th {
-        background: #f0f0f0;
-        color: #000000;
+        {% comment %} background: #f0f0f0; {% endcomment %}
+        {% comment %} color: #000000; {% endcomment %}
         padding: 5px 8px;
         text-align: left;
         font-weight: 700;
@@ -300,14 +300,14 @@
 
         /* Table colors */
         .medication-table thead th {
-            background: #f0f0f0 !important;
-            color: #000000 !important;
+            {% comment %} background: #f0f0f0 !important;
+            color: #000000 !important; {% endcomment %}
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
         }
 
         .emergency-care {
-            background: #f8f9fa !important;
+            {% comment %} background: #f8f9fa !important; {% endcomment %}
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
         }
@@ -406,7 +406,7 @@
         }
         
         .hospital-header .hospital-info h2 {
-            font-size: 15px;
+            font-size: 18px;
         }
         
         .document-title {
@@ -451,7 +451,7 @@
                 <p>Phone: {{ hospital.Contact_no }} | Email: {{ hospital.Email }} | GST: {{ hospital.GST }}</p>
                 {% endfor %}
             </div>
-            <div class="emergency-box">24/7 Emergency</div>
+            {% comment %} <div class="emergency-box">24/7 Emergency</div> {% endcomment %}
         </div>
 
         <!-- ===== DOCUMENT TITLE ===== -->
@@ -535,7 +535,7 @@
         <div class="medical-section">
             <div class="section-label">PHYSICAL EXAMINATION (O/E):</div>
             <div class="section-content">
-                {{ discharge_record.condition_on_discharge|default:"No physical examination recorded." }}
+                {{ discharge_record.physical_examinations|default:"No physical examination recorded." }}
             </div>
         </div>
 
@@ -592,7 +592,7 @@
         {% if discharge_record.condition_on_discharge %}
         <div class="medical-section">
             <div class="section-label">DISCHARGE SUMMARY NOTES:</div>
-            <div class="section-content">{{ discharge_record.condition_on_discharge }}</div>
+            <div class="section-content">{{ discharge_record.discharge_summary_notes|default:'-' }}</div>
         </div>
         {% endif %}
 
@@ -620,6 +620,12 @@
         // Uncomment below to auto-print:
         // window.print(); 
     };
+    $(document).ready(function() {
+        // Force full width always
+        $('.content-wrapper').css('margin-left', '0');
+        $('.main-header .navbar').css('margin-left', '0');
+        $('body').addClass('sidebar-collapse');
+    });
 </script>
 
 {% endblock %}

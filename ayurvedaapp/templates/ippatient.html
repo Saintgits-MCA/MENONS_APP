@@ -104,29 +104,49 @@
                     <label>Contact No</label>
                     <input type="text" class="form-control" id="contctno" name="contactnumber" placeholder="Enter Contact No">
                   </div>
-                  <div class="form-group col-md-6">
-                    <label>Address</label>
-                    <textarea class="form-control" name="address" rows="1" placeholder="Enter Address"></textarea>
-                  </div>
-                </div>
-            
-                <div class="form-row">
                   <div class="form-group col-md-4">
                     <label>Blood Group</label>
                     <input type="text" class="form-control" name="bloodgroup" placeholder="e.g. A+">
                   </div>
+                  
+                </div>
+            
+                <div class="form-row">
+                  <div class="form-group col-md-4">
+                    <label>Address</label>
+                    <textarea class="form-control" name="address" id="address"rows="4" placeholder="Enter Address"></textarea>
+                  </div>
                   <div class="form-group col-md-8">
                     <label>Diagnosis</label>
-                    <textarea class="form-control" name="diagnosis" rows="1" placeholder="Diagnosis details"></textarea>
+                    <textarea class="form-control" name="diagnosis" rows="4" placeholder="Diagnosis details"></textarea>
                   </div>
                 </div>
             
-
+                <!-- Add Department and Doctor Selection -->
                 <div class="form-row">
                   <div class="form-group col-md-4">
-                    <label for="booking_start_date">Start Date</label>
+                    <label for="department">Department</label>
+                    <select class="form-control" id="department" name="department">
+                      <option value="">Select Department</option>
+                      {% for dept in departments %}
+                        <option value="{{ dept.id }}">{{ dept.Department_Name }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                  <div class="form-group col-md-4">
+                    <label for="admitted_doctor">Admitted Doctor</label>
+                    <select class="form-control" id="admitted_doctor" name="admitted_doctor">
+                      <option value="">Select Doctor</option>
+                    </select>
+                  </div>
+                  <div class="form-group col-md-4">
+                    <label for="booking_start_date">Admission Date</label>
                     <input type="date" class="form-control" id="booking_start_date" name="booking_start_date" required>
                   </div>
+                </div>
+
+                <div class="form-row">
+                  
                   <div class="form-group col-md-4 d-none">
                     <label for="booking_end_date">End Date</label>
                     <input type="date" class="form-control" id="booking_end_date" name="booking_end_date">
@@ -360,8 +380,71 @@ function showMessageModal(message, type) {
     $('#messageModal').modal('show');
 }
 </script>
+
 <script>
-  document.getElementById('patientadmission').addEventListener('submit', function (e) {
+// Set default start date to current date
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('booking_start_date').value = today;
+});
+
+// Department and Doctor selection with AJAX
+$(document).ready(function() {
+    // When department changes, fetch doctors
+    $('#department').on('change', function() {
+        var departmentId = $(this).val();
+        var doctorSelect = $('#admitted_doctor');
+        doctorSelect.empty().append('<option value="">Select Doctor</option>');
+        
+        if (departmentId) {
+            // Show loading state
+            doctorSelect.append('<option value="">Loading doctors...</option>');
+            
+            $.ajax({
+                url: "{% url 'get_staff_by_department_ajax' %}",
+                data: {
+                    'department_id': departmentId
+                },
+                dataType: 'json',
+                success: function(data) {
+                    doctorSelect.empty().append('<option value="">Select Doctor</option>');
+                    
+                    // Check if data is an array (your view returns array directly)
+                    if (Array.isArray(data) && data.length > 0) {
+                        $.each(data, function(index, staff_list) {
+                            doctorSelect.append(
+                                $('<option>', {
+                                    value: staff_list.docid,
+                                    text: staff_list.name
+                                })
+                            );
+                        });
+                    } else if (data.doctors && data.doctors.length > 0) {
+                        // Handle case where response has 'doctors' property
+                        $.each(data.doctors, function(index, staff_list) {
+                            doctorSelect.append(
+                                $('<option>', {
+                                    value: staff_list.docid,
+                                    text: staff_list.name
+                                })
+                            );
+                        });
+                    } else {
+                        doctorSelect.append('<option value="">No doctors available in this department</option>');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error loading doctors:', error);
+                    console.error('Response:', xhr.responseText);
+                    doctorSelect.empty().append('<option value="">Error loading doctors</option>');
+                }
+            });
+        }
+    });
+});
+
+// Modified validation for doctor field
+document.getElementById('patientadmission').addEventListener('submit', function (e) {
     let isValid = true;
     let errorMsg = [];
 
@@ -373,132 +456,130 @@ function showMessageModal(message, type) {
     const contact = document.getElementById('contctno').value.trim();
     const address = document.querySelector('textarea[name="address"]').value.trim();
     const gender = document.querySelector('input[name="gender"]:checked');
+    const department = document.getElementById('department').value;
+    const doctor = document.getElementById('admitted_doctor').value;
 
     if (!ptid) {
-      isValid = false;
-      errorMsg.push("Please select a valid patient from search results.");
+        isValid = false;
+        errorMsg.push("Please select a valid patient from search results.");
     }
     if (!name) {
-      isValid = false;
-      errorMsg.push("Patient name is required.");
+        isValid = false;
+        errorMsg.push("Patient name is required.");
     }
     if (!age || isNaN(age) || parseInt(age) < 0) {
-      isValid = false;
-      errorMsg.push("Enter a valid age.");
+        isValid = false;
+        errorMsg.push("Enter a valid age.");
     }
     if (!gender) {
-      isValid = false;
-      errorMsg.push("Please select a gender.");
+        isValid = false;
+        errorMsg.push("Please select a gender.");
     }
     if (!contact || contact.length < 10 || isNaN(contact)) {
-      isValid = false;
-      errorMsg.push("Enter a valid 10-digit contact number.");
+        isValid = false;
+        errorMsg.push("Enter a valid 10-digit contact number.");
     }
     if (!address) {
-      isValid = false;
-      errorMsg.push("Address is required.");
+        isValid = false;
+        errorMsg.push("Address is required.");
+    }
+    if (!department) {
+        isValid = false;
+        errorMsg.push("Please select a department.");
+    }
+    if (!doctor) {
+        isValid = false;
+        errorMsg.push("Please select an admitting doctor.");
     }
 
     const bookingStart = document.getElementById('booking_start_date').value.trim();
-    {% comment %} const bookingEnd = document.getElementById('booking_end_date').value.trim(); {% endcomment %}
     if (!bookingStart) {
-      isValid = false;
-      errorMsg.push("Please select a Start Date.");
-    }
-    if (!bookingEnd) {
-      isValid = false;
-      errorMsg.push("Please select an End Date.");
-    }
-    if (bookingStart && bookingEnd && new Date(bookingStart) > new Date(bookingEnd)) {
-      isValid = false;
-      errorMsg.push("Start Date should not be after End Date.");
+        isValid = false;
+        errorMsg.push("Please select a Start Date.");
     }
 
     const accommodation = document.querySelector('input[name="accommodation"]:checked');
     if (!accommodation) {
-      isValid = false;
-      errorMsg.push("Please select an accommodation type.");
+        isValid = false;
+        errorMsg.push("Please select an accommodation type.");
     } else if (accommodation.value === "Room") {
-      if (!document.getElementById('roomtype').value) {
-        isValid = false;
-        errorMsg.push("Please select a room type.");
-      }
-      if (!document.getElementById('roommnumber').value) {
-        isValid = false;
-        errorMsg.push("Please select a room.");
-      }
+        if (!document.getElementById('roomtype').value) {
+            isValid = false;
+            errorMsg.push("Please select a room type.");
+        }
+        if (!document.getElementById('roommnumber').value) {
+            isValid = false;
+            errorMsg.push("Please select a room.");
+        }
     } else if (accommodation.value === "Ward" && !document.getElementById('wardbedno').value) {
-      isValid = false;
-      errorMsg.push("Please select a bed.");
+        isValid = false;
+        errorMsg.push("Please select a bed.");
     }
 
     // If package is selected, validate package-related fields
     const packageYes = document.getElementById('needPackageYes').checked;
-  if (packageYes) {
-  const packageSelect = document.querySelector('select[name="pckid"]');
-  const selectedPackage = packageSelect.value;
-  const fromDate = document.getElementById('fromDate').value.trim();
-  const toDate = document.getElementById('toDate').value.trim();
-  const packageRate = parseFloat(document.getElementById('selectedDateTotal').value.trim());
-  const discount = parseFloat(document.getElementById('discount').value.trim()) || 0;
-  const totalPay = parseFloat(document.getElementById('payingAmount').value.trim()) || 0;
-  const advanceStr = document.getElementById('advanceamount').value.trim();
-  const advance = parseFloat(advanceStr);
-  // Check if package is selected
-  if (!selectedPackage || selectedPackage === "--select--") {
-    isValid = false;
-    errorMsg.push("Please select a package before selecting From and To dates.");
-  }
-  // Validate fields if package selected
-  if (selectedPackage && selectedPackage !== "--select--") {
-    if (!fromDate || !toDate) {
-      isValid = false;
-      errorMsg.push("Both From Date and To Date are required.");
-    }
-    if (isNaN(packageRate) || packageRate <= 0) {
-      isValid = false;
-      errorMsg.push("Enter a valid package rate.");
-    }
-    if (new Date(fromDate) > new Date(toDate)) {
-      isValid = false;
-      errorMsg.push("From Date should not be after To Date.");
-    }
-
-    if (discount > packageRate) {
-      isValid = false;
-      errorMsg.push("Discount cannot be greater than the package rate.");
-    }
-
-    // Advance is required
-    if (!advanceStr) {
-      isValid = false;
-      errorMsg.push("Advance amount is required.");
-    } else if (isNaN(advance) || advance < 0) {
-      isValid = false;
-      errorMsg.push("Enter a valid advance amount.");
-    } else if (advance > totalPay) {
-      isValid = false;
-      errorMsg.push("Advance amount cannot be greater than the total payable amount.");
-    }
-  }
-// If bystander is selected, validate those fields too
-      if (document.getElementById('bystanderYes').checked) {
-        const days = document.getElementById('bystanderDays').value;
-        const rate = document.getElementById('bystanderRate').value;
-        if (!days || isNaN(days) || days <= 0) {
-          isValid = false;
-          errorMsg.push("Enter valid number of bystander days.");
+    if (packageYes) {
+        const packageSelect = document.querySelector('select[name="pckid"]');
+        const selectedPackage = packageSelect.value;
+        const fromDate = document.getElementById('fromDate').value.trim();
+        const toDate = document.getElementById('toDate').value.trim();
+        const packageRate = parseFloat(document.getElementById('selectedDateTotal').value.trim());
+        const discount = parseFloat(document.getElementById('discount').value.trim()) || 0;
+        const totalPay = parseFloat(document.getElementById('payingAmount').value.trim()) || 0;
+        const advanceStr = document.getElementById('advanceamount').value.trim();
+        const advance = parseFloat(advanceStr);
+        
+        if (!selectedPackage || selectedPackage === "--select--") {
+            isValid = false;
+            errorMsg.push("Please select a package.");
         }
-        if (!rate || isNaN(rate) || rate <= 0) {
-          isValid = false;
-          errorMsg.push("Enter a valid bystander rate.");
+        if (selectedPackage && selectedPackage !== "--select--") {
+            if (!fromDate || !toDate) {
+                isValid = false;
+                errorMsg.push("Both From Date and To Date are required.");
+            }
+            if (isNaN(packageRate) || packageRate <= 0) {
+                isValid = false;
+                errorMsg.push("Enter a valid package rate.");
+            }
+            if (new Date(fromDate) > new Date(toDate)) {
+                isValid = false;
+                errorMsg.push("From Date should not be after To Date.");
+            }
+            if (discount > packageRate) {
+                isValid = false;
+                errorMsg.push("Discount cannot be greater than the package rate.");
+            }
+            if (!advanceStr) {
+                isValid = false;
+                errorMsg.push("Advance amount is required.");
+            } else if (isNaN(advance) || advance < 0) {
+                isValid = false;
+                errorMsg.push("Enter a valid advance amount.");
+            } else if (advance > totalPay) {
+                isValid = false;
+                errorMsg.push("Advance amount cannot be greater than the total payable amount.");
+            }
         }
-      }
+        
+        if (document.getElementById('bystanderYes').checked) {
+            const days = document.getElementById('bystanderDays').value;
+            const rate = document.getElementById('bystanderRate').value;
+            if (!days || isNaN(days) || days <= 0) {
+                isValid = false;
+                errorMsg.push("Enter valid number of bystander days.");
+            }
+            if (!rate || isNaN(rate) || rate <= 0) {
+                isValid = false;
+                errorMsg.push("Enter a valid bystander rate.");
+            }
+        }
     }
+    
     if (!isValid) {
-      e.preventDefault();
-      showMessageModal(`<ul>${errorMsg.map(msg => `<li>${msg}</li>`).join('')}</ul>`, 'validation');
-      return;
+        e.preventDefault();
+        showMessageModal(`<ul>${errorMsg.map(msg => `<li>${msg}</li>`).join('')}</ul>`, 'validation');
+        return;
     }
 
     // Submit via AJAX to prevent full page reload on error
@@ -507,36 +588,34 @@ function showMessageModal(message, type) {
     const formData = new FormData(form);
 
     fetch(form.action, {
-      method: 'POST',
-      headers: {
-        'X-Requested-With': 'XMLHttpRequest',
-      },
-      body: formData,
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: formData,
     })
     .then(response => response.json())
     .then(data => {
-      if (data.success) {
-        showMessageModal("Patient admission recorded successfully!", 'success');
-        var redirectUrl = data.redirect;
-        $('#messageModal').off('hidden.bs.modal.successRedirect');
-        $('#messageModal').one('hidden.bs.modal.successRedirect', function () {
-          window.location.href = redirectUrl;
-        });
-      } else {
-        showMessageModal(data.error, 'error');
-        document.getElementById('booking_start_date').value = '';
-        {% comment %} document.getElementById('booking_end_date').value = ''; {% endcomment %}
-        document.querySelectorAll('input[name="accommodation"]').forEach(function(r) { r.checked = false; });
-        $('#roomSelection, #wardSelection').hide();
-        $('#roomtype, #roommnumber, #roomfloor, #wardbedno, #wardfloor').val('');
-      }
+        if (data.success) {
+            showMessageModal("Patient admission recorded successfully!", 'success');
+            var redirectUrl = data.redirect;
+            $('#messageModal').off('hidden.bs.modal.successRedirect');
+            $('#messageModal').one('hidden.bs.modal.successRedirect', function () {
+                window.location.href = redirectUrl;
+            });
+        } else {
+            showMessageModal(data.error, 'error');
+            document.getElementById('booking_start_date').value = '';
+            document.querySelectorAll('input[name="accommodation"]').forEach(function(r) { r.checked = false; });
+            $('#roomSelection, #wardSelection').hide();
+            $('#roomtype, #roommnumber, #roomfloor, #wardbedno, #wardfloor').val('');
+        }
     })
     .catch(function() {
-      showMessageModal('A network error occurred. Please try again.', 'error');
+        showMessageModal('A network error occurred. Please try again.', 'error');
     });
-  });
+});
 </script>
-
 
 <script>$(document).ready(function() {
   // Initialize DataTable (without data initially)
@@ -571,7 +650,7 @@ function showMessageModal(message, type) {
                                 data-name="${item.Patient_Name}" 
                                 data-mrno="${item.Medical_Record_Number}" 
                                 data-contact="${item.contactno}"
-                                data-address="${item.Housename}"
+                                data-address="${item.address}"
                                 data-age="${item.Age}"
                                 data-gender="${item.Gender}">
                               Select
@@ -581,7 +660,7 @@ function showMessageModal(message, type) {
             table.row.add([
               item.Medical_Record_Number,  // MR Number
               item.Patient_Name,
-              item.Housename || 'N/A',            // Patient Name
+              item.address || 'N/A',            // Patient Name
               item.contactno,              // Contact Number
                   // Address (if null, show 'N/A')
               actionBtn,                   // Action Button
@@ -616,7 +695,7 @@ function showMessageModal(message, type) {
     $('#contctno').val(`${contact}`);
     $('#exampleInputpatientname').val(`${name}`);
     $('#ptid').val(`${id}`);
-    
+    $('#address').val(`${address}`);
     $('#exampleInputage').val(`${age}`);
    // Set gender radio button
    $(`input[name="gender"][value="${gender}"]`).prop("checked", true);
@@ -639,15 +718,12 @@ function showMessageModal(message, type) {
         }
       });
     });
-
     // Calculate Total Bystander Amount
     const bystanderDaysInput = document.getElementById('bystanderDays');
     const bystanderRateInput = document.getElementById('bystanderRate');
     const bystanderTotalInput = document.getElementById('bystanderTotal');
-
     bystanderDaysInput.addEventListener('input', calculateBystanderAmount);
     bystanderRateInput.addEventListener('input', calculateBystanderAmount);
-
     function calculateBystanderAmount() {
       const bystanderDays = parseFloat(bystanderDaysInput.value) || 0;
       const bystanderRate = parseFloat(bystanderRateInput.value) || 0;
@@ -745,10 +821,6 @@ function showMessageModal(message, type) {
 });
 
 </script>
-
-
-
-
 
 <script>
   $(document).ready(function () {

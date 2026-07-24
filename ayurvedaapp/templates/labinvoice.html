@@ -294,7 +294,7 @@
           </div>
           <div class="col-md-4">
             <div class="form-check mb-3">
-              <input class="form-check-input" type="checkbox" id="cashCheck" name="payment_modes" value="Cash"  onchange="togglePaymentInputs()">
+              <input class="form-check-input" type="checkbox" id="cashCheck" name="payment_modes" value="Cash"  onchange="togglePaymentInputs()" checked>
               <label class="form-check-label" for="cashCheck">Cash</label>
               <input type="number" id="cashInput" name="cash_amount" class="form-control mt-1 payment-input" placeholder="Cash Amount" min="0" onwheel="this.blur()">
             </div>
@@ -312,7 +312,7 @@
             </div>
 
             <div class="form-check">
-              <input class="form-check-input" type="checkbox" id="creditCheck" name="payment_modes" value="Credit" onchange="togglePaymentInputs()" checked>
+              <input class="form-check-input" type="checkbox" id="creditCheck" name="payment_modes" value="Credit" onchange="togglePaymentInputs()">
               <label class="form-check-label" for="creditCheck">Credit</label>
               <input type="number" id="creditInput" name="credit_amount" class="form-control mt-1 payment-input" placeholder="Credit Amount" style="display:none;" min="0" onwheel="this.blur()">
             </div>
