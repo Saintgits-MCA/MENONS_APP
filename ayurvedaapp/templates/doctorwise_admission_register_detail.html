@@ -1,432 +1,330 @@
 {% extends 'base.html' %}
 {% load static %}
+
 {% block content %}
 
-<style>
-  .detail-header {
-    background: linear-gradient(135deg, #00796b, #004d40);
-    color: white;
-    padding: 20px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-  }
-  .detail-header h2 { margin: 0; font-weight: 600; }
-  .detail-header .sub-info { font-size: 14px; opacity: 0.9; margin-top: 5px; }
-  .detail-card { border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; margin-bottom: 15px; background: #f8f9fa; }
-  .detail-card .label { font-weight: 600; color: #555; font-size: 13px; }
-  .detail-card .value { font-weight: 500; font-size: 15px; }
-  .badge-admitted { background: #28a745; color: white; padding: 5px 15px; border-radius: 20px; }
-  .badge-discharged { background: #dc3545; color: white; padding: 5px 15px; border-radius: 20px; }
-  .section-title { font-weight: 600; color: #00796b; border-bottom: 2px solid #00796b; padding-bottom: 5px; margin-bottom: 15px; }
-  .table-sm th { background: #e9ecef; }
-  .info-box { background: white; padding: 10px 15px; border-radius: 6px; border-left: 4px solid #00796b; margin-bottom: 8px; }
-  .info-box .label { font-size: 12px; color: #888; }
-  .info-box .value { font-size: 16px; font-weight: 500; }
-  .summary-cards { margin-bottom: 20px; }
-  .summary-cards .card { border: none; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-  .summary-cards .card .card-body { padding: 15px; }
-  .summary-cards .card .card-title { font-size: 12px; color: #888; }
-  .summary-cards .card .card-text { font-size: 22px; font-weight: 700; }
-</style>
-
-<div class="content-wrapper">
-  <section class="content-header">
-    <div class="container-fluid">
-      <div class="row mb-2">
-        <div class="col-sm-6">
-          <h1>Admission Details</h1>
-        </div>
-        <div class="col-sm-6">
-          <ol class="breadcrumb float-sm-right">
-            <li class="breadcrumb-item"><a href="{% url 'doctorwise_admission_register' %}">Admission Register</a></li>
-            <li class="breadcrumb-item active">Details</li>
-          </ol>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="content">
-    <div class="container-fluid">
-      <!-- Back Button -->
-      <a href="{% url 'doctorwise_admission_register' %}" class="btn btn-secondary btn-sm mb-3">
-        <i class="fas fa-arrow-left"></i> Back to Register
-      </a>
-
-      <!-- Header -->
-      <div class="detail-header">
-        <div class="row">
-          <div class="col-md-8">
-            <h2><i class="fas fa-user-injured"></i> {{ admission.patient_name }}</h2>
-            <div class="sub-info">
-              <strong>IP Number:</strong> {{ admission.ip_number }} |
-              <strong>OP Number:</strong> {{ admission.op_number }} |
-              <strong>Status:</strong>
-              <span class="badge {% if admission.status == 'Admitted' %}badge-admitted{% else %}badge-discharged{% endif %}">
-                {{ admission.status }}
-              </span>
-            </div>
-          </div>
-          <div class="col-md-4 text-right">
-            <div style="font-size: 24px; font-weight: 700;">₹ {{ admission.bill_amount|floatformat:2 }}</div>
-            <div class="sub-info">Total Bill Amount</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Patient Information -->
-      <div class="row">
-        <div class="col-md-6">
-          <div class="detail-card">
-            <h6 class="section-title">Patient Information</h6>
+<div class="content-wrapper" style="background: #f0f2f5;">
+    <section class="content">
+        <div class="container-fluid py-3">
             <div class="row">
-              <div class="col-6"><span class="label">Patient Name</span><div class="value">{{ admission.patient_name }}</div></div>
-              <div class="col-6"><span class="label">OP Number</span><div class="value">{{ admission.op_number }}</div></div>
-            </div>
-            <div class="row mt-2">
-              <div class="col-6"><span class="label">Gender</span><div class="value">{{ admission.gender }}</div></div>
-              <div class="col-6"><span class="label">Age</span><div class="value">{{ admission.age }}</div></div>
-            </div>
-            <div class="row mt-2">
-              <div class="col-6"><span class="label">Blood Group</span><div class="value">{{ admission.blood_group|default:"-" }}</div></div>
-              <div class="col-6"><span class="label">Phone</span><div class="value">{{ admission.phone }}</div></div>
-            </div>
-            <div class="row mt-2">
-              <div class="col-12"><span class="label">Address</span><div class="value">{{ admission.address }}</div></div>
-            </div>
-            <div class="row mt-2">
-              <div class="col-12"><span class="label">Email</span><div class="value">{{ admission.email|default:"-" }}</div></div>
-            </div>
-          </div>
-        </div>
+                <div class="col-12">
+                    <!-- Page Header -->
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="mb-0" style="font-weight: 700; color: #1a2332;">
+                            <i class="fas fa-user-injured me-2" style="color: #2c7a5f;"></i> Doctorwise Admission Details
+                        </h4>
+                        <div class="float-right">
+                            <a href="{% url 'doctorwise_admission_register' %}" class="btn btn-secondary btn-sm" style="padding: 8px 10px;">
+                                <i class="fas fa-arrow-left"></i> Back To Register
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Main Card -->
+                    <div class="card" style="border-radius: 16px; border: none; box-shadow: 0 2px 12px rgba(0,0,0,0.06);">
+                        <div class="card-body p-4">
 
-        <div class="col-md-6">
-          <div class="detail-card">
-            <h6 class="section-title">Admission Details</h6>
-            <div class="row">
-              <div class="col-6"><span class="label">Admission Date</span><div class="value">{{ admission.admission_date|date:"d/m/Y" }}</div></div>
-              <div class="col-6"><span class="label">Admission Time</span><div class="value">{{ admission.admission_time }}</div></div>
-            </div>
-            <div class="row mt-2">
-              <div class="col-6"><span class="label">Doctor</span><div class="value">{{ admission.doctor }}</div></div>
-              <div class="col-6"><span class="label">Room/Ward</span><div class="value">{{ admission.room }}</div></div>
-            </div>
-            <div class="row mt-2">
-              <div class="col-6"><span class="label">Accommodation Type</span><div class="value">{{ admission.accommodation_type|default:"-" }}</div></div>
-              <div class="col-6"><span class="label">Floor</span><div class="value">{{ admission.floor_number|default:"-" }}</div></div>
-            </div>
-            <div class="row mt-2">
-              <div class="col-12"><span class="label">Reason for Admission</span><div class="value">{{ admission.reason_for_admission|default:"-" }}</div></div>
-            </div>
-          </div>
-        </div>
-      </div>
+                            <!-- Header - Two Column Layout -->
+                            <div class="row g-4">
+                                <!-- Left: Patient Info -->
+                                <div class="col-md-6">
+                                    <div style="background: #f8fafc; border-radius: 12px; padding: 18px 20px;">
+                                        <h6 style="font-weight: 600; color: #2c7a5f; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
+                                            <i class="fas fa-user me-2"></i> Patient Information
+                                        </h6>
+                                        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 4px 12px; font-size: 0.92rem;">
+                                            <span style="color: #6b7a8f;">Patient Name</span>
+                                            <span style="font-weight: 600; color: #1a2332;">{{ admission.patient_name }}</span>
+                                            
+                                            <span style="color: #6b7a8f;">IP Number</span>
+                                            <span>{{ admission.ip_number }}</span>
+                                            
+                                            <span style="color: #6b7a8f;">OP Number</span>
+                                            <span>{{ admission.op_number }}</span>
+                                            
+                                            <span style="color: #6b7a8f;">Gender</span>
+                                            <span>{{ admission.gender }}</span>
+                                            
+                                            <span style="color: #6b7a8f;">Age</span>
+                                            <span>{{ admission.age }}</span>
+                                        </div>
+                                    </div>
+                                </div>
 
-      <!-- Discharge Details (if discharged) -->
-      {% if admission.status == 'Discharged' %}
-      <div class="row">
-        <div class="col-md-12">
-          <div class="detail-card" style="border-left: 4px solid #dc3545;">
-            <h6 class="section-title" style="color: #dc3545; border-bottom-color: #dc3545;">Discharge Details</h6>
-            <div class="row">
-              <div class="col-6"><span class="label">Discharge Date</span><div class="value">{{ admission.discharge_date|date:"d/m/Y" }}</div></div>
-              <div class="col-6"><span class="label">Next Checkup Date</span><div class="value">{{ admission.next_checkup_date|date:"d/m/Y"|default:"-" }}</div></div>
-            </div>
-            <div class="row mt-2">
-              <div class="col-12"><span class="label">Treatment Summary</span><div class="value">{{ admission.discharge_summary|default:"-" }}</div></div>
-            </div>
-            <div class="row mt-2">
-              <div class="col-12"><span class="label">Condition on Discharge</span><div class="value">{{ admission.discharge_condition|default:"-" }}</div></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      {% endif %}
+                                <!-- Right: Admission Info -->
+                                <div class="col-md-6">
+                                    <div style="background: #f8fafc; border-radius: 12px; padding: 18px 20px;">
+                                        <h6 style="font-weight: 600; color: #2c7a5f; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
+                                            <i class="fas fa-calendar-check me-2"></i> Admission Information
+                                        </h6>
+                                        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 4px 12px; font-size: 0.92rem;">
+                                            <span style="color: #6b7a8f;">Admission Date</span>
+                                            <span>{{ admission.admission_date|date:"d/m/Y" }}</span>
+                                            
+                                            <span style="color: #6b7a8f;">Admission Time</span>
+                                            <span>{{ admission.admission_time }}</span>
+                                            
+                                            <span style="color: #6b7a8f;">Status</span>
+                                            <span>
+                                                <span class="badge" style="{% if admission.status == 'Admitted' %}background: #28a745; padding: 4px 14px; border-radius: 20px; color: #fff;{% else %}background: #dc3545; padding: 4px 14px; border-radius: 20px; color: #fff;{% endif %}">
+                                                    {{ admission.status }}
+                                                </span>
+                                            </span>
+                                            
+                                            <span style="color: #6b7a8f;">Total Bill Amount</span>
+                                            <span style="font-weight: 700; color: #2c7a5f;">₹ {{ admission.bill_amount|floatformat:2 }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
-      <!-- Bill Summary -->
-      <div class="card">
-        <div class="card-header" style="background: #28a745; color: white;">
-          <h5 class="card-title"><i class="fas fa-file-invoice"></i> Bill Summary</h5>
-        </div>
-        <div class="card-body">
-          <div class="row summary-cards">
-            <div class="col-md-3">
-              <div class="card" style="border-left: 4px solid #007bff;">
-                <div class="card-body">
-                  <h6 class="card-title">Room Charges</h6>
-                  <p class="card-text">₹ {{ admission.room_charges|floatformat:2 }}</p>
+                            <!-- Contact & Address Row -->
+                            <div class="row g-4 mt-1">
+                                <div class="col-md-6">
+                                    <div style="background: #f8fafc; border-radius: 12px; padding: 14px 20px;">
+                                        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 4px 12px; font-size: 0.92rem;">
+                                            <span style="color: #6b7a8f;">Phone</span>
+                                            <span>{{ admission.phone }}</span>
+                                            
+                                            <span style="color: #6b7a8f;">Email</span>
+                                            <span>{{ admission.email|default:"-" }}</span>
+                                            
+                                            <span style="color: #6b7a8f;">Blood Group</span>
+                                            <span>{{ admission.blood_group|default:"-" }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div style="background: #f8fafc; border-radius: 12px; padding: 14px 20px;">
+                                        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 4px 12px; font-size: 0.92rem;">
+                                            <span style="color: #6b7a8f;">Address</span>
+                                            <span>{{ admission.address }}</span>
+                                            
+                                            <span style="color: #6b7a8f;">Reason for Admission</span>
+                                            <span>{{ admission.reason_for_admission|default:"-" }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Room & Doctor Details -->
+                            <div class="row g-4 mt-1">
+                                <div class="col-md-6">
+                                    <div style="background: #f8fafc; border-radius: 12px; padding: 14px 20px;">
+                                        <h6 style="font-weight: 600; color: #2c7a5f; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
+                                            <i class="fas fa-bed me-2"></i> Room Details
+                                        </h6>
+                                        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 4px 12px; font-size: 0.92rem;">
+                                            <span style="color: #6b7a8f;">Room/Ward</span>
+                                            <span>{{ admission.room }}</span>
+                                            
+                                            <span style="color: #6b7a8f;">Accommodation Type</span>
+                                            <span>{{ admission.accommodation_type|default:"-" }}</span>
+                                            
+                                            <span style="color: #6b7a8f;">Floor</span>
+                                            <span>{{ admission.floor_number|default:"-" }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div style="background: #f8fafc; border-radius: 12px; padding: 14px 20px;">
+                                        <h6 style="font-weight: 600; color: #2c7a5f; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
+                                            <i class="fas fa-user-md me-2"></i> Doctor Details
+                                        </h6>
+                                        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 4px 12px; font-size: 0.92rem;">
+                                            <span style="color: #6b7a8f;">Doctor</span>
+                                            <span style="font-weight: 500;">{{ admission.doctor }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Discharge Details (if discharged) -->
+                            {% if admission.status == 'Discharged' %}
+                            <div class="mt-3">
+                                <div style="background: #fde8e8; border-radius: 12px; padding: 18px 20px; border-left: 4px solid #dc3545;">
+                                    <h6 style="font-weight: 600; color: #dc3545; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
+                                        <i class="fas fa-file-medical me-2"></i> Discharge Details
+                                    </h6>
+                                    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 4px 12px; font-size: 0.92rem;">
+                                        <span style="color: #6b7a8f;">Discharge Date</span>
+                                        <span>{{ admission.discharge_date|date:"d/m/Y" }}</span>
+                                        
+                                        <span style="color: #6b7a8f;">Next Checkup Date</span>
+                                        <span>{{ admission.next_checkup_date|date:"d/m/Y"|default:"-" }}</span>
+                                        
+                                        <span style="color: #6b7a8f;">Treatment Summary</span>
+                                        <span>{{ admission.discharge_summary|default:"-" }}</span>
+                                        
+                                        <span style="color: #6b7a8f;">Condition on Discharge</span>
+                                        <span>{{ admission.discharge_condition|default:"-" }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Bill Summary -->
+                            <div class="mt-3">
+                                <div style="background: #f8fafc; border-radius: 12px; padding: 18px 20px;">
+                                    <h6 style="font-weight: 600; color: #2c7a5f; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
+                                        <i class="fas fa-file-invoice me-2"></i> Bill Summary
+                                    </h6>
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <div style="text-align: center; padding: 8px;">
+                                                <div style="font-size: 0.75rem; color: #6b7a8f;">Room Charges</div>
+                                                <div style="font-size: 1rem; font-weight: 600; color: #1a2332;">₹ {{ admission.room_charges|floatformat:2 }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div style="text-align: center; padding: 8px;">
+                                                <div style="font-size: 0.75rem; color: #6b7a8f;">Medicine Charges</div>
+                                                <div style="font-size: 1rem; font-weight: 600; color: #1a2332;">₹ {{ admission.medicine_charges|floatformat:2 }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div style="text-align: center; padding: 8px;">
+                                                <div style="font-size: 0.75rem; color: #6b7a8f;">Treatment Charges</div>
+                                                <div style="font-size: 1rem; font-weight: 600; color: #1a2332;">₹ {{ admission.treatment_charges|floatformat:2 }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div style="text-align: center; padding: 8px; background: #e9f5ef; border-radius: 8px;">
+                                                <div style="font-size: 0.75rem; color: #2c7a5f;">Total Amount</div>
+                                                <div style="font-size: 1.1rem; font-weight: 700; color: #1e7e54;">₹ {{ admission.bill_amount|floatformat:2 }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-2">
+                                        <div class="col-md-3">
+                                            <div style="text-align: center; padding: 6px;">
+                                                <div style="font-size: 0.7rem; color: #6b7a8f;">Food Expenses</div>
+                                                <div style="font-size: 0.9rem; font-weight: 500;">₹ {{ admission.food_expenses|floatformat:2 }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div style="text-align: center; padding: 6px;">
+                                                <div style="font-size: 0.7rem; color: #6b7a8f;">Other Expenses</div>
+                                                <div style="font-size: 0.9rem; font-weight: 500;">₹ {{ admission.other_expenses|floatformat:2 }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div style="text-align: center; padding: 6px;">
+                                                <div style="font-size: 0.7rem; color: #6b7a8f;">Subtotal</div>
+                                                <div style="font-size: 0.9rem; font-weight: 500;">₹ {{ admission.subtotal|floatformat:2 }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div style="text-align: center; padding: 6px;">
+                                                <div style="font-size: 0.7rem; color: #6b7a8f;">Tax / Discount</div>
+                                                <div style="font-size: 0.8rem; font-weight: 500;">
+                                                    Tax: ₹ {{ admission.tax|floatformat:2 }}<br>
+                                                    Disc: ₹ {{ admission.discount|floatformat:2 }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Treatments -->
+                            <div class="mt-3">
+                                <div style="background: #f8fafc; border-radius: 12px; overflow: hidden;">
+                                    <div style="padding: 12px 20px; background: #ffffff; border-bottom: 1px solid #edf0f5;">
+                                        <h6 style="font-weight: 600; color: #2c7a5f; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; margin: 0;">
+                                            <i class="fas fa-notes-medical me-2"></i> Treatment History
+                                        </h6>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table" style="font-size: 0.88rem; margin-bottom: 0;">
+                                            <thead style="background: #f0f2f5;">
+                                                <tr>
+                                                    <th style="padding: 10px 12px; font-weight: 600;">#</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600;">Date</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600;">Treatment Name</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600; text-align: center;">Count</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600;">Handled By</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600;">Given By</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for treatment in treatments %}
+                                                <tr style="border-bottom: 1px solid #edf0f5;">
+                                                    <td style="padding: 10px 12px;">{{ forloop.counter }}</td>
+                                                    <td style="padding: 10px 12px;">{{ treatment.date|date:"d/m/Y" }}</td>
+                                                    <td style="padding: 10px 12px;">
+                                                        <strong>{{ treatment.treatment_name }}</strong>
+                                                    </td>
+                                                    <td style="padding: 10px 12px; text-align: center;">{{ treatment.count }}</td>
+                                                    <td style="padding: 10px 12px;">{{ treatment.handled_by }}</td>
+                                                    <td style="padding: 10px 12px;">{{ treatment.given_by }}</td>
+                                                </tr>
+                                                {% empty %}
+                                                <tr>
+                                                    <td colspan="6" style="padding: 20px; text-align: center; color: #6b7a8f;">No treatments found</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Medicines -->
+                            <div class="mt-3">
+                                <div style="background: #f8fafc; border-radius: 12px; overflow: hidden;">
+                                    <div style="padding: 12px 20px; background: #ffffff; border-bottom: 1px solid #edf0f5;">
+                                        <h6 style="font-weight: 600; color: #2c7a5f; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; margin: 0;">
+                                            <i class="fas fa-pills me-2"></i> Medicine History
+                                        </h6>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table" style="font-size: 0.88rem; margin-bottom: 0;">
+                                            <thead style="background: #f0f2f5;">
+                                                <tr>
+                                                    <th style="padding: 10px 12px; font-weight: 600;">#</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600;">Date</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600;">Medicine Name</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600; text-align: center;">Count</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600;">Dosage</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600;">Time</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for medicine in medicines %}
+                                                <tr style="border-bottom: 1px solid #edf0f5;">
+                                                    <td style="padding: 10px 12px;">{{ forloop.counter }}</td>
+                                                    <td style="padding: 10px 12px;">{{ medicine.date|date:"d/m/Y" }}</td>
+                                                    <td style="padding: 10px 12px;">
+                                                        <strong>{{ medicine.medicine_name }}</strong>
+                                                    </td>
+                                                    <td style="padding: 10px 12px; text-align: center;">{{ medicine.count }}</td>
+                                                    <td style="padding: 10px 12px;">{{ medicine.dosage }}</td>
+                                                    <td style="padding: 10px 12px;">{{ medicine.time }}</td>
+                                                </tr>
+                                                {% empty %}
+                                                <tr>
+                                                    <td colspan="6" style="padding: 20px; text-align: center; color: #6b7a8f;">No medicines found</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Footer -->
+                            <div class="mt-3" style="text-align: center; font-size: 11px; color: #999; padding: 10px 0; border-top: 1px solid #edf0f5;">
+                                <p style="margin: 0;"><strong>*** This is a computer generated report ***</strong></p>
+                                <p style="margin: 0;">Generated on: {% now "d/m/Y H:i:s" %}</p>
+                            </div>
+
+                        </div>
+                    </div>
                 </div>
-              </div>
             </div>
-            <div class="col-md-3">
-              <div class="card" style="border-left: 4px solid #28a745;">
-                <div class="card-body">
-                  <h6 class="card-title">Medicine Charges</h6>
-                  <p class="card-text">₹ {{ admission.medicine_charges|floatformat:2 }}</p>
-                </div>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="card" style="border-left: 4px solid #ffc107;">
-                <div class="card-body">
-                  <h6 class="card-title">Treatment Charges</h6>
-                  <p class="card-text">₹ {{ admission.treatment_charges|floatformat:2 }}</p>
-                </div>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="card" style="border-left: 4px solid #dc3545;">
-                <div class="card-body">
-                  <h6 class="card-title">Total Amount</h6>
-                  <p class="card-text">₹ {{ admission.bill_amount|floatformat:2 }}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-md-3">
-              <div class="card" style="border-left: 4px solid #6c757d;">
-                <div class="card-body">
-                  <h6 class="card-title">Food Expenses</h6>
-                  <p class="card-text">₹ {{ admission.food_expenses|floatformat:2 }}</p>
-                </div>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="card" style="border-left: 4px solid #6c757d;">
-                <div class="card-body">
-                  <h6 class="card-title">Other Expenses</h6>
-                  <p class="card-text">₹ {{ admission.other_expenses|floatformat:2 }}</p>
-                </div>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="card" style="border-left: 4px solid #17a2b8;">
-                <div class="card-body">
-                  <h6 class="card-title">Subtotal</h6>
-                  <p class="card-text">₹ {{ admission.subtotal|floatformat:2 }}</p>
-                </div>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="card" style="border-left: 4px solid #fd7e14;">
-                <div class="card-body">
-                  <h6 class="card-title">Tax / Discount</h6>
-                  <p class="card-text">
-                    Tax: ₹ {{ admission.tax|floatformat:2 }}<br>
-                    Discount: ₹ {{ admission.discount|floatformat:2 }}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
-      </div>
-
-      <!-- Treatments -->
-      <div class="card">
-        <div class="card-header" style="background: #6f42c1; color: white;">
-          <h5 class="card-title"><i class="fas fa-notes-medical"></i> Treatment History</h5>
-        </div>
-        <div class="card-body p-0">
-          <div class="table-responsive">
-            <table class="table table-bordered table-sm">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Date</th>
-                  <th>Treatment Name</th>
-                  <th>Count</th>
-                  <th>Handled By</th>
-                  <th>Given By</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for treatment in treatments %}
-                <tr>
-                  <td>{{ forloop.counter }}</td>
-                  <td>{{ treatment.date|date:"d/m/Y" }}</td>
-                  <td>{{ treatment.treatment_name }}</td>
-                  <td>{{ treatment.count }}</td>
-                  <td>{{ treatment.handled_by }}</td>
-                  <td>{{ treatment.given_by }}</td>
-                </tr>
-                {% empty %}
-                <tr>
-                  <td colspan="6" class="text-center text-muted">No treatments found</td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- Medicines -->
-      <div class="card">
-        <div class="card-header" style="background: #fd7e14; color: white;">
-          <h5 class="card-title"><i class="fas fa-pills"></i> Medicine History</h5>
-        </div>
-        <div class="card-body p-0">
-          <div class="table-responsive">
-            <table class="table table-bordered table-sm">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Date</th>
-                  <th>Medicine Name</th>
-                  <th>Count</th>
-                  <th>Dosage</th>
-                  <th>Time</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for medicine in medicines %}
-                <tr>
-                  <td>{{ forloop.counter }}</td>
-                  <td>{{ medicine.date|date:"d/m/Y" }}</td>
-                  <td>{{ medicine.medicine_name }}</td>
-                  <td>{{ medicine.count }}</td>
-                  <td>{{ medicine.dosage }}</td>
-                  <td>{{ medicine.time }}</td>
-                </tr>
-                {% empty %}
-                <tr>
-                  <td colspan="6" class="text-center text-muted">No medicines found</td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- Expanded Bill Details -->
-      {% if room_details or medicine_details or treatment_details or other_expense_details %}
-      <div class="card">
-        <div class="card-header" style="background: #17a2b8; color: white;">
-          <h5 class="card-title"><i class="fas fa-file-invoice"></i> Detailed Bill Breakdown</h5>
-        </div>
-        <div class="card-body">
-          <!-- Room Details -->
-          {% if room_details %}
-          <h6 class="font-weight-bold text-primary">Room Details</h6>
-          <div class="table-responsive">
-            <table class="table table-bordered table-sm">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Room</th>
-                  <th>No of Days</th>
-                  <th>Rate/Day</th>
-                  <th class="text-right">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for room in room_details %}
-                <tr>
-                  <td>{{ forloop.counter }}</td>
-                  <td>{{ room.room.Roomno|default:"-" }}</td>
-                  <td>{{ room.no_of_days }}</td>
-                  <td>₹ {{ room.rate_per_day|floatformat:2 }}</td>
-                  <td class="text-right">₹ {{ room.total_rent|floatformat:2 }}</td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-          {% endif %}
-
-          <!-- Medicine Details -->
-          {% if medicine_details %}
-          <h6 class="font-weight-bold text-success mt-3">Medicine Details</h6>
-          <div class="table-responsive">
-            <table class="table table-bordered table-sm">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Medicine Name</th>
-                  <th>Count</th>
-                  <th>Rate</th>
-                  <th class="text-right">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for med in medicine_details %}
-                <tr>
-                  <td>{{ forloop.counter }}</td>
-                  <td>{{ med.medicinename|default:"-" }}</td>
-                  <td>{{ med.count }}</td>
-                  <td>₹ {{ med.rate_per_medicine|floatformat:2 }}</td>
-                  <td class="text-right">₹ {{ med.totalmedicine|floatformat:2 }}</td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-          {% endif %}
-
-          <!-- Treatment Details -->
-          {% if treatment_details %}
-          <h6 class="font-weight-bold text-warning mt-3">Treatment Details</h6>
-          <div class="table-responsive">
-            <table class="table table-bordered table-sm">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Treatment</th>
-                  <th>Count</th>
-                  <th>Rate</th>
-                  <th class="text-right">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for treatment in treatment_details %}
-                <tr>
-                  <td>{{ forloop.counter }}</td>
-                  <td>{{ treatment.tratmntid.Treatment_name|default:"-" }}</td>
-                  <td>{{ treatment.treatmentcount }}</td>
-                  <td>₹ {{ treatment.rate_per_treatment|floatformat:2 }}</td>
-                  <td class="text-right">₹ {{ treatment.total_treatmentrate|floatformat:2 }}</td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-          {% endif %}
-
-          <!-- Other Expenses -->
-          {% if other_expense_details %}
-          <h6 class="font-weight-bold text-danger mt-3">Other Expenses</h6>
-          <div class="table-responsive">
-            <table class="table table-bordered table-sm">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Service</th>
-                  <th>Details</th>
-                  <th class="text-right">Charges</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for expense in other_expense_details %}
-                <tr>
-                  <td>{{ forloop.counter }}</td>
-                  <td>{{ expense.service|default:"-" }}</td>
-                  <td>{{ expense.details|default:"-" }}</td>
-                  <td class="text-right">₹ {{ expense.charges|floatformat:2 }}</td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-          {% endif %}
-        </div>
-      </div>
-      {% endif %}
-
-    </div>
-  </section>
+    </section>
 </div>
 
 {% endblock %}

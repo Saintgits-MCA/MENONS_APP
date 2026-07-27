@@ -2,120 +2,162 @@
 {% load static %}
 
 {% block content %}
-<div class="content-wrapper">
-    <section class="content-header">
-        <div class="container-fluid">
-            <div class="row mb-2">
-                <div class="col-sm-6">
-                    <h1>Cancelled Bill Details</h1>
-                </div>
-                <div class="col-sm-6">
-                    <ol class="breadcrumb float-sm-right">
-                        <li class="breadcrumb-item">
-                            <a href="{% url 'cancelled_bills_report' %}">Cancelled Bills Report</a>
-                        </li>
-                        <li class="breadcrumb-item active">Details</li>
-                    </ol>
-                </div>
-            </div>
-        </div>
-    </section>
 
+<div class="content-wrapper" style="background: #f0f2f5;">
     <section class="content">
-        <div class="container-fluid">
-            <div class="row mb-3">
+        <div class="container-fluid py-3">
+            <div class="row">
                 <div class="col-12">
-                    <a href="{% url 'cancelled_bills_report' %}" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left"></i> Back to List
-                    </a>
-                </div>
-            </div>
-
-            <!-- Invoice Header -->
-            <div class="card">
-                <div class="card-header {% if is_cancelled %}bg-danger{% else %}bg-success{% endif %} text-white">
-                    <h5 class="mb-0">
-                        Invoice Information
-                        {% if is_cancelled %}
-                            <span class="badge badge-light float-right">CANCELLED</span>
-                        {% else %}
-                            <span class="badge badge-light float-right">ACTIVE</span>
-                        {% endif %}
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <table class="table table-bordered table-sm">
-                                <tr>
-                                    <th style="width:40%;">Bill No</th>
-                                    <td>{{ invoice.Invoicenumber|default:"N/A" }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Bill Date</th>
-                                    <td>{{ invoice.currentdate|date:"d/m/Y" }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Patient Name</th>
-                                    <td>{{ invoice.patientname|default:"N/A" }}</td>
-                                </tr>
-                            </table>
+                    <!-- Page Header -->
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="mb-0" style="font-weight: 700; color: #1a2332;">
+                            <i class="fas fa-file-invoice me-2" style="color: #2c7a5f;"></i> Cancelled Bill Details
+                        </h4>
+                        <div class="float-right">
+                            <a href="{% url 'cancelled_bills_report' %}" class="btn btn-secondary btn-sm" style="padding: 8px 10px;">
+                                <i class="fas fa-arrow-left"></i> Back To List
+                            </a>
                         </div>
-                        <div class="col-md-6">
-                            <table class="table table-bordered table-sm">
-                                <tr>
-                                    <th style="width:40%;">Original Amount</th>
-                                    <td class="text-right">₹{{ original_amount|floatformat:2 }}</td>
-                                </tr>
-                                {% if is_cancelled %}
-                                <tr class="text-danger">
-                                    <th>Cancelled Amount</th>
-                                    <td class="text-right">₹{{ cancelled_amount|floatformat:2 }}</td>
-                                </tr>
-                                <tr class="text-danger">
-                                    <th>Refund Amount</th>
-                                    <td class="text-right">₹{{ refund_amount|floatformat:2 }}</td>
-                                </tr>
-                                {% endif %}
-                            </table>
+                    </div>
+                    
+                    <!-- Main Card -->
+                    <div class="card" style="border-radius: 16px; border: none; box-shadow: 0 2px 12px rgba(0,0,0,0.06);">
+                        <div class="card-body p-4">
+
+                            <!-- Invoice Information - Two Column Layout -->
+                            <div class="row g-4">
+                                <!-- Left: Invoice Details -->
+                                <div class="col-md-6">
+                                    <div style="background: #f8fafc; border-radius: 12px; padding: 18px 20px;">
+                                        <h6 style="font-weight: 600; color: #2c7a5f; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
+                                            <i class="fas fa-receipt me-2"></i> Invoice Information
+                                            {% if is_cancelled %}
+                                                <span class="badge" style="background: #dc3545; padding: 4px 12px; border-radius: 20px; color: #fff; font-size: 0.7rem; margin-left: 8px;">CANCELLED</span>
+                                            {% else %}
+                                                <span class="badge" style="background: #28a745; padding: 4px 12px; border-radius: 20px; color: #fff; font-size: 0.7rem; margin-left: 8px;">ACTIVE</span>
+                                            {% endif %}
+                                        </h6>
+                                        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 4px 12px; font-size: 0.92rem;">
+                                            <span style="color: #6b7a8f;">Bill No</span>
+                                            <span style="font-weight: 600; color: #1a2332;">{{ invoice.Invoicenumber|default:"N/A" }}</span>
+                                            
+                                            <span style="color: #6b7a8f;">Bill Date</span>
+                                            <span>{{ invoice.currentdate|date:"d/m/Y" }}</span>
+                                            
+                                            <span style="color: #6b7a8f;">Patient Name</span>
+                                            <span style="font-weight: 500;">{{ invoice.patientname|default:"N/A" }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Right: Financial Summary -->
+                                <div class="col-md-6">
+                                    <div style="background: #f8fafc; border-radius: 12px; padding: 18px 20px;">
+                                        <h6 style="font-weight: 600; color: #2c7a5f; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
+                                            <i class="fas fa-money-bill-wave me-2"></i> Financial Summary
+                                        </h6>
+                                        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 4px 12px; font-size: 0.92rem;">
+                                            <span style="color: #6b7a8f;">Original Amount</span>
+                                            <span style="font-weight: 600; color: #1a2332;">₹{{ original_amount|floatformat:2 }}</span>
+                                            
+                                            {% if is_cancelled %}
+                                                <span style="color: #dc3545;">Cancelled Amount</span>
+                                                <span style="font-weight: 600; color: #dc3545;">₹{{ cancelled_amount|floatformat:2 }}</span>
+                                                
+                                                <span style="color: #dc3545;">Refund Amount</span>
+                                                <span style="font-weight: 600; color: #dc3545;">₹{{ refund_amount|floatformat:2 }}</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Invoice Items -->
+                            {% if invoice_items %}
+                            <div class="mt-3">
+                                <div style="background: #f8fafc; border-radius: 12px; overflow: hidden;">
+                                    <div style="padding: 12px 20px; background: #ffffff; border-bottom: 1px solid #edf0f5;">
+                                        <h6 style="font-weight: 600; color: #2c7a5f; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; margin: 0;">
+                                            <i class="fas fa-table-list me-2"></i> Invoice Items
+                                        </h6>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table" style="font-size: 0.88rem; margin-bottom: 0;">
+                                            <thead style="background: #f0f2f5;">
+                                                <tr>
+                                                    <th style="padding: 10px 12px; font-weight: 600;">#</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600;">Item</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600; text-align: center;">Quantity</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600; text-align: right;">Rate</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600; text-align: right;">Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for item in invoice_items %}
+                                                <tr style="border-bottom: 1px solid #edf0f5;">
+                                                    <td style="padding: 10px 12px;">{{ forloop.counter }}</td>
+                                                    <td style="padding: 10px 12px;">
+                                                        <strong>{{ item.particulars|default:"N/A" }}</strong>
+                                                    </td>
+                                                    <td style="padding: 10px 12px; text-align: center;">{{ item.quantity }}</td>
+                                                    <td style="padding: 10px 12px; text-align: right;">₹ {{ item.amount|floatformat:2 }}</td>
+                                                    <td style="padding: 10px 12px; text-align: right; font-weight: 600;">₹ {{ item.sutotal|floatformat:2 }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                            <tfoot style="background: #f8fafc; border-top: 2px solid #e0e6ed;">
+                                                <tr>
+                                                    <td colspan="4" style="padding: 10px 12px; text-align: right; font-weight: 500;">Total Amount</td>
+                                                    <td style="padding: 10px 12px; text-align: right; font-weight: 700; color: #1a2332;">₹{{ original_amount|floatformat:2 }}</td>
+                                                </tr>
+                                                {% if is_cancelled %}
+                                                <tr>
+                                                    <td colspan="4" style="padding: 4px 12px; text-align: right; font-weight: 500; color: #dc3545;">Cancelled Amount</td>
+                                                    <td style="padding: 4px 12px; text-align: right; font-weight: 500; color: #dc3545;">- ₹{{ cancelled_amount|floatformat:2 }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td colspan="4" style="padding: 4px 12px; text-align: right; font-weight: 500; color: #dc3545;">Refund Amount</td>
+                                                    <td style="padding: 4px 12px; text-align: right; font-weight: 500; color: #dc3545;">₹{{ refund_amount|floatformat:2 }}</td>
+                                                </tr>
+                                                {% endif %}
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Status Banner -->
+                            <div class="row g-4 mt-3">
+                                <div class="col-12">
+                                    {% if is_cancelled %}
+                                        <div style="background: #fde8e8; border-radius: 12px; padding: 14px 20px; border-left: 4px solid #dc3545;">
+                                            <h6 style="font-weight: 600; color: #dc3545; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+                                                <i class="fas fa-ban me-2"></i> This bill has been CANCELLED
+                                            </h6>
+                                            <p class="mb-0" style="font-size: 0.92rem; color: #721c24;">
+                                                Total amount of ₹{{ cancelled_amount|floatformat:2 }} has been cancelled. Refund of ₹{{ refund_amount|floatformat:2 }} has been processed.
+                                            </p>
+                                        </div>
+                                    {% else %}
+                                        <div style="background: #e8f4fd; border-radius: 12px; padding: 14px 20px; border-left: 4px solid #2c7a5f;">
+                                            <h6 style="font-weight: 600; color: #2c7a5f; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+                                                <i class="fas fa-check-circle me-2"></i> Active Bill
+                                            </h6>
+                                            <p class="mb-0" style="font-size: 0.92rem; color: #1a2332;">
+                                                This bill is active and has not been cancelled.
+                                            </p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
                         </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Invoice Items -->
-            {% if invoice_items %}
-            <div class="card">
-                <div class="card-header bg-info text-white">
-                    <h5 class="mb-0">Invoice Items</h5>
-                </div>
-                <div class="card-body table-responsive">
-                    <table class="table table-bordered table-striped table-sm">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Item</th>
-                                <th>Quantity</th>
-                                <th class="text-right">Rate</th>
-                                <th class="text-right">Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for item in invoice_items %}
-                            <tr>
-                                <td>{{ forloop.counter }}</td>
-                                <td>{{ item.particulars|default:"N/A" }}</td>
-                                <td>{{ item.quantity }}</td>
-                                <td class="text-right">{{ item.amount|floatformat:2 }}</td>
-                                <td class="text-right">{{ item.sutotal|floatformat:2 }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            {% endif %}
         </div>
     </section>
 </div>
+
 {% endblock %}

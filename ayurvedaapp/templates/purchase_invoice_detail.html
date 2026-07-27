@@ -12,13 +12,18 @@
                         <h4 class="mb-0" style="font-weight: 700; color: #1a2332;">
                             <i class="fas fa-file-invoice me-2" style="color: #2c7a5f;"></i> Purchase Invoice
                         </h4>
-                        <a href="{% url 'purchase_invoice_list' %}" class="btn btn-outline-secondary btn-sm" style="border-radius: 30px; padding: 8px 20px;">
-                            <i class="fas fa-arrow-left me-2"></i> Back
+                      <div class="float-right">
+                        <a href="{% url 'purchase_invoice_list' %}" class="btn btn-secondary btn-sm" style=" padding: 8px 10px;">
+                            <i class="fas fa-arrow-left"></i> Back To List
                         </a>
+                        <a href="{% url 'purchase_statement_report' %}" class="btn btn-success btn-sm" style="padding: 8px 20px;">
+                            <i class="fas fa-arrow-left"></i> Back To Report
+                        </a>
+                        </div>
                     </div>
-
+                    
                     <!-- Main Card -->
-                    <div class="card" style="border-radius: 16px; border: none; box-shadow: 0 2px 12px rgba(0,0,0,0.06);">
+                    <div class="card" style="border: none; box-shadow: 0 2px 12px rgba(0,0,0,0.06);">
                         <div class="card-body p-4">
 
                             <!-- Invoice Header - Two Column Layout -->
@@ -78,7 +83,7 @@
                             </div>
 
                             <!-- Store & Company Row -->
-                            <div class="row g-4 mt-3">
+                            <div class="row g-4 mt-1">
                                 <div class="col-md-6">
                                     <div style="background: #f8fafc; border-radius: 12px; padding: 14px 20px;">
                                         <h6 style="font-weight: 600; color: #2c7a5f; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
@@ -98,7 +103,7 @@
                             </div>
 
                             <!-- Items Table -->
-                            <div class="mt-4">
+                            <div class="mt-2">
                                 <div style="background: #f8fafc; border-radius: 12px; overflow: hidden;">
                                     <div style="padding: 12px 20px; background: #ffffff; border-bottom: 1px solid #edf0f5;">
                                         <h6 style="font-weight: 600; color: #2c7a5f; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; margin: 0;">

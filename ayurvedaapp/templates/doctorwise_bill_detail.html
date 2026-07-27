@@ -1,264 +1,211 @@
 {% extends 'base.html' %}
 {% load static %}
+
 {% block content %}
 
-<style>
-  .bill-header {
-    background: linear-gradient(135deg, #00796b, #004d40);
-    color: white;
-    padding: 20px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-  }
-  .bill-header h2 {
-    margin: 0;
-    font-weight: 600;
-  }
-  .bill-header .sub-info {
-    font-size: 14px;
-    opacity: 0.9;
-    margin-top: 5px;
-  }
-  .detail-card {
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    padding: 15px;
-    margin-bottom: 15px;
-    background: #f8f9fa;
-  }
-  .detail-card .label {
-    font-weight: 600;
-    color: #555;
-    font-size: 13px;
-  }
-  .detail-card .value {
-    font-weight: 500;
-    font-size: 15px;
-  }
-  .amount-total {
-    font-size: 24px;
-    font-weight: 700;
-    color: #00796b;
-  }
-  .badge-type {
-    padding: 5px 12px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 600;
-  }
-  .badge-appointment { background: #007bff; color: white; }
-  .badge-treatment { background: #28a745; color: white; }
-  .badge-pharmacy { background: #ffc107; color: #333; }
-  .badge-lab { background: #6f42c1; color: white; }
-  .table-items th {
-    background: #e9ecef;
-    font-size: 13px;
-  }
-  .table-items td {
-    font-size: 13px;
-    vertical-align: middle;
-  }
-  .back-btn {
-    margin-bottom: 15px;
-  }
-  .footer-print {
-    text-align: center;
-    font-size: 11px;
-    color: #999;
-    padding: 10px 0;
-    border-top: 1px solid #ddd;
-    margin-top: 20px;
-  }
-</style>
-
-<div class="content-wrapper">
-  <section class="content-header">
-    <div class="container-fluid">
-      <div class="row mb-2">
-        <div class="col-sm-6">
-          <h1>Bill Details</h1>
-        </div>
-        <div class="col-sm-6">
-          <ol class="breadcrumb float-sm-right">
-            <li class="breadcrumb-item">
-              <a href="{% url 'doctorwise_bill_analysis' %}">Bill Analysis</a>
-            </li>
-            <li class="breadcrumb-item active">Bill Details</li>
-          </ol>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="content">
-    <div class="container-fluid">
-      <!-- Back Button -->
-      <div class="back-btn">
-        <a href="{% url 'doctorwise_bill_analysis' %}" class="btn btn-secondary btn-sm">
-          <i class="fas fa-arrow-left"></i> Back to Bill Analysis
-        </a>
-      </div>
-
-      <!-- Bill Header -->
-      <div class="bill-header">
-        <div class="row">
-          <div class="col-md-8">
-            <h2><i class="fas fa-file-invoice"></i> {{ bill.bill_number }}</h2>
-            <div class="sub-info">
-              <strong>Patient:</strong> {{ bill.patient_name }} |
-              <strong>Date:</strong> {{ bill.date|date:"d/m/Y" }} |
-              <strong>Type:</strong>
-              <span class="badge-type 
-                {% if bill.bill_type == 'APPOINTMENT' %}badge-appointment
-                {% elif bill.bill_type == 'TREATMENT' %}badge-treatment
-                {% elif bill.bill_type == 'PHARMACY' %}badge-pharmacy
-                {% elif bill.bill_type == 'LAB BILL' %}badge-lab
-                {% endif %}">
-                {{ bill.bill_type }}
-              </span>
-            </div>
-          </div>
-          <div class="col-md-4 text-right">
-            <div class="amount-total text-white">₹ {{ bill.amount|floatformat:2 }}</div>
-            <div class="sub-info">Total Amount</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Bill Details -->
-      <div class="row">
-        <div class="col-md-6">
-          <div class="detail-card">
+<div class="content-wrapper" style="background: #f0f2f5;">
+    <section class="content">
+        <div class="container-fluid py-3">
             <div class="row">
-              <div class="col-6">
-                <div class="label">Bill Number</div>
-                <div class="value">{{ bill.bill_number }}</div>
-              </div>
-              <div class="col-6">
-                <div class="label">Bill Type</div>
-                <div class="value">{{ bill.bill_type }}</div>
-              </div>
-            </div>
-            <hr style="margin: 10px 0;">
-            <div class="row">
-              <div class="col-6">
-                <div class="label">Patient Name</div>
-                <div class="value">{{ bill.patient_name }}</div>
-              </div>
-              <div class="col-6">
-                <div class="label">Date</div>
-                <div class="value">{{ bill.date|date:"d/m/Y" }}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-6">
-          <div class="detail-card">
-            <div class="row">
-              <div class="col-6">
-                <div class="label">Branch</div>
-                <div class="value">{{ bill.branch }}</div>
-              </div>
-              <div class="col-6">
-                <div class="label">Payment Mode</div>
-                <div class="value">{{ bill.payment_mode }}</div>
-              </div>
-            </div>
-            <hr style="margin: 10px 0;">
-            <div class="row">
-              <div class="col-6">
-                <div class="label">Prepared By</div>
-                <div class="value">{{ bill.prepared_by }}</div>
-              </div>
-              <div class="col-6">
-                <div class="label">Status</div>
-                <div class="value">
-                  <span class="badge badge-success">{{ bill.status }}</span>
+                <div class="col-12">
+                    <!-- Page Header -->
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="mb-0" style="font-weight: 700; color: #1a2332;">
+                            <i class="fas fa-file-invoice me-2" style="color: #2c7a5f;"></i> Bill Details
+                        </h4>
+                        <div class="float-right">
+                            <a href="{% url 'doctorwise_bill_analysis' %}" class="btn btn-secondary btn-sm" style="padding: 8px 10px;">
+                                <i class="fas fa-arrow-left"></i> Back To List
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Main Card -->
+                    <div class="card" style="border: none; box-shadow: 0 2px 12px rgba(0,0,0,0.06);">
+                        <div class="card-body p-4">
+
+                            <!-- Bill Header -->
+                            <div style="background: linear-gradient(135deg, #2c7a5f, #1a4d3e); color: white; padding: 20px 24px; border-radius: 12px; margin-bottom: 20px;">
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <h2 style="margin: 0; font-weight: 600; font-size: 1.5rem;">
+                                            <i class="fas fa-file-invoice me-2"></i> {{ bill.bill_number }}
+                                        </h2>
+                                        <div style="font-size: 14px; opacity: 0.9; margin-top: 5px;">
+                                            <strong>Patient:</strong> {{ bill.patient_name }} |
+                                            <strong>Date:</strong> {{ bill.date|date:"d/m/Y" }} |
+                                            <strong>Type:</strong>
+                                            <span style="padding: 3px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; background: rgba(255,255,255,0.2); color: #fff; margin-left: 5px;">
+                                                {{ bill.bill_type }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 text-right">
+                                        <div style="font-size: 24px; font-weight: 700;">₹ {{ bill.amount|floatformat:2 }}</div>
+                                        <div style="font-size: 13px; opacity: 0.8;">Total Amount</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Bill Details - Two Column Layout -->
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <div style="background: #f8fafc; border-radius: 12px; padding: 18px 20px;">
+                                        <h6 style="font-weight: 600; color: #2c7a5f; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
+                                            <i class="fas fa-receipt me-2"></i> Bill Information
+                                        </h6>
+                                        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 4px 12px; font-size: 0.92rem;">
+                                            <span style="color: #6b7a8f;">Bill Number</span>
+                                            <span style="font-weight: 600; color: #1a2332;">{{ bill.bill_number }}</span>
+                                            
+                                            <span style="color: #6b7a8f;">Bill Type</span>
+                                            <span>
+                                                <span class="badge" style="
+                                                    {% if bill.bill_type == 'APPOINTMENT' %}
+                                                        background: #007bff; padding: 4px 14px; border-radius: 20px; color: #fff;
+                                                    {% elif bill.bill_type == 'TREATMENT' %}
+                                                        background: #28a745; padding: 4px 14px; border-radius: 20px; color: #fff;
+                                                    {% elif bill.bill_type == 'PHARMACY' %}
+                                                        background: #ffc107; padding: 4px 14px; border-radius: 20px; color: #333;
+                                                    {% elif bill.bill_type == 'LAB BILL' %}
+                                                        background: #6f42c1; padding: 4px 14px; border-radius: 20px; color: #fff;
+                                                    {% else %}
+                                                        background: #6c757d; padding: 4px 14px; border-radius: 20px; color: #fff;
+                                                    {% endif %}
+                                                ">
+                                                    {{ bill.bill_type }}
+                                                </span>
+                                            </span>
+                                            
+                                            <span style="color: #6b7a8f;">Patient Name</span>
+                                            <span style="font-weight: 500;">{{ bill.patient_name }}</span>
+                                            
+                                            <span style="color: #6b7a8f;">Date</span>
+                                            <span>{{ bill.date|date:"d/m/Y" }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div style="background: #f8fafc; border-radius: 12px; padding: 18px 20px;">
+                                        <h6 style="font-weight: 600; color: #2c7a5f; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
+                                            <i class="fas fa-store me-2"></i> Additional Details
+                                        </h6>
+                                        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 4px 12px; font-size: 0.92rem;">
+                                            <span style="color: #6b7a8f;">Branch</span>
+                                            <span>{{ bill.branch }}</span>
+                                            
+                                            <span style="color: #6b7a8f;">Payment Mode</span>
+                                            <span>{{ bill.payment_mode }}</span>
+                                            
+                                            <span style="color: #6b7a8f;">Prepared By</span>
+                                            <span>{{ bill.prepared_by }}</span>
+                                            
+                                            <span style="color: #6b7a8f;">Status</span>
+                                            <span>
+                                                <span class="badge" style="background: #28a745; padding: 4px 14px; border-radius: 20px; color: #fff;">
+                                                    {{ bill.status }}
+                                                </span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Financial Summary -->
+                            <div class="mt-3">
+                                <div style="background: #f8fafc; border-radius: 12px; padding: 18px 20px;">
+                                    <h6 style="font-weight: 600; color: #2c7a5f; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
+                                        <i class="fas fa-money-bill-wave me-2"></i> Financial Summary
+                                    </h6>
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <div style="text-align: center; padding: 10px;">
+                                                <div style="font-size: 0.8rem; color: #6b7a8f;">Subtotal</div>
+                                                <div style="font-size: 1.1rem; font-weight: 600; color: #1a2332;">₹ {{ bill.subtotal|floatformat:2 }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div style="text-align: center; padding: 10px;">
+                                                <div style="font-size: 0.8rem; color: #6b7a8f;">Tax</div>
+                                                <div style="font-size: 1.1rem; font-weight: 600; color: #1a2332;">₹ {{ bill.tax|floatformat:2 }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div style="text-align: center; padding: 10px;">
+                                                <div style="font-size: 0.8rem; color: #6b7a8f;">Discount</div>
+                                                <div style="font-size: 1.1rem; font-weight: 600; color: #dc3545;">₹ {{ bill.discount|floatformat:2 }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div style="text-align: center; padding: 10px; background: #e9f5ef; border-radius: 8px;">
+                                                <div style="font-size: 0.8rem; color: #2c7a5f;">Total Amount</div>
+                                                <div style="font-size: 1.3rem; font-weight: 700; color: #1e7e54;">₹ {{ bill.amount|floatformat:2 }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Items Table -->
+                            <div class="mt-3">
+                                <div style="background: #f8fafc; border-radius: 12px; overflow: hidden;">
+                                    <div style="padding: 12px 20px; background: #ffffff; border-bottom: 1px solid #edf0f5;">
+                                        <h6 style="font-weight: 600; color: #2c7a5f; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; margin: 0;">
+                                            <i class="fas fa-table-list me-2"></i> Bill Items
+                                        </h6>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table" style="font-size: 0.88rem; margin-bottom: 0;">
+                                            <thead style="background: #f0f2f5;">
+                                                <tr>
+                                                    <th style="padding: 10px 12px; font-weight: 600;">#</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600;">Particulars</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600; text-align: center;">Quantity</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600; text-align: right;">Rate</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600; text-align: right;">Amount</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% if bill_items %}
+                                                    {% for item in bill_items %}
+                                                    <tr style="border-bottom: 1px solid #edf0f5;">
+                                                        <td style="padding: 10px 12px;">{{ forloop.counter }}</td>
+                                                        <td style="padding: 10px 12px;">
+                                                            <strong>{{ item.particulars }}</strong>
+                                                        </td>
+                                                        <td style="padding: 10px 12px; text-align: center;">{{ item.quantity }}</td>
+                                                        <td style="padding: 10px 12px; text-align: right;">₹ {{ item.rate|floatformat:2 }}</td>
+                                                        <td style="padding: 10px 12px; text-align: right; font-weight: 600;">₹ {{ item.amount|floatformat:2 }}</td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                    <tr style="background: #f8fafc; border-top: 2px solid #e0e6ed; font-weight: 700;">
+                                                        <td colspan="4" style="padding: 10px 12px; text-align: right;">Total</td>
+                                                        <td style="padding: 10px 12px; text-align: right; color: #2c7a5f;">₹ {{ bill.amount|floatformat:2 }}</td>
+                                                    </tr>
+                                                {% else %}
+                                                    <tr>
+                                                        <td colspan="5" style="padding: 20px; text-align: center; color: #6b7a8f;">No items found for this bill</td>
+                                                    </tr>
+                                                {% endif %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Footer -->
+                            <div class="mt-3" style="text-align: center; font-size: 11px; color: #999; padding: 10px 0; border-top: 1px solid #edf0f5;">
+                                <p style="margin: 0;"><strong>*** This is a computer generated report ***</strong></p>
+                                <p style="margin: 0;">Generated on: {% now "d/m/Y H:i:s" %}</p>
+                            </div>
+
+                        </div>
+                    </div>
                 </div>
-              </div>
             </div>
-          </div>
         </div>
-      </div>
-
-      <!-- Financial Summary -->
-      <div class="row">
-        <div class="col-md-12">
-          <div class="detail-card">
-            <div class="row">
-              <div class="col-md-3">
-                <div class="label">Subtotal</div>
-                <div class="value">₹ {{ bill.subtotal|floatformat:2 }}</div>
-              </div>
-              <div class="col-md-3">
-                <div class="label">Tax</div>
-                <div class="value">₹ {{ bill.tax|floatformat:2 }}</div>
-              </div>
-              <div class="col-md-3">
-                <div class="label">Discount</div>
-                <div class="value">₹ {{ bill.discount|floatformat:2 }}</div>
-              </div>
-              <div class="col-md-3">
-                <div class="label">Total Amount</div>
-                <div class="value" style="font-weight: 700; font-size: 18px; color: #00796b;">
-                  ₹ {{ bill.amount|floatformat:2 }}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Items Table -->
-      <div class="card">
-        <div class="card-header">
-          <h5 class="card-title"><i class="fas fa-list"></i> Bill Items</h5>
-        </div>
-        <div class="card-body p-0">
-          <div class="table-responsive">
-            <table class="table table-bordered table-striped table-items">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Particulars</th>
-                  <th class="text-center">Quantity</th>
-                  <th class="text-right">Rate</th>
-                  <th class="text-right">Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% if bill_items %}
-                  {% for item in bill_items %}
-                  <tr>
-                    <td>{{ forloop.counter }}</td>
-                    <td>{{ item.particulars }}</td>
-                    <td class="text-center">{{ item.quantity }}</td>
-                    <td class="text-right">₹ {{ item.rate|floatformat:2 }}</td>
-                    <td class="text-right">₹ {{ item.amount|floatformat:2 }}</td>
-                  </tr>
-                  {% endfor %}
-                  <tr style="background: #f8f9fa; font-weight: 700;">
-                    <td colspan="4" class="text-right">Total</td>
-                    <td class="text-right">₹ {{ bill.amount|floatformat:2 }}</td>
-                  </tr>
-                {% else %}
-                  <tr>
-                    <td colspan="5" class="text-center text-muted">No items found for this bill</td>
-                  </tr>
-                {% endif %}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <div class="footer-print">
-        <p><strong>*** This is a computer generated report ***</strong></p>
-        <p>Generated on: {% now "d/m/Y H:i:s" %}</p>
-      </div>
-
-    </div>
-  </section>
+    </section>
 </div>
 
 {% endblock %}

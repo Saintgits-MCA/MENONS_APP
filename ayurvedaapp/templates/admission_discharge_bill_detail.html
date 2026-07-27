@@ -2,182 +2,308 @@
 {% load static %}
 
 {% block content %}
-<div class="content-wrapper">
-    <section class="content-header">
-        <div class="container-fluid">
-            <div class="row mb-2">
-                <div class="col-sm-6">
-                    <h1>Admission Discharge Bill Details</h1>
-                </div>
-                <div class="col-sm-6">
-                    <ol class="breadcrumb float-sm-right">
-                        <li class="breadcrumb-item">
-                            <a href="{% url 'admission_discharge_bill_register' %}">Bill Register</a>
-                        </li>
-                        <li class="breadcrumb-item active">Details</li>
-                    </ol>
-                </div>
-            </div>
-        </div>
-    </section>
 
+<div class="content-wrapper" style="background: #f0f2f5;">
     <section class="content">
-        <div class="container-fluid">
-            <div class="row mb-3">
+        <div class="container-fluid py-3">
+            <div class="row">
                 <div class="col-12">
-                    <a href="{% url 'admission_discharge_bill_register' %}" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left"></i> Back to List
-                    </a>
-                </div>
-            </div>
-
-            <!-- Bill Information -->
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">Bill Information</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <table class="table table-bordered table-sm">
-                                <tr>
-                                    <th style="width:40%;">Bill No</th>
-                                    <td>{{ bill.ipinvoicenumber|default:"N/A" }}</td>
-                                </tr>
-                                <tr>
-                                    <th>IP Number</th>
-                                    <td>{{ admission.ipnumber|default:"N/A" }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Patient Name</th>
-                                    <td>{{ patient.Patient_Name|default:"N/A" }}</td>
-                                </tr>
-                                <tr>
-                                    <th>MR Number</th>
-                                    <td>{{ patient.Medical_Record_Number|default:"N/A" }}</td>
-                                </tr>
-                            </table>
+                    <!-- Page Header -->
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="mb-0" style="font-weight: 700; color: #1a2332;">
+                            <i class="fas fa-file-invoice me-2" style="color: #2c7a5f;"></i> Admission Discharge Bill Details
+                        </h4>
+                        <div class="float-right">
+                            <a href="{% url 'admission_discharge_bill_register' %}" class="btn btn-secondary btn-sm" style="padding: 8px 10px;">
+                                <i class="fas fa-arrow-left"></i> Back To List
+                            </a>
                         </div>
-                        <div class="col-md-6">
-                            <table class="table table-bordered table-sm">
-                                <tr>
-                                    <th style="width:40%;">Admission Date</th>
-                                    <td>{{ admission.Current_Date|date:"d/m/Y"|default:"N/A" }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Discharge Date</th>
-                                    <td>{{ discharge.discharged_date|date:"d/m/Y"|default:"-" }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Room</th>
-                                    <td>{{ room_booking.room_number.Roomno|default:"N/A" }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Billing Staff</th>
-                                    <td>{{ bill.billingstaff.Staff.Staff_firstname|default:"N/A" }}</td>
-                                </tr>
-                            </table>
+                    </div>
+                    
+                    <!-- Main Card -->
+                    <div class="card" style="border: none; box-shadow: 0 2px 12px rgba(0,0,0,0.06);">
+                        <div class="card-body p-4">
+
+                            <!-- Bill Header - Two Column Layout -->
+                            <div class="row g-4">
+                                <!-- Left: Bill Information -->
+                                <div class="col-md-6">
+                                    <div style="background: #f8fafc; border-radius: 12px; padding: 18px 20px;">
+                                        <h6 style="font-weight: 600; color: #2c7a5f; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
+                                            <i class="fas fa-receipt me-2"></i> Bill Information
+                                        </h6>
+                                        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 4px 12px; font-size: 0.92rem;">
+                                            <span style="color: #6b7a8f;">Bill No</span>
+                                            <span style="font-weight: 600; color: #1a2332;">{{ bill.ipinvoicenumber|default:"N/A" }}</span>
+                                            
+                                            <span style="color: #6b7a8f;">IP Number</span>
+                                            <span>{{ admission.ipnumber|default:"N/A" }}</span>
+                                            
+                                            <span style="color: #6b7a8f;">Patient Name</span>
+                                            <span style="font-weight: 500;">{{ patient.Patient_Name|default:"N/A" }}</span>
+                                            
+                                            <span style="color: #6b7a8f;">MR Number</span>
+                                            <span>{{ patient.Medical_Record_Number|default:"N/A" }}</span>
+                                            
+                                            <span style="color: #6b7a8f;">Billing Staff</span>
+                                            <span>{{ bill.billingstaff.Staff.Staff_firstname|default:"N/A" }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Right: Admission & Discharge Details -->
+                                <div class="col-md-6">
+                                    <div style="background: #f8fafc; border-radius: 12px; padding: 18px 20px;">
+                                        <h6 style="font-weight: 600; color: #2c7a5f; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
+                                            <i class="fas fa-hospital-user me-2"></i> Admission Details
+                                        </h6>
+                                        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 4px 12px; font-size: 0.92rem;">
+                                            <span style="color: #6b7a8f;">Admission Date</span>
+                                            <span>{{ admission.Current_Date|date:"d/m/Y"|default:"N/A" }}</span>
+                                            
+                                            <span style="color: #6b7a8f;">Discharge Date</span>
+                                            <span>{{ discharge.discharged_date|date:"d/m/Y"|default:"-" }}</span>
+                                            
+                                            <span style="color: #6b7a8f;">Room</span>
+                                            <span>{{ room_booking.room_number.Roomno|default:"N/A" }}</span>
+                                            
+                                            <span style="color: #6b7a8f;">Bed</span>
+                                            <span>{{ room_booking.bed_number.wardbedno|default:"-" }}</span>
+                                            
+                                            <span style="color: #6b7a8f;">Accommodation Type</span>
+                                            <span>{{ room_booking.accommodation_type|default:"-" }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Financial Summary -->
+                            <div class="row g-4 mt-1">
+                                <div class="col-12">
+                                    <div style="background: #f8fafc; border-radius: 12px; padding: 18px 20px;">
+                                        <h6 style="font-weight: 600; color: #2c7a5f; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
+                                            <i class="fas fa-money-bill-wave me-2"></i> Financial Summary
+                                        </h6>
+                                        <div class="row">
+                                            <div class="col-md-6 offset-md-6">
+                                                <table class="table table-bordered" style="font-size: 0.92rem;">
+                                                    <tr>
+                                                        <th style="width:60%;">Subtotal</th>
+                                                        <td class="text-right">₹{{ subtotal|floatformat:2 }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>Tax</th>
+                                                        <td class="text-right">₹{{ tax|floatformat:2 }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>Discount</th>
+                                                        <td class="text-right">₹{{ discount|floatformat:2 }}</td>
+                                                    </tr>
+                                                    <tr style="background: #e9f5ef;">
+                                                        <th><strong>Total Amount</strong></th>
+                                                        <td class="text-right"><strong style="color: #1e7e54;">₹{{ total_amount|floatformat:2 }}</strong></td>
+                                                    </tr>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Medicine Details -->
+                            {% if expanded_medicines %}
+                            <div class="mt-2">
+                                <div style="background: #f8fafc; border-radius: 12px; overflow: hidden;">
+                                    <div style="padding: 12px 20px; background: #ffffff; border-bottom: 1px solid #edf0f5;">
+                                        <h6 style="font-weight: 600; color: #2c7a5f; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; margin: 0;">
+                                            <i class="fas fa-pills me-2"></i> Medicine Details
+                                        </h6>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table" style="font-size: 0.88rem; margin-bottom: 0;">
+                                            <thead style="background: #f0f2f5;">
+                                                <tr>
+                                                    <th style="padding: 10px 12px; font-weight: 600;">#</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600;">Medicine Name</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600; text-align: center;">Quantity</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600; text-align: right;">Rate</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600; text-align: right;">Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for item in expanded_medicines %}
+                                                <tr style="border-bottom: 1px solid #edf0f5;">
+                                                    <td style="padding: 10px 12px;">{{ forloop.counter }}</td>
+                                                    <td style="padding: 10px 12px;">
+                                                        <strong>{{ item.medicinename }}</strong>
+                                                    </td>
+                                                    <td style="padding: 10px 12px; text-align: center;">{{ item.count }}</td>
+                                                    <td style="padding: 10px 12px; text-align: right;">₹ {{ item.rate_per_medicine|floatformat:2 }}</td>
+                                                    <td style="padding: 10px 12px; text-align: right; font-weight: 600;">₹ {{ item.totalmedicine|floatformat:2 }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                            <tfoot style="background: #f8fafc; border-top: 2px solid #e0e6ed;">
+                                                <tr>
+                                                    <td colspan="4" style="padding: 10px 12px; text-align: right; font-weight: 500;">Total Medicine Charges</td>
+                                                    <td style="padding: 10px 12px; text-align: right; font-weight: 600;">₹ {{ medicine_total|floatformat:2 }}</td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Treatment Details -->
+                            {% if expanded_treatments %}
+                            <div class="mt-3">
+                                <div style="background: #f8fafc; border-radius: 12px; overflow: hidden;">
+                                    <div style="padding: 12px 20px; background: #ffffff; border-bottom: 1px solid #edf0f5;">
+                                        <h6 style="font-weight: 600; color: #2c7a5f; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; margin: 0;">
+                                            <i class="fas fa-notes-medical me-2"></i> Treatment Details
+                                        </h6>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table" style="font-size: 0.88rem; margin-bottom: 0;">
+                                            <thead style="background: #f0f2f5;">
+                                                <tr>
+                                                    <th style="padding: 10px 12px; font-weight: 600;">#</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600;">Treatment Name</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600; text-align: center;">Count</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600; text-align: right;">Rate</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600; text-align: right;">Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for item in expanded_treatments %}
+                                                <tr style="border-bottom: 1px solid #edf0f5;">
+                                                    <td style="padding: 10px 12px;">{{ forloop.counter }}</td>
+                                                    <td style="padding: 10px 12px;">
+                                                        <strong>{{ item.tratmntid.Treatment_name|default:"N/A" }}</strong>
+                                                    </td>
+                                                    <td style="padding: 10px 12px; text-align: center;">{{ item.treatmentcount }}</td>
+                                                    <td style="padding: 10px 12px; text-align: right;">₹ {{ item.rate_per_treatment|floatformat:2 }}</td>
+                                                    <td style="padding: 10px 12px; text-align: right; font-weight: 600;">₹ {{ item.total_treatmentrate|floatformat:2 }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                            <tfoot style="background: #f8fafc; border-top: 2px solid #e0e6ed;">
+                                                <tr>
+                                                    <td colspan="4" style="padding: 10px 12px; text-align: right; font-weight: 500;">Total Treatment Charges</td>
+                                                    <td style="padding: 10px 12px; text-align: right; font-weight: 600;">₹ {{ treatment_total|floatformat:2 }}</td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Room Charges Details -->
+                            {% if expanded_room_details %}
+                            <div class="mt-3">
+                                <div style="background: #f8fafc; border-radius: 12px; overflow: hidden;">
+                                    <div style="padding: 12px 20px; background: #ffffff; border-bottom: 1px solid #edf0f5;">
+                                        <h6 style="font-weight: 600; color: #2c7a5f; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; margin: 0;">
+                                            <i class="fas fa-bed me-2"></i> Room Charges Details
+                                        </h6>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table" style="font-size: 0.88rem; margin-bottom: 0;">
+                                            <thead style="background: #f0f2f5;">
+                                                <tr>
+                                                    <th style="padding: 10px 12px; font-weight: 600;">#</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600;">Room</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600; text-align: center;">No of Days</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600; text-align: right;">Rate/Day</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600; text-align: right;">Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for item in expanded_room_details %}
+                                                <tr style="border-bottom: 1px solid #edf0f5;">
+                                                    <td style="padding: 10px 12px;">{{ forloop.counter }}</td>
+                                                    <td style="padding: 10px 12px;">
+                                                        <strong>{{ item.room.Roomno|default:"-" }}</strong>
+                                                    </td>
+                                                    <td style="padding: 10px 12px; text-align: center;">{{ item.no_of_days }}</td>
+                                                    <td style="padding: 10px 12px; text-align: right;">₹ {{ item.rate_per_day|floatformat:2 }}</td>
+                                                    <td style="padding: 10px 12px; text-align: right; font-weight: 600;">₹ {{ item.total_rent|floatformat:2 }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                            <tfoot style="background: #f8fafc; border-top: 2px solid #e0e6ed;">
+                                                <tr>
+                                                    <td colspan="4" style="padding: 10px 12px; text-align: right; font-weight: 500;">Total Room Charges</td>
+                                                    <td style="padding: 10px 12px; text-align: right; font-weight: 600;">₹ {{ room_total|floatformat:2 }}</td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Other Expenses Details -->
+                            {% if other_expenses %}
+                            <div class="mt-3">
+                                <div style="background: #f8fafc; border-radius: 12px; overflow: hidden;">
+                                    <div style="padding: 12px 20px; background: #ffffff; border-bottom: 1px solid #edf0f5;">
+                                        <h6 style="font-weight: 600; color: #2c7a5f; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; margin: 0;">
+                                            <i class="fas fa-coins me-2"></i> Other Expenses
+                                        </h6>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table" style="font-size: 0.88rem; margin-bottom: 0;">
+                                            <thead style="background: #f0f2f5;">
+                                                <tr>
+                                                    <th style="padding: 10px 12px; font-weight: 600;">#</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600;">Service</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600;">Details</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600; text-align: right;">Charges</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for item in other_expenses %}
+                                                <tr style="border-bottom: 1px solid #edf0f5;">
+                                                    <td style="padding: 10px 12px;">{{ forloop.counter }}</td>
+                                                    <td style="padding: 10px 12px;">{{ item.service|default:"-" }}</td>
+                                                    <td style="padding: 10px 12px;">{{ item.details|default:"-" }}</td>
+                                                    <td style="padding: 10px 12px; text-align: right; font-weight: 600;">₹ {{ item.charges|floatformat:2 }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                            <tfoot style="background: #f8fafc; border-top: 2px solid #e0e6ed;">
+                                                <tr>
+                                                    <td colspan="3" style="padding: 10px 12px; text-align: right; font-weight: 500;">Total Other Expenses</td>
+                                                    <td style="padding: 10px 12px; text-align: right; font-weight: 600;">₹ {{ other_total|floatformat:2 }}</td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Amount in Words -->
+                            {% comment %} <div class="row g-4 mt-3">
+                                <div class="col-12">
+                                    <div style="background: #e8f4fd; border-radius: 12px; padding: 14px 20px; border-left: 4px solid #2c7a5f;">
+                                        <h6 style="font-weight: 600; color: #2c7a5f; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+                                            <i class="fas fa-language me-2"></i> Amount in Words
+                                        </h6>
+                                        <p class="mb-0" style="font-size: 0.95rem; font-weight: 500; color: #1a2332;">{{ amount_in_words }}</p>
+                                    </div>
+                                </div>
+                            </div> {% endcomment %}
+
                         </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Financial Summary -->
-            <div class="card">
-                <div class="card-header bg-success text-white">
-                    <h5 class="mb-0">Financial Summary</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6 offset-md-6">
-                            <table class="table table-bordered">
-                                <tr>
-                                    <th>Subtotal</th>
-                                    <td class="text-right">₹{{ subtotal|floatformat:2 }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Tax</th>
-                                    <td class="text-right">₹{{ tax|floatformat:2 }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Discount</th>
-                                    <td class="text-right">₹{{ discount|floatformat:2 }}</td>
-                                </tr>
-                                <tr class="bg-info text-white">
-                                    <th><strong>Total Amount</strong></th>
-                                    <td class="text-right"><strong>₹{{ total_amount|floatformat:2 }}</strong></td>
-                                </tr>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Expanded Details -->
-            {% if expanded_medicines %}
-            <div class="card">
-                <div class="card-header bg-info text-white">
-                    <h5 class="mb-0">Medicine Details</h5>
-                </div>
-                <div class="card-body table-responsive">
-                    <table class="table table-bordered table-striped table-sm">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Medicine Name</th>
-                                <th class="text-right">Quantity</th>
-                                <th class="text-right">Rate</th>
-                                <th class="text-right">Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for item in expanded_medicines %}
-                            <tr>
-                                <td>{{ forloop.counter }}</td>
-                                <td>{{ item.medicinename }}</td>
-                                <td class="text-right">{{ item.count }}</td>
-                                <td class="text-right">{{ item.rate_per_medicine|floatformat:2 }}</td>
-                                <td class="text-right">{{ item.totalmedicine|floatformat:2 }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            {% endif %}
-
-            {% if expanded_treatments %}
-            <div class="card">
-                <div class="card-header bg-warning text-dark">
-                    <h5 class="mb-0">Treatment Details</h5>
-                </div>
-                <div class="card-body table-responsive">
-                    <table class="table table-bordered table-striped table-sm">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Treatment Name</th>
-                                <th class="text-right">Count</th>
-                                <th class="text-right">Rate</th>
-                                <th class="text-right">Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for item in expanded_treatments %}
-                            <tr>
-                                <td>{{ forloop.counter }}</td>
-                                <td>{{ item.tratmntid.Treatment_name|default:"N/A" }}</td>
-                                <td class="text-right">{{ item.treatmentcount }}</td>
-                                <td class="text-right">{{ item.rate_per_treatment|floatformat:2 }}</td>
-                                <td class="text-right">{{ item.total_treatmentrate|floatformat:2 }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            {% endif %}
         </div>
     </section>
 </div>
+
 {% endblock %}

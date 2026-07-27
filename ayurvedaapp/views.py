@@ -28876,7 +28876,7 @@ def newtaxinvview(request):
 
     # Hospital & branch info
     br = lsinvoice.branch
-    objhospt = Hospitaldetails.objects.all()
+    objhospt = Hospitaldetails.objects.first()
 
     # ✅ GST flags with condition
     branch_has_gst = False
@@ -40254,7 +40254,7 @@ def cancelled_bills_report(request):
     
     # ========== FETCH CANCELLED INVOICES ==========
     # Get cancelled invoices (restockstatus=False means cancelled)
-    invoices_query = newInvoiceMaster.objects.filter(restockstatus__in=[0, 1]).select_related(
+    invoices_query = newInvoiceMaster.objects.filter(restockstatus__in=[1]).select_related(
         'Mrno',
         'branch',
         'preparedby',
@@ -40853,14 +40853,10 @@ def sales_return_report(request):
     to_date = request.GET.get('to_date', '')
     bill_type = request.GET.get('bill_type', '')
     
-    if not from_date and to_date:
-        from_date = date.today().replace(day=1).strftime('%Y-%m-%d')
-        to_date = date.today().strftime('%Y-%m-%d')
-    
     # Start with all credit notes
     credit_notes = CreditNoteMaster.objects.all()
     
-    # Apply date filter - only if both dates are provided
+    # Apply date filter
     if from_date and to_date:
         credit_notes = credit_notes.filter(creditnote_date__range=[from_date, to_date])
     elif from_date and not to_date:
@@ -40869,9 +40865,8 @@ def sales_return_report(request):
     elif not from_date and to_date:
         from_date = date.today().replace(day=1).strftime('%Y-%m-%d')
         credit_notes = credit_notes.filter(creditnote_date__range=[from_date, to_date])
-
     
-    # Apply bill type filter (if needed)
+    # Apply bill type filter
     if bill_type:
         if bill_type == 'Cash':
             credit_notes = credit_notes.filter(
@@ -40884,59 +40879,75 @@ def sales_return_report(request):
                 Q(invoicemaster__payementmode__icontains='credit')
             )
     
-    # Build the sales return data
-    sales_returns = []
+    # Build grouped data by date and credit_no
     total_amount = 0
     day_totals = {}
+    grouped_data = {}  # Group by credit_note_id to avoid duplicates
     
     for credit_note in credit_notes.order_by('creditnote_date', '-id'):
         items = CreditNoteChild.objects.filter(creditnote_master=credit_note)
         day_total = 0
+        credit_note_total = 0
+        
+        date_str = credit_note.creditnote_date.strftime('%d/%m/%Y') if credit_note.creditnote_date else ''
+        credit_no = credit_note.creditnote_number
+        
+        # Group by credit_note_id
+        if credit_note.id not in grouped_data:
+            grouped_data[credit_note.id] = {
+                'date': credit_note.creditnote_date,
+                'credit_no': credit_no,
+                'credit_note_id': credit_note.id,
+                'items': [],
+                'total': 0
+            }
         
         for item in items:
             amount = float(item.total or item.amount or 0)
-            sales_returns.append({
-                'date': credit_note.creditnote_date,
-                'credit_no': credit_note.creditnote_number,
+            total_amount += amount
+            day_total += amount
+            credit_note_total += amount
+            
+            grouped_data[credit_note.id]['items'].append({
                 'product_name': item.particulars or 'N/A',
                 'batch': item.invoice_child.batchno if item.invoice_child else '',
                 'quantity': item.quantity,
-                'amount': amount,
-                'credit_note_id':credit_note.id
+                'amount': amount
             })
-            total_amount += amount
-            day_total += amount
+        
+        grouped_data[credit_note.id]['total'] = credit_note_total
         
         # Store day-wise total
-        if credit_note.creditnote_date:
-            date_str = credit_note.creditnote_date.strftime('%d/%m/%Y')
-            if date_str in day_totals:
-                day_totals[date_str] += day_total
-            else:
-                day_totals[date_str] = day_total
+        if date_str in day_totals:
+            day_totals[date_str] += day_total
+        else:
+            day_totals[date_str] = day_total
     
-    # ALL DATA (for print) - use the same data
-    all_sales_returns = sales_returns.copy()  # All data for print
+    # Convert grouped_data dict to list
+    grouped_list = list(grouped_data.values())
     
-    # Pagination - 25 items per page (for view)
-    paginator = Paginator(sales_returns, 5)
+    # Sort by date (newest first)
+    grouped_list.sort(key=lambda x: x['date'], reverse=True)
+    
+    # Get hospital details
+    hospital = Hospitaldetails.objects.first()
+    
+    # Pagination for grouped data
+    paginator = Paginator(grouped_list, 10)
     page = request.GET.get('page', 1)
     
     try:
-        sales_returns_page = paginator.page(page)
+        grouped_page = paginator.page(page)
     except PageNotAnInteger:
-        sales_returns_page = paginator.page(1)
+        grouped_page = paginator.page(1)
     except EmptyPage:
-        sales_returns_page = paginator.page(paginator.num_pages)
-    
-    # Get hospital details from database
-    hospital = Hospitaldetails.objects.first()
+        grouped_page = paginator.page(paginator.num_pages)
     
     context = {
-        'sales_returns': sales_returns_page,     
-        'all_sales_returns': all_sales_returns,   
+        'grouped_data': grouped_page,  # Paginated grouped data
+        'all_grouped_data': grouped_list,  # All grouped data for print
         'total_amount': total_amount,
-        'total_count': len(sales_returns),
+        'total_count': len(grouped_list),
         'from_date': from_date,
         'to_date': to_date,
         'bill_type': bill_type,
@@ -40980,13 +40991,14 @@ def purchase_statement_report(request):
     total_amount = 0
     total_qty = 0
     invoice_totals = {}
-    
+    suppliers_with_invoices = set()
     for invoice in purchase_invoices.order_by('invoice_date', '-id'):
         items = PurchaseInvoiceItem.objects.filter(invoice=invoice)
         invoice_total = 0
         invoice_qty = 0
         invoice_id = invoice.id
-
+        if invoice.supplier:
+            suppliers_with_invoices.add(invoice.supplier.id)
         for item in items:
             qty = float(item.quantity or 0)
             rate = float(item.unit_price or 0)
@@ -41021,7 +41033,9 @@ def purchase_statement_report(request):
         }
     
     # Get all suppliers for filter dropdown
-    suppliers = supplier.objects.all().order_by('shopname')
+    suppliers = supplier.objects.filter(
+        id__in=suppliers_with_invoices
+    ).order_by('shopname')
     
     # Get hospital details from database
     hospital = Hospitaldetails.objects.first()
@@ -41068,7 +41082,8 @@ def sales_statement_report(request):
     to_date = request.GET.get('to_date', '')
     patient_filter = request.GET.get('patient', '')
     bill_type = request.GET.get('bill_type', '')
-    
+    search_term = request.GET.get('search', '')
+
     # Start with all Sales Invoices
     sales_invoices = newInvoiceMaster.objects.filter(restockstatus=True).select_related('branch', 'Mrno', 'preparedby')
     
@@ -41084,27 +41099,23 @@ def sales_statement_report(request):
 
     # Apply patient filter
     if patient_filter:
-        sales_invoices = sales_invoices.filter(Mrno_id=patient_filter)
-    
-    # Apply bill type filter (if needed)
-    if bill_type:
-        if bill_type == 'Cash':
-            sales_invoices = sales_invoices.filter(
-                Q(payementmode__icontains='Cash') |
-                Q(payementmode__icontains='cash')
-            )
-        elif bill_type == 'Credit':
-            sales_invoices = sales_invoices.filter(
-                Q(payementmode__icontains='Credit') |
-                Q(payementmode__icontains='credit')
-            )
-    
+        sales_invoices = sales_invoices.filter( Q(patientname__icontains=patient_filter) |
+                    Q(Mrno__Patient_Name__icontains=patient_filter))
+
+    if search_term:
+        # Search in invoice fields
+        invoice_matches = sales_invoices.filter(
+            Q(Invoicenumber__icontains=search_term) |
+            Q(patientname__icontains=search_term) |
+            Q(Mrno__Patient_Name__icontains=search_term) |
+            Q(Mrno__Medical_Record_Number__icontains=search_term) |
+            Q(Mrno__contactno__icontains=search_term)
+        )
     # Build the sales statement data
     sales_data = []
     total_amount = 0
     total_qty = 0
     invoice_totals = {}
-    
     for invoice in sales_invoices.order_by('currentdate', '-id'):
         items = newInvoiceChild.objects.filter(invmasterid=invoice)
         invoice_total = 0
@@ -41114,7 +41125,6 @@ def sales_statement_report(request):
         patient_name = invoice.patientname or 'N/A'
         if invoice.Mrno:
             patient_name = invoice.Mrno.Patient_Name if invoice.Mrno.Patient_Name else patient_name
-        
         for item in items:
             qty = float(item.quantity or 0)
             rate = float(item.amount or 0)
@@ -41167,7 +41177,7 @@ def sales_statement_report(request):
         }
     
     # Get all patients for filter dropdown
-    patients = Patient_details.objects.all().order_by('Patient_Name')
+    
     
     # Get hospital details from database
     hospital = Hospitaldetails.objects.first()
@@ -41198,7 +41208,8 @@ def sales_statement_report(request):
         'bill_type': bill_type,
         'invoice_totals': invoice_totals,
         'hospital': hospital,
-        'patients': patients,
+        'search_term': search_term,
+        'patient_filter':patient_filter,
     }
     
     return render(request, 'sales_statement_report.html', context)
@@ -41218,12 +41229,7 @@ def detailed_bill_register(request):
     from_date = request.GET.get('from_date', '')
     to_date = request.GET.get('to_date', '')
     bill_type = request.GET.get('bill_type', '')
-    
-    # Set default dates to today if not provided
-    if not from_date:
-        from_date = date.today().replace(day=1).strftime('%Y-%m-%d')
-    if not to_date:
-        to_date = date.today().strftime('%Y-%m-%d')
+
     
     all_bills = []
     total_gross = 0
@@ -41232,13 +41238,15 @@ def detailed_bill_register(request):
     cash_count = 0
     credit_count = 0
     
+    date_filter_applied = from_date and to_date
+    
     # ============================================================
     # 1. PHARMACY INVOICES (newInvoiceMaster)
     # ============================================================
-    pharmacy_invoices = newInvoiceMaster.objects.filter(
-        restockstatus=True,
-        currentdate__range=[from_date, to_date]
-    ).select_related('Mrno', 'branch')
+    pharmacy_invoices = newInvoiceMaster.objects.filter(restockstatus=True).select_related('Mrno', 'branch')
+    
+    if date_filter_applied:
+        pharmacy_invoices = pharmacy_invoices.filter(currentdate__range=[from_date, to_date])
     
     for inv in pharmacy_invoices:
         payment_mode = inv.payementmode or 'Cash'
@@ -41268,13 +41276,13 @@ def detailed_bill_register(request):
             'date': inv.currentdate
         })
     
-    # ============================================================
+   # ============================================================
     # 2. LAB INVOICES (LabInvoiceMaster)
     # ============================================================
-    lab_invoices = LabInvoiceMaster.objects.filter(
-        is_cancelled=False,
-        date__range=[from_date, to_date]
-    ).select_related('patient')
+    lab_invoices = LabInvoiceMaster.objects.filter(is_cancelled=False).select_related('patient')
+    
+    if date_filter_applied:
+        lab_invoices = lab_invoices.filter(date__range=[from_date, to_date])
     
     for inv in lab_invoices:
         payment_mode = 'Cash' if not inv.is_credit else 'Credit'
@@ -41307,9 +41315,10 @@ def detailed_bill_register(request):
     # ============================================================
     # 3. PURCHASE INVOICES (PurchaseInvoice)
     # ============================================================
-    purchase_invoices = PurchaseInvoice.objects.filter(
-        invoice_date__range=[from_date, to_date]
-    ).select_related('supplier', 'branch')
+    purchase_invoices = PurchaseInvoice.objects.all().select_related('supplier', 'branch')
+    
+    if date_filter_applied:
+        purchase_invoices = purchase_invoices.filter(invoice_date__range=[from_date, to_date])
     
     for inv in purchase_invoices:
         amount = float(inv.grand_total or 0)
@@ -41332,13 +41341,13 @@ def detailed_bill_register(request):
             'date': inv.invoice_date
         })
     
-    # ============================================================
+     # ============================================================
     # 4. APPOINTMENT INVOICES (appointmentinvoicemaster)
     # ============================================================
-    appointment_invoices = appointmentinvoicemaster.objects.filter(
-        cancelstatus=False,
-        currentdate__range=[from_date, to_date]
-    ).select_related('Mrno', 'branch')
+    appointment_invoices = appointmentinvoicemaster.objects.filter(cancelstatus=False).select_related('Mrno', 'branch')
+    
+    if date_filter_applied:
+        appointment_invoices = appointment_invoices.filter(currentdate__range=[from_date, to_date])
     
     for inv in appointment_invoices:
         payment_mode = inv.payementmode or 'Cash'
@@ -41371,10 +41380,10 @@ def detailed_bill_register(request):
     # ============================================================
     # 5. TREATMENT INVOICES (treatmentinvoicemaster)
     # ============================================================
-    treatment_invoices = treatmentinvoicemaster.objects.filter(
-        cancelstatus=False,
-        currentdate__range=[from_date, to_date]
-    ).select_related('Mrno', 'branch')
+    treatment_invoices = treatmentinvoicemaster.objects.filter(cancelstatus=False).select_related('Mrno', 'branch')
+    
+    if date_filter_applied:
+        treatment_invoices = treatment_invoices.filter(currentdate__range=[from_date, to_date])
     
     for inv in treatment_invoices:
         payment_mode = inv.paymentmode or 'Cash'
@@ -41473,9 +41482,25 @@ def doctorwise_op_registration(request):
     total_cons_fees = 0
     total_count = 0
     
-    for appt in appointments.order_by('Appointment_date', '-id'):
-        reg_fees = float(appt.Fee or 0) if appt.status and 'consultation' in appt.status.lower() else 0
-        cons_fees = float(appt.Fee or 0) if appt.status and 'followup' in appt.status.lower() else 0
+    for appt in appointments.order_by('-Appointment_date', '-id'):
+        # ✅ Get reg_Fee from Patient_details (if registered patient)
+        reg_fees = 0
+        if appt.MR_Number:
+            reg_fees = float(appt.MR_Number.reg_Fee)
+        
+        # ✅ Get consultation fee from Appointment Fee field
+        cons_fees = 0
+        if appt.status:
+            status_lower = appt.status.lower()
+            # Consultation fee for consultation status
+            if 'consultation' in status_lower or 'new' in status_lower:
+                cons_fees = float(appt.Fee or 0)
+            # Followup fee for followup status
+            elif 'followup' in status_lower:
+                cons_fees = float(appt.Fee or 0)
+            # Revisit fee for revisit status
+            elif 'revisit' in status_lower:
+                cons_fees = float(appt.Fee or 0)
         
         reg_data.append({
             'sl_no': len(reg_data) + 1,
@@ -41521,11 +41546,6 @@ def doctorwise_bill_analysis(request):
     to_date = request.GET.get('to_date', '')
     doctor_id = request.GET.get('doctor', '')
     
-    # Set default dates to today if not provided
-    if not from_date:
-        from_date = date.today().replace(day=1).strftime('%Y-%m-%d')
-    if not to_date:
-        to_date = date.today().strftime('%Y-%m-%d')
     
     # Get all doctors for dropdown
     doctors = Staffallocation.objects.filter(
@@ -41552,9 +41572,13 @@ def doctorwise_bill_analysis(request):
     # ============================================================
     appointment_invoices = appointmentinvoicemaster.objects.filter(
         cancelstatus=False,
-        currentdate__range=[from_date, to_date]
     ).select_related('Mrno', 'branch')
     
+    if from_date and to_date:
+        appointment_invoices = appointmentinvoicemaster.objects.filter(cancelstatus=False,currentdate__range=[from_date,to_date])
+    elif from_date and not to_date:
+        appointment_invoices = appointmentinvoicemaster.objects.filter(cancelstatus=False,currentdate__range=[from_date,timezone.now().date()])
+
     if doctor_id:
         appointment_invoices = appointment_invoices.filter(
             Mrno__in=Appointments.objects.filter(Doctor_Name_id=doctor_id).values_list('MR_Number_id', flat=True)
@@ -41565,9 +41589,18 @@ def doctorwise_bill_analysis(request):
     # ============================================================
     treatment_invoices = treatmentinvoicemaster.objects.filter(
         cancelstatus=False,
-        currentdate__range=[from_date, to_date]
     ).select_related('Mrno', 'branch')
     
+    if from_date and to_date:
+        treatment_invoices = treatmentinvoicemaster.objects.filter(
+                cancelstatus=False,
+                currentdate__range=[from_date, to_date]
+            ).select_related('Mrno', 'branch')
+    elif from_date and not to_date:
+        treatment_invoices = treatmentinvoicemaster.objects.filter(
+        cancelstatus=False,
+        currentdate__range=[from_date, timezone.now().date()]
+    ).select_related('Mrno', 'branch')
     if doctor_id:
         treatment_invoices = treatment_invoices.filter(
             Mrno__in=Appointments.objects.filter(Doctor_Name_id=doctor_id).values_list('MR_Number_id', flat=True)
@@ -41578,9 +41611,11 @@ def doctorwise_bill_analysis(request):
     # ============================================================
     pharmacy_invoices = newInvoiceMaster.objects.filter(
         restockstatus=True,
-        currentdate__range=[from_date, to_date]
     ).select_related('Mrno', 'branch')
-    
+    if from_date and to_date:
+        pharmacy_invoices = newInvoiceMaster.objects.filter(restockstatus=True,currentdate__range=[from_date,to_date])
+    elif from_date and not to_date:
+        pharmacy_invoices = newInvoiceMaster.objects.filter(restockstatus=True,currentdate__range=[from_date,timezone.now().today()])
     if doctor_id:
         pharmacy_invoices = pharmacy_invoices.filter(
             Mrno__in=Appointments.objects.filter(Doctor_Name_id=doctor_id).values_list('MR_Number_id', flat=True)
@@ -41591,9 +41626,18 @@ def doctorwise_bill_analysis(request):
     # ============================================================
     lab_invoices = LabInvoiceMaster.objects.filter(
         is_cancelled=False,
+    ).select_related('patient')
+    if from_date and to_date:
+        lab_invoices = LabInvoiceMaster.objects.filter(
+        is_cancelled=False,
         date__range=[from_date, to_date]
     ).select_related('patient')
-    
+    elif from_date and not to_date:
+        lab_invoices = LabInvoiceMaster.objects.filter(
+        is_cancelled=False,
+        date__range=[from_date, timezone.now().today()]
+    ).select_related('patient')
+       
     if doctor_id:
         lab_invoices = lab_invoices.filter(
             patient__in=Appointments.objects.filter(Doctor_Name_id=doctor_id).values_list('MR_Number_id', flat=True)
@@ -41896,11 +41940,7 @@ def doctors_op_ip_collection(request):
     to_date = request.GET.get('to_date', '')
     doctor_id = request.GET.get('doctor', '')
     
-    # Set default dates if not provided
-    if not from_date:
-        from_date = date.today().replace(day=1).strftime('%Y-%m-%d')
-    if not to_date:
-        to_date = date.today().strftime('%Y-%m-%d')
+    # ✅ No default dates - only use if both provided
     
     # Get all doctors for dropdown
     doctors = Staffallocation.objects.filter(
@@ -41920,6 +41960,7 @@ def doctors_op_ip_collection(request):
     # ============================================================
     op_appointments = Appointments.objects.select_related('MR_Number', 'Doctor_Name')
     
+    # ✅ Only apply date filter if both dates are provided
     if from_date and to_date:
         op_appointments = op_appointments.filter(Appointment_date__range=[from_date, to_date])
     
@@ -41946,17 +41987,31 @@ def doctors_op_ip_collection(request):
         
         doctor_collection[doc_id]['op_count'] += 1
         
-        # Determine if registration or consultation fee
-        if appt.status and ('consultation' in appt.status.lower() or 'new' in appt.status.lower()):
-            doctor_collection[doc_id]['reg_fees'] += float(appt.Fee or 0)
-        else:
-            doctor_collection[doc_id]['cons_fees'] += float(appt.Fee or 0)
+        # ✅ Registration Fee: From Patient_details.reg_Fee
+        reg_fee = 0
+        if appt.MR_Number:
+            reg_fee = float(appt.MR_Number.reg_Fee or 0)
+        
+        # ✅ Consultation Fee: From Appointment.Fee (only for consultation/followup/revisit)
+        cons_fee = 0
+        status_lower = (appt.status or "").lower()
+        if status_lower:
+            if 'consultation' in status_lower or 'followup' in status_lower or 'revisit' in status_lower:
+                cons_fee = float(appt.Fee or 0)
+        
+        # Add to totals
+        if reg_fee > 0:
+            doctor_collection[doc_id]['reg_fees'] += reg_fee
+        
+        if cons_fee > 0:
+            doctor_collection[doc_id]['cons_fees'] += cons_fee
     
     # ============================================================
     # 2. GET IP ADMISSIONS
     # ============================================================
     ip_admissions = ippatientadmission.objects.filter(Admittedstatus=True)
     
+    # ✅ Only apply date filter if both dates are provided
     if from_date and to_date:
         ip_admissions = ip_admissions.filter(Current_Date__range=[from_date, to_date])
     
@@ -41970,7 +42025,7 @@ def doctors_op_ip_collection(request):
                 # Get IP bill amount
                 ip_bill = IPBill.objects.filter(ip_admission=admission).first()
                 if ip_bill:
-                    doctor_collection[doc_id]['ip_amount'] += float(ip_bill.total_amount or 0)
+                    doctor_collection[doc_id]['ip_amount'] += float(ip_bill.total_amount)
     
     # ============================================================
     # 3. CONVERT TO LIST FOR TEMPLATE
@@ -41985,7 +42040,7 @@ def doctors_op_ip_collection(request):
     for idx, (doc_id, data) in enumerate(doctor_collection.items(), 1):
         total = data['reg_fees'] + data['cons_fees'] + data['ip_amount']
         collection_data.append({
-             'id': doc_id,
+            'id': doc_id,
             'sl_no': idx,
             'doctor_name': data['name'],
             'op_count': data['op_count'],
@@ -42037,11 +42092,11 @@ def doctorwise_admission_register(request):
     doctor_id = request.GET.get('doctor', '')
     status_filter = request.GET.get('status', 'all')  # all, admitted, discharged
     
-    # Set default dates if not provided
-    if not from_date:
-        from_date = date.today().replace(day=1).strftime('%Y-%m-%d')
-    if not to_date:
-        to_date = date.today().strftime('%Y-%m-%d')
+    # # Set default dates if not provided
+    # if not from_date:
+    #     from_date = date.today().replace(day=1).strftime('%Y-%m-%d')
+    # if not to_date:
+    #     to_date = date.today().strftime('%Y-%m-%d')
     
     # Get all doctors for dropdown
     doctors = Staffallocation.objects.filter(
@@ -45748,222 +45803,6 @@ def registration_fee_invoice(request):
     
     return render(request, 'registration_fee_invoice.html', context)
 
-def sales_return_detail(request):
-    """
-    Sales Return Detail View - Shows complete details of a single credit note
-    """
-    # Get the credit note ID from request
-    credit_note_id = request.GET.get('ids')
-    
-    if not credit_note_id:
-        messages.error(request, "Credit Note ID is required.")
-        return redirect('sales_return_report')
-    
-    try:
-        # Get the credit note master
-        credit_note = get_object_or_404(CreditNoteMaster, id=credit_note_id)
-        
-        # Get all items for this credit note
-        credit_items = CreditNoteChild.objects.filter(
-            creditnote_master=credit_note
-        ).select_related('invoice_child')
-        
-        # Calculate totals
-        subtotal = 0
-        tax_total = 0
-        grand_total = 0
-        
-        for item in credit_items:
-            item_amount = float(item.total or item.amount or 0)
-            subtotal += item_amount
-            
-            # Get tax from invoice child if available
-            if item.invoice_child:
-                tax = float(item.invoice_child.tax or 0)
-                # tax_total += (item_amount * tax / 100) if tax else 0
-        
-        grand_total = subtotal + tax_total
-        
-        # Get hospital details
-        hospital = Hospitaldetails.objects.first()
-        
-        # Get branch details
-        branch = credit_note.branch if credit_note.branch else None
-        
-        # Get patient details
-        patient = None
-        if credit_note.invoicemaster and credit_note.invoicemaster.Mrno:
-            patient = credit_note.invoicemaster.Mrno
-        
-        context = {
-            'credit_note': credit_note,
-            'credit_items': credit_items,
-            'subtotal': subtotal,
-            'tax_total': tax_total,
-            'grand_total': grand_total,
-            'hospital': hospital,
-            'branch': branch,
-            'patient': patient,
-        }
-        
-        return render(request, 'sales_return_detail.html', context)
-        
-    except Exception as e:
-        messages.error(request, f"Error loading credit note details: {str(e)}")
-        return redirect('sales_return_report')
-
-def purchase_statement_detail(request):
-    """
-    Purchase Statement Detail View - Shows complete details of a single purchase invoice
-    """
-    # Get the invoice ID from request
-    invoice_id = request.GET.get('ids')
-    
-    if not invoice_id:
-        messages.error(request, "Invoice ID is required.")
-        return redirect('purchase_statement_report')
-    
-    try:
-        # Get the purchase invoice
-        invoice = get_object_or_404(PurchaseInvoice, id=invoice_id)
-        
-        # Get all items for this invoice
-        items = PurchaseInvoiceItem.objects.filter(invoice=invoice).select_related('medicine', 'company', 'unt')
-        
-        # Calculate totals
-        subtotal = 0
-        gst_total = 0
-        discount_total = 0
-        grand_total = 0
-        total_qty = 0
-        
-        for item in items:
-            qty = float(item.quantity or 0)
-            rate = float(item.unit_price or 0)
-            amount = qty * rate
-            subtotal += amount
-            total_qty += qty
-            
-            # Calculate GST
-            gst_percent = float(item.gst_percent or 0)
-            gst_amount = amount * gst_percent / 100 if gst_percent else 0
-            gst_total += gst_amount
-            
-            # Calculate discount
-            discount_percent = float(item.discount_percent or 0)
-            discount_amount = amount * discount_percent / 100 if discount_percent else 0
-            discount_total += discount_amount
-        
-        grand_total = subtotal + gst_total - discount_total
-        
-        # Get hospital details
-        hospital = Hospitaldetails.objects.first()
-        
-        # Get supplier details
-        supplier = invoice.supplier if invoice.supplier else None
-        
-        # Get branch details
-        branch = invoice.branch if invoice.branch else None
-        
-        # Get store details
-        store = invoice.store if invoice.store else None
-        
-        context = {
-            'invoice': invoice,
-            'items': items,
-            'subtotal': subtotal,
-            'gst_total': gst_total,
-            'discount_total': discount_total,
-            'grand_total': grand_total,
-            'total_qty': total_qty,
-            'hospital': hospital,
-            'supplier': supplier,
-            'branch': branch,
-            'store': store,
-        }
-        
-        return render(request, 'purchase_statement_detail.html', context)
-        
-    except Exception as e:
-        messages.error(request, f"Error loading purchase invoice details: {str(e)}")
-        return redirect('purchase_statement_report')
-
-def sales_statement_detail(request):
-    """
-    Sales Statement Detail View - Shows complete details of a single sales invoice
-    """
-    # Get the invoice ID from request
-    invoice_id = request.GET.get('ids')
-    
-    if not invoice_id:
-        messages.error(request, "Invoice ID is required.")
-        return redirect('sales_statement_report')
-    
-    try:
-        # Get the sales invoice
-        invoice = get_object_or_404(newInvoiceMaster, id=invoice_id)
-        
-        # Get all items for this invoice
-        items = newInvoiceChild.objects.filter(invmasterid=invoice)
-        
-        # Calculate totals
-        subtotal = 0
-        tax_total = 0
-        discount_amount = 0
-        grand_total = 0
-        total_qty = 0
-        
-        for item in items:
-            qty = float(item.quantity or 0)
-            amount = float(item.sutotal or item.amount or 0)
-            subtotal += amount
-            total_qty += qty
-            
-            # Calculate tax
-            # tax_percent = float(item.tax or 0)
-            # tax_amount = amount * tax_percent / 100 if tax_percent else 0
-            # tax_total += tax_amount
-        
-        grand_total = subtotal
-        
-        # Apply discount if exists
-        if invoice.discount:
-            discount_amount = float(invoice.discount)
-            grand_total -= discount_amount
-        
-        # Get patient details
-        patient = None
-        if invoice.Mrno:
-            patient = invoice.Mrno
-        
-        # Get hospital details
-        hospital = Hospitaldetails.objects.first()
-        
-        # Get branch details
-        branch = invoice.branch if invoice.branch else None
-        
-        # Get staff details
-        staff = invoice.preparedby if invoice.preparedby else None
-        
-        context = {
-            'invoice': invoice,
-            'items': items,
-            'subtotal': subtotal,
-            'tax_total': tax_total,
-            'discount_amount': discount_amount,
-            'grand_total': grand_total,
-            'total_qty': total_qty,
-            'patient': patient,
-            'hospital': hospital,
-            'branch': branch,
-            'staff': staff,
-        }
-        
-        return render(request, 'sales_statement_detail.html', context)
-        
-    except Exception as e:
-        messages.error(request, f"Error loading sales invoice details: {str(e)}")
-        return redirect('sales_statement_report')
 
 def doctorwise_op_registration_detail(request):
     """
@@ -45995,9 +45834,25 @@ def doctorwise_op_registration_detail(request):
         # Get branch details
         branch = appointment.Branch if appointment.Branch else None
         
-        # Calculate fees
-        reg_fee = float(appointment.Fee or 0) if appointment.status and 'consultation' in appointment.status.lower() else 0
-        cons_fee = float(appointment.Fee or 0) if appointment.status and 'followup' in appointment.status.lower() else 0
+        # ✅ Registration Fee: From Patient_details.reg_Fee
+        reg_fee = 0
+        if patient:
+            reg_fee = float(patient.reg_Fee or 0)
+        
+        # ✅ Consultation Fee: From Appointment.Fee (only for consultation/followup/revisit)
+        cons_fee = 0
+        status_lower = (appointment.status or "").lower()
+        if status_lower:
+            if 'consultation' in status_lower or 'followup' in status_lower or 'revisit' in status_lower:
+                cons_fee = float(appointment.Fee or 0)
+        
+        # If consultation fee is 0 but appointment fee exists, use it as consultation fee
+        if cons_fee == 0 and appointment.Fee and float(appointment.Fee) > 0:
+            # Check if it might be a consultation without explicit status
+            if not status_lower or 'consultation' not in status_lower:
+                # Only use if no reg_fee or reg_fee is different from total fee
+                if reg_fee == 0 or float(appointment.Fee) != reg_fee:
+                    cons_fee = float(appointment.Fee)
         
         # Get previous appointments for this patient (history)
         previous_appointments = Appointments.objects.filter(
@@ -46380,10 +46235,7 @@ def collection_detail(request):
         messages.error(request, "Doctor ID is required")
         return redirect('doctors_op_ip_collection')
     
-    if not from_date:
-        from_date = date.today().replace(day=1).strftime('%Y-%m-%d')
-    if not to_date:
-        to_date = date.today().strftime('%Y-%m-%d')
+    # ✅ Remove default date setting - only use if both provided
     
     try:
         doctor = Staffdetails.objects.filter(id=doctor_id).first()
@@ -46398,8 +46250,13 @@ def collection_detail(request):
         # ============================================================
         op_appointments = Appointments.objects.filter(
             Doctor_Name_id=doctor_id,
-            Appointment_date__range=[from_date, to_date]
-        ).select_related('MR_Number')
+        )
+        
+        # ✅ Only apply date filter if both dates are provided
+        if from_date and to_date:
+            op_appointments = op_appointments.filter(Appointment_date__range=[from_date, to_date])
+        
+        op_appointments = op_appointments.select_related('MR_Number')
         
         op_data = []
         total_reg_fees = 0
@@ -46407,30 +46264,77 @@ def collection_detail(request):
         
         for appt in op_appointments:
             fee = float(appt.Fee or 0)
-            if appt.status and ('consultation' in appt.status.lower() or 'new' in appt.status.lower()):
-                fee_type = 'Registration Fee'
-                total_reg_fees += fee
-            else:
-                fee_type = 'Consultation Fee'
-                total_cons_fees += fee
+            status_lower = (appt.status or "").lower()
             
-            op_data.append({
-                'date': appt.Appointment_date,
-                'patient_name': appt.MR_Number.Patient_Name if appt.MR_Number else 'N/A',
-                'status': appt.status or '-',
-                'fee': fee,
-                'fee_type': fee_type,
-                'token': appt.Tokenno
-            })
+            # ✅ Registration Fee: Only from Patient_details.reg_Fee
+            reg_fee = 0
+            if appt.MR_Number:
+                reg_fee = float(appt.MR_Number.reg_Fee or 0)
+            
+            # ✅ Consultation Fee: From Appointment.Fee (only for consultation/followup/revisit)
+            cons_fee = 0
+            if status_lower:
+                if 'consultation' in status_lower or 'followup' in status_lower or 'revisit' in status_lower:
+                    cons_fee = fee
+            
+            # ✅ Add registration fee if exists
+            if reg_fee > 0:
+                total_reg_fees += reg_fee
+                op_data.append({
+                    'date': appt.Appointment_date,
+                    'patient_name': appt.MR_Number.Patient_Name if appt.MR_Number else 'N/A',
+                    'status': appt.status or '-',
+                    'fee': reg_fee,
+                    'fee_type': 'Registration Fee',
+                    'token': appt.Tokenno
+                })
+            
+            # ✅ Add consultation fee if exists
+            if cons_fee > 0:
+                total_cons_fees += cons_fee
+                op_data.append({
+                    'date': appt.Appointment_date,
+                    'patient_name': appt.MR_Number.Patient_Name if appt.MR_Number else 'N/A',
+                    'status': appt.status or '-',
+                    'fee': cons_fee,
+                    'fee_type': 'Consultation Fee',
+                    'token': appt.Tokenno
+                })
+            
+            # ✅ If no reg_fee and no cons_fee but fee exists (fallback)
+            if reg_fee == 0 and cons_fee == 0 and fee > 0:
+                # Check if this might be a registration fee that wasn't captured
+                if appt.MR_Number and float(appt.MR_Number.reg_Fee or 0) == fee:
+                    total_reg_fees += fee
+                    op_data.append({
+                        'date': appt.Appointment_date,
+                        'patient_name': appt.MR_Number.Patient_Name if appt.MR_Number else 'N/A',
+                        'status': appt.status or '-',
+                        'fee': fee,
+                        'fee_type': 'Registration Fee',
+                        'token': appt.Tokenno
+                    })
+                else:
+                    op_data.append({
+                        'date': appt.Appointment_date,
+                        'patient_name': appt.MR_Number.Patient_Name if appt.MR_Number else 'N/A',
+                        'status': appt.status or '-',
+                        'fee': fee,
+                        'fee_type': 'Other Fee',
+                        'token': appt.Tokenno
+                    })
         
         # ============================================================
         # GET IP ADMISSIONS FOR THIS DOCTOR
         # ============================================================
         ip_admissions = ippatientadmission.objects.filter(
             ippatientroombooking__admitteddoctor__Staff_id=doctor_id,
-            Current_Date__range=[from_date, to_date],
             Admittedstatus=True
         ).distinct()
+        
+        # ✅ Only apply date filter if both dates are provided
+        if from_date and to_date:
+            ip_admissions = ip_admissions.filter(Current_Date__range=[from_date, to_date])
         
         ip_data = []
         total_ip_amount = 0
@@ -46453,8 +46357,10 @@ def collection_detail(request):
         # Get discharge counts for this doctor
         discharged_count = PatientDischarge.objects.filter(
             ipptno__ippatientroombooking__admitteddoctor__Staff_id=doctor_id,
-            discharged_date__range=[from_date, to_date]
-        ).count()
+        )
+        if from_date and to_date:
+            discharged_count = discharged_count.filter(discharged_date__range=[from_date, to_date])
+        discharged_count = discharged_count.count()
         
         admitted_count = ip_admissions.count() - discharged_count
         
@@ -46804,3 +46710,123 @@ def doctorwise_admission_register_detail(request):
     except Exception as e:
         messages.error(request, f"Error loading admission details: {str(e)}")
         return redirect('doctorwise_admission_register')
+
+def sales_summary(request):
+    """
+    Sales Summary Report - Shows daily sales summary with bill-wise details
+    """
+    staff_design_id = request.session.get('loginstaffdesign')
+    if not staff_design_id:
+        return redirect('staff_login')
+    
+    # Get filter values from request
+    from_date = request.GET.get('from_date', '')
+    to_date = request.GET.get('to_date', '')
+    patient_filter = request.GET.get('patient', '')
+    bill_type = request.GET.get('bill_type', '')
+    
+    # Get all patients for dropdown
+    patients = Patient_details.objects.filter(deleted=False).order_by('Patient_Name')
+    
+    # ============================================================
+    # GET PHARMACY INVOICES
+    # ============================================================
+    pharmacy_invoices = newInvoiceMaster.objects.filter(
+        restockstatus=True,
+    ).select_related('Mrno', 'branch', 'preparedby')
+    
+    if from_date and to_date:
+        pharmacy_invoices = newInvoiceMaster.objects.filter(restockstatus=True,  currentdate__range=[from_date, to_date])
+
+    # Apply patient filter
+    if patient_filter:
+        pharmacy_invoices = pharmacy_invoices.filter(Mrno_id=patient_filter)
+    
+    # Apply bill type filter
+    if bill_type:
+        if bill_type == 'Cash':
+            pharmacy_invoices = pharmacy_invoices.filter(
+                Q(payementmode__icontains='Cash') |
+                Q(payementmode__icontains='cash')
+            )
+        elif bill_type == 'Credit':
+            pharmacy_invoices = pharmacy_invoices.filter(
+                Q(payementmode__icontains='Credit') |
+                Q(payementmode__icontains='credit')
+            )
+    
+    # ============================================================
+    # BUILD SALES DATA - Like Image Format
+    # ============================================================
+    sales_data = []
+    total_gross = 0
+    total_discount = 0
+    total_amount = 0
+    day_totals = {}
+    
+    for invoice in pharmacy_invoices.order_by('currentdate', '-id'):
+        # Calculate invoice totals
+        gross = float(invoice.subtotal or 0)
+        discount = float(invoice.discount or 0)
+        amount = float(invoice.total or 0)
+        
+        # Get patient name
+        patient_name = invoice.patientname or (invoice.Mrno.Patient_Name if invoice.Mrno else 'N/A')
+        
+        sales_data.append({
+            'date': invoice.currentdate,
+            'bill_no': invoice.Invoicenumber,
+            'patient': patient_name,
+            'gross': gross,
+            'discount': discount,
+            'amount': amount,
+            'invoice_id': invoice.id
+        })
+        
+        total_gross += gross
+        total_discount += discount
+        total_amount += amount
+        
+        # Store day total
+        date_str = invoice.currentdate.strftime('%d/%m/%Y')
+        if date_str not in day_totals:
+            day_totals[date_str] = {
+                'gross': 0,
+                'discount': 0,
+                'amount': 0
+            }
+        day_totals[date_str]['gross'] += gross
+        day_totals[date_str]['discount'] += discount
+        day_totals[date_str]['amount'] += amount
+    
+    # ============================================================
+    # PAGINATION
+    # ============================================================
+    paginator = Paginator(sales_data, 10)
+    page = request.GET.get('page', 1)
+    
+    try:
+        sales_data_page = paginator.page(page)
+    except (PageNotAnInteger, EmptyPage):
+        sales_data_page = paginator.page(1)
+    
+    # Get hospital details
+    hospital = Hospitaldetails.objects.first()
+    
+    context = {
+        'sales_data': sales_data_page,
+        'all_sales_data': sales_data,
+        'total_gross': total_gross,
+        'total_discount': total_discount,
+        'total_amount': total_amount,
+        'from_date': from_date,
+        'to_date': to_date,
+        'patient_filter': patient_filter,
+        'bill_type': bill_type,
+        'patients': patients,
+        'day_totals': day_totals,
+        'hospital': hospital,
+        'stdesign': staff_design_id,
+    }
+    
+    return render(request, 'sales_summary.html', context)

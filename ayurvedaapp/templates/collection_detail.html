@@ -1,232 +1,231 @@
 {% extends 'base.html' %}
 {% load static %}
+
 {% block content %}
 
-<style>
-  .summary-card {
-    background: linear-gradient(135deg, #00796b, #004d40);
-    color: white;
-    padding: 15px 20px;
-    border-radius: 8px;
-    margin-bottom: 15px;
-  }
-  .summary-card .number {
-    font-size: 28px;
-    font-weight: 700;
-  }
-  .summary-card .label {
-    font-size: 13px;
-    opacity: 0.9;
-  }
-  .detail-header {
-    background: #f8f9fa;
-    padding: 15px 20px;
-    border-radius: 8px;
-    border-left: 4px solid #00796b;
-    margin-bottom: 20px;
-  }
-  .detail-header h3 {
-    margin: 0;
-    font-weight: 600;
-  }
-  .detail-header .sub-info {
-    font-size: 13px;
-    color: #666;
-    margin-top: 5px;
-  }
-  .badge-reg { background: #007bff; color: white; padding: 3px 10px; border-radius: 12px; font-size: 11px; }
-  .badge-cons { background: #28a745; color: white; padding: 3px 10px; border-radius: 12px; font-size: 11px; }
-  .badge-ip { background: #6f42c1; color: white; padding: 3px 10px; border-radius: 12px; font-size: 11px; }
-  .table-sm th { background: #e9ecef; font-size: 12px; }
-  .table-sm td { font-size: 12px; }
-  .total-row { background: #f8f9fa; font-weight: 700; }
-  .total-row td { border-top: 2px solid #00796b; }
-</style>
+<div class="content-wrapper" style="background: #f0f2f5;">
+    <section class="content">
+        <div class="container-fluid py-3">
+            <div class="row">
+                <div class="col-12">
+                    <!-- Page Header -->
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="mb-0" style="font-weight: 700; color: #1a2332;">
+                            <i class="fas fa-user-md me-2" style="color: #2c7a5f;"></i> Collection Details
+                        </h4>
+                        <div class="float-right">
+                
+                            <a href="{% url 'doctors_op_ip_collection' %}" class="btn btn-secondary btn-sm" style="padding: 8px 20px;">
+                                <i class="fas fa-arrow-left"></i> Back
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Main Card -->
+                    <div class="card" style="border: none; box-shadow: 0 2px 12px rgba(0,0,0,0.06);">
+                        <div class="card-body p-4">
 
-<div class="content-wrapper">
-  <section class="content-header">
-    <div class="container-fluid">
-      <div class="row mb-2">
-        <div class="col-sm-6">
-          <h1>Collection Details</h1>
-        </div>
-        <div class="col-sm-6">
-          <ol class="breadcrumb float-sm-right">
-            <li class="breadcrumb-item"><a href="{% url 'doctors_op_ip_collection' %}">OP/IP Collection</a></li>
-            <li class="breadcrumb-item active">Details</li>
-          </ol>
-        </div>
-      </div>
-    </div>
-  </section>
+                            <!-- Header - Two Column Layout -->
+                            <div class="row g-4">
+                                <!-- Left: Doctor Info -->
+                                <div class="col-md-6">
+                                    <div style="background: #f8fafc; border-radius: 12px; padding: 18px 20px;">
+                                        <h6 style="font-weight: 600; color: #2c7a5f; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
+                                            <i class="fas fa-user-md me-2"></i> Doctor Information
+                                        </h6>
+                                        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 4px 12px; font-size: 0.92rem;">
+                                            <span style="color: #6b7a8f;">Doctor Name</span>
+                                            <span style="font-weight: 600; color: #1a2332;">{{ doctor_name }}</span>
+                                            
+                                            <span style="color: #6b7a8f;">Period From</span>
+                                            <span>{{ from_date|date:"d-m-Y" }}</span>
+                                            
+                                            <span style="color: #6b7a8f;">Period To</span>
+                                            <span>{{ to_date|date:"d-m-Y" }}</span>
+                                            
+                                            <span style="color: #6b7a8f;">Total Collection</span>
+                                            <span style="font-weight: 700; color: #2c7a5f;">₹ {{ total_amount|floatformat:2 }}</span>
+                                        </div>
+                                    </div>
+                                </div>
 
-  <section class="content">
-    <div class="container-fluid">
-      <!-- Back Button -->
-      <a href="{% url 'doctors_op_ip_collection' %}?from_date={{ from_date }}&to_date={{ to_date }}" class="btn btn-secondary btn-sm mb-3">
-        <i class="fas fa-arrow-left"></i> Back to Collection
-      </a>
+                                <!-- Right: Summary Cards -->
+                                <div class="col-md-6">
+                                    <div style="background: #f8fafc; border-radius: 12px; padding: 18px 20px;">
+                                        <h6 style="font-weight: 600; color: #2c7a5f; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
+                                            <i class="fas fa-chart-bar me-2"></i> Collection Summary
+                                        </h6>
+                                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.92rem;">
+                                            <div style="background: #e9f5ef; border-radius: 8px; padding: 10px; text-align: center;">
+                                                <div style="color: #6b7a8f; font-size: 0.75rem;">OP Appointments</div>
+                                                <div style="font-weight: 700; color: #1a2332; font-size: 1.2rem;">{{ op_count }}</div>
+                                            </div>
+                                            <div style="background: #e9f5ef; border-radius: 8px; padding: 10px; text-align: center;">
+                                                <div style="color: #6b7a8f; font-size: 0.75rem;">IP Admissions</div>
+                                                <div style="font-weight: 700; color: #1a2332; font-size: 1.2rem;">{{ ip_count }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
-      <!-- Header -->
-      <div class="detail-header">
-        <div class="row">
-          <div class="col-md-8">
-            <h3><i class="fas fa-user-md"></i> {{ doctor_name }}</h3>
-            <div class="sub-info">
-              <strong>Period:</strong> {{ from_date|date:"d/m/Y" }} to {{ to_date|date:"d/m/Y" }} |
-              <strong>Total Collection:</strong> ₹ {{ total_amount|floatformat:2 }}
+                            <!-- Fee Summary Cards -->
+                            <div class="row g-4 mt-1">
+                                <div class="col-md-3">
+                                    <div style="background: linear-gradient(135deg, #28a745, #1e7e34); color: white; padding: 15px 20px; border-radius: 12px;">
+                                        <div style="font-size: 22px; font-weight: 700;">₹ {{ total_reg_fees|floatformat:0 }}</div>
+                                        <div style="font-size: 12px; opacity: 0.9;">Registration Fees</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div style="background: linear-gradient(135deg, #007bff, #0056b3); color: white; padding: 15px 20px; border-radius: 12px;">
+                                        <div style="font-size: 22px; font-weight: 700;">₹ {{ total_cons_fees|floatformat:0 }}</div>
+                                        <div style="font-size: 12px; opacity: 0.9;">Consultation Fees</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div style="background: linear-gradient(135deg, #6f42c1, #5a2d91); color: white; padding: 15px 20px; border-radius: 12px;">
+                                        <div style="font-size: 22px; font-weight: 700;">₹ {{ total_ip_amount|floatformat:0 }}</div>
+                                        <div style="font-size: 12px; opacity: 0.9;">IP Collections</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div style="background: linear-gradient(135deg, #2c7a5f, #1a4d3e); color: white; padding: 15px 20px; border-radius: 12px;">
+                                        <div style="font-size: 22px; font-weight: 700;">₹ {{ total_amount|floatformat:0 }}</div>
+                                        <div style="font-size: 12px; opacity: 0.9;">Grand Total</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- OP Appointments Table -->
+                            <div class="mt-3">
+                                <div style="background: #f8fafc; border-radius: 12px; overflow: hidden;">
+                                    <div style="padding: 12px 20px; background: #ffffff; border-bottom: 1px solid #edf0f5;">
+                                        <h6 style="font-weight: 600; color: #2c7a5f; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; margin: 0;">
+                                            <i class="fas fa-users me-2"></i> OP Appointments
+                                        </h6>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table" style="font-size: 0.88rem; margin-bottom: 0;" id="example2">
+                                            <thead style="background: #f0f2f5;">
+                                                <tr>
+                                                    <th style="padding: 10px 12px; font-weight: 600;">#</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600;">Date</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600;">Token</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600;">Patient Name</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600;">Status</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600;">Fee Type</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600; text-align: right;">Amount</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for op in op_data %}
+                                                <tr style="border-bottom: 1px solid #edf0f5;">
+                                                    <td style="padding: 10px 12px;">{{ forloop.counter }}</td>
+                                                    <td style="padding: 10px 12px;">{{ op.date|date:"d/m/Y" }}</td>
+                                                    <td style="padding: 10px 12px; font-weight: 500;">{{ op.token }}</td>
+                                                    <td style="padding: 10px 12px;">{{ op.patient_name }}</td>
+                                                    <td style="padding: 10px 12px;">{{ op.status }}</td>
+                                                    <td style="padding: 10px 12px;">
+                                                        <span class="badge" style="{% if op.fee_type == 'Registration Fee' %}background: #007bff; padding: 4px 12px; border-radius: 20px; color: #fff;{% else %}background: #28a745; padding: 4px 12px; border-radius: 20px; color: #fff;{% endif %}">
+                                                            {{ op.fee_type }}
+                                                        </span>
+                                                    </td>
+                                                    <td style="padding: 10px 12px; text-align: right; font-weight: 500;">₹ {{ op.fee|floatformat:2 }}</td>
+                                                </tr>
+                                                {% empty %}
+                                                <tr>
+                                                    <td colspan="7" style="padding: 20px; text-align: center; color: #6b7a8f;">No OP appointments found</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                            <tfoot style="background: #f8fafc; border-top: 2px solid #e0e6ed;">
+                                                <tr>
+                                                    <td colspan="6" style="padding: 10px 12px; text-align: right; font-weight: 500;">Total OP Collection</td>
+                                                    <td style="padding: 10px 12px; text-align: right; font-weight: 600; color: #2c7a5f;">₹ {{ total_reg_fees|add:total_cons_fees|floatformat:2 }}</td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- IP Admissions Table -->
+                            <div class="mt-3">
+                                <div style="background: #f8fafc; border-radius: 12px; overflow: hidden;">
+                                    <div style="padding: 12px 20px; background: #ffffff; border-bottom: 1px solid #edf0f5;">
+                                        <h6 style="font-weight: 600; color: #2c7a5f; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; margin: 0;">
+                                            <i class="fas fa-hospital me-2"></i> IP Admissions
+                                        </h6>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table" style="font-size: 0.88rem; margin-bottom: 0;">
+                                            <thead style="background: #f0f2f5;">
+                                                <tr>
+                                                    <th style="padding: 10px 12px; font-weight: 600;">#</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600;">Date</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600;">IP Number</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600;">Patient Name</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600;">Room</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600; text-align: right;">Bill Amount</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for ip in ip_data %}
+                                                <tr style="border-bottom: 1px solid #edf0f5;">
+                                                    <td style="padding: 10px 12px;">{{ forloop.counter }}</td>
+                                                    <td style="padding: 10px 12px;">{{ ip.date|date:"d/m/Y" }}</td>
+                                                    <td style="padding: 10px 12px; font-weight: 500;">{{ ip.ip_number }}</td>
+                                                    <td style="padding: 10px 12px;">{{ ip.patient_name }}</td>
+                                                    <td style="padding: 10px 12px;">{{ ip.room }}</td>
+                                                    <td style="padding: 10px 12px; text-align: right; font-weight: 500;">₹ {{ ip.bill_amount|floatformat:2 }}</td>
+                                                </tr>
+                                                {% empty %}
+                                                <tr>
+                                                    <td colspan="6" style="padding: 20px; text-align: center; color: #6b7a8f;">No IP admissions found</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                            <tfoot style="background: #f8fafc; border-top: 2px solid #e0e6ed;">
+                                                <tr>
+                                                    <td colspan="5" style="padding: 10px 12px; text-align: right; font-weight: 500;">Total IP Collection</td>
+                                                    <td style="padding: 10px 12px; text-align: right; font-weight: 600; color: #2c7a5f;">₹ {{ total_ip_amount|floatformat:2 }}</td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Grand Total -->
+                            <div class="mt-3">
+                                <div style="background: #e9f5ef; border-radius: 12px; padding: 18px 24px; border: 1px solid #d4e8d8;">
+                                    <div class="row">
+                                        <div class="col-md-8">
+                                            <h6 style="margin: 0; font-weight: 600; color: #1a2332; font-size: 0.95rem;">
+                                                <i class="fas fa-calculator me-2" style="color: #2c7a5f;"></i> Grand Total Collection
+                                            </h6>
+                                            <small style="color: #6b7a8f; font-size: 0.8rem;">Includes OP Registration, OP Consultation & IP Collections</small>
+                                        </div>
+                                        <div class="col-md-4 text-right">
+                                            <h4 style="font-weight: 700; color: #1e7e54; margin: 0; font-size: 1.4rem;">₹ {{ total_amount|floatformat:2 }}</h4>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Footer -->
+                            <div class="mt-3" style="text-align: center; font-size: 11px; color: #999; padding: 10px 0; border-top: 1px solid #edf0f5;">
+                                <p style="margin: 0;"><strong>*** This is a computer generated report ***</strong></p>
+                                <p style="margin: 0;">Generated on: {% now "d/m/Y H:i:s" %}</p>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
-          <div class="col-md-4 text-right">
-            <div style="font-size: 22px; font-weight: 700; color: #00796b;">₹ {{ total_amount|floatformat:2 }}</div>
-            <div class="sub-info">Grand Total</div>
-          </div>
         </div>
-      </div>
-
-      <!-- Summary Cards -->
-      <div class="row">
-        <div class="col-md-3">
-          <div class="summary-card">
-            <div class="number">{{ op_count }}</div>
-            <div class="label">OP Appointments</div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="summary-card" style="background: linear-gradient(135deg, #28a745, #1e7e34);">
-            <div class="number">₹ {{ total_reg_fees|floatformat:0 }}</div>
-            <div class="label">Registration Fees</div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="summary-card" style="background: linear-gradient(135deg, #007bff, #0056b3);">
-            <div class="number">₹ {{ total_cons_fees|floatformat:0 }}</div>
-            <div class="label">Consultation Fees</div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="summary-card" style="background: linear-gradient(135deg, #6f42c1, #5a2d91);">
-            <div class="number">₹ {{ total_ip_amount|floatformat:0 }}</div>
-            <div class="label">IP Collections</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- OP Appointments Table -->
-      <div class="card">
-        <div class="card-header">
-          <h5 class="card-title"><i class="fas fa-users"></i> OP Appointments ({{ op_count }})</h5>
-        </div>
-        <div class="card-body p-0">
-          <div class="table-responsive">
-            <table class="table table-bordered table-sm">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Date</th>
-                  <th>Token</th>
-                  <th>Patient Name</th>
-                  <th>Status</th>
-                  <th>Fee Type</th>
-                  <th class="text-right">Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for op in op_data %}
-                <tr>
-                  <td>{{ forloop.counter }}</td>
-                  <td>{{ op.date|date:"d/m/Y" }}</td>
-                  <td>{{ op.token }}</td>
-                  <td>{{ op.patient_name }}</td>
-                  <td>{{ op.status }}</td>
-                  <td>
-                    <span class="badge {% if op.fee_type == 'Registration Fee' %}badge-reg{% else %}badge-cons{% endif %}">
-                      {{ op.fee_type }}
-                    </span>
-                  </td>
-                  <td class="text-right">₹ {{ op.fee|floatformat:2 }}</td>
-                </tr>
-                {% empty %}
-                <tr>
-                  <td colspan="7" class="text-center text-muted">No OP appointments found</td>
-                </tr>
-                {% endfor %}
-                {% if op_data %}
-                <tr class="total-row">
-                  <td colspan="6" class="text-right">Total OP Collection</td>
-                  <td class="text-right">₹ {{ total_reg_fees|add:total_cons_fees|floatformat:2 }}</td>
-                </tr>
-                {% endif %}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- IP Admissions Table -->
-      <div class="card">
-        <div class="card-header">
-          <h5 class="card-title"><i class="fas fa-hospital"></i> IP Admissions ({{ ip_count }})</h5>
-        </div>
-        <div class="card-body p-0">
-          <div class="table-responsive">
-            <table class="table table-bordered table-sm">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Date</th>
-                  <th>IP Number</th>
-                  <th>Patient Name</th>
-                  <th>Room</th>
-                  <th>Status</th>
-                  <th class="text-right">Bill Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for ip in ip_data %}
-                <tr>
-                  <td>{{ forloop.counter }}</td>
-                  <td>{{ ip.date|date:"d/m/Y" }}</td>
-                  <td>{{ ip.ip_number }}</td>
-                  <td>{{ ip.patient_name }}</td>
-                  <td>{{ ip.room }}</td>
-                  <td><span class="badge badge-success">{{ ip.status }}</span></td>
-                  <td class="text-right">₹ {{ ip.bill_amount|floatformat:2 }}</td>
-                </tr>
-                {% empty %}
-                <tr>
-                  <td colspan="7" class="text-center text-muted">No IP admissions found</td>
-                </tr>
-                {% endfor %}
-                {% if ip_data %}
-                <tr class="total-row">
-                  <td colspan="6" class="text-right">Total IP Collection</td>
-                  <td class="text-right">₹ {{ total_ip_amount|floatformat:2 }}</td>
-                </tr>
-                {% endif %}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- Grand Total -->
-      <div class="card">
-        <div class="card-body" style="background: #f8f9fa;">
-          <div class="row">
-            <div class="col-md-8">
-              <h5>Grand Total Collection</h5>
-              <small class="text-muted">Includes OP Registration, OP Consultation & IP Collections</small>
-            </div>
-            <div class="col-md-4 text-right">
-              <h3 style="font-weight: 700; color: #00796b;">₹ {{ total_amount|floatformat:2 }}</h3>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </section>
+    </section>
 </div>
 
 {% endblock %}

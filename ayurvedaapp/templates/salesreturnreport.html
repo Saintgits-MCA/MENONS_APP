@@ -2,7 +2,7 @@
 {% load static %}
 {% block content %}
 <div class="content-wrapper">
-    <section class="content">        
+    <section class="content mt-2">        
         <div class="container-fluid">
             <div class="row">
                 <div class="col-12">
@@ -35,16 +35,6 @@
                                     </div>
                                     <div class="col-md-2">
                                         <div class="form-group" style="margin-bottom: 5px;">
-                                            <label style="font-size: 13px;">Bill Type</label>
-                                            <select class="form-control form-control-sm" name="bill_type" id="billType">
-                                                <option value="">All</option>
-                                                <option value="Cash" {% if bill_type == 'Cash' %}selected{% endif %}>Cash</option>
-                                                <option value="Credit" {% if bill_type == 'Credit' %}selected{% endif %}>Credit</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-2">
-                                        <div class="form-group" style="margin-bottom: 5px;">
                                             <label style="font-size: 13px;">&nbsp;</label>
                                             <button type="submit" class="btn btn-primary btn-sm btn-block">
                                                 <i class="fas fa-search"></i> Filter
@@ -67,64 +57,80 @@
                                 <table class="table table-bordered table-striped" id="salesReturnTable" style="font-size: 13px; width: 100%;">
                                     <thead>
                                         <tr>
-                                            <th style="width: 50px;">Sl.No</th>
                                             <th style="width: 100px;">Date</th>
-                                            <th style="width: 100px;">Credit No</th>
+                                            <th style="width: 120px;">Credit No</th>
                                             <th>Products</th>
                                             <th style="width: 100px;">Batch</th>
                                             <th style="width: 80px;" class="text-right">Qty</th>
                                             <th style="width: 100px;" class="text-right">Amount (₹)</th>
-                                            <th>Action</th>
+                                            {% comment %} <th style="width: 80px;">Action</th> {% endcomment %}
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {% if sales_returns %}
-                                            {% regroup sales_returns by date as date_list %}
+                                        {% if grouped_data %}
+                                            <!-- Group by Date -->
+                                            {% regroup grouped_data by date|date:"d/m/Y" as date_list %}
                                             {% for date_group in date_list %}
                                                 <!-- Date Header Row -->
                                                 <tr style="font-weight: bold;">
-                                                    <td colspan="8" style="font-size: 14px; text-align: left;">
+                                                    <td colspan="7" style="font-size: 14px; text-align: left;">
                                                         <i class="fas fa-calendar-day"></i> 
-                                                        <strong>{{ date_group.grouper|date:"l, d M Y" }}</strong>
+                                                        <strong>{{ date_group.grouper }}</strong>
+                                                        <span class="float-right">
+                                                            <strong>Day Total: ₹ 
+                                                            {% for date_str, day_total in day_totals.items %}
+                                                                {% if date_str == date_group.grouper %}
+                                                                    {{ day_total|floatformat:2 }}
+                                                                {% endif %}
+                                                            {% endfor %}
+                                                            </strong>
+                                                        </span>
                                                     </td>
                                                 </tr>
-                                                <!-- Items for this date -->
-                                                {% for item in date_group.list %}
-                                                <tr>
-                                                    <td>{{ forloop.parentloop.counter }}.{{ forloop.counter }}</td>
-                                                    <td>{{ item.date|date:"d/m/Y" }}</td>
-                                                    <td>{{ item.credit_no }}</td>
-                                                    <td>{{ item.product_name }}</td>
-                                                    <td>{{ item.batch }}</td>
-                                                    <td class="text-right">{{ item.quantity }}</td>
-                                                    <td class="text-right">{{ item.amount|floatformat:2 }}</td>
-                                                     <td>
-                <a href="{% url 'sales_return_detail' %}?ids={{ item.credit_note_id }}" 
-                   class="btn btn-sm btn-info">
-                    <i class="fas fa-eye"></i> View
-                </a>
-            </td>
-                                                </tr>
+                                                
+                                                <!-- Group by Credit No within this date -->
+                                                {% for credit_group in date_group.list %}
+                                                    <!-- Credit Note Header Row with View Button -->
+                                                    <tr style=" border-bottom: 2px solid #007bff;">
+                                                        <td colspan="6" style="text-align: left; padding: 5px 10px;">
+                                                            <i class="fas fa-file-invoice"></i> 
+                                                            <strong>Credit Note: {{ credit_group.credit_no }}</strong>
+                                                            <span class="badge badge-info ml-2">
+                                                                Total: ₹ {{ credit_group.total|floatformat:2 }}
+                                                            </span>
+                                                            <!-- View Button in Grouper Section -->
+                                                            <a href="{% url 'creditnote_detail' %}?creditnote_id={{ credit_group.credit_note_id }}" 
+                                                               class="btn btn-sm btn-primary ml-2 float-right" title="View Credit Note">
+                                                                <i class="fas fa-eye"></i> View
+                                                            </a>
+                                                            <span class="float-right text-muted">
+                                                                <i class="fas fa-cubes"></i> {{ credit_group.items|length }} items
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                    
+                                                    <!-- Items for this Credit Note -->
+                                                    {% for item in credit_group.items %}
+                                                    <tr>
+                                                        <td>{{ credit_group.date|date:"d/m/Y" }}</td>
+                                                        <td>{{ credit_group.credit_no }}</td>
+                                                        <td>{{ item.product_name }}</td>
+                                                        <td>{{ item.batch }}</td>
+                                                        <td class="text-right">{{ item.quantity }}</td>
+                                                        <td class="text-right">{{ item.amount|floatformat:2 }}</td>
+                                                        {% comment %} <td class="text-center">
+                                                            <a href="{% url 'creditnote_detail' %}?creditnote_id={{ credit_group.credit_note_id }}" 
+                                                               class="btn btn-sm btn-info" title="View Credit Note">
+                                                                <i class="fas fa-eye"></i>
+                                                            </a>
+                                                        </td> {% endcomment %}
+                                                    </tr>
+                                                    {% endfor %}
                                                 {% endfor %}
-                                                <!-- Day Total Row -->
-                                                <tr style="font-weight: bold;">
-                                                    <td colspan="6" class="text-right">
-                                                        <i class="fas fa-calculator"></i> Day Total ({{ date_group.grouper|date:"d/m/Y" }}):
-                                                    </td>
-                                                    <td class="text-right">
-                                                        ₹ 
-                                                        {% for date_str, day_total in day_totals.items %}
-                                                            {% if date_str == date_group.grouper|date:"d/m/Y" %}
-                                                                {{ day_total|floatformat:2 }}
-                                                            {% endif %}
-                                                        {% endfor %}
-                                                    </td>
-                                                    <td></td>
-                                                </tr>
                                             {% endfor %}
                                         {% else %}
                                             <tr>
-                                                <td colspan="8" class="text-center text-muted py-2">
+                                                <td colspan="6" class="text-center text-muted py-2">
                                                     No sales returns found for this period
                                                 </td>
                                             </tr>
@@ -133,9 +139,8 @@
                                     <tfoot>
                                         <!-- Grand Total -->
                                         <tr style="font-weight: bold; font-size: 14px;">
-                                            <th colspan="6" class="text-right">Grand Total:</th>
+                                            <th colspan="5" class="text-right">Grand Total:</th>
                                             <th class="text-right">₹ {{ total_amount|floatformat:2 }}</th>
-                                            <th></th>
                                         </tr>
                                     </tfoot>
                                 </table>
@@ -145,18 +150,18 @@
                             <div class="row mt-3">
                                 <div class="col-sm-12 col-md-5">
                                     <div class="dataTables_info" role="status" aria-live="polite">
-                                        Showing {{ sales_returns.start_index }} to {{ sales_returns.end_index }} of {{ sales_returns.paginator.count }} entries
+                                        Showing {{ grouped_data.start_index }} to {{ grouped_data.end_index }} of {{ grouped_data.paginator.count }} entries
                                     </div>
                                 </div>
                                 <div class="col-sm-12 col-md-7">
                                     <div class="dataTables_paginate paging_simple_numbers">
                                         <ul class="pagination">
-                                            {% if sales_returns.has_previous %}
+                                            {% if grouped_data.has_previous %}
                                                 <li class="paginate_button page-item previous">
                                                     <a href="?page=1{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}{% if bill_type %}&bill_type={{ bill_type }}{% endif %}" class="page-link">First</a>
                                                 </li>
                                                 <li class="paginate_button page-item previous">
-                                                    <a href="?page={{ sales_returns.previous_page_number }}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}{% if bill_type %}&bill_type={{ bill_type }}{% endif %}" class="page-link">Previous</a>
+                                                    <a href="?page={{ grouped_data.previous_page_number }}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}{% if bill_type %}&bill_type={{ bill_type }}{% endif %}" class="page-link">Previous</a>
                                                 </li>
                                             {% else %}
                                                 <li class="paginate_button page-item previous disabled">
@@ -167,24 +172,24 @@
                                                 </li>
                                             {% endif %}
 
-                                            {% for num in sales_returns.paginator.page_range %}
-                                                {% if sales_returns.number == num %}
+                                            {% for num in grouped_data.paginator.page_range %}
+                                                {% if grouped_data.number == num %}
                                                     <li class="paginate_button page-item active">
                                                         <span class="page-link">{{ num }}</span>
                                                     </li>
-                                                {% elif num > sales_returns.number|add:'-3' and num < sales_returns.number|add:'3' %}
+                                                {% elif num > grouped_data.number|add:'-3' and num < grouped_data.number|add:'3' %}
                                                     <li class="paginate_button page-item">
                                                         <a href="?page={{ num }}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}{% if bill_type %}&bill_type={{ bill_type }}{% endif %}" class="page-link">{{ num }}</a>
                                                     </li>
                                                 {% endif %}
                                             {% endfor %}
 
-                                            {% if sales_returns.has_next %}
+                                            {% if grouped_data.has_next %}
                                                 <li class="paginate_button page-item next">
-                                                    <a href="?page={{ sales_returns.next_page_number }}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}{% if bill_type %}&bill_type={{ bill_type }}{% endif %}" class="page-link">Next</a>
+                                                    <a href="?page={{ grouped_data.next_page_number }}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}{% if bill_type %}&bill_type={{ bill_type }}{% endif %}" class="page-link">Next</a>
                                                 </li>
                                                 <li class="paginate_button page-item next">
-                                                    <a href="?page={{ sales_returns.paginator.num_pages }}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}{% if bill_type %}&bill_type={{ bill_type }}{% endif %}" class="page-link">Last</a>
+                                                    <a href="?page={{ grouped_data.paginator.num_pages }}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}{% if bill_type %}&bill_type={{ bill_type }}{% endif %}" class="page-link">Last</a>
                                                 </li>
                                             {% else %}
                                                 <li class="paginate_button page-item next disabled">
@@ -196,17 +201,6 @@
                                             {% endif %}
                                         </ul>
                                     </div>
-                                </div>
-                            </div>
-
-                            <!-- Footer -->
-                            <div class="row mt-3 d-none">
-                                <div class="col-12 text-center">
-                                    <hr style="margin: 5px 0;">
-                                    <p style="margin: 0; font-size: 11px; color: #6c757d;">
-                                        <strong>*** This is a computer generated report ***</strong> | 
-                                        Generated on: {% now "d/m/Y H:i:s" %}
-                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -244,77 +238,76 @@
     <!-- Full Table for Print -->
     <table class="table table-bordered" style="width: 100%; border-collapse: collapse; font-size: 12px;">
         <thead>
-            <tr style="">
-                <th style="border: 1px solid #000; padding: 6px; text-align: left; width: 50px;">Sl.No</th>
-                <th style="border: 1px solid #000; padding: 6px; text-align: left; width: 100px;">Date</th>
-                <th style="border: 1px solid #000; padding: 6px; text-align: left; width: 100px;">Credit No</th>
+            <tr>
+                <th style="border: 1px solid #000; padding: 6px; text-align: left;">Date</th>
+                <th style="border: 1px solid #000; padding: 6px; text-align: left;">Credit No</th>
                 <th style="border: 1px solid #000; padding: 6px; text-align: left;">Products</th>
-                <th style="border: 1px solid #000; padding: 6px; text-align: left; width: 100px;">Batch</th>
-                <th style="border: 1px solid #000; padding: 6px; text-align: right; width: 80px;">Qty</th>
-                <th style="border: 1px solid #000; padding: 6px; text-align: right; width: 100px;">Amount (₹)</th>
+                <th style="border: 1px solid #000; padding: 6px; text-align: left;">Batch</th>
+                <th style="border: 1px solid #000; padding: 6px; text-align: right;">Qty</th>
+                <th style="border: 1px solid #000; padding: 6px; text-align: right;">Amount (₹)</th>
             </tr>
         </thead>
         <tbody>
-            {% if all_sales_returns %}
-                {% regroup all_sales_returns by date as date_list %}
+            {% if all_grouped_data %}
+                {% regroup all_grouped_data by date|date:"d/m/Y" as date_list %}
                 {% for date_group in date_list %}
-                    <!-- Date Header Row -->
-                    <tr style=" font-weight: bold;">
-                        <td colspan="7" style="border: 1px solid #000; padding: 6px; text-align: left; font-size: 14px;">
-                            <i class="fas fa-calendar-day"></i> 
-                            <strong>{{ date_group.grouper|date:"l, d M Y" }}</strong>
-                        </td>
-                    </tr>
-                    <!-- Items for this date -->
-                    {% for item in date_group.list %}
-                    <tr>
-                        <td style="border: 1px solid #000; padding: 4px; text-align: left;">{{ forloop.parentloop.counter }}.{{ forloop.counter }}</td>
-                        <td style="border: 1px solid #000; padding: 4px; text-align: left;">{{ item.date|date:"d/m/Y" }}</td>
-                        <td style="border: 1px solid #000; padding: 4px; text-align: left;">{{ item.credit_no }}</td>
-                        <td style="border: 1px solid #000; padding: 4px; text-align: left;">{{ item.product_name }}</td>
-                        <td style="border: 1px solid #000; padding: 4px; text-align: left;">{{ item.batch }}</td>
-                        <td style="border: 1px solid #000; padding: 4px; text-align: right;">{{ item.quantity }}</td>
-                        <td style="border: 1px solid #000; padding: 4px; text-align: right;">{{ item.amount|floatformat:2 }}</td>
-                    </tr>
-                    {% endfor %}
-                    <!-- Day Total Row -->
                     <tr style="font-weight: bold;">
-                        <td colspan="6" style="border: 1px solid #000; padding: 6px; text-align: right;">
-                            <i class="fas fa-calculator"></i> Day Total ({{ date_group.grouper|date:"d/m/Y" }}):
-                        </td>
-                        <td style="border: 1px solid #000; padding: 6px; text-align: right;">
-                            ₹ 
-                            {% for date_str, day_total in day_totals.items %}
-                                {% if date_str == date_group.grouper|date:"d/m/Y" %}
-                                    {{ day_total|floatformat:2 }}
-                                {% endif %}
-                            {% endfor %}
+                        <td colspan="6" style="border: 1px solid #000; padding: 6px; text-align: left; font-size: 14px;">
+                            <i class="fas fa-calendar-day"></i> 
+                            <strong>{{ date_group.grouper }}</strong>
+                            <span style="float: right;">
+                                <strong>Day Total: ₹ 
+                                {% for date_str, day_total in day_totals.items %}
+                                    {% if date_str == date_group.grouper %}
+                                        {{ day_total|floatformat:2 }}
+                                    {% endif %}
+                                {% endfor %}
+                                </strong>
+                            </span>
                         </td>
                     </tr>
+                    {% for credit_group in date_group.list %}
+                        <tr>
+                            <td colspan="6" style="border: 1px solid #000; padding: 4px; text-align: left;">
+                                <strong>Credit Note: {{ credit_group.credit_no }}</strong>
+                                <span style="float: right;">
+                                    Total: ₹ {{ credit_group.total|floatformat:2 }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% for item in credit_group.items %}
+                        <tr>
+                            <td style="border: 1px solid #000; padding: 4px; text-align: left;">{{ credit_group.date|date:"d/m/Y" }}</td>
+                            <td style="border: 1px solid #000; padding: 4px; text-align: left;">{{ credit_group.credit_no }}</td>
+                            <td style="border: 1px solid #000; padding: 4px; text-align: left;">{{ item.product_name }}</td>
+                            <td style="border: 1px solid #000; padding: 4px; text-align: left;">{{ item.batch }}</td>
+                            <td style="border: 1px solid #000; padding: 4px; text-align: right;">{{ item.quantity }}</td>
+                            <td style="border: 1px solid #000; padding: 4px; text-align: right;">{{ item.amount|floatformat:2 }}</td>
+                        </tr>
+                        {% endfor %}
+                    {% endfor %}
                 {% endfor %}
             {% else %}
                 <tr>
-                    <td colspan="7" style="border: 1px solid #000; padding: 6px; text-align: center;">
+                    <td colspan="6" style="border: 1px solid #000; padding: 6px; text-align: center;">
                         No sales returns found for this period
                     </td>
                 </tr>
             {% endif %}
         </tbody>
         <tfoot>
-            <!-- Grand Total -->
             <tr style="font-weight: bold; font-size: 14px;">
-                <th colspan="6" style="border: 1px solid #000; padding: 6px; text-align: right;">Grand Total:</th>
+                <th colspan="5" style="border: 1px solid #000; padding: 6px; text-align: right;">Grand Total:</th>
                 <th style="border: 1px solid #000; padding: 6px; text-align: right;">₹ {{ total_amount|floatformat:2 }}</th>
             </tr>
         </tfoot>
     </table>
 
-    <!-- Footer -->
-    <div style="text-align: center; margin-top: 20px;display:none; font-size: 11px; color: #6c757d;">
+    {% comment %} <div style="text-align: center; margin-top: 20px; font-size: 11px; color: #6c757d;">
         <hr style="border: 1px solid #ddd; margin: 10px 0;">
         <p style="margin: 0;"><strong>*** This is a computer generated report ***</strong></p>
         <p style="margin: 0;">Generated on: {% now "d/m/Y H:i:s" %}</p>
-    </div>
+    </div> {% endcomment %}
 </div>
 
 <style>
@@ -381,15 +374,11 @@
 function resetFilters() {
     document.getElementById('fromDate').value = '';
     document.getElementById('toDate').value = '';
-    document.getElementById('billType').value = '';
-    document.getElementById('filterForm').submit();
+    window.location.href = window.location.pathname;
 }
 
 function printFullReport() {
-    // Get the print area content
     var printContent = document.getElementById('printArea').innerHTML;
-    
-    // Create a new window for printing
     var printWindow = window.open('', '_blank', 'width=1000,height=800');
     printWindow.document.write('<html><head><title>Sales Return Report</title>');
     printWindow.document.write('<style>');
@@ -404,7 +393,6 @@ function printFullReport() {
     printWindow.document.write('</body></html>');
     printWindow.document.close();
     
-    // Wait for content to load then print
     setTimeout(function() {
         printWindow.print();
         printWindow.close();

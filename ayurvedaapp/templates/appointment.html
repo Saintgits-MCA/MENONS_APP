@@ -143,7 +143,7 @@
                                         <div class="form-group">
                                             <label for="exampleInputtime">Appointment Time</label>
                                             <input type="time" class="form-control" id="exampleInputtime" name="apnttime"
-                                                   value="{{ pre_booking.apnttime }}" step="900">
+                                                   value="{{ pre_booking.apnttime }}">
                                             <small class="form-text text-muted">Optional - Select a time slot for the appointment</small>
                                         </div>
 
@@ -943,7 +943,7 @@
             // If no pre-filled time from pre-booking, set to current time rounded to nearest 15 min
             if (!timeInput.value) {
                 const now = new Date();
-                const minutes = Math.ceil(now.getMinutes() / 15) * 15;
+                const minutes = Math.ceil(now.getMinutes());
                 const hours = now.getHours();
                 const formattedHours = String(hours).padStart(2, '0');
                 const formattedMinutes = String(minutes === 60 ? 0 : minutes).padStart(2, '0');

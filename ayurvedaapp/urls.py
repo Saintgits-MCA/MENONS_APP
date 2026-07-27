@@ -1061,13 +1061,11 @@ urlpatterns = [
     path('delete-pre-appointment/<int:booking_id>/', views.delete_pre_appointment, name='delete_pre_appointment'),
 
     path('registration-fee-invoice/', views.registration_fee_invoice, name='registration_fee_invoice'),
-    path('sales-return-detail/', views.sales_return_detail, name='sales_return_detail'),  # Using ?ids
-    path('purchase-statement-detail/', views.purchase_statement_detail, name='purchase_statement_detail'),  
-    path('sales-statement-detail/', views.sales_statement_detail, name='sales_statement_detail'),
     path('doctorwise-op-registration-detail/', views.doctorwise_op_registration_detail, name='doctorwise_op_registration_detail'),
     path('doctorwise-bill-detail/', views.doctorwise_bill_detail, name='doctorwise_bill_detail'),
     path('occupancy-detail/', views.occupancy_detail, name='occupancy_detail'),
     path('collection-detail/',  views.collection_detail, name='collection_detail'),
     path('doctorwise-admission-register-detail/',  views.doctorwise_admission_register_detail, name='doctorwise_admission_register_detail'),
     path('death-during-admission-detail/', views.death_during_admission_detail, name='death_during_admission_detail'),
+    path('sales-summary/', views.sales_summary, name='sales_summary'),
     ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
