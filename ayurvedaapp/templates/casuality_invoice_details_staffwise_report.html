@@ -1,0 +1,285 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="content-wrapper">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1><i class="fas fa-file-invoice"></i> Invoice Details</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{% url 'index' %}">Home</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'casuality_invoice_list' %}">Invoices</a></li>
+                        <li class="breadcrumb-item active">Invoice #{{ invoice.invoice_no }}</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card card-primary card-outline">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-file-invoice"></i> Invoice Information
+                            </h3>
+                            <div class="card-tools">
+                                <a href="{% url 'casuality_invoice_print' %}?invoice_id={{ invoice.id }}" class="btn mr-3 btn-primary btn-sm" target="_blank">
+                                    <i class="fas fa-print"></i> Print
+                                </a>
+                                 <a href="{% url 'staffwise_bill_analysis' %}" class="btn mr-3 btn-danger btn-sm">
+                                    <i class="fas fa-arrow-left"></i> Back to Report
+                                </a>
+                                <a href="{% url 'casuality_invoice_list' %}" class="btn btn-secondary btn-sm">
+                                    <i class="fas fa-arrow-left"></i> Back
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <div class="card-body">
+                            <!-- Hospital Details -->
+                            {% if invoice.hospital %}
+                            <div class="row mb-4">
+                                <div class="col-12 text-center">
+                                    <h4>{{ invoice.hospital.Name }}</h4>
+                                    <p>{{ invoice.hospital.Address }} | Phone: {{ invoice.hospital.Phone }}</p>
+                                    {% if invoice.branch %}
+                                    <p class="text-muted">Branch: {{ invoice.branch.Branch_Name }} | GST: {{ invoice.branch.gstno }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="info-box bg-light">
+                                        <div class="info-box-content">
+                                            <span class="info-box-text text-muted">INVOICE DETAILS</span>
+                                            <table class="table table-sm table-borderless">
+                                                <tr>
+                                                    <th width="40%">Invoice No:</th>
+                                                    <td><strong>{{ invoice.invoice_no }}</strong></td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Invoice Date:</th>
+                                                    <td>{{ invoice.invoice_date|date:"d-m-Y" }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Payment Mode:</th>
+                                                    <td>
+                                                        <span class="badge badge-success">{{ invoice.payment_mode }}</span>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Payment Status:</th>
+                                                    <td>
+                                                        {% if invoice.payment_status == 'Paid' %}
+                                                            <span class="badge badge-success">Paid</span>
+                                                        {% elif invoice.payment_status == 'Partial' %}
+                                                            <span class="badge badge-warning">Partial</span>
+                                                        {% else %}
+                                                            <span class="badge badge-danger">Pending</span>
+                                                        {% endif %}
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Created By:</th>
+                                                    <td>{{ invoice.created_by.Staff_firstname|default:"" }}</td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="info-box bg-light">
+                                        <div class="info-box-content">
+                                            <span class="info-box-text text-muted">PATIENT DETAILS</span>
+                                            <table class="table table-sm table-borderless">
+                                                <tr>
+                                                    {%if invoice.patient_id %}
+                                                    <th width="40%">Patient Name:</th>
+                                                    <td>{{ invoice.patient.Patient_Name|default:"-" }}</td>
+                                                    {%endif%}
+                                                </tr>
+                                                <tr>
+                                                    <th>MR Number:</th>
+                                                    <td>{{ invoice.patient_mr_no|default:"-" }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Phone:</th>
+                                                    <td>{{ invoice.patient_phone|default:"-" }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Gender:</th>
+                                                    <td>{{ invoice.patient_gender|default:"-" }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Age:</th>
+                                                    <td>{{ invoice.patient_age|default:"-" }}</td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Procedures Table -->
+                            <div class="row mt-3">
+                                <div class="col-12">
+                                    <h4><i class="fas fa-stethoscope"></i> Procedures</h4>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered table-striped">
+                                            <thead class="thead-light">
+                                                <tr>
+                                                    <th width="5%">#</th>
+                                                    <th width="45%">Procedure Name</th>
+                                                    <th width="15%">Quantity</th>
+                                                    <th width="15%">Rate (₹)</th>
+                                                    <th width="20%">Amount (₹)</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for item in items %}
+                                                <tr>
+                                                    <td class="text-center">{{ item.sl_no }}</td>
+                                                    <td>{{ item.procedure_name }}</td>
+                                                    <td class="text-center">{{ item.quantity }}</td>
+                                                    <td class="text-right">₹ {{ item.rate|floatformat:2 }}</td>
+                                                    <td class="text-right">₹ {{ item.amount|floatformat:2 }}</td>
+                                                </tr>
+                                                {% empty %}
+                                                <tr>
+                                                    <td colspan="5" class="text-center text-muted">No procedures found</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Payment Breakdown -->
+                            <div class="row mt-3">
+                                <div class="col-md-6 offset-md-6">
+                                    <div class="info-box bg-light">
+                                        <div class="info-box-content">
+                                            <span class="info-box-text text-muted">PAYMENT BREAKDOWN</span>
+                                            <table class="table table-sm table-borderless">
+                                                {% if invoice.cash_amount %}
+                                                <tr>
+                                                    <th width="60%">Cash:</th>
+                                                    <td class="text-right">₹ {{ invoice.cash_amount|floatformat:2 }}</td>
+                                                </tr>
+                                                {% endif %}
+                                                {% if invoice.online_amount %}
+                                                <tr>
+                                                    <th>Online Payment:</th>
+                                                    <td class="text-right">₹ {{ invoice.online_amount|floatformat:2 }}</td>
+                                                </tr>
+                                                {% endif %}
+                                                {% if invoice.card_amount %}
+                                                <tr>
+                                                    <th>Card:</th>
+                                                    <td class="text-right">₹ {{ invoice.card_amount|floatformat:2 }}</td>
+                                                </tr>
+                                                {% endif %}
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Invoice Summary -->
+                            <div class="row">
+                                <div class="col-md-6 offset-md-6">
+                                    <div class="info-box bg-light">
+                                        <div class="info-box-content">
+                                            <span class="info-box-text text-muted">INVOICE SUMMARY</span>
+                                            <table class="table table-sm table-borderless">
+                                                <tr>
+                                                    <th width="60%">Subtotal:</th>
+                                                    <td class="text-right">₹ {{ invoice.subtotal|floatformat:2 }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Tax Amount:</th>
+                                                    <td class="text-right">₹ {{ invoice.tax_amount|floatformat:2 }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Discount:</th>
+                                                    <td class="text-right text-danger">- ₹ {{ invoice.discount|floatformat:2 }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Consultation Fee:</th>
+                                                    <td class="text-right">₹ {{ invoice.consultation_fee|floatformat:2 }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Registration Fee:</th>
+                                                    <td class="text-right">₹ {{ invoice.registration_fee|floatformat:2 }}</td>
+                                                </tr>
+                                                <tr class="bg-success text-white">
+                                                    <th><strong>Grand Total:</strong></th>
+                                                    <th class="text-right">₹ {{ invoice.total|floatformat:2 }}</th>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="alert alert-info mt-3">
+                                <i class="fas fa-info-circle"></i> 
+                                <strong>Note:</strong> This is a computer-generated invoice and requires no signature.
+                            </div>
+                        </div>
+                        
+                        <div class="card-footer">
+                            <div class="row">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<style>
+    @media print {
+        .btn, .card-header, .card-footer, .main-sidebar, .main-header {
+            display: none !important;
+        }
+        .card {
+            border: none !important;
+        }
+        .content-wrapper {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        .info-box {
+            border: 1px solid #ddd !important;
+        }
+    }
+    
+    .info-box {
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        margin-bottom: 20px;
+    }
+    
+    .info-box .info-box-content {
+        padding: 15px;
+    }
+    
+    .table th {
+        font-weight: 600;
+    }
+</style>
+
+{% endblock %}

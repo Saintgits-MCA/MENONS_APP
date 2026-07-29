@@ -1,0 +1,768 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<style>
+    .table-responsive::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+ 
+
+    
+    /* Info box responsiveness */
+    .info-box {
+        display: flex;
+        align-items: center;
+        padding: 10px;
+        background: #fff;
+        border-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+        min-height: 80px;
+    }
+    .info-box-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 50px;
+        width: 60px;
+        height: 60px;
+        border-radius: 4px;
+        color: #fff;
+        font-size: 24px;
+        margin-right: 15px;
+        flex-shrink: 0;
+    }
+    .info-box-content {
+        flex: 1;
+        min-width: 0;
+    }
+    .info-box-text {
+        font-size: 13px;
+        color: #6c757d;
+        word-break: break-word;
+    }
+    .info-box-number {
+        font-size: 18px;
+        font-weight: 600;
+        word-break: break-word;
+    }
+    
+    /* Responsive table fixes */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .table {
+        min-width: 600px;
+    }
+    .table th, .table td {
+        white-space: nowrap;
+    }
+    
+    /* Responsive filter fixes */
+    @media (max-width: 768px) {
+        .filter-buttons {
+            margin-top: 10px;
+        }
+        .filter-buttons .btn {
+            width: 100%;
+            margin-bottom: 5px;
+        }
+        .info-box-number {
+            font-size: 16px;
+        }
+        .info-box-icon {
+            width: 45px;
+            height: 45px;
+            font-size: 18px;
+            margin-right: 10px;
+        }
+    }
+    
+    @media print {
+        .card-tools, .form-group, .btn, #filterForm, .pagination, .info-box {
+            display: none !important;
+        }
+        .card {
+            border: none !important;
+            box-shadow: none !important;
+        }
+    }
+</style>
+<div class="content-wrapper">
+  <!-- Page Header -->
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-1">
+        <div class="col-sm-6">
+          <h1>Staff Wise Bill Analysis</h1>
+        </div>
+      </div>
+
+      <!-- Filter Card -->
+      <div class="card mb-0">
+        <div class="card-body">
+          <form method="GET" action="" id="filterForm">
+            <div class="row">
+              <div class="col-lg-3 col-md-6">
+                <div class="form-group">
+                  <label>From Date</label>
+                  <input type="date" class="form-control" name="from_date" value="{{ from_date }}" id="fromDate">
+                </div>
+              </div>
+
+              <div class="col-lg-3 col-md-6">
+                <div class="form-group">
+                  <label>To Date</label>
+                  <input type="date" class="form-control" name="to_date" value="{{ to_date }}" id="toDate">
+                </div>
+              </div>
+
+              <div class="col-lg-2 col-md-6">
+                <div class="form-group">
+                  <label>Staff</label>
+                  <select class="form-control" name="staff" id="staffFilter">
+                    <option value="">All Staff</option>
+                    {% for staff in staff_list %}
+                    <option value="{{ staff.id }}" {% if staff_id == staff.id|stringformat:"s" %}selected{% endif %}>
+                      {{ staff.Staff.Staff_firstname }} {{ staff.Staff.Staff_lastname }}
+                    </option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+
+              <div class="col-lg-2 col-md-6">
+                <div class="form-group">
+                  <label>Bill Type</label>
+                  <select class="form-control" name="bill_type" id="billType">
+                    <option value="">All Type</option>
+                    <option value="PHARMACY" {% if bill_type == 'PHARMACY' %}selected{% endif %}>PHARMACY</option>
+                    <option value="LAB BILL" {% if bill_type == 'LAB BILL' %}selected{% endif %}>LAB BILL</option>
+                    <option value="PURCHASE" {% if bill_type == 'PURCHASE' %}selected{% endif %}>PURCHASE</option>
+                    <option value="APPOINTMENT" {% if bill_type == 'APPOINTMENT' %}selected{% endif %}>APPOINTMENT</option>
+                    {% comment %} <option value="TREATMENT" {% if bill_type == 'TREATMENT' %}selected{% endif %}>TREATMENT</option> {% endcomment %}
+                    <option value="PROCEDURE" {% if bill_type == 'PROCEDURE' %}selected{% endif %}>PROCEDURE</option>
+                  </select>
+                </div>
+              </div>
+             <div class="row">
+              <div class="col-md-6 mt-1">
+                <div class="form-group">
+                  <label>&nbsp;</label><br>
+                  <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="col-md-2 mt-1">
+                <div class="form-group">
+                  <label>&nbsp;</label>
+                  <button type="reset" class="btn btn-danger  btn-reset" onclick="resetFilters()">
+                     <i class="fas fa-eraser"></i>
+                  </button>
+                </div>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Summary Section -->
+  <section class="content">
+    <div class="container-fluid">
+      <div class="card mx-0">
+        <div class="card-header">
+          <h6 class="mb-0 font-weight-bold">Bill Summary</h6>
+          <small class="text-muted">
+            Staff: {{ selected_staff_name }} | Period: {{ from_date|date:"d-M-Y" }} to {{ to_date|date:"d-M-Y" }}
+            {% if bill_type %} | Type: {{ bill_type }}{% endif %}
+          </small>
+        </div>
+
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-3">
+              <div class="info-box">
+                <span class="info-box-icon bg-primary"><i class="fas fa-file-invoice"></i></span>
+                <div class="info-box-content">
+                  <span class="info-box-text">Total Bills</span>
+                  <span class="info-box-number">{{ total_count }}</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="info-box">
+                <span class="info-box-icon bg-success"><i class="fas fa-money-bill"></i></span>
+                <div class="info-box-content">
+                  <span class="info-box-text">Cash Bills</span>
+                  <span class="info-box-number">{{ cash_count }}</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="info-box">
+                <span class="info-box-icon bg-info"><i class="fas fa-credit-card"></i></span>
+                <div class="info-box-content">
+                  <span class="info-box-text">Card Bills</span>
+                  <span class="info-box-number">{{ card_count }}</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="info-box">
+                <span class="info-box-icon bg-warning"><i class="fab fa-google-pay"></i></span>
+                <div class="info-box-content">
+                  <span class="info-box-text">GPay Bills</span>
+                  <span class="info-box-number">{{ gpay_count }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row mt-3">
+            <div class="col-md-3">
+              <div class="info-box">
+                <span class="info-box-icon bg-danger"><i class="fas fa-coins"></i></span>
+                <div class="info-box-content">
+                  <span class="info-box-text">Total Amount</span>
+                  <span class="info-box-number">₹ {{ total_amount|floatformat:2 }}</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="info-box">
+                <span class="info-box-icon bg-success"><i class="fas fa-money-bill-wave"></i></span>
+                <div class="info-box-content">
+                  <span class="info-box-text">Cash Amount</span>
+                  <span class="info-box-number">₹ {{ total_cash|floatformat:2 }}</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="info-box">
+                <span class="info-box-icon bg-info"><i class="fas fa-credit-card"></i></span>
+                <div class="info-box-content">
+                  <span class="info-box-text">Card Amount</span>
+                  <span class="info-box-number">₹ {{ total_card|floatformat:2 }}</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="info-box">
+                <span class="info-box-icon bg-warning"><i class="fab fa-google-pay"></i></span>
+                <div class="info-box-content">
+                  <span class="info-box-text">GPay Amount</span>
+                  <span class="info-box-number">₹ {{ total_gpay|floatformat:2 }}</span>
+                </div>
+              </div>
+            </div>
+             <div class="col-md-3">
+              <div class="info-box">
+                <span class="info-box-icon bg-warning"><i class="fa fa-dollar-sign"></i></span>
+                <div class="info-box-content">
+                  <span class="info-box-text">Credit Amount</span>
+                  <span class="info-box-number">₹ {{ total_credit|floatformat:2 }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Staff Summary Table -->
+      <div class="card">
+        <div class="card-header">
+          <h6 class="mb-0 font-weight-bold">Staff Wise Summary</h6>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-bordered table-striped" id="example4">
+              <thead>
+                <tr>
+                  <th>Sl.No</th>
+                  <th>Staff Name</th>
+                  <th class="text-right">Total Bills</th>
+                  <th class="text-right">Total Amount</th>
+                  <th class="text-right">Cash</th>
+                  <th class="text-right">Card</th>
+                  <th class="text-right">GPay</th>
+                  <th class="text-right">Credit</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% if staff_summary %}
+                  {% for staff_name, data in staff_summary.items %}
+                  <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ staff_name }}</td>
+                    <td class="text-right">{{ data.count }}</td>
+                    <td class="text-right">₹ {{ data.total|floatformat:2 }}</td>
+                    <td class="text-right">₹ {{ data.cash|floatformat:2 }}</td>
+                    <td class="text-right">₹ {{ data.card|floatformat:2 }}</td>
+                    <td class="text-right">₹ {{ data.gpay|floatformat:2 }}</td>
+                    <td class="text-right">₹ {{ data.credit|floatformat:2 }}</td>
+                  </tr>
+                  {% endfor %}
+                {% else %}
+                  <tr>
+                    <td colspan="8" class="text-center text-muted">No data found</td>
+                  </tr>
+                {% endif %}
+              </tbody>
+              <tfoot class="font-weight-bold bg-light">
+                <tr>
+                  <td class="text-right"></td>
+                  <td class="text-right">TOTAL</td>
+                  <td class="text-right">{{ total_count }}</td>
+                  <td class="text-right">₹ {{ total_amount|floatformat:2 }}</td>
+                  <td class="text-right">₹ {{ total_cash|floatformat:2 }}</td>
+                  <td class="text-right">₹ {{ total_card|floatformat:2 }}</td>
+                  <td class="text-right">₹ {{ total_gpay|floatformat:2 }}</td>
+                  <td class="text-right">₹ {{ total_credit|floatformat:2 }}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bill Details Table -->
+      <div class="card">
+        <div class="card-header">
+          <h6 class="mb-0 font-weight-bold">Bill Details</h6>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-bordered table-striped" id="example5">
+              <thead>
+                <tr>
+                  <th>Sl.No</th>
+                  <th>Bill Number</th>
+                  <th>Bill Type</th>
+                  <th>Patient/Party Name</th>
+                  <th>OP Number</th>
+                  <th class="text-right">Amount</th>
+                  <th>Payment Mode</th>
+                  <th>Created By</th>
+                  <th>Date</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% if bill_data %}
+                  {% for bill in bill_data %}
+                  <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ bill.bill_number }}</td>
+                    <td>
+                      <span class="badge 
+                        {% if bill.bill_type == 'PHARMACY' %}badge-primary
+                        {% elif bill.bill_type == 'LAB BILL' %}badge-success
+                        {% elif bill.bill_type == 'PURCHASE' %}badge-warning
+                        {% elif bill.bill_type == 'APPOINTMENT' %}badge-info
+                        {% comment %} {% elif bill.bill_type == 'TREATMENT' %}badge-danger {% endcomment %}
+                        {% elif bill.bill_type == 'PROCEDURE' %}badge-dark
+                        {% else %}badge-secondary{% endif %}">
+                        {{ bill.bill_type }}
+                      </span>
+                    </td>
+                    <td>{{ bill.patient_name }}</td>
+                    <td>{{ bill.op_number }}</td>
+                    <td class="text-right">₹ {{ bill.amount|floatformat:2 }}</td>
+                    <td>
+                      <span class="badge 
+                        {% if 'Cash' in bill.payment_mode %}badge-success
+                        {% elif 'Card' in bill.payment_mode %}badge-info
+                        {% elif 'GPay' in bill.payment_mode or 'Google Pay' in bill.payment_mode or 'Gpay' in bill.payment_mode %}badge-warning
+                        {% elif 'Credit' in bill.payment_mode %}badge-danger
+                        {% else %}badge-secondary{% endif %}">
+                        {{ bill.payment_mode }}
+                      </span>
+                    </td>
+                    <td>{{ bill.created_by }}</td>
+                    <td>{{ bill.date|date:"d/m/Y" }}</td>
+                    <td>
+                      {% if bill.bill_type == 'APPOINTMENT' %}
+                        <a href="{% url 'appointmentinvoice' %}?invoice_id={{ bill.bill_id }}" class="btn btn-primary btn-sm"><i class="fas fa-eye"></i></a>
+                      {% elif bill.bill_type == 'PHARMACY' %}
+                        <a href="{% url 'newtaxinvview' %}?ids={{ bill.bill_id }}" class="btn btn-success btn-sm"><i class="fas fa-eye"></i></a>
+                      {% elif bill.bill_type == 'LAB BILL' %}
+                        <a href="{% url 'lab_invoice_detail_staffwise_report' %}?invoice_id={{ bill.bill_id }}" class="btn btn-info btn-sm"><i class="fas fa-eye"></i></a>
+                      {% elif bill.bill_type == 'PURCHASE' %}
+                        <a href="{% url 'purchase_invoice_detail_staffwise' %}?ids={{ bill.bill_id }}" class="btn btn-warning btn-sm"><i class="fas fa-eye"></i></a>
+                      {% comment %} {% elif bill.bill_type == 'TREATMENT' %}
+                        <a href="{% url 'treatmentinvprint' %}?ids={{ bill.bill_id }}" class="btn btn-danger btn-sm"><i class="fas fa-eye"></i></a> {% endcomment %}
+                      {% elif bill.bill_type == 'PROCEDURE' %}
+                        <a href="{% url 'casuality_invoice_detail_staffwise' %}?invoice_id={{ bill.bill_id }}" class="btn btn-dark btn-sm"><i class="fas fa-eye"></i></a>
+                      {% else %}
+                        <a href="#" class="btn btn-secondary btn-sm"><i class="fas fa-eye"></i></a>
+                      {% endif %}
+                    </td>
+                  </tr>
+                  {% endfor %}
+                {% else %}
+                  <tr>
+                    <td colspan="10" class="text-center text-muted py-3">
+                      No bills found for the selected criteria
+                    </td>
+                  </tr>
+                {% endif %}
+              </tbody>
+              <tfoot>
+                    <tr>
+                      <th></th>
+                      <th></th>
+                      <th></th>
+                      <th></th>
+                        <th class="text-right">TOTAL</th>
+                        <th class="text-right" id="totalAmount">₹ {{ total_amount|floatformat:2 }}</th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                    </tr>
+                </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+      <!-- Procedure/Service Summary Table -->
+<div class="card">
+    <div class="card-header">
+        <h6 class="mb-0 font-weight-bold">Procedure/Service Summary (Casuality Invoices)</h6>
+        <small class="text-muted">
+            Showing count and total amount for each service/procedure
+        </small>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped" id="example6">
+                <thead>
+                    <tr>
+                        <th>Sl.No</th>
+                        <th>Service/Procedure Name</th>
+                        <th class="text-center">Count</th>
+                        <th class="text-right">Total Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if procedure_summary %}
+                        {% for name, data in procedure_summary.items %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ name }}</td>
+                            <td class="text-center">{{ data.count }}</td>
+                            <td class="text-right">₹ {{ data.total_amount|floatformat:2 }}</td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">No procedure/services found</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+                <tfoot class="font-weight-bold bg-light">
+                    <tr>
+                       <td class="text-right"></td>
+                        <td class="text-right">TOTAL</td>
+                        <td class="text-center">{{ procedure_total_count }}</td>
+                        <td class="text-right">₹ {{procedure_total_amount|floatformat:2}}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+    </div>
+  </section>
+</div>
+
+<style>
+.info-box {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+}
+.info-box-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 24px;
+  margin-right: 15px;
+}
+.info-box-content {
+  flex: 1;
+}
+.info-box-text {
+  font-size: 13px;
+  color: #6c757d;
+}
+.info-box-number {
+  font-size: 20px;
+  font-weight: 600;
+}
+@media print {
+  .card-tools, .form-group, .btn, #filterForm, .pagination, .info-box {
+    display: none !important;
+  }
+  .card {
+    border: none !important;
+    box-shadow: none !important;
+  }
+}
+</style>
+
+<script>
+function resetFilters() {
+  document.getElementById('fromDate').value = '';
+  document.getElementById('toDate').value = '';
+  document.getElementById('staffFilter').value = '';
+  document.getElementById('billType').value = '';
+  document.getElementById('filterForm').submit();
+}
+$(document).ready(function() {
+    // Initialize DataTable for example4 with export buttons
+      $('#example4').DataTable({
+        dom: '<"row"<"col-sm-6"l><"col-sm-6"f>>' +
+             '<"row"<"col-sm-12"B>>' +
+             '<"row"<"col-sm-12"tr>>' +
+             '<"row"<"col-sm-5"i><"col-sm-7"p>>',
+        buttons: [
+            {
+                extend: 'copy',
+                text: '<i class="fas fa-copy"></i> Copy',
+                className: 'btn btn-secondary btn-md',
+                footer: true, 
+            },
+            {
+                extend: 'excel',
+                text: '<i class="fas fa-file-excel"></i> Excel',
+                className: 'btn btn-secondary btn-md',
+                footer: true, 
+            },
+            {
+                extend: 'pdf',
+                text: '<i class="fas fa-file-pdf"></i> PDF',
+                className: 'btn btn-secondary btn-md',
+                orientation: 'landscape',
+                pageSize: 'A4',
+                footer: true, 
+            },
+            {
+                extend: 'print',
+                text: '<i class="fas fa-print"></i> Print',
+                className: 'btn btn-secondary btn-md',
+                footer: true, 
+            },
+            {
+                extend: 'csv',
+                text: '<i class="fas fa-file-csv"></i> CSV',
+                className: 'btn btn-secondary btn-md',
+                footer: true, 
+            }
+        ],
+        pageLength: 5,  // Default showing 10 entries
+        responsive: true,
+        lengthMenu: [
+            [5,10, 25, 50, 100], 
+            [5,10, 25, 50, 100]
+        ],
+        columnDefs: [
+            {
+                targets: [0], // Sl.No - center align
+                className: 'text-center'
+            },
+            {
+                targets: [1], // Procedure Name
+                className: 'text-left'
+            },
+            {
+                targets: [2], // Count - center align
+                className: 'text-center'
+            },
+            {
+                targets: [3], // Total Amount - right align
+                className: 'text-right'
+            }
+        ],
+        language: {
+            lengthMenu: "Show _MENU_ entries",
+            info: "Showing _START_ to _END_ of _TOTAL_ entries",
+            infoEmpty: "Showing 0 to 0 of 0 entries",
+            infoFiltered: "(filtered from _MAX_ total entries)",
+            paginate: {
+                first: "First",
+                last: "Last",
+                next: "Next",
+                previous: "Previous"
+            }
+        }
+    });
+    $('#example5').DataTable({
+        dom: '<"row"<"col-sm-6"l><"col-sm-6"f>>' +
+             '<"row"<"col-sm-12"B>>' +
+             '<"row"<"col-sm-12"tr>>' +
+             '<"row"<"col-sm-5"i><"col-sm-7"p>>',
+        buttons: [
+            {
+                extend: 'copy',
+                text: '<i class="fas fa-copy"></i> Copy',
+                className: 'btn btn-secondary btn-md',
+                footer: true, 
+            },
+            {
+                extend: 'excel',
+                text: '<i class="fas fa-file-excel"></i> Excel',
+                className: 'btn btn-secondary btn-md',
+                footer: true, 
+            },
+            {
+                extend: 'pdf',
+                text: '<i class="fas fa-file-pdf"></i> PDF',
+                className: 'btn btn-secondary btn-md',
+                orientation: 'landscape',
+                pageSize: 'A4',
+                footer: true, 
+            },
+            {
+                extend: 'print',
+                text: '<i class="fas fa-print"></i> Print',
+                className: 'btn btn-secondary btn-md',
+                footer: true, 
+            },
+            {
+                extend: 'csv',
+                text: '<i class="fas fa-file-csv"></i> CSV',
+                className: 'btn btn-secondary btn-md',
+                footer: true, 
+            }
+        ],
+        pageLength: 5,  // Default showing 10 entries
+        responsive: true,
+        lengthMenu: [
+            [5,10, 25, 50, 100], 
+            [5,10, 25, 50, 100]
+        ],
+        columnDefs: [
+            {
+                targets: [0], // Sl.No - center align
+                className: 'text-center'
+            },
+            {
+                targets: [1], // Procedure Name
+                className: 'text-left'
+            },
+            {
+                targets: [2], // Count - center align
+                className: 'text-center'
+            },
+            {
+                targets: [3], // Total Amount - right align
+                className: 'text-right'
+            }
+        ],
+        language: {
+            lengthMenu: "Show _MENU_ entries",
+            info: "Showing _START_ to _END_ of _TOTAL_ entries",
+            infoEmpty: "Showing 0 to 0 of 0 entries",
+            infoFiltered: "(filtered from _MAX_ total entries)",
+            paginate: {
+                first: "First",
+                last: "Last",
+                next: "Next",
+                previous: "Previous"
+            }
+        }
+    });
+
+     $('#example6').DataTable({
+        dom: '<"row"<"col-sm-6"l><"col-sm-6"f>>' +
+             '<"row"<"col-sm-12"B>>' +
+             '<"row"<"col-sm-12"tr>>' +
+             '<"row"<"col-sm-5"i><"col-sm-7"p>>',
+        buttons: [
+            {
+                extend: 'copy',
+                text: '<i class="fas fa-copy"></i> Copy',
+                className: 'btn btn-secondary btn-md',
+                footer: true, 
+            },
+            {
+                extend: 'excel',
+                text: '<i class="fas fa-file-excel"></i> Excel',
+                className: 'btn btn-secondary btn-md',
+                footer: true, 
+            },
+            {
+                extend: 'pdf',
+                text: '<i class="fas fa-file-pdf"></i> PDF',
+                className: 'btn btn-secondary btn-md',
+                orientation: 'landscape',
+                pageSize: 'A4',
+                footer: true, 
+            },
+            {
+                extend: 'print',
+                text: '<i class="fas fa-print"></i> Print',
+                className: 'btn btn-secondary btn-md',
+                footer: true, 
+            },
+            {
+                extend: 'csv',
+                text: '<i class="fas fa-file-csv"></i> CSV',
+                className: 'btn btn-secondary btn-md',
+                footer: true, 
+            }
+        ],
+        pageLength: 5,  // Default showing 10 entries
+        responsive: true,
+        lengthMenu: [
+            [5,10, 25, 50, 100], 
+            [5,10, 25, 50, 100]
+        ],
+        columnDefs: [
+            {
+                targets: [0], // Sl.No - center align
+                className: 'text-center'
+            },
+            {
+                targets: [1], // Procedure Name
+                className: 'text-left'
+            },
+            {
+                targets: [2], // Count - center align
+                className: 'text-center'
+            },
+            {
+                targets: [3], // Total Amount - right align
+                className: 'text-right'
+            }
+        ],
+        language: {
+            lengthMenu: "Show _MENU_ entries",
+            info: "Showing _START_ to _END_ of _TOTAL_ entries",
+            infoEmpty: "Showing 0 to 0 of 0 entries",
+            infoFiltered: "(filtered from _MAX_ total entries)",
+            paginate: {
+                first: "First",
+                last: "Last",
+                next: "Next",
+                previous: "Previous"
+            }
+        }
+    });
+});
+</script>
+
+{% endblock %}

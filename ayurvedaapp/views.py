@@ -1,6 +1,5 @@
 import base64
 import uuid
-from .utils import save_visit_cycle_log
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from datetime import datetime
@@ -413,22 +412,6 @@ def appointment(request):
                 except Exception:
                     pass  # Silently ignore if pre-booking not found
 
-            try:
-                cycle_log = save_visit_cycle_log(
-                    patient_id=addmrnumber,
-                    doctor_id=adddocname,
-                    appointment=objappointment,
-                    status=status,
-                    branch_id=addbranch
-                )
-                
-                if cycle_log:
-                    print(f"✅ Visit cycle log saved for appointment {objappointment.id} - Status: {status}")
-                else:
-                    print(f"⚠️ Failed to save visit cycle log for appointment {objappointment.id}")
-                    
-            except Exception as log_error:
-                print(f"❌ Error saving visit cycle log: {str(log_error)}")
 
             # ✅ Fetch Hospital (first hospital record)
             hospital_obj = Hospitaldetails.objects.first()
@@ -437,7 +420,7 @@ def appointment(request):
                 return redirect('error_page')
 
             # ✅ Staff (logged-in staff from session)
-            staff_id = request.session.get("staff_id")
+            staff_id = request.session.get("staffid")
 
             # ✅ Create Invoice Entry
             invoice = appointmentinvoicemaster.objects.create(
@@ -483,10 +466,10 @@ def appointment(request):
             # ✅ Fetch all required dropdown values
             mrnoobj = Patient_details.objects.all()  # like treatmentinvoice
             branchobj = Branch.objects.all()
-            departmentobj = Department.objects.filter(flag=1)
+            departmentobj = Department.objects.filter(flag=1,id__in=[4,8, 15, 16, 17, 18, 19, 20])
             stobj = Staffallocation.objects.select_related('Staff').filter(Designation_Name_id="9")
             stdesign = request.session.get('loginstaffdesign')
-            designobj = Designation.objects.all()
+            designobj = Designation.objects.filter(id__in=[2,3,13,15])
 
             # ✅ Fetch appointment fees from database
             appointment_fees = []
@@ -613,7 +596,15 @@ def appointmentafterreg(request):
         today = date.today()
         todate = timezone.now().strftime("%Y%m%d")
         adddesgn = request.POST.get('desgname')
-
+        addappointmenttime = request.POST.get('apnttime')
+        appointment_time_obj = None
+        if addappointmenttime:
+            try:
+                appointment_time_obj = datetime.strptime(addappointmenttime, "%H:%M").time()
+                print(f"✅ Appointment time parsed: {appointment_time_obj}") 
+            except ValueError as e:
+                print(f"❌ Error parsing time: {e}")
+                appointment_time_obj = None
 
         
             # ✅ Fetch Patient details (same as treatmentinvoice)
@@ -647,7 +638,7 @@ def appointmentafterreg(request):
                 objappointment.Doctor_Name_id = doctor1
                 objappointment.Appointment_date = addappoinmentdate
                 # objappointment.Time_slot = addslottime
-                # objappointment.Start_time = addstarttime
+                objappointment.visit_start_time = appointment_time_obj
                 # objappointment.End_time = addendtime
                 objappointment.contactno=addcontactnumber
                 objappointment.status=status
@@ -665,7 +656,7 @@ def appointmentafterreg(request):
                     return redirect('error_page')
 
                 # ✅ Staff (logged-in staff from session)
-                staff_id = request.session.get("staff_id")
+                staff_id = request.session.get("staffid")
 
                 # ✅ Create Invoice Entry
                 invoice = appointmentinvoicemaster.objects.create(
@@ -723,11 +714,11 @@ def appointmentafterreg(request):
             else:
                 refnid = 1
             branchobj = Branch.objects.all()
-            departmentobj = Department.objects.filter(flag=1)
+            departmentobj = Department.objects.filter(flag=1,id__in=[4,8, 15, 16, 17, 18, 19, 20])
             stobj = Staffallocation.objects.all()
             # select_related('Staff').filter(Designation_Name="4")
             stdesign = request.session.get('loginstaffdesign')
-            designobj = Designation.objects.all()
+            designobj = Designation.objects.filter(id__in=[2,3,13,15])
             tk_id = f"TKNO{todate}{refnid}"
             idmngmnt = request.GET.get('menumanagement_id')
             mangmntobj = get_object_or_404(menumanagement, id=idmngmnt)
@@ -1039,7 +1030,7 @@ def online_appointment(request):
                     return redirect('error_page')
 
                 # Get staff ID from session
-                staff_id = request.session.get("staff_id")
+                staff_id = request.session.get("staffid")
                 
                 # Patient name and phone
                 patient_name = patient_obj.Patient_Name
@@ -1447,25 +1438,7 @@ def editappointment(request):
             if addremarks is not None:
                 objappointment.Remark = addremarks
 
-            objappointment.save()
-            
-            try:
-                
-                cycle_log = save_visit_cycle_log(
-                    patient_id=objappointment.MR_Number_id,
-                    doctor_id=adddocname,
-                    appointment=objappointment,
-                    status=objappointment.status,
-                    branch_id=addbranch if addbranch else objappointment.Branch_id
-                )
-                
-                if cycle_log:
-                    print(f"✅ Visit cycle log saved for appointment {objappointment.id} - Status: {status}")
-                else:
-                    print(f"⚠️ Failed to save visit cycle log for appointment {objappointment.id}")
-                    
-            except Exception as log_error:
-                print(f"❌ Error saving visit cycle log: {str(log_error)}")
+            objappointment.save()         
             # ----------------------------
             # LOG EDIT
             # ----------------------------
@@ -1628,10 +1601,9 @@ def editappointment(request):
             doctor_department_id = doctor_allocation.Department_Name_id
             doctor_designation_id = doctor_allocation.Designation_Name_id
             doctor_allocation_exists = True
-
         context = {
-            'departmentobj': Department.objects.filter(flag=1),  # Active departments
-            'designobj': Designation.objects.all(), 
+            'departmentobj': Department.objects.filter(flag=1,id__in=[4,8, 15, 16, 17, 18, 19, 20]),  # Active departments
+            'designobj': Designation.objects.filter(id__in=[2,3,13,15]), 
             'objedappo': objedappo,
             'doctors': current_doctors,
             'branches': branches,
@@ -17439,7 +17411,7 @@ def smilee_kannur_appointment(request):
                         messages.error(request, "Hospital details not found.")
                         return redirect('error_page')
 
-                    staff_id = request.session.get("staff_id")
+                    staff_id = request.session.get("staffid")
                     patient_name = patient_obj.Patient_Name
                     patient_phone = patient_obj.contactno or addcontactnumber
 
@@ -18029,7 +18001,20 @@ def ippatient(request):
                         ipnumber=ip_invoice_number,
                         department_id=department_id if department_id else None,  # Add department
                         admitted_doctor_id=doctor_id if doctor_id else None,
-
+                        patient_name=request.POST.get('patient_name', ''),
+                    gender=request.POST.get('gender', ''),
+                    marital_status=request.POST.get('marital_status', ''),
+                    nationality=request.POST.get('nationality', ''),
+                    consultant_incharge=request.POST.get('consultant_incharge', ''),
+                    
+                    admission_category=request.POST.get('admission_category', ''),
+                    booking_start_date=request.POST.get('booking_start_date') or None,
+                    estimated_stay_days=request.POST.get('estimated_stay_days') or None,
+                   
+                    procedures_planned=request.POST.get('procedures_planned', ''),
+                    surgical_procedure_date=request.POST.get('surgical_procedure_date') or None,
+                    referral_source=request.POST.get('referral_source', ''),
+  admission_datetime=datetime.now(),
                     )
                     _save_ip_patient_room_booking(admission, request, branch_id, contactnumber)
             except ValueError as exc:
@@ -20479,7 +20464,7 @@ def discharge_summary(request):
 
     except PatientDischarge.DoesNotExist:
         messages.error(request, "Discharge record not found.")
-        return redirect(f"{reverse('discharge')}")
+        return redirect(f"{reverse('discharge')}?menumanagement_id={idmngmnt}")
     
 @require_POST
 @login_required
@@ -28876,7 +28861,7 @@ def newtaxinvview(request):
 
     # Hospital & branch info
     br = lsinvoice.branch
-    objhospt = Hospitaldetails.objects.first()
+    objhospt = Hospitaldetails.objects.all()
 
     # ✅ GST flags with condition
     branch_has_gst = False
@@ -32164,22 +32149,96 @@ def daily_transaction_report(request):
         branch_filter = Q(branch_id=int(selected_branch_id))
         appointment_branch_filter = Q(Branch_id=int(selected_branch_id))
         patient_branch_filter = Q(Branch_Name_id=int(selected_branch_id))
+        reg_branch_filter = Q(branch_id=int(selected_branch_id))
     elif not is_superadmin:
         branch_filter = Q(branch_id=staff_branch_id)
         appointment_branch_filter = Q(Branch_id=staff_branch_id)
         patient_branch_filter = Q(Branch_Name_id=staff_branch_id)
+        reg_branch_filter = Q(branch_id=staff_branch_id)
     else:
         branch_filter = Q()
         appointment_branch_filter = Q()
         patient_branch_filter = Q()
+        reg_branch_filter = Q()
 
-    # ---------- GET ALL APPOINTMENT INVOICES ----------
+    # ============================================================
+    # 1. GET REGISTRATION FEE INVOICES (FROM NEW MODEL)
+    # ============================================================
+    reg_fee_invoices = RegistrationFeeInvoice.objects.filter(
+        invoice_date__range=(start_date, end_date),
+        is_cancelled=False
+    ).filter(reg_branch_filter).select_related('patient', 'branch', 'created_by')
+
+    # Calculate registration fee totals
+    total_reg_fees = 0
+    reg_fee_count = reg_fee_invoices.count()
+    
+    reg_fee_totals = {
+        'cash': 0,
+        'gpay': 0,
+        'card': 0,
+        'total': 0
+    }
+
+    # Debug: Print to console
+    print(f"Registration Fee Invoices Count: {reg_fee_count}")
+
+    for inv in reg_fee_invoices:
+        # Use registration_fee field from the new model (NOT total)
+        fee = float(inv.registration_fee or 0)
+        total_reg_fees += fee
+        reg_fee_totals['total'] += fee
+        
+        mode = (inv.payment_mode or "").lower()
+        if "cash" in mode:
+            reg_fee_totals['cash'] += fee
+        elif "gpay" in mode or "google" in mode or "upi" in mode:
+            reg_fee_totals['gpay'] += fee
+        elif "card" in mode:
+            reg_fee_totals['card'] += fee
+
+    # Get registration invoice numbers for filtering
+    reg_invoice_numbers = set(reg_fee_invoices.values_list('invoice_number', flat=True))
+
+    # ============================================================
+    # 2. GET APPOINTMENT INVOICES (EXCLUDING REGISTRATION FEES)
+    # ============================================================
     all_appointment_invoices = appointmentinvoicemaster.objects.filter(
         currentdate__range=(start_date, end_date),
         cancelstatus=False
     ).filter(branch_filter).select_related('Mrno', 'branch')
 
-    # ---------- APPOINTMENTS ----------
+    # Filter out registration fee invoices
+    appointment_invoices = []
+    for inv in all_appointment_invoices:
+        is_reg_fee = False
+        
+        # Check by invoice number
+        if inv.treatmentInvoicenumber:
+            # Check against registration invoice numbers
+            if inv.treatmentInvoicenumber in reg_invoice_numbers:
+                is_reg_fee = True
+            # Check REG prefix
+            elif inv.treatmentInvoicenumber[:3] == 'REG':
+                is_reg_fee = True
+            # Check REGNO or REGFEE prefix (legacy)
+            elif inv.treatmentInvoicenumber[:5] in ['REGNO', 'REGFEE']:
+                is_reg_fee = True
+        
+        # Check by consultationfeecumregfee field (legacy)
+        if not is_reg_fee and inv.consultationfeecumregfee and 'reg' in inv.consultationfeecumregfee.lower():
+            is_reg_fee = True
+        
+        # Check by consultationfee field (legacy)
+        if not is_reg_fee and inv.consultationfee and 'reg' in inv.consultationfee.lower():
+            is_reg_fee = True
+        
+        if not is_reg_fee:
+            appointment_invoices.append(inv)
+
+    # ============================================================
+    # 3. APPOINTMENTS FOR STATUS LOOKUP
+    # ============================================================
     appointments = Appointments.objects.filter(
         Appointment_date__range=(start_date, end_date)
     ).filter(appointment_branch_filter).select_related('MR_Number', 'Branch', 'Doctor_Name')
@@ -32190,81 +32249,9 @@ def daily_transaction_report(request):
         key = (app.MR_Number_id, app.Tokenno)
         appointment_dict[key] = app
 
-    # ✅ Get patients with reg_Fee > 0
-    patients_with_reg_fee = Patient_details.objects.filter(
-        reg_Fee__gt=0,
-        deleted=False
-    ).filter(patient_branch_filter).values_list('id', flat=True)
-
-    # ✅ SEPARATE: Registration fee invoices vs Appointment invoices
-    # Use dictionary to track unique patients for registration fees
-    reg_fee_dict = {}  # key: patient_id, value: invoice object
-    appointment_invoices = []
-    
-    for inv in all_appointment_invoices:
-        is_reg_fee = False
-        patient_id = inv.Mrno_id
-        
-        # Method 1: Check by invoice number pattern (REGNO or REGFEE prefix)
-        if inv.treatmentInvoicenumber:
-            invoice_prefix = inv.treatmentInvoicenumber[:5] if len(inv.treatmentInvoicenumber) >= 5 else ''
-            if invoice_prefix in ['REGNO', 'REGFEE']:  # REGNO or REGFEE
-                is_reg_fee = True
-        
-        # Method 2: Check by consultationfeecumregfee field
-        elif inv.consultationfeecumregfee and 'reg' in inv.consultationfeecumregfee.lower():
-            is_reg_fee = True
-        
-        # Method 3: Check by consultationfee field
-        elif inv.consultationfee and 'reg' in inv.consultationfee.lower():
-            is_reg_fee = True
-        
-        # Method 4: Check if patient has reg_Fee and this matches
-        elif patient_id and patient_id in patients_with_reg_fee:
-            patient = Patient_details.objects.filter(id=patient_id).first()
-            if patient:
-                reg_fee_amount = float(patient.reg_Fee or 0)
-                invoice_amount = float(inv.total or 0)
-                
-                # If invoice amount matches reg_Fee
-                if reg_fee_amount > 0 and invoice_amount == reg_fee_amount:
-                    is_reg_fee = True
-        
-        if is_reg_fee:
-            # ✅ ONLY add if this patient doesn't already have a registration fee
-            if patient_id not in reg_fee_dict:
-                reg_fee_dict[patient_id] = inv
-        else:
-            appointment_invoices.append(inv)
-
-    # Convert reg_fee_dict to list for template
-    reg_fee_invoices = list(reg_fee_dict.values())
-
-    # Calculate registration fee totals
-    total_reg_fees = 0
-    reg_fee_count = len(reg_fee_invoices)
-    
-    reg_fee_totals = {
-        'cash': 0,
-        'gpay': 0,
-        'card': 0,
-        'total': 0
-    }
-
-    for inv in reg_fee_invoices:
-        fee = float(inv.total or 0)
-        total_reg_fees += fee
-        reg_fee_totals['total'] += fee
-        
-        mode = (inv.payementmode or "").lower()
-        if "cash" in mode:
-            reg_fee_totals['cash'] += fee
-        elif "gpay" in mode or "google" in mode or "upi" in mode:
-            reg_fee_totals['gpay'] += fee
-        elif "card" in mode:
-            reg_fee_totals['card'] += fee
-
-    # ---------- PROCESS APPOINTMENT INVOICES (ONLY NON-REG FEES) ----------
+    # ============================================================
+    # 4. PROCESS APPOINTMENT INVOICES
+    # ============================================================
     appointment_list = []
     appointment_fees_by_status = {
         "consultation": 0.0,
@@ -32293,13 +32280,11 @@ def daily_transaction_report(request):
     }
 
     for inv in appointment_invoices:
-        # Try to find matching appointment
         appointment = None
         status = ""
         
         if inv.Mrno_id and inv.treatmentInvoicenumber:
             token_no = inv.treatmentInvoicenumber
-            # Clean token number
             if token_no.startswith('TKNO'):
                 token_no = token_no.replace('TKNO', '')
             
@@ -32340,13 +32325,10 @@ def daily_transaction_report(request):
         if appointment:
             status = (appointment.status or "").strip().lower()
         
-        # Add status to invoice object for display
         inv.appointment_status = status.capitalize() if status else "N/A"
         
-        # Calculate fee
         fee = float(inv.total or 0)
         
-        # Update fees and counts by status
         if status in appointment_fees_by_status:
             appointment_fees_by_status[status] += fee
             appointment_counts_by_status[status] += 1
@@ -32356,7 +32338,9 @@ def daily_transaction_report(request):
         
         appointment_list.append(inv)
 
-    # ---------- CALCULATE APPOINTMENT TOTALS BY PAYMENT MODE ----------
+    # ============================================================
+    # 5. APPOINTMENT TOTALS BY PAYMENT MODE
+    # ============================================================
     appointment_totals = {
         'cash': 0,
         'gpay': 0,
@@ -32376,7 +32360,9 @@ def daily_transaction_report(request):
         elif "card" in mode:
             appointment_totals['card'] += fee
 
-    # ---------- PHARMACY ----------
+    # ============================================================
+    # 6. PHARMACY
+    # ============================================================
     pharmacy_qs = newInvoiceMaster.objects.filter(
         currentdate__range=(start_date, end_date),
         restockstatus=True
@@ -32397,13 +32383,19 @@ def daily_transaction_report(request):
         pharmacy_totals['card']
     )
 
-    # ---------- BRANCH LIST ----------
+    # ============================================================
+    # 7. BRANCH LIST
+    # ============================================================
     branches = Branch.objects.all() if is_superadmin else Branch.objects.filter(id=staff_branch_id)
 
-    # ---------- CALCULATE TOTAL VISITS ----------
+    # ============================================================
+    # 8. TOTAL VISITS
+    # ============================================================
     total_visits = sum(appointment_counts_by_status.values())
     
-    # ---------- CONTEXT ----------
+    # ============================================================
+    # 9. CONTEXT
+    # ============================================================
     context = {
         "start_date": start_date,
         "end_date": end_date,
@@ -32442,11 +32434,11 @@ def daily_transaction_report(request):
         "other_count": appointment_counts_by_status[""],
         "other_fee": appointment_fees_by_status[""],
         
-        # Registration fees - ONLY UNIQUE PATIENTS
+        # Registration fees - FROM NEW MODEL
         "reg_fee_count": reg_fee_count,
         "total_reg_fees": total_reg_fees,
         "reg_fee_totals": reg_fee_totals,
-        "reg_fee_invoices": reg_fee_invoices,
+        "reg_fee_invoices": reg_fee_invoices,  # Now using RegistrationFeeInvoice model
     }
 
     return render(request, "daily_transaction.html", context)
@@ -39921,6 +39913,7 @@ def advance_register_ip(request):
     return render(request, 'advance_register_ip.html', context)
 
 
+
 # ==================== ADMISSION DISCHARGE BILL REGISTER ====================
 # @login_required
 def admission_discharge_bill_register(request):
@@ -40130,8 +40123,8 @@ def admission_register(request):
         
         # Get doctor name from room booking
         doctor_name_display = "N/A"
-        if room_booking and room_booking.admitteddoctor:
-            doctor_name_display = f"{room_booking.admitteddoctor.Staff.Staff_firstname} {room_booking.admitteddoctor.Staff.Staff_lastname}".strip()
+        if admission and admission.admitted_doctor:
+            doctor_name_display = f"{admission.admitted_doctor.Staff.Staff_firstname} {admission.admitted_doctor.Staff.Staff_lastname}".strip()
         
         # Get room details
         room_display = "N/A"
@@ -40151,25 +40144,24 @@ def admission_register(request):
             patient_details += f"<br>+{patient.contactno}"
         
         # Build doctor/complaint string
-        doctor_complaint = ""
+        patient_credentials = ""
         if patient:
             gender_age = ""
             if patient.Gender:
                 gender_age += patient.Gender
             if admission.age:
-                gender_age += f"/{admission.age}/Y" if gender_age else f"{admission.age}/Y"
-            doctor_complaint = gender_age if gender_age else ""
-        if doctor_name_display != "N/A":
-            doctor_complaint += f"<br>{doctor_name_display}" if doctor_complaint else doctor_name_display
+                gender_age += f"/{admission.age}" if gender_age else f"{admission.age}"
+            patient_credentials = gender_age if gender_age else ""
         
         # Determine discharge status
         discharge_status = "Discharged" if discharge else "Active"
-        discharge_date = discharge.discharged_date.strftime('%d/%m/%Y') if discharge else "-"
+        discharge_date = discharge.discharged_date.strftime('%d/%m/%Y') if discharge else "Active"
         
         # Get user (admitted by)
         user_name = "N/A"
         # You can get this from admission.created_by if available
-        
+        if admission and admission.admitted_doctor_id:
+            user_name= f"{admission.admitted_doctor.Staff.Staff_firstname} {admission.admitted_doctor.Staff.Staff_lastname}"
         # Build patient record
         patient_record = {
             'sl_no': sl_no,
@@ -40178,7 +40170,7 @@ def admission_register(request):
             'mr_number': patient.Medical_Record_Number if patient else "N/A",
             'patient_name': patient.Patient_Name if patient else "N/A",
             'patient_details': patient_details,
-            'doctor_complaint': doctor_complaint,
+            'patient_credentials': patient_credentials,
             'room': room_display,
             'discharge': discharge_date,
             'user': user_name,
@@ -40632,12 +40624,14 @@ def deaths_during_admission(request):
             patient_name = record.patient.Patient_Name
             gender = record.patient.Gender
             age = record.patient.Age or 'N/A'
-            ip_number = record.patient.Medical_Record_Number or 'N/A'
+            ip_number = 'N/A'
+            if ippatientadmission.objects.filter(MR_Number=record.patient,Admittedstatus=True):
+                ip_number = ippatientadmission.objects.get(MR_Number=record.patient,Admittedstatus=True).ipnumber or 'Unregistered'
         else:
             patient_name = record.unregistered_name or 'N/A'
             gender = record.unregistered_gender or 'N/A'
             age = record.unregistered_age or 'N/A'
-            ip_number = 'N/A'
+            ip_number = 'Unregistered'
         
         # Format gender for display
         gender_display = 'Male' if gender == 'Male' else 'Female' if gender == 'Female' else 'Others'
@@ -41413,6 +41407,51 @@ def detailed_bill_register(request):
             'date': inv.currentdate
         })
     
+    # ============================================================
+    # 6. CASUALITY INVOICES (CasualityInvoiceMaster)
+    # ============================================================
+    casuality_invoices = CasualityInvoiceMaster.objects.filter(is_cancelled=False).select_related('patient', 'branch', 'created_by')
+    
+    if date_filter_applied:
+        casuality_invoices = casuality_invoices.filter(invoice_date__range=[from_date, to_date])
+    
+    for inv in casuality_invoices:
+        payment_mode = inv.payment_mode or 'Cash'
+        is_cash = 'Cash' in payment_mode
+        amount = float(inv.total or 0)
+        
+        if is_cash:
+            cash_count += 1
+            total_cash += amount
+        else:
+            credit_count += 1
+            total_credit += amount
+        
+        total_gross += amount
+        
+        # Get patient MR number
+        if inv.patient_mr_no:
+            op_number = inv.patient_mr_no
+        elif inv.patient and inv.patient.Medical_Record_Number:
+            op_number = inv.patient.Medical_Record_Number
+        else:
+            op_number = '-'
+        
+        all_bills.append({
+            'sl_no': len(all_bills) + 1,
+            'bill_id': inv.id,
+            'bill_number': inv.invoice_no,
+            'bill_type': 'PROCEDURE',
+            'patient_name': inv.patient_name or (inv.patient.Patient_Name if inv.patient else 'N/A'),
+            'op_number': op_number,
+            'gross': amount,
+            'cash': amount if is_cash else 0,
+            'credit': amount if not is_cash else 0,
+            'payment_mode': payment_mode,
+            'date': inv.invoice_date
+        })
+    
+    
     # Sort by date (newest first)
     all_bills.sort(key=lambda x: x['date'], reverse=True)
     
@@ -41660,7 +41699,7 @@ def doctorwise_bill_analysis(request):
             'bill_type': bill_type,
             'patient_name': inv.patientname or (inv.Mrno.Patient_Name if inv.Mrno else 'N/A'),
             'amount': amount,
-            'date': inv.currentdate
+            'date': inv.currentdate,
         })
         bill_types[bill_type] = bill_types.get(bill_type, 0) + amount
         total_amount += amount
@@ -41675,7 +41714,7 @@ def doctorwise_bill_analysis(request):
             'bill_type': bill_type,
             'patient_name': inv.patientname or (inv.Mrno.Patient_Name if inv.Mrno else 'N/A'),
             'amount': amount,
-            'date': inv.currentdate
+            'date': inv.currentdate,
         })
         bill_types[bill_type] = bill_types.get(bill_type, 0) + amount
         total_amount += amount
@@ -41699,17 +41738,60 @@ def doctorwise_bill_analysis(request):
     for inv in lab_invoices:
         amount = float(inv.total or 0)
         bill_type = 'LAB BILL'
+        created_by = inv.created_by.Staff.Staff_firstname + ' ' + inv.created_by.Staff.Staff_lastname if inv.created_by and hasattr(inv.created_by, 'Staff') else 'N/A'
         bill_details.append({
             'id': inv.id,
             'bill_number': inv.invoiceno,
             'bill_type': bill_type,
             'patient_name': inv.patient.Patient_Name if inv.patient else 'N/A',
             'amount': amount,
-            'date': inv.date
+            'date': inv.date,
+            'created_by':created_by
         })
         bill_types[bill_type] = bill_types.get(bill_type, 0) + amount
         total_amount += amount
+    # ============================================================
+    # 5. CASUALITY INVOICES (CasualityInvoiceMaster)
+    # ============================================================
+    casuality_invoices = CasualityInvoiceMaster.objects.filter(
+        is_cancelled=False,
+    ).select_related('patient', 'branch', 'created_by')
     
+    if from_date and to_date:
+        casuality_invoices = casuality_invoices.filter(invoice_date__range=[from_date, to_date])
+    elif from_date and not to_date:
+        casuality_invoices = casuality_invoices.filter(invoice_date__gte=from_date)
+    
+    if doctor_id:
+        casuality_invoices = casuality_invoices.filter(
+            patient__in=Appointments.objects.filter(Doctor_Name_id=doctor_id).values_list('MR_Number_id', flat=True)
+        )
+    
+    # Process Casuality Invoices
+    for inv in casuality_invoices:
+        amount = float(inv.total or 0)
+        bill_type = 'CASUALITY'
+        created_by = inv.created_by.Staff.Staff_firstname + ' ' + inv.created_by.Staff.Staff_lastname if inv.created_by and hasattr(inv.created_by, 'Staff') else 'N/A'
+        
+        # Get patient MR number
+        if inv.patient_mr_no:
+            op_number = inv.patient_mr_no
+        elif inv.patient and inv.patient.Medical_Record_Number:
+            op_number = inv.patient.Medical_Record_Number
+        else:
+            op_number = '-'
+        
+        bill_details.append({
+            'id': inv.id,
+            'bill_number': inv.invoice_no,
+            'bill_type': bill_type,
+            'patient_name': inv.patient_name or (inv.patient.Patient_Name if inv.patient else 'N/A'),
+            'amount': amount,
+            'date': inv.invoice_date,
+            'created_by': created_by
+        })
+        bill_types[bill_type] = bill_types.get(bill_type, 0) + amount
+        total_amount += amount
     # Sort bill details by date (newest first)
     bill_details.sort(key=lambda x: x['date'], reverse=True)
     
@@ -42193,14 +42275,14 @@ def doctorwise_admission_register(request):
         
         # Get doctor name
         doctor_name = "N/A"
-        if room_booking and room_booking.admitteddoctor and room_booking.admitteddoctor.Staff:
-            doctor_name = f"{room_booking.admitteddoctor.Staff.Staff_firstname} {room_booking.admitteddoctor.Staff.Staff_lastname}".strip()
+        if admission and admission.admitted_doctor and admission.admitted_doctor.Staff:
+            doctor_name = f"{admission.admitted_doctor.Staff.Staff_firstname} {admission.admitted_doctor.Staff.Staff_lastname}".strip()
         
         admission_data.append({
             'id': admission.id, 
             'sl_no': sl_no,
             'date': admission.Current_Date,
-            'ip_number': admission.ipnumber or '-',
+            'ip_number': admission.ipnumber or 'N/A',
             'doctor': doctor_name,
             'patient_name': patient.Patient_Name if patient else 'N/A',
             'address': patient.address if patient else '',
@@ -44474,61 +44556,6 @@ def get_appointment_fee_ajax(request):
 
 
 
-def patient_visit_cycle_list(request):
-    """List all visit cycles with basic filtering"""
-    
-    # Get filters
-    patient_id = request.GET.get('patient_id')
-    status = request.GET.get('status')
-    search = request.GET.get('search', '')
-    
-    # Base queryset
-    cycles = PatientVisitCycleLog.objects.select_related(
-        'patient', 'doctor'
-    ).order_by('-consultation_date')
-    
-    # Apply filters
-    if patient_id:
-        cycles = cycles.filter(patient_id=patient_id)
-    if status:
-        cycles = cycles.filter(current_status=status)
-    if search:
-        cycles = cycles.filter(
-            Q(patient__Patient_Name__icontains=search) |
-            Q(patient__Medical_Record_Number__icontains=search)
-        )
-    context = {
-        'cycles': cycles,
-        'patients': Patient_details.objects.filter(
-            id__in=PatientVisitCycleLog.objects.values_list('patient_id', flat=True).distinct()
-        ).order_by('Patient_Name'),
-        'status_choices': AppointmentStatus.objects.all(),
-        'filters': {
-            'patient_id': patient_id,
-            'status': status,
-            'search': search,
-        }
-    }
-    
-    return render(request, 'patient_visit_cycle_list.html', context)
-
-
-def patient_visit_cycle_detail(request):
-    """View single cycle details"""
-    cycle_id = request.GET.get('cycle_id')
-    cycle = get_object_or_404(
-        PatientVisitCycleLog.objects.select_related('patient', 'doctor', 'branch'),
-        id=cycle_id
-    )
-    appointments = cycle.appointments.select_related('appointment').order_by('order_in_cycle')
-    
-    context = {
-        'cycle': cycle,
-        'appointments': appointments,
-    }
-    return render(request, 'patient_visit_cycle_detail.html', context)
-
-
 def advance_register_ip_detail(request):
     """
     Detail view for a specific IP advance payment
@@ -44779,8 +44806,8 @@ def admission_register_detail(request):
         
         # Get doctor details
         doctor_name = "N/A"
-        if room_booking and room_booking.admitteddoctor:
-            doctor_name = f"{room_booking.admitteddoctor.Staff.Staff_firstname} {room_booking.admitteddoctor.Staff.Staff_lastname}".strip()
+        if admission and admission.admitted_doctor_id:
+            doctor_name = f"{admission.admitted_doctor.Staff.Staff_firstname} {admission.admitted_doctor.Staff.Staff_lastname}".strip()
         
         context = {
             'admission': admission,
@@ -45710,6 +45737,38 @@ def registration_fee_invoice(request):
     
     # Get patient ID from request
     patient_id = request.GET.get('patient_id')
+    invoice_id = request.GET.get('invoice_id')
+    
+    # If viewing existing invoice
+    if invoice_id:
+        try:
+            invoice = RegistrationFeeInvoice.objects.get(id=invoice_id)
+            patient = invoice.patient
+            objhospt = invoice.hospital or Hospitaldetails.objects.first()
+            brname = invoice.branch
+            
+            
+            # Convert total to words
+            from num2words import num2words
+            amount_in_words = num2words(float(invoice.registration_fee), to="currency", lang="en_IN").title()
+            amount_in_words = amount_in_words.replace("euro", "Rupees").replace("cents", "Paise") + " Only"
+            
+            context = {
+                'lsinvoice': invoice,
+                'objhospt': objhospt,
+                'brname': brname,
+                'patient': patient,
+                # 'doctor_name': doctor_name,
+                'amount_in_words': amount_in_words,
+                'registration_fee': float(invoice.registration_fee),
+            }
+            return render(request, 'registration_fee_invoice.html', context)
+            
+        except RegistrationFeeInvoice.DoesNotExist:
+            messages.error(request, "Invoice not found.")
+            return redirect('daily_transaction_report')
+    
+    # Create new invoice
     if not patient_id:
         messages.error(request, "Patient ID is required.")
         return redirect('daily_transaction_report')
@@ -45721,7 +45780,8 @@ def registration_fee_invoice(request):
         return redirect('daily_transaction_report')
     
     # Check if patient has registration fee
-    if patient.reg_Fee <= 0:
+    reg_fee = float(patient.reg_Fee) if patient.reg_Fee else 0
+    if reg_fee <= 0:
         messages.error(request, "No registration fee found for this patient.")
         return redirect('daily_transaction_report')
     
@@ -45737,24 +45797,42 @@ def registration_fee_invoice(request):
         messages.error(request, "Branch details not found.")
         return redirect('daily_transaction_report')
     
-    # Get staff who created the patient (if available)
-    staff_name = "System"
+    # Check if invoice already exists for this patient today
+    existing_invoice = RegistrationFeeInvoice.objects.filter(
+        patient=patient,
+        invoice_date=date.today(),
+        is_cancelled=False
+    ).first()
+    
+    if existing_invoice:
+        messages.warning(request, f"Registration fee invoice already exists: {existing_invoice.invoice_number}")
+        return redirect(f"{reverse('registration_fee_invoice')}?invoice_id={existing_invoice.id}")
+    
     # Generate invoice number
     today = date.today().strftime("%Y%m%d")
-    last_invoice = appointmentinvoicemaster.objects.filter(
-        treatmentInvoicenumber__startswith=f"REGNO{today}"
+    last_invoice = RegistrationFeeInvoice.objects.filter(
+        invoice_number__startswith=f"REG{today}"
     ).order_by('-id').first()
     
-    if last_invoice and last_invoice.treatmentInvoicenumber:
+    if last_invoice and last_invoice.invoice_number:
         try:
-            last_num = int(last_invoice.treatmentInvoicenumber[-4:])
+            last_num = int(last_invoice.invoice_number[-4:])
             new_num = last_num + 1
-        except:
+        except (ValueError, IndexError):
             new_num = 1
     else:
         new_num = 1
     
-    invoice_number = f"REGNO{today}{new_num:04d}"
+    invoice_number = f"REG{today}{new_num:04d}"
+    
+    # Get staff (logged-in user)
+    staff_id = request.session.get('staffid')
+    staff_obj = None
+    if staff_id:
+        try:
+            staff_obj = Staffdetails.objects.get(id=staff_id)
+        except Staffdetails.DoesNotExist:
+            pass
     
     # Get doctor name (if available from patient's appointments)
     doctor_name = "N/A"
@@ -45763,33 +45841,38 @@ def registration_fee_invoice(request):
     ).order_by('-Appointment_date').first()
     
     if last_appointment and last_appointment.Doctor_Name:
-        doctor_name = f"Dr. {last_appointment.Doctor_Name.Staff_firstname} {last_appointment.Doctor_Name.Staff_lastname}".strip()
+        doctor_obj = last_appointment.Doctor_Name
+        if hasattr(doctor_obj, 'Staff'):
+            doctor_name = f"{doctor_obj.Staff.Staff_firstname} {doctor_obj.Staff.Staff_lastname}".strip()
+        else:
+            doctor_name = f"{doctor_obj.Staff_firstname} {doctor_obj.Staff_lastname}".strip()
     
-    # Create or get invoice record
-    invoice, created = appointmentinvoicemaster.objects.get_or_create(
-        Mrno=patient,
-        currentdate=date.today(),
-        treatmentInvoicenumber=invoice_number,
-        defaults={
-            'hospitalname': objhospt,
-            'branch': brname,
-            'patientname': patient.Patient_Name,
-            'patientphno': patient.contactno,
-            'subtotal': float(patient.reg_Fee),
-            'tax': 0,
-            'shipping': 0,
-            'total': float(patient.reg_Fee),
-            'consultationfee': str(float(patient.reg_Fee)),
-            'consultationfeecumregfee': str(float(patient.reg_Fee)),
-            'cancelstatus': False,
-            'preparedby': None
-        }
+    # Create invoice record using new model
+    invoice = RegistrationFeeInvoice.objects.create(
+        invoice_number=invoice_number,
+        patient=patient,
+        patient_name=patient.Patient_Name,
+        patient_mr_no=patient.Medical_Record_Number or "N/A",
+        patient_phone=patient.contactno,
+        patient_address=getattr(patient, 'address', None),
+        patient_age=patient.Age,
+        patient_gender=patient.Gender,
+        branch=brname,
+        hospital=objhospt,
+        registration_fee=reg_fee,
+        tax_percentage=0,
+        tax_amount=0,
+        discount=0,
+        payment_mode='Cash',
+        payment_status='Paid',
+        created_by=staff_obj,
+        notes=f"Registration fee invoice for patient {patient.Patient_Name}"
     )
     
     # Convert total to words
     from num2words import num2words
-    amount_in_words = num2words(float(patient.reg_Fee), to="currency", lang="en_IN").title()
-    amount_in_words = amount_in_words.replace("euro", "Rupees").replace("cents", "Paise") + " Only"
+    amount_in_words = num2words(reg_fee, to="cardinal", lang="en_IN").title()
+    amount_in_words = amount_in_words.replace("Rs", "Rupees").replace("cents", "Paise") + " Only"
     
     context = {
         'lsinvoice': invoice,
@@ -45798,11 +45881,385 @@ def registration_fee_invoice(request):
         'patient': patient,
         'doctor_name': doctor_name,
         'amount_in_words': amount_in_words,
-        'registration_fee': float(patient.reg_Fee),
+        'registration_fee': reg_fee,
     }
     
     return render(request, 'registration_fee_invoice.html', context)
 
+
+    
+
+def dotmatrixview(request):
+        lsinvoice = newInvoiceMaster.objects.get(id=request.GET.get('ids'))  # fetch specific invoice
+        chinvoice = newInvoiceChild.objects.filter(invmasterid=lsinvoice.id)
+    
+        # Chunk items for printing
+        chunk_size = 10
+        chinvoice_list = list(chinvoice)
+        chinvoice_chunks = []
+        for i in range(0, len(chinvoice_list), chunk_size):
+            chunk_items = chinvoice_list[i:i+chunk_size]
+            chunk_subtotal = sum(item.sutotal for item in chunk_items)
+            chinvoice_chunks.append((chunk_items, chunk_subtotal))
+    
+        # Staff info
+        st_id = request.session['loginstaff']
+        staff_branch = Staffallocation.objects.get(id=st_id)
+    
+        # Hospital & branch info from invoice
+        br = lsinvoice.branch  # assuming ForeignKey to Branch in invoice
+        objhospt = Hospitaldetails.objects.first()
+    
+        # GST flags
+        branch_has_gst = bool(br and br.gstno and br.gstno.lower() != 'none')
+        branch_is_composition = bool(br and br.compositiontax)
+    
+        # Amount in words
+        amount_in_words = ""
+        if lsinvoice.total:
+            amount_in_words = num2words(lsinvoice.total, lang='en_IN').title()
+            amount_in_words = f"Rupees {amount_in_words} Only"
+    
+        context = {
+            'lsinvoice': lsinvoice,
+            'chinvoice_chunks': chinvoice_chunks,
+            'staffn': staff_branch,
+            'objhospt': objhospt,
+            'br': br,
+            'branch_has_gst': branch_has_gst,
+            'branch_is_composition': branch_is_composition,
+            'amount_in_words': amount_in_words,
+        }
+        return render(request, "dotmatrixprint.html", context)
+
+@login_required
+@require_http_methods(["POST"])
+def save_ipprocedure(request):
+    """
+    Save procedure(s) for an IP patient.
+    Expects form data with:
+    - ipno_id: ID of the IP patient admission
+    - mr_number: MR Number of the patient
+    - procedure[]: Array of procedure names
+    - procedure_id[]: Array of procedure IDs from ProcedureMaster
+    - count[]: Array of counts
+    - proceduretakendate[]: Array of dates
+    """
+    try:
+        # Get required fields
+        ipno_id = request.POST.get('ipno_id')
+        mr_number = request.POST.get('mr_number')
+        
+        if not ipno_id or not mr_number:
+            return JsonResponse({
+                'success': False,
+                'error': 'IPNO ID and MR Number are required'
+            }, status=400)
+        
+        # Get or create patient
+        try:
+            patient = Patient_details.objects.get(Medical_Record_Number=mr_number)
+        except Patient_details.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': f'Patient with MR Number {mr_number} not found'
+            }, status=404)
+        
+        # Get IP admission
+        try:
+            ip_admission = ippatientadmission.objects.get(id=ipno_id)
+        except ippatientadmission.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': f'IP admission with ID {ipno_id} not found'
+            }, status=404)
+        
+        # Get branch from session or request
+        branch_id = request.session.get('branch_id')
+        if not branch_id:
+            # Try to get from user's staff allocation
+            try:
+                staff = Staffallocation.objects.get(user=request.user)
+                branch_id = staff.branchdt_id
+            except Staffallocation.DoesNotExist:
+                branch_id = None
+        
+        # Get current user's staff allocation
+        created_by = None
+        try:
+            staff = Staffallocation.objects.get(user=request.user)
+            created_by = staff
+        except Staffallocation.DoesNotExist:
+            pass
+        
+        # Get arrays from POST data
+        procedure_ids = request.POST.getlist('procedure_id[]')
+        counts = request.POST.getlist('count[]')
+        dates = request.POST.getlist('proceduretakendate[]')
+        
+        if not procedure_ids or not any(procedure_ids):
+            return JsonResponse({
+                'success': False,
+                'error': 'At least one procedure is required'
+            }, status=400)
+        
+        saved_procedures = []
+        errors = []
+        
+        # Process each procedure
+        for i, procedure_id in enumerate(procedure_ids):
+            if not procedure_id:
+                continue
+                
+            try:
+                # Get the procedure from master
+                procedure = ProcedureMaster.objects.get(id=procedure_id)
+                
+                # Get count (default to 1 if not provided)
+                count = counts[i] if i < len(counts) else '1'
+                
+                # Get date (default to today if not provided)
+                procedure_date = dates[i] if i < len(dates) else datetime.now().date()
+                if isinstance(procedure_date, str):
+                    try:
+                        procedure_date = datetime.strptime(procedure_date, '%Y-%m-%d').date()
+                    except ValueError:
+                        procedure_date = datetime.now().date()
+                
+                # Create the procedure record
+                procedure_record = ipprocedurecreation(
+                    ipno=ip_admission,
+                    currentdate=datetime.now().date(),
+                    proceduretaken=procedure,
+                    proceduretakendate=procedure_date,
+                    count=count,
+                    createdby=created_by,
+                    MR_Number=patient,
+                    branchdt_id=branch_id if branch_id else None
+                )
+                procedure_record.save()
+                
+                saved_procedures.append({
+                    'id': procedure_record.id,
+                    'procedure_name': procedure.name,
+                    'proceduretakendate': procedure_date.strftime('%Y-%m-%d'),
+                    'count': count
+                })
+                
+            except ProcedureMaster.DoesNotExist:
+                errors.append(f'Procedure with ID {procedure_id} not found')
+            except Exception as e:
+                errors.append(str(e))
+        
+        if saved_procedures:
+            return JsonResponse({
+                'success': True,
+                'message': f'{len(saved_procedures)} procedure(s) saved successfully',
+                'procedures': saved_procedures,
+                'errors': errors if errors else None
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'error': 'No procedures were saved. ' + (' '.join(errors) if errors else '')
+            }, status=400)
+            
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+@login_required
+def get_procedure_details(request):
+    """
+    Get procedure details for a patient.
+    Query parameters:
+    - booking_id: Booking ID (optional)
+    - ipno_id: IP admission ID
+    """
+    booking_id = request.GET.get('booking_id')
+    ipno_id = request.GET.get('ipno_id')
+
+    patient_info = {
+        'patient_name': 'N/A',
+        'ward_name': 'N/A',
+        'ward_number': 'N/A',
+        'room_name': 'N/A',
+        'accommodation_type': 'N/A',
+        'mr_number': 'N/A',
+    }
+
+    # Fetch real patient info if booking exists
+    if booking_id:
+        try:
+            booking = ippatientroombooking.objects.select_related(
+                'ipno', 'MR_Number', 'room_number', 'bed_number', 'roomdt'
+            ).get(id=booking_id)
+
+            patient_name = booking.MR_Number.Patient_Name if booking.MR_Number else 'N/A'
+            mr_number = booking.MR_Number.Medical_Record_Number if booking.MR_Number else 'N/A'
+            accommodation_type = booking.accommodation_type or 'N/A'
+
+            if accommodation_type.lower() == 'ward':
+                room_ref = booking.bed_number or booking.roomdt
+                ward_name = room_ref.Blockno if room_ref else 'N/A'
+                ward_number = room_ref.wardbedno if room_ref else 'N/A'
+                room_name = f"Ward Bed {ward_number}"
+            else:
+                room_ref = booking.room_number or booking.roomdt
+                ward_name = 'N/A'
+                ward_number = 'N/A'
+                room_name = f"{room_ref.Roomno} ({room_ref.Room_type})" if room_ref and room_ref.Roomno else 'N/A'
+
+            patient_info = {
+                'patient_name': patient_name,
+                'mr_number': mr_number,
+                'ward_name': ward_name,
+                'ward_number': ward_number,
+                'room_name': room_name,
+                'accommodation_type': accommodation_type,
+            }
+        except ippatientroombooking.DoesNotExist:
+            pass
+    # Set session for existing procedure save views
+    patient_id = None
+    if booking_id:
+        try:
+            booking_for_session = ippatientroombooking.objects.select_related('MR_Number').get(id=booking_id)
+            if booking_for_session.MR_Number:
+                patient_id = booking_for_session.MR_Number.id
+                request.session['tabcasehstptid'] = patient_id
+        except ippatientroombooking.DoesNotExist:
+            pass
+    # Store admission ID in session for save endpoints
+    if ipno_id:
+        request.session['tab_ipno_id'] = ipno_id
+
+    # Fetch current admission object
+    current_admission = None
+    if ipno_id:
+        try:
+            current_admission = ippatientadmission.objects.get(id=ipno_id)
+        except ippatientadmission.DoesNotExist:
+            pass
+
+    # Fetch procedures from ipprocedurecreation (filtered by current admission)
+    procedures = []
+    if current_admission:
+        proc_qs = ipprocedurecreation.objects.filter(
+            ipno=current_admission
+        ).select_related('proceduretaken', 'MR_Number', 'createdby').order_by('-proceduretakendate')
+        
+        for p in proc_qs:
+            procedures.append({
+                'id': p.id,
+                'procedure_name': p.proceduretaken.name if p.proceduretaken else '',
+                'procedure_id': p.proceduretaken.id if p.proceduretaken else '',
+                'count': p.count or '1',
+                'proceduretakendate': p.proceduretakendate.strftime('%Y-%m-%d') if p.proceduretakendate else '',
+                'currentdate': p.currentdate.strftime('%Y-%m-%d') if p.currentdate else '',
+                'created_by': p.createdby.Staff.Staff_firstname if p.createdby and hasattr(p.createdby, 'Staff') else ''
+            })
+
+    # Fetch prescriptions if you have them (optional)
+    prescriptions = []
+    # If you have a prescription model, fetch it here
+    # Example:
+    # if current_admission:
+    #     pres_qs = Prescriptionnew.objects.filter(patient_id=patient_id)
+    #     for pres in pres_qs:
+    #         prescriptions.append({...})
+
+    response_data = {
+        'patient_info': patient_info,
+        'prescriptions': prescriptions,
+        'procedures': procedures,
+    }
+
+    return JsonResponse(response_data)
+
+
+@login_required
+@require_http_methods(["GET"])
+def search_procedures(request):
+    """
+    Search for procedures from ProcedureMaster.
+    Query parameters:
+    - q: Search query string
+    """
+    try:
+        query = request.GET.get('q', '').strip()
+        
+        if not query or len(query) < 2:
+            # Return empty results if query is too short
+            return JsonResponse({
+                'results': []
+            })
+        
+        # Search in ProcedureMaster
+        procedures = ProcedureMaster.objects.filter(
+            name__icontains=query,
+            is_active=True
+        )[:20]  # Limit to 20 results
+        
+        results = []
+        for proc in procedures:
+            results.append({
+                'id': proc.id,
+                'name': proc.name,
+                'rate': str(proc.rate),
+                'category': proc.category,
+                'description': proc.description or ''
+            })
+        
+        return JsonResponse({
+            'results': results
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'results': [],
+            'error': str(e)
+        }, status=500)
+
+
+@login_required
+@require_http_methods(["DELETE"])
+def delete_ipprocedure(request):
+    """
+    Delete a procedure record.
+    Query parameters:
+    - procedure_id: ID of the procedure record to delete
+    """
+    try:
+        procedure_id = request.GET.get('procedure_id')
+        
+        if not procedure_id:
+            return JsonResponse({
+                'success': False,
+                'error': 'Procedure ID is required'
+            }, status=400)
+        
+        try:
+            procedure = ipprocedurecreation.objects.get(id=procedure_id)
+            procedure.delete()
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Procedure deleted successfully'
+            })
+            
+        except ipprocedurecreation.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': 'Procedure not found'
+            }, status=404)
+            
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
 
 def doctorwise_op_registration_detail(request):
     """
@@ -46419,7 +46876,9 @@ def death_during_admission_detail(request):
         if death_record.registration_type == 'registered' and death_record.patient:
             patient = death_record.patient
             patient_name = patient.Patient_Name
-            ip_number = patient.Medical_Record_Number or 'N/A'
+            ip_number = 'N/A'
+            if ippatientadmission.objects.filter(MR_Number=death_record.patient,Admittedstatus=True):
+                ip_number = ippatientadmission.objects.get(MR_Number=death_record.patient,Admittedstatus=True).ipnumber or 'Unregistered'
             gender = patient.Gender or 'N/A'
             age = patient.Age or 'N/A'
             address = patient.address or 'N/A'
@@ -46606,8 +47065,8 @@ def doctorwise_admission_register_detail(request):
         
         # Get doctor name
         doctor_name = "N/A"
-        if room_booking and room_booking.admitteddoctor and room_booking.admitteddoctor.Staff:
-            doctor_name = f"{room_booking.admitteddoctor.Staff.Staff_firstname} {room_booking.admitteddoctor.Staff.Staff_lastname}".strip()
+        if admission and admission.admitted_doctor and admission.admitted_doctor.Staff:
+            doctor_name = f"{admission.admitted_doctor.Staff.Staff_firstname} {admission.admitted_doctor.Staff.Staff_lastname}".strip()
         
         # Get treatments
         treatments = iptreatmentdetails.objects.filter(
@@ -46830,3 +47289,532 @@ def sales_summary(request):
     }
     
     return render(request, 'sales_summary.html', context)
+
+def staffwise_bill_analysis(request):
+    """
+    Staff Wise Bill Analysis - Shows bills created by each staff member
+    Including: Pharmacy, Lab, Purchase, Appointment, Treatment, Casuality invoices
+    With payment mode breakdown: Cash, Card, GPay, Credit
+    """
+    staff_design_id = request.session.get('loginstaffdesign')
+    if not staff_design_id:
+        return redirect('staff_login')
+    
+    # Get filter values from request
+    from_date = request.GET.get('from_date', '')
+    to_date = request.GET.get('to_date', '')
+    staff_id = request.GET.get('staff', '')
+    bill_type = request.GET.get('bill_type', '')
+    
+    # Get all staff IDs who have created invoices in any module
+    staff_ids = set()
+    
+    # Get staff from pharmacy invoices (preparedby)
+    pharmacy_staff = newInvoiceMaster.objects.filter(restockstatus=True, preparedby__isnull=False).values_list('preparedby_id', flat=True).distinct()
+    staff_ids.update(pharmacy_staff)
+    
+    # Get staff from lab invoices (created_by)
+    lab_staff_details = LabInvoiceMaster.objects.filter(is_cancelled=False, created_by__isnull=False).values_list('created_by_id', flat=True).distinct()
+    for details_id in lab_staff_details:
+        staff_alloc = Staffallocation.objects.filter(Staff_id=details_id, Status="Active").first()
+        if staff_alloc:
+            staff_ids.add(staff_alloc.id)
+    
+    # Get staff from purchase invoices (created_by)
+    purchase_staff = PurchaseInvoice.objects.filter(created_by__isnull=False).values_list('created_by_id', flat=True).distinct()
+    staff_ids.update(purchase_staff)
+    
+    # Get staff from appointment invoices (preparedby)
+    appointment_staff = appointmentinvoicemaster.objects.filter(cancelstatus=False, preparedby__isnull=False).values_list('preparedby_id', flat=True).distinct()
+    staff_ids.update(appointment_staff)
+    
+    # Get staff from treatment invoices (preparedby)
+    treatment_staff = treatmentinvoicemaster.objects.filter(cancelstatus=False, preparedby__isnull=False).values_list('preparedby_id', flat=True).distinct()
+    staff_ids.update(treatment_staff)
+    
+    # Get staff from casuality invoices (created_by)
+    casuality_staff = CasualityInvoiceMaster.objects.filter(is_cancelled=False, created_by__isnull=False).values_list('created_by_id', flat=True).distinct()
+    staff_ids.update(casuality_staff)
+    
+    # Convert staff_ids to list of integers
+    staff_ids_list = list(staff_ids)
+    
+    # Filter staff list to only those who have created invoices
+    if staff_ids_list:
+        staff_list = Staffallocation.objects.filter(
+            id__in=staff_ids_list,
+            Status="Active"
+        ).order_by('Staff__Staff_firstname')
+    else:
+        staff_list = Staffallocation.objects.none()
+    
+    # Get selected staff name
+    selected_staff_name = "All Staff"
+    if staff_id:
+        try:
+            staff_id_int = int(staff_id)
+            selected_staff = Staffallocation.objects.filter(id=staff_id_int).first()
+            if selected_staff:
+                selected_staff_name = f"{selected_staff.Staff.Staff_firstname} {selected_staff.Staff.Staff_lastname}".strip()
+        except (ValueError, TypeError):
+            pass
+    
+    all_bills = []
+    
+    # Date filter
+    date_filter_applied = from_date and to_date
+    
+    # ============================================================
+    # 1. PHARMACY INVOICES (newInvoiceMaster)
+    # ============================================================
+    pharmacy_invoices = newInvoiceMaster.objects.filter(restockstatus=True).select_related('Mrno', 'branch', 'preparedby')
+    
+    if date_filter_applied:
+        pharmacy_invoices = pharmacy_invoices.filter(currentdate__range=[from_date, to_date])
+    elif from_date and not to_date:
+        pharmacy_invoices = pharmacy_invoices.filter(currentdate__gte=from_date)
+    
+    if staff_id:
+        try:
+            staff_id_int = int(staff_id)
+            pharmacy_invoices = pharmacy_invoices.filter(preparedby_id=staff_id_int)
+        except (ValueError, TypeError):
+            pass
+    
+    for inv in pharmacy_invoices:
+        payment_mode = inv.payementmode or 'Cash'
+        amount = float(inv.total or 0)
+        
+        # Get staff name safely
+        staff_name = 'N/A'
+        if inv.preparedby and hasattr(inv.preparedby, 'Staff'):
+            staff_name = f"{inv.preparedby.Staff.Staff_firstname} {inv.preparedby.Staff.Staff_lastname}".strip()
+        elif inv.preparedby:
+            staff_name = f"{inv.preparedby.Staff_firstname} {inv.preparedby.Staff_lastname}".strip()
+        
+        all_bills.append({
+            'bill_id': inv.id,
+            'bill_number': inv.Invoicenumber,
+            'bill_type': 'PHARMACY',
+            'patient_name': inv.patientname or (inv.Mrno.Patient_Name if inv.Mrno else 'N/A'),
+            'op_number': inv.Mrno.Medical_Record_Number if inv.Mrno else '-',
+            'amount': amount,
+            'payment_mode': payment_mode,
+            'date': inv.currentdate,
+            'created_by': staff_name
+        })
+    
+    # ============================================================
+    # 2. LAB INVOICES (LabInvoiceMaster)
+    # ============================================================
+    lab_invoices = LabInvoiceMaster.objects.filter(is_cancelled=False).select_related('patient', 'created_by')
+    
+    if date_filter_applied:
+        lab_invoices = lab_invoices.filter(date__range=[from_date, to_date])
+    elif from_date and not to_date:
+        lab_invoices = lab_invoices.filter(date__gte=from_date)
+    
+    if staff_id:
+        try:
+            staff_id_int = int(staff_id)
+            allocation= Staffallocation.objects.get(id=staff_id).Staff_id
+            lab_invoices = lab_invoices.filter(created_by_id=allocation)
+        except (ValueError, TypeError):
+            pass
+    
+    for inv in lab_invoices:
+        payment_mode = 'Credit' if inv.is_credit else 'Cash'
+        amount = float(inv.total or 0)
+        
+        # Get staff name safely
+        staff_name = 'N/A'
+        if inv.created_by:
+            staff_name = f"{inv.created_by.Staff_firstname} {inv.created_by.Staff_lastname}".strip()
+        
+        all_bills.append({
+            'bill_id': inv.id,
+            'bill_number': inv.invoiceno,
+            'bill_type': 'LAB BILL',
+            'patient_name': inv.patient.Patient_Name if inv.patient else 'N/A',
+            'op_number': inv.patient.Medical_Record_Number if inv.patient else '-',
+            'amount': amount,
+            'payment_mode': payment_mode,
+            'date': inv.date,
+            'created_by': staff_name
+        })
+    
+    # ============================================================
+    # 3. PURCHASE INVOICES (PurchaseInvoice)
+    # ============================================================
+    purchase_invoices = PurchaseInvoice.objects.all().select_related('supplier', 'branch', 'created_by')
+    
+    if date_filter_applied:
+        purchase_invoices = purchase_invoices.filter(invoice_date__range=[from_date, to_date])
+    elif from_date and not to_date:
+        purchase_invoices = purchase_invoices.filter(invoice_date__gte=from_date)
+    
+    if staff_id:
+        try:
+            staff_id_int = int(staff_id)
+            purchase_invoices = purchase_invoices.filter(created_by_id=staff_id_int)
+        except (ValueError, TypeError):
+            pass
+    
+    for inv in purchase_invoices:
+        amount = float(inv.grand_total or 0)
+        
+        # Get staff name safely
+        staff_name = 'N/A'
+        if inv.created_by and hasattr(inv.created_by, 'Staff'):
+            staff_name = f"{inv.created_by.Staff.Staff_firstname} {inv.created_by.Staff.Staff_lastname}".strip()
+        elif inv.created_by:
+            staff_name = f"{inv.created_by.Staff_firstname} {inv.created_by.Staff_lastname}".strip()
+        
+        all_bills.append({
+            'bill_id': inv.id,
+            'bill_number': inv.invoice_number,
+            'bill_type': 'PURCHASE',
+            'patient_name': inv.supplier.shopname if inv.supplier else 'N/A',
+            'op_number': '-',
+            'amount': amount,
+            'payment_mode': 'Cash',
+            'date': inv.invoice_date,
+            'created_by': staff_name
+        })
+    
+    # ============================================================
+    # 4. APPOINTMENT INVOICES (appointmentinvoicemaster)
+    # ============================================================
+    appointment_invoices = appointmentinvoicemaster.objects.filter(cancelstatus=False).select_related('Mrno', 'branch', 'preparedby')
+    
+    if date_filter_applied:
+        appointment_invoices = appointment_invoices.filter(currentdate__range=[from_date, to_date])
+    elif from_date and not to_date:
+        appointment_invoices = appointment_invoices.filter(currentdate__gte=from_date)
+    
+    if staff_id:
+        try:
+            staff_id_int = int(staff_id)
+            appointment_invoices = appointment_invoices.filter(preparedby_id=staff_id_int)
+        except (ValueError, TypeError):
+            pass
+    
+    for inv in appointment_invoices:
+        payment_mode = inv.payementmode or 'Cash'
+        amount = float(inv.total or 0)
+        
+        # Get staff name safely
+        staff_name = 'N/A'
+        if inv.preparedby and hasattr(inv.preparedby, 'Staff'):
+            staff_name = f"{inv.preparedby.Staff.Staff_firstname} {inv.preparedby.Staff.Staff_lastname}".strip()
+        elif inv.preparedby:
+            staff_name = f"{inv.preparedby.Staff_firstname} {inv.preparedby.Staff_lastname}".strip()
+        
+        all_bills.append({
+            'bill_id': inv.id,
+            'bill_number': inv.treatmentInvoicenumber,
+            'bill_type': 'APPOINTMENT',
+            'patient_name': inv.patientname or (inv.Mrno.Patient_Name if inv.Mrno else 'N/A'),
+            'op_number': inv.Mrno.Medical_Record_Number if inv.Mrno else '-',
+            'amount': amount,
+            'payment_mode': payment_mode,
+            'date': inv.currentdate,
+            'created_by': staff_name
+        })
+        
+    # ============================================================
+    # 5. CASUALITY INVOICES (CasualityInvoiceMaster)
+    # ============================================================
+    casuality_invoices = CasualityInvoiceMaster.objects.filter(is_cancelled=False).select_related('patient', 'branch', 'created_by')
+    
+    if date_filter_applied:
+        casuality_invoices = casuality_invoices.filter(invoice_date__range=[from_date, to_date])
+    elif from_date and not to_date:
+        casuality_invoices = casuality_invoices.filter(invoice_date__gte=from_date)
+    
+    if staff_id:
+        try:
+            staff_id_int = int(staff_id)
+            allocation= Staffallocation.objects.get(id=staff_id).Staff_id
+            casuality_invoices = casuality_invoices.filter(created_by_id=allocation)
+        except (ValueError, TypeError):
+            pass
+    procedure_summary = {}
+    procedure_total_count=0
+    procedure_total_amount=0
+    for inv in casuality_invoices:
+        payment_mode = inv.payment_mode or 'Cash'
+        amount = float(inv.total or 0)
+        
+        # Get patient MR number
+        if inv.patient_mr_no:
+            op_number = inv.patient_mr_no
+        elif inv.patient and inv.patient.Medical_Record_Number:
+            op_number = inv.patient.Medical_Record_Number
+        else:
+            op_number = '-'
+        
+        # Get staff name safely
+        staff_name = 'N/A'
+        if inv.created_by:
+            staff_name = f"{inv.created_by.Staff_firstname} {inv.created_by.Staff_lastname}".strip()
+        
+        all_bills.append({
+            'bill_id': inv.id,
+            'bill_number': inv.invoice_no,
+            'bill_type': 'PROCEDURE',
+            'patient_name': inv.patient_name or (inv.patient.Patient_Name if inv.patient else 'N/A'),
+            'op_number': op_number,
+            'amount': amount,
+            'payment_mode': payment_mode,
+            'date': inv.invoice_date,
+            'created_by': staff_name
+        })
+        try:
+            procedure_items = CasualityInvoiceChild.objects.filter(invoice=inv)
+            for item in procedure_items:
+                procedure_name = item.procedure_name or 'Unknown Service'
+                item_amount = float(item.amount or 0)
+            
+                if procedure_name not in procedure_summary:
+                    procedure_summary[procedure_name] = {
+                        'count': 0,
+                        'total_amount': 0
+                    }
+                procedure_summary[procedure_name]['count'] += 1
+                procedure_summary[procedure_name]['total_amount'] += item_amount
+        except Exception as e:
+            # If child table doesn't exist or error, skip
+            pass
+    # Sort by date (newest first)
+    all_bills.sort(key=lambda x: x['date'], reverse=True)
+    
+    # Apply bill type filter
+    if bill_type:
+        all_bills = [b for b in all_bills if b['bill_type'] == bill_type]
+    
+    # Initialize all totals to 0
+    total_amount = 0
+    total_cash = 0
+    total_card = 0
+    total_gpay = 0
+    total_credit = 0
+    total_other = 0
+    
+    cash_count = 0
+    card_count = 0
+    gpay_count = 0
+    credit_count = 0
+    other_count = 0
+    
+    # Loop through bills once and categorize
+    for bill in all_bills:
+        amount = bill['amount']
+        total_amount += amount
+        
+        payment_mode = bill['payment_mode'].lower() if bill['payment_mode'] else ''
+        
+        # Categorize payment mode - CHECK IN ORDER OF PRIORITY
+        if 'gpay' in payment_mode or 'google pay' in payment_mode:
+            total_gpay += amount
+            gpay_count += 1
+        elif 'card' in payment_mode:
+            total_card += amount
+            card_count += 1
+        elif 'credit' in payment_mode and 'cash' not in payment_mode:
+            total_credit += amount
+            credit_count += 1
+        elif 'cash' in payment_mode:
+            total_cash += amount
+            cash_count += 1
+        else:
+            # If no match, treat as cash
+            total_cash += amount
+            cash_count += 1
+    
+    # Group by staff - CHECK IN ORDER OF PRIORITY
+    staff_summary = {}
+    for bill in all_bills:
+        staff_name = bill['created_by']
+        if staff_name not in staff_summary:
+            staff_summary[staff_name] = {
+                'total': 0,
+                'count': 0,
+                'cash': 0,
+                'card': 0,
+                'gpay': 0,
+                'credit': 0,
+                'other': 0
+            }
+        
+        staff_summary[staff_name]['total'] += bill['amount']
+        staff_summary[staff_name]['count'] += 1
+        
+        payment_mode = bill['payment_mode'].lower() if bill['payment_mode'] else ''
+        
+        # Categorize with priority order
+        if 'gpay' in payment_mode or 'google pay' in payment_mode:
+            staff_summary[staff_name]['gpay'] += bill['amount']
+        elif 'card' in payment_mode:
+            staff_summary[staff_name]['card'] += bill['amount']
+        elif 'credit' in payment_mode and 'cash' not in payment_mode:
+            staff_summary[staff_name]['credit'] += bill['amount']
+        elif 'cash' in payment_mode:
+            staff_summary[staff_name]['cash'] += bill['amount']
+        else:
+            staff_summary[staff_name]['cash'] += bill['amount']
+    
+    # Get hospital details
+    hospital = Hospitaldetails.objects.first()
+    procedure_total_count = 0
+    procedure_total_amount = 0
+    for proc_name, proc_data in procedure_summary.items():
+        procedure_total_count += proc_data['count']
+        procedure_total_amount += proc_data['total_amount']
+    context = {
+        'bill_data': all_bills,
+        'staff_summary': staff_summary,
+        'total_amount': total_amount,
+        'total_cash': total_cash,
+        'total_card': total_card,
+        'total_gpay': total_gpay,
+        'total_credit': total_credit,
+        'cash_count': cash_count,
+        'card_count': card_count,
+        'gpay_count': gpay_count,
+        'credit_count': credit_count,
+        'total_count': len(all_bills),
+        'from_date': from_date,
+        'to_date': to_date,
+        'staff_id': staff_id,
+        'selected_staff_name': selected_staff_name,
+        'bill_type': bill_type,
+        'staff_list': staff_list,
+        'hospital': hospital,
+        'procedure_summary': procedure_summary,
+        'stdesign': staff_design_id,
+        'procedure_total_count': procedure_total_count,  # Add this
+        'procedure_total_amount': procedure_total_amount,  
+    }
+    return render(request, 'staffwise_bill_analysis.html', context)
+
+def casuality_invoice_detail_staffwise(request):
+    """View invoice details"""
+    invoice_id = request.GET.get('invoice_id')
+    if not invoice_id:
+        messages.error(request, "Invoice ID not provided")
+        return redirect('casuality_invoice_list')
+    
+    invoice = get_object_or_404(CasualityInvoiceMaster, id=invoice_id)
+    invoice.payment_mode = invoice.payment_mode.replace('GPay', 'Online')
+    items = CasualityInvoiceChild.objects.filter(invoice=invoice).order_by('sl_no')
+    
+    context = {
+        'invoice': invoice,
+        'items': items,
+    }
+    return render(request, 'casuality_invoice_details_staffwise_report.html', context)
+
+def lab_invoice_detail_staffwise_report(request):
+    """View to show detailed invoice information using GET parameter"""
+    invoice_id = request.GET.get('invoice_id')
+    
+    if not invoice_id:
+        messages.error(request, "Invoice ID not provided")
+        return redirect('lab_invoice_list')
+    
+    try:
+        invoice = get_object_or_404(LabInvoiceMaster, id=invoice_id)
+        items = LabInvoiceChild.objects.filter(invoice=invoice).order_by('sl_no')
+        
+        context = {
+            'invoice': invoice,
+            'items': items,
+        }
+        return render(request, 'lab_invoice_detail_staffwise_report.html', context)
+    except Exception as e:
+        messages.error(request, f"Error loading invoice: {str(e)}")
+        return redirect('lab_invoice_list')
+
+
+def purchase_invoice_detail_staffwise(request):
+    """View single invoice details"""
+    invoice_id=request.GET.get('ids')
+    invoice = get_object_or_404(PurchaseInvoice.objects.prefetch_related('items__medicine'), id=invoice_id)
+    invoice.amount_in_words = number_to_words(invoice.grand_total)
+    context = {'invoice': invoice}
+    return render(request, 'purchase_invoice_detail_staffwise.html', context)
+
+def registration_fee_invoice_list(request):
+    """
+    List page for Registration Fee Invoices with filters and summary
+    """
+    staff_design_id = request.session.get('loginstaffdesign')
+    if not staff_design_id:
+        return redirect('staff_login')
+    
+    # Get filter values
+    from_date = request.GET.get('from_date', '')
+    to_date = request.GET.get('to_date', '')
+    patient_name = request.GET.get('patient_name', '')
+    payment_mode = request.GET.get('payment_mode', '')
+    invoice_number = request.GET.get('invoice_number', '')
+    
+    # Base queryset
+    invoices = RegistrationFeeInvoice.objects.filter(
+        is_cancelled=False
+    ).select_related('patient', 'branch', 'created_by')
+    
+    # Apply filters
+    if from_date:
+        invoices = invoices.filter(invoice_date__gte=from_date)
+    if to_date:
+        invoices = invoices.filter(invoice_date__lte=to_date)
+    if patient_name:
+        invoices = invoices.filter(patient_name__icontains=patient_name)
+    if payment_mode:
+        invoices = invoices.filter(payment_mode=payment_mode)
+    if invoice_number:
+        invoices = invoices.filter(invoice_number__icontains=invoice_number)
+    
+    # Order by newest first
+    invoices = invoices.order_by('-created_at')
+    
+    # Calculate totals
+    total_amount = sum(float(inv.registration_fee or 0) for inv in invoices)
+    total_count = invoices.count()
+    
+    # Calculate payment mode totals
+    payment_mode_totals = {
+        'Cash': 0,
+        'Card': 0,
+        'GPay': 0,
+        'Online': 0,
+        'Credit': 0,
+        'Insurance': 0
+    }
+    
+    for inv in invoices:
+        mode = inv.payment_mode or 'Cash'
+        if mode in payment_mode_totals:
+            payment_mode_totals[mode] += float(inv.registration_fee or 0)
+        else:
+            payment_mode_totals['Cash'] += float(inv.registration_fee or 0)
+    
+    # Get hospital details
+    hospital = Hospitaldetails.objects.first()
+    
+    context = {
+        'invoices': invoices,
+        'total_amount': total_amount,
+        'total_count': total_count,
+        'payment_mode_totals': payment_mode_totals,
+        'from_date': from_date,
+        'to_date': to_date,
+        'patient_name': patient_name,
+        'payment_mode': payment_mode,
+        'invoice_number': invoice_number,
+        'hospital': hospital,
+        'stdesign': staff_design_id,
+    }
+    return render(request, 'registration_fee_invoice_list.html', context)

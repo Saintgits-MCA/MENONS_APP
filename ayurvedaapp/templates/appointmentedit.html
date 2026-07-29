@@ -200,7 +200,7 @@
                     <strong>Current Doctor:</strong>
                     {% if objedappo.Doctor_Name %}
                         <span class="ml-2">
-                            Dr. {{ objedappo.Doctor_Name.Staff_firstname }} {{ objedappo.Doctor_Name.Staff_lastname }}
+                            {{ objedappo.Doctor_Name.Staff_firstname }} {{ objedappo.Doctor_Name.Staff_lastname }}
                         </span>
                         {% if doctor_allocation_exists %}
                             <br>
@@ -224,7 +224,7 @@
                         {% if doctor.id == objedappo.Doctor_Name_id %}selected{% endif %}
                         data-designation-id="{{ doctor.designation_id }}"
                         data-department-id="{{ doctor.department_id }}">
-                        Dr. {{ doctor.first_name }} {{ doctor.last_name }}
+                        {{ doctor.first_name }} {{ doctor.last_name }}
                         {% if doctor.designation %} - {{ doctor.designation }}{% endif %}
                     </option>
                 {% endfor %}
@@ -393,7 +393,7 @@ function loadDoctorsByFilters() {
                         'data-designation-id': doctor.designation_id || '',
                         'data-designation': doctor.designation || '',
                         'data-department': doctor.deprt || ''
-                    }).html(`Dr. ${doctor.Staff_firstname} ${doctor.Staff_lastname || ''} ${doctor.deprt ? '- ' + doctor.deprt : ''}`);
+                    }).html(` ${doctor.Staff_firstname} ${doctor.Staff_lastname || ''} ${doctor.deprt ? '- ' + doctor.deprt : ''}`);
                     doctorSelect.append(option);
                 });
                 

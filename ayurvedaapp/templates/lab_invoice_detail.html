@@ -36,13 +36,17 @@
                             </h3>
                             <div class="card-tools">
                                 {%if not invoice.is_credit and invoice.payment_status == "Paid"%}
-                                <a href="{% url 'lab_invoice_print' %}?invoice_id={{ invoice.id }}&header=0"><button type="button" class="btn btn-success">
+                                <a href="{% url 'lab_invoice_print' %}?invoice_id={{ invoice.id }}&header=0"><button type="button" class="btn btn-success mr-3">
                                     <i class="fas fa-print"></i> Print
                                 </button></a>
                                 {%endif%}
+                                <a href="{% url 'detailed_bill_register' %}" class="btn btn-danger mr-3">
+                                    <i class="fas fa-file-alt"></i> Back to Report
+                                </a>
                                 <a href="{% url 'lab_invoice_list' %}" class="btn btn-dark">
                                     <i class="fas fa-arrow-left"></i> Back
                                 </a>
+                               
                             </div>
                         </div>
                         

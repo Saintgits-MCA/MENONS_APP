@@ -29,7 +29,7 @@
                 </div>
               </div>
 
-              <div class="col-lg-2 col-md-6">
+              {% comment %} <div class="col-lg-2 col-md-6">
                 <div class="form-group">
                   <label>Doctor Name</label>
                   <select class="form-control" name="doctor" id="doctorFilter">
@@ -41,7 +41,7 @@
                     {% endfor %}
                   </select>
                 </div>
-              </div>
+              </div> {% endcomment %}
 
               <div class="col-lg-2 col-md-6">
                 <div class="form-group">
@@ -101,7 +101,7 @@
                 <th>Room</th>
                 <th>Name & Address of Patient</th>
                 <th>Admission Date</th>
-                <th>Doctor</th>
+                {% comment %} <th>Doctor</th> {% endcomment %}
                 <th>Action</th>
               </tr>
             </thead>
@@ -118,7 +118,7 @@
                     {{ item.patient_details|safe }}
                   </td>
                   <td>{{ item.admission_date|date:"d/m/Y" }}</td>
-                  <td>{{ item.doctor }}</td>
+                  {% comment %} <td>{{ item.doctor }}</td> {% endcomment %}
                      <td>
       <a href="{% url 'occupancy_detail' %}?ids={{ item.id }}" class="btn btn-sm btn-info" title="View Details">
         <i class="fas fa-eye"></i>
@@ -146,7 +146,7 @@
 function resetFilters() {
   document.getElementById('fromDate').value = '';
   document.getElementById('toDate').value = '';
-  document.getElementById('doctorFilter').value = '';
+  {% comment %} document.getElementById('doctorFilter').value = ''; {% endcomment %}
   document.getElementById('filterForm').submit();
 }
 

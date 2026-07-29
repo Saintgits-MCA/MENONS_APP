@@ -173,73 +173,10 @@
     font-weight: 600;
     text-align: center;
   }
-  .badge-advance {
-    background: #ffc107;
-    color: #856404;
-    padding: 3px 10px;
-    border-radius: 12px;
-    font-size: 11px;
-    font-weight: 600;
-  }
-  .badge-net {
-    background: #28a745;
-    color: #fff;
-    padding: 3px 10px;
-    border-radius: 12px;
-    font-size: 11px;
-    font-weight: 600;
-  }
-  .badge-collected {
-    background: #007bff;
-    color: #fff;
-    padding: 3px 10px;
-    border-radius: 12px;
-    font-size: 11px;
-    font-weight: 600;
-  }
-  
-  /* Table rows for payment summary */
-  .advance-row {
-    background-color: #fff3cd !important;
-  }
-  .advance-row th, .advance-row td {
-    color: #856404;
-  }
-  .net-amount-row {
-    background-color: #d4edda !important;
-  }
-  .net-amount-row th, .net-amount-row td {
-    color: #155724;
-  }
-  .collected-row {
-    background-color: #cce5ff !important;
-  }
-  .collected-row th, .collected-row td {
-    color: #004085;
-  }
   .grand-total-row {
     background-color: #f8f9fa !important;
     font-weight: 700;
     font-size: 1.2rem;
-  }
-  .text-advance {
-    color: #dc3545;
-    font-weight: 700;
-  }
-  .text-net {
-    color: #28a745;
-    font-weight: 700;
-    font-size: 1.1rem;
-  }
-  .text-collected {
-    color: #007bff;
-    font-weight: 700;
-    font-size: 1.2rem;
-  }
-  .text-grand {
-    color: #28a745;
-    font-weight: 700;
-    font-size: 1.3rem;
   }
 
   /* Refund Alert */
@@ -391,13 +328,21 @@
                 <thead class="room-breakdown-header">
                   <tr>
                     <th>Treatment Amount</th>
+                    <th>Procedure Amount</th>
                     <th>Medicine Amount</th>
                     <th>Food Charges</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
-                    <td><input type="number" step="0.01" id="treatment-total" class="form-control" name="treatment_total" placeholder="0.00"></td>
+                     <td>
+                      <input type="number" step="0.01" id="treatment-total" class="form-control" name="treatment_total" placeholder="0.00">
+                    
+                     </td>
+                      
+                    <td>
+                      <input type="number" step="0.01" id="procedure-total" class="form-control" name="procedure_total" placeholder="0.00"></td>
+                   
                     <td><input type="number" step="0.01" id="medicine-total" class="form-control" name="medicine_total" placeholder="0.00"></td>
                     <td><input type="number" step="0.01" id="food-total" class="form-control" name="food_total" placeholder="0.00"></td>
                   </tr>
@@ -445,6 +390,10 @@
                     <th>Total Treatment Charges</th>
                     <td><input type="text" id="totaltreatmentamount" class="form-control" value="0.00" name="totaltreatmentamount" readonly></td>
                   </tr>
+                   <tr>
+                    <th>Total Procedure Charges</th>
+                    <td><input type="text" id="totalprocedureamount" class="form-control" value="0.00" name="totalprocedureamount" readonly></td>
+                  </tr>
                   <tr>
                     <th>Total Medicines Amount</th>
                     <td><input type="text" id="totalmedicineamount" class="form-control" value="0.00" name="totalmedicineamount" readonly></td>
@@ -462,13 +411,15 @@
                     <td><input type="text" id="subtotal" class="form-control" value="0.00" name="sub_total" readonly style="font-weight: bold;"></td>
                   </tr>
                   <tr>
-                    <th>Discount</th>
-                    <td><input type="text" id="discount" class="form-control" value="0.00" name="discount"></td>
+                <tr>
+    <th>Discount</th>
+    <td><input type="text" id="discountDisplay" class="form-control" value="0.00" name="discountDisplay" readonly></td>
+
                   </tr>
                   <tr>
-                    <th>Tax</th>
-                    <td><input type="text" id="tax" class="form-control" value="0.00" name="tax"></td>
-                  </tr>
+    <th>Tax</th>
+    <td><input type="text" id="taxDisplay" class="form-control" value="0.00" name="taxDisplay" readonly></td>
+</tr>
 
                   <!-- ============================================================ -->
                   <!-- ADVANCE PAID ROW (Highlighted) - Same as ipbillexpanded      -->
@@ -476,7 +427,7 @@
                   <tr class="advance-row">
                     <th><i class="fas fa-hand-holding-usd"></i> Advance Paid</th>
                     <td>
-                      <input type="text" id="advance-paid" class="form-control" value="0.00" name="advance_amount" readonly style="color: #dc3545; font-weight: bold;">
+                      <input type="text" id="advance-paid" class="form-control" value="0.00" name="advance_amount" readonly style="font-weight: bold;">
                       <small class="text-muted">From admission records</small>
                     </td>
                   </tr>
@@ -487,7 +438,7 @@
                   <tr class="net-amount-row">
                     <th><i class="fas fa-rupee-sign"></i> Net Amount</th>
                     <td>
-                      <input type="text" id="net-amount" class="form-control" value="0.00" name="net_amount" readonly style="color: #28a745; font-weight: bold; font-size: 16px;">
+                      <input type="text" id="net-amount" class="form-control" value="0.00" name="net_amount" readonly style=" font-weight: bold; font-size: 16px;">
                       <small class="text-muted">After advance deduction</small>
                     </td>
                   </tr>
@@ -498,7 +449,7 @@
                   <tr class="collected-row">
                     <th><i class="fas fa-money-bill-wave"></i> Amount Collected</th>
                     <td>
-                      <input type="text" id="amount-collected" class="form-control" value="0.00" name="balance_amount" readonly style="color: #007bff; font-weight: bold; font-size: 18px;">
+                      <input type="text" id="amount-collected" class="form-control" value="0.00" name="balance_amount" readonly style="font-weight: bold; font-size: 18px;">
                       <small class="text-muted">Final amount to be collected</small>
                     </td>
                   </tr>
@@ -509,7 +460,7 @@
                   <tr class="grand-total-row">
                     <th><i class="fas fa-check-circle"></i> Grand Total</th>
                     <td>
-                      <input type="text" id="grandtotal" class="form-control" value="0.00" name="grand_total" readonly style="color: #28a745; font-weight: bold; font-size: 18px;">
+                      <input type="text" id="grandtotal" class="form-control" value="0.00" name="grand_total" readonly style="font-weight: bold; font-size: 18px;">
                     </td>
                   </tr>
                 </tbody>
@@ -528,7 +479,7 @@
                     <div class="row">
                       <div class="col-md-3">
                         <div class="payment-method-card" data-method="cash" onclick="selectPaymentMethod('cash')">
-                          <span class="method-icon">💵</span>
+                          <span class="method-icon"></span>
                           <span class="method-name">Cash</span>
                           <span class="method-amount">
                             <input type="number" step="0.01" id="cashAmount" class="form-control form-control-sm payment-input" name="cashAmount" placeholder="0.00" style="width:120px;display:inline-block;">
@@ -537,7 +488,7 @@
                       </div>
                       <div class="col-md-3">
                         <div class="payment-method-card" data-method="card" onclick="selectPaymentMethod('card')">
-                          <span class="method-icon">💳</span>
+                          <span class="method-icon"></span>
                           <span class="method-name">Card</span>
                           <span class="method-amount">
                             <input type="number" step="0.01" id="cardAmount" class="form-control form-control-sm payment-input" name="cardAmount" placeholder="0.00" style="width:120px;display:inline-block;">
@@ -546,7 +497,7 @@
                       </div>
                       <div class="col-md-3">
                         <div class="payment-method-card" data-method="upi" onclick="selectPaymentMethod('upi')">
-                          <span class="method-icon">📱</span>
+                          <span class="method-icon"></span>
                           <span class="method-name">UPI</span>
                           <span class="method-amount">
                             <input type="number" step="0.01" id="upiAmount" class="form-control form-control-sm payment-input" name="upiAmount" placeholder="0.00" style="width:120px;display:inline-block;">
@@ -555,7 +506,7 @@
                       </div>
                       <div class="col-md-3">
                         <div class="payment-method-card" data-method="bank" onclick="selectPaymentMethod('bank')">
-                          <span class="method-icon">🏦</span>
+                          <span class="method-icon"></span>
                           <span class="method-name">Bank Transfer</span>
                           <span class="method-amount">
                             <input type="number" step="0.01" id="bankAmount" class="form-control form-control-sm payment-input" name="bankAmount" placeholder="0.00" style="width:120px;display:inline-block;">
@@ -592,19 +543,19 @@
               <div class="row">
                 <div class="col-md-3 text-center">
                   <div><small>Gross Total</small></div>
-                  <div><strong id="displayGrossTotal" style="color: #dc3545; font-size: 18px;">₹ 0.00</strong></div>
+                  <div><strong id="displayGrossTotal" style=" font-size: 18px;">₹ 0.00</strong></div>
                 </div>
                 <div class="col-md-3 text-center">
                   <div><small>Advance Paid</small></div>
-                  <div><strong id="displayAdvancePaid" style="color: #856404; font-size: 18px;">₹ 0.00</strong></div>
+                  <div><strong id="displayAdvancePaid" style="font-size: 18px;">₹ 0.00</strong></div>
                 </div>
                 <div class="col-md-3 text-center">
                   <div><small>Net Amount</small></div>
-                  <div><strong id="displayNetAmount" style="color: #28a745; font-size: 18px;">₹ 0.00</strong></div>
+                  <div><strong id="displayNetAmount" style="font-size: 18px;">₹ 0.00</strong></div>
                 </div>
                 <div class="col-md-3 text-center">
                   <div><small>Amount Collected</small></div>
-                  <div><strong id="displayCollected" style="color: #007bff; font-size: 18px;">₹ 0.00</strong></div>
+                  <div><strong id="displayCollected" style=" font-size: 18px;">₹ 0.00</strong></div>
                 </div>
               </div>
               <!-- Refund Alert - Same as ipbillexpanded -->
@@ -899,6 +850,8 @@ $(document).ready(function () {
         
         // Populate treatment and medicine costs
         $("#treatment-total").val(parseFloat(data.treatment_cost || 0).toFixed(2));
+        
+       
         $("#medicine-total").val(parseFloat(data.medicine_cost || 0).toFixed(2));
         $("#food-total").val(0);
         $("#expense").val(0);
@@ -961,7 +914,7 @@ $(document).ready(function () {
     });
 
     // Trigger calculation on input changes
-    $(document).on("input", "#treatment-total, #medicine-total, #food-total, #expense, #discount, #tax, .room-days, #advance-paid, .payment-input", updateBillingTotal);
+    $(document).on("input", "#treatment-total,#procedure-total,#medicine-total, #food-total, #expense, #discount, #tax, .room-days, #advance-paid, .payment-input", updateBillingTotal);
 
     // ============================================================
     // BILLING TOTAL CALCULATION - SAME AS ipbillexpanded
@@ -986,6 +939,7 @@ $(document).ready(function () {
         // Calculate all amounts
         const medicine = parseFloat($("#medicine-total").val()) || 0;
         const treatment = parseFloat($("#treatment-total").val()) || 0;
+        const procedure = parseFloat($("#procedure-total").val()) || 0;
         const food = parseFloat($("#food-total").val()) || 0;
         const expense = parseFloat($("#expense").val()) || 0;
         const tax = parseFloat($("#tax").val()) || 0;
@@ -993,7 +947,7 @@ $(document).ready(function () {
         const advance = parseFloat($("#advance-paid").val()) || 0;
 
         // Calculate subtotal
-        const subTotal = roomRent + medicine + treatment + food + expense;
+        const subTotal = roomRent + medicine + treatment + food + expense +procedure;
         
         // Calculate tax amount
         const taxAmount = (subTotal * tax) / 100;
@@ -1028,8 +982,10 @@ $(document).ready(function () {
         $("#totalfoodamount").val(food.toFixed(2));
         $("#totalmedicineamount").val(medicine.toFixed(2));
         $("#totaltreatmentamount").val(treatment.toFixed(2));
+        $("#totalprocedureamount").val(procedure.toFixed(2));
         $("#totalserviceamount").val(expense.toFixed(2));
-        
+        $("#discountDisplay").val(discount.toFixed(2));
+        $("#taxDisplay").val(tax.toFixed(2));
         // Update display summary
         updatePaymentSummaryDisplay();
         
@@ -1081,6 +1037,9 @@ $(document).ready(function () {
             $("#roomBreakdownTable tbody").html(`<tr id="noRoomData"><td colspan="7" class="text-center text-muted">No room data available</td></tr>`);
             $("#roomRentTotal").val("0.00");
             $("#treatment-total").val("");
+$("#procedure-total").val("");
+
+            
             $("#medicine-total").val("");
             $("#food-total").val("");
             $("#expense").val("");
@@ -1120,6 +1079,8 @@ $(document).ready(function () {
             // Reset summary fields
             $("#totalrentamount").val("0.00");
             $("#totaltreatmentamount").val("0.00");
+              $("#totalprocedureamount").val("0.00");
+            
             $("#totalmedicineamount").val("0.00");
             $("#totalfoodamount").val("0.00");
             $("#totalserviceamount").val("0.00");

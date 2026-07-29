@@ -76,7 +76,7 @@
       <div class="card">
         <div class="card-header">
           <h5 class="font-weight-bold mb-0">
-            ADMISSION REGISTER
+            IP ADMISSION REGISTER
             {% if display_from_date or display_to_date %} FOR THE PERIOD FROM
                     {{ display_from_date|default:"-" }} TO {{ display_to_date|default:"-" }}{% endif %}
           </h5>
@@ -93,10 +93,10 @@
                 <th>Date</th>
                 <th>IP Number</th>
                 <th>Patient Details</th>
-                <th>Doctor / Complaint</th>
+                <th>Gender/Age</th>
                 <th>Room</th>
                 <th>Discharge</th>
-                <th>User</th>
+                <th>Admitted By</th>
              <th>Action</th>  
               </tr>
             </thead>
@@ -114,7 +114,7 @@
                   {{ patient.patient_details|safe }}
                 </td>
                 <td>
-                  {{ patient.doctor_complaint|safe }}
+                  {{ patient.patient_credentials|safe }}
                 </td>
                 <td>{{ patient.room }}</td>
                 <td>{{ patient.discharge }}</td>

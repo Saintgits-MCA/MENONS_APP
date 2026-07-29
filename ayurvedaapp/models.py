@@ -1871,6 +1871,7 @@ class IPBill(models.Model):
     room_charges = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     medicine_charges = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     treatment_charges = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    procedure_charges = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, null=True, blank=True)
     other_expenses = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, null=True, blank=True)
     discount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
@@ -3436,113 +3437,6 @@ class AppointmentStatus(models.Model):
         verbose_name_plural = 'Appointment Status'
 
 
-class PatientVisitCycleLog(models.Model):
-    """
-    Master table for visit cycles - one record per consultation cycle
-    """
-    # Core identifiers
-    patient = models.ForeignKey(Patient_details, on_delete=models.CASCADE, related_name='visit_cycles')
-    doctor = models.ForeignKey(Staffdetails, on_delete=models.CASCADE, related_name='visit_cycles')
-    branch = models.ForeignKey(Branch, on_delete=models.SET_NULL, null=True, blank=True)
-    
-    # Consultation information (the cycle start)
-    consultation_date = models.DateField()
-    consultation_appointment = models.ForeignKey('Appointments', on_delete=models.SET_NULL, null=True, blank=True, related_name='consultation_cycle')
-    consultation_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    
-    # Counts (aggregated from child records)
-    consultation_count = models.IntegerField(default=1)
-    revisit_count = models.IntegerField(default=0)
-    followup_count = models.IntegerField(default=0)
-    total_visits_in_cycle = models.IntegerField(default=1)
-    
-    # Aggregated fees
-    total_fee_collected = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
-    total_revisit_fees = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
-    total_followup_fees = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
-    
-    # ===== SNAPSHOT OF SETTINGS =====
-    consultation_days = models.IntegerField(default=0)
-    revisit_days = models.IntegerField(default=0)
-    max_revisit_count = models.IntegerField(default=0)
-    followup_days = models.IntegerField(default=0)
-    max_followup_count = models.IntegerField(default=0)
-    
-    consultation_fee_setting = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    revisit_fee_setting = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    followup_fee_setting = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    
-    # Current status
-    current_appointment = models.ForeignKey('Appointments', on_delete=models.SET_NULL, null=True, blank=True, related_name='current_cycle')
-    current_status = models.CharField(max_length=50, choices=[
-        ('Consultation', 'Consultation'),
-        ('Revisit', 'Revisit'),
-        ('Followup', 'Followup'),
-    ])
-    days_from_consultation = models.IntegerField(default=0)
-    
-    # Cycle status
-    is_cycle_active = models.BooleanField(default=True)
-    is_cycle_closed = models.BooleanField(default=False)
-    cycle_end_date = models.DateField(null=True, blank=True)
-    cycle_closed_reason = models.CharField(max_length=50, null=True, blank=True, choices=[
-        ('max_revisit_reached', 'Max Revisit Count Reached'),
-        ('max_followup_reached', 'Max Followup Count Reached'),
-        ('consultation_days_expired', 'Consultation Days Expired'),
-        ('manual_close', 'Manually Closed'),
-    ])
-    
-    # Timestamps
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        ordering = ['-consultation_date', '-created_at']
-        verbose_name_plural = 'Patient Visit Cycle Logs'
-        indexes = [
-            models.Index(fields=['patient', 'doctor']),
-            models.Index(fields=['consultation_date']),
-            models.Index(fields=['is_cycle_active']),
-            models.Index(fields=['current_status']),
-        ]
-    
-    def __str__(self):
-        return f"{self.patient.Patient_Name} - Dr.{self.doctor.Staff_firstname} - {self.consultation_date}"
-
-
-class PatientVisitCycleAppointment(models.Model):
-    """
-    Child table - Each appointment in a cycle
-    This is the normalized way to track appointments
-    """
-    cycle = models.ForeignKey(PatientVisitCycleLog, on_delete=models.CASCADE, related_name='appointments')
-    appointment = models.ForeignKey('Appointments', on_delete=models.CASCADE, related_name='cycle_appointments')
-    
-    # Status of this appointment within the cycle
-    status = models.CharField(max_length=50)
-    
-    # Fee for this appointment
-    fee = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    
-    # Order in the cycle (1st, 2nd, 3rd, etc.)
-    order_in_cycle = models.IntegerField(default=0)
-    
-    # Days from consultation at this appointment
-    days_from_consultation = models.IntegerField(default=0)
-    
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    class Meta:
-        ordering = ['order_in_cycle', 'appointment__Appointment_date']
-        verbose_name_plural = 'Cycle Appointments'
-        indexes = [
-            models.Index(fields=['cycle', 'status']),
-            models.Index(fields=['appointment']),
-        ]
-    
-    def __str__(self):
-        return f"{self.cycle.patient.Patient_Name} - {self.status} - {self.appointment.Appointment_date}"
-
 class PreAppointmentBooking(models.Model):
     patient = models.ForeignKey(Patient_details, on_delete=models.CASCADE)
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE)
@@ -3559,3 +3453,90 @@ class PreAppointmentBooking(models.Model):
     def __str__(self):
         return f"Pre-Booking: {self.patient.Patient_Name} on {self.appointment_date}"
 
+
+class RegistrationFeeInvoice(models.Model):
+    """Model for Registration Fee Invoices"""    
+    # Invoice Information
+    invoice_number = models.CharField(max_length=50, unique=True)
+    invoice_date = models.DateField(auto_now_add=True)
+    
+    # Patient Information
+    patient = models.ForeignKey(
+        'Patient_details', 
+        on_delete=models.CASCADE, 
+        related_name='registration_invoices'
+    )
+    patient_name = models.CharField(max_length=255)
+    patient_mr_no = models.CharField(max_length=100)
+    patient_phone = models.CharField(max_length=20, blank=True, null=True)
+    patient_address = models.TextField(blank=True, null=True)
+    patient_age = models.CharField(max_length=20, blank=True, null=True)
+    patient_gender = models.CharField(max_length=10, blank=True, null=True)
+    # Branch and Hospital
+    branch = models.ForeignKey(
+        'Branch', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='registration_invoices'
+    )
+    hospital = models.ForeignKey(
+        'Hospitaldetails', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True
+    )
+    
+    tax_percentage = models.DecimalField(
+        max_digits=5, 
+        decimal_places=2, 
+        default=0.00
+    )
+    tax_amount = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        default=0.00
+    )
+    discount = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        default=0.00
+    )
+    registration_fee = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        default=0.00
+    )
+    
+    # Payment Information
+    payment_mode = models.CharField(max_length=20, default='Cash')
+    payment_status = models.CharField(max_length=20, default='Paid')
+    payment_reference = models.CharField(max_length=100, blank=True, null=True)
+        
+    # Staff Information
+    created_by = models.ForeignKey(
+        'Staffdetails', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='created_registration_invoices'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    # Status
+    is_cancelled = models.BooleanField(default=False)
+    cancelled_by = models.ForeignKey(
+        'Staffallocation', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='cancelled_registration_invoices'
+    )
+    cancelled_at = models.DateTimeField(null=True, blank=True)
+    cancellation_reason = models.TextField(blank=True, null=True)
+    
+    # Additional Notes
+    notes = models.TextField(blank=True, null=True)    
+    def __str__(self):
+        return f"{self.invoice_number} - {self.patient_name}"

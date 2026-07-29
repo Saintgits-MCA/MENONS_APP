@@ -3,6 +3,15 @@
 
 {% block content %}
 
+<style>
+      @media print{
+    .btn ,.main-footer
+    {
+        display:none;
+    }
+}
+</style>
+
 <div class="content-wrapper" style="background: #f0f2f5;">
     <section class="content">
         <div class="container-fluid py-3">
@@ -17,6 +26,8 @@
                             <a href="{% url 'cancelled_bills_report' %}" class="btn btn-secondary btn-sm" style="padding: 8px 10px;">
                                 <i class="fas fa-arrow-left"></i> Back To List
                             </a>
+                            <button class="btn btn-success" onclick="window.print()"><i class="fas fa-print mr-1"></i>Print</button>
+
                         </div>
                     </div>
                     

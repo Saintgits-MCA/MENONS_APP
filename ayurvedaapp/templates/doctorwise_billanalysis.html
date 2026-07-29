@@ -235,6 +235,7 @@
                       <th>Patient Name</th>
                       <th class="text-right">Amount</th>
                       <th>Date</th>
+                      {% comment %} <th>Created By</th> {% endcomment %}
                       <th>Action</th>
                     </tr>
                   </thead>
@@ -248,12 +249,13 @@
                         <td>{{ bill.patient_name }}</td>
                         <td class="text-right">₹ {{ bill.amount|floatformat:2 }}</td>
                         <td>{{ bill.date|date:"d/m/Y" }}</td>
-                        <td><a href="{% url 'doctorwise_bill_detail' %}?ids={{ bill.id }}&type={{ bill.bill_type }}" class="btn btn-primary btn-sm"><i class="fas fa-eye"></i></a></td>
+                        {% comment %} <td>{{bill.created_by}}</td> {% endcomment %}
+                        <td>{%if bill.bill_type == "LAB BILL"%}<a href="{% url 'lab_invoice_detail' %}?invoice_id={{ bill.id }}" class="btn btn-primary btn-sm"><i class="fas fa-eye"></i></a>{%elif bill.bill_type == "CASUALITY"%}<a href="{% url 'casuality_invoice_detail' %}?invoice_id={{ bill.id }}" class="btn btn-primary btn-sm"><i class="fas fa-eye"></i></a>{%else%}<a href="{% url 'doctorwise_bill_detail' %}?ids={{ bill.id }}&type={{ bill.bill_type }}" class="btn btn-primary btn-sm"><i class="fas fa-eye"></i></a>{%endif%}</td>
                       </tr>
                       {% endfor %}
                     {% else %}
                       <tr>
-                        <td colspan="6" class="text-center text-muted">No bill details found</td>
+                        <td colspan="7" class="text-center text-muted">No bill details found</td>
                       </tr>
                     {% endif %}
                   </tbody>

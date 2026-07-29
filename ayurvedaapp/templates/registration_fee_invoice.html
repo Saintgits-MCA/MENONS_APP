@@ -193,8 +193,8 @@
     </div>
     <div class="box">
       <strong>Bill Details:</strong><br />
-      <p><strong>Invoice Number:</strong> {{ lsinvoice.treatmentInvoicenumber }}</p>
-      <p><strong>Date:</strong> {{ lsinvoice.currentdate|date:"d/m/Y" }}</p>
+      <p><strong>Invoice Number:</strong> {{ lsinvoice.invoice_number }}</p>
+      <p><strong>Date:</strong> {{ lsinvoice.invoice_date|date:"d/m/Y" }}</p>
       <p><strong>Branch:</strong> {{ brname.Branch_Name }}</p>
     
     </div>
@@ -216,7 +216,7 @@
           <td>1</td>
           <td>Registration Fee</td>
         
-          <td>{{ lsinvoice.currentdate|date:"d/m/Y" }}</td>
+          <td>{{ lsinvoice.created_at|date:"d/m/Y" }}</td>
           <td>₹{{ registration_fee|floatformat:2 }}</td>
         </tr>
       </tbody>
@@ -224,8 +224,9 @@
   </div>
 
   <div class="total">
+    <br>
     <p><strong>Registration Fee: ₹{{ registration_fee|floatformat:2 }}</strong></p>
-    <p><strong>Total Amount: ₹{{ lsinvoice.total|floatformat:2 }}</strong></p>
+    {% comment %} <p><strong>Total Amount: ₹{{ lsinvoice.total|floatformat:2 }}</strong></p> {% endcomment %}
   </div>
 
   <div class="amount-words">In Words: {{ amount_in_words }}</div>

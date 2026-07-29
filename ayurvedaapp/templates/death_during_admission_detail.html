@@ -2,7 +2,104 @@
 {% load static %}
 
 {% block content %}
+<style>
+  @media print {
+    /* Hide only buttons and navigation elements */
+    .btn, .main-footer, .float-right, .d-flex.mb-4 .float-right,
+    .d-flex.mb-4 .btn, .d-flex.mb-4 a {
+      display: none !important;
+    }
+    
+    /* Hide the "Back To Report" and Print buttons */
+    .float-right .btn, .float-right a {
+      display: none !important;
+    }
+    
+    /* Keep all colors exactly as they appear on screen */
+    [style*="background"] {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    
+    .badge {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      border:none;
+    }
+    
+    /* Keep all colors everywhere */
+    * {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    
+    /* Remove card shadow but keep border */
+    .card {
+      box-shadow: none !important;
+      border: 1px solid #ddd !important;
+    }
+    
+    /* Keep table borders */
+    .table th, .table td {
+      border: 1px solid #dee2e6 !important;
+    }
+    
+    /* Page margin */
+    @page {
+      margin: 12mm !important;
+    }
+    
+    /* Keep all divs visible - no hiding */
+    .row, .col-md-4, .col-md-6, .col-md-8, .col-12 {
+      display: block !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      flex: 1 !important;
+    }
+    
+        .d-flex.mb-4 h4 {
+      display: block !important;
+    }
+    
+    .d-flex.mb-4 {
+      display: flex !important;
+      justify-content: space-between !important;
+    }
+    /* Keep grid layout for print */
+    .row {
+      display: flex !important;
+      flex-wrap: wrap !important;
+    }
+    
+    .col-md-3 {
+      width: 22.22% !important;
+      flex: 0 0 22.22% !important;
+      max-width: 22.22% !important;
+    }
 
+    .col-md-4 {
+      width: 33.33% !important;
+      flex: 0 0 33.33% !important;
+      max-width: 33.33% !important;
+    }
+    
+    .col-md-6 {
+      width: 50% !important;
+      flex: 0 0 50% !important;
+      max-width: 50% !important;
+    }
+    
+    /* Keep the header visible */
+    .page-header, .content-header {
+      display: block !important;
+    }
+    
+    /* Keep hospital info border */
+    .border-bottom {
+      border-bottom: 1px solid #dee2e6 !important;
+    }
+  }
+</style>
 <div class="content-wrapper" style="background: #f0f2f5;">
     <section class="content">
         <div class="container-fluid py-3">
@@ -17,6 +114,8 @@
                             <a href="{% url 'deaths_during_admission' %}" class="btn btn-secondary btn-sm" style="padding: 8px 10px;">
                                 <i class="fas fa-arrow-left"></i> Back To List
                             </a>
+                            <button class="btn btn-success" onclick="window.print()"><i class="fas fa-print mr-1"></i>Print</button>
+
                         </div>
                     </div>
                     

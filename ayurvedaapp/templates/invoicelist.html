@@ -140,6 +140,7 @@
                            
                             <td>
                               <a href="{% url 'invview'%}?ids={{i.id}}"> <button class="btn btn-primary">View</button></a> 
+                               <a href="{% url 'dotmatrixview'%}?ids={{i.id}}"> <button class="btn btn-primary">dot matrix View</button></a> 
                              
                               {% if i.restockstatus%}
                               <button class="btn btn-primary" onclick="confirmCancellationAndRestock('{{i.Invoicenumber}}')">Cancel</button>

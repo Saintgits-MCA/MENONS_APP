@@ -1582,8 +1582,13 @@ document.addEventListener('DOMContentLoaded', function() {
           tbody.innerHTML = '';
           data.prescriptions.forEach(function(p) {
             var row = document.createElement('tr');
-            row.innerHTML = '<td>' + (p.medicine_name || '') + '</td><td>' + (p.noofdays || '') + '</td><td>' + (p.moringtime || '') + '</td><td>' + (p.noontime || '') + '</td><td>' + (p.nighttime || '') + '</td><td>' + (p.beforeorafterdiet || '') + '</td>';
-            tbody.appendChild(row);
+            row.innerHTML = '<td>' + p.medicine_name + '</td>' +
+                '<td>' + p.noofdays + '</td>' +
+                '<td>' + p.moringtime + '</td>' +
+                '<td>' + p.noontime + '</td>' +
+                '<td>' + p.nighttime + '</td>' +
+                '<td>' + p.beforeorafterdiet + '</td>';
+                            tbody.appendChild(row);
           });
         } else {
           $('#modalExistingPrescriptions').html('<tr><td colspan="7" class="text-center text-muted py-2">No prescriptions found.</td></tr>');

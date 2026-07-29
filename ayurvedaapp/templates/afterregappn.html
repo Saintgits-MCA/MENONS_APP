@@ -104,33 +104,35 @@
                         <option selected disabled value="">Select</option>
                       </select>
                     </div>
-
-                    <div class="form-group">
-                      <label for="exampleInputappdate">Appointment Date</label>
-                      <input type="date" class="form-control" id="exampleInputdate" name="apntdate" required>
-                    </div>
                   </div>
                 </div>
               </div>
+                
 
               <div class="col-md-6">
                 <div class="card">
                   <div class="card-body">
-                     <div class="card-body">
                     <div class="form-group">
-                      <label for="exampleInputRegisterNo">Status</label>
-                       <select class="form-control" id="status" name="status" required>
-                          <option value="Consultation" selected>Consultation</option>
-                          <option value="Followup">Followup</option>
-                          <option value="Revisit">Revisit</option>
-                          <option value="Whatsapp">Whatsapp</option>
-                          <option value="Camp">Camp</option>
-                          <option value="Treatment">Treatment</option>
-                          <option value="Treatment Revisit">Treatment Revisit</option>
-                        </select>
+                      <label for="exampleInputappdate">Appointment Date</label>
+                      <input type="date" class="form-control" id="exampleInputdate" name="apntdate" required>
                     </div>
+                    <div class="form-group">
+                      <label for="exampleInputtime">Appointment Time</label>
+                      <input type="time" class="form-control" id="exampleInputtime" name="apnttime" value="{{ pre_booking.apnttime }}">
+                      <small class="form-text text-muted">Optional - Select a time slot for the appointment</small>
+                   </div>
+                    <div class="form-group">
+                    <label for="exampleInputRegisterNo">Status</label>
+                    <select type="text" class="form-control" id="status" name="status" required>
+                        <option value="" disabled {% if not pre_booking.status %}selected{% endif %}>Select</option>
+                        {% for i in appointment_status %}
+                            <option value="{{i.status_name}}" {% if pre_booking.status == i.status_name %}selected{% endif %}>{{i.status_name}}</option>
+                        {% endfor %}
+                    </select>
+                      </div>
+
                 <div class="form-group">
-                  <label for="exampleInputContactNo">Appointment Fee</label>
+                  <label for="exampleInputFee">Appointment Fee</label>
                   <input type="text" class="form-control" id="examplefee" name="fee" value="500" readonly>
                 </div>
 
@@ -389,6 +391,334 @@ $(document).ready(function() {
         }
     });
 });
-</script>
 
+    document.addEventListener("DOMContentLoaded", function () {
+        const timeInput = document.getElementById("exampleInputtime");
+        if (timeInput) {
+            // If no pre-filled time from pre-booking, set to current time rounded to nearest 15 min
+            if (!timeInput.value) {
+                const now = new Date();
+                const minutes = Math.ceil(now.getMinutes());
+                const hours = now.getHours();
+                const formattedHours = String(hours).padStart(2, '0');
+                const formattedMinutes = String(minutes === 60 ? 0 : minutes).padStart(2, '0');
+                const formattedTime = `${formattedHours}:${formattedMinutes}`;
+                timeInput.value = formattedTime;
+            }
+        }
+    });
+    </script>
+    <script>
+    $(document).ready(function () {
+        // ==================== FEE DATA FROM DATABASE ====================
+        const appointmentFees = JSON.parse(document.getElementById('appointmentFeesData').textContent);
+
+        console.log('Appointment Fees Loaded:', appointmentFees);
+
+        // Define static rates as fallback
+        const staticRates = {
+            'Consultation': 0,
+            'Followup': '',
+            'Revisit': 0,
+            'Whatsapp': 0,
+            'Camp': '',
+            'Treatment': 0,
+            'Treatment Revisit': 0
+        };
+
+        // Define which statuses should have readonly fee field
+        const readonlyStatuses = ['Consultation', 'Followup', 'Revisit', 'Camp'];
+
+        // ==================== FEE LOOKUP FROM JSON ====================
+        function getFeeFromTable(branchId, doctorId, visitType) {
+            if (!branchId || !doctorId || !visitType) {
+                return null;
+            }
+
+            const branchNum = parseInt(branchId, 10);
+            const doctorNum = parseInt(doctorId, 10);
+
+            const fee = appointmentFees.find(function(f) {
+                return (
+                    parseInt(f.branch_id, 10) === branchNum &&
+                    parseInt(f.doctor_id, 10) === doctorNum &&
+                    f.visit_type.toLowerCase() === visitType.toLowerCase()
+                );
+            });
+
+            return fee ? fee.fee_amount : null;
+        }
+
+        // ==================== FEE LOOKUP FROM BACKEND ====================
+        function getFeeFromBackend(doctorId, status, branchId) {
+            return new Promise(function(resolve, reject) {
+                if (!doctorId || !status) {
+                    resolve(0);
+                    return;
+                }
+
+                $.ajax({
+                    url: "{% url 'get_appointment_fee_ajax' %}",
+                    type: 'GET',
+                    data: {
+                        doctor_id: doctorId,
+                        status: status,
+                        branch_id: branchId || ''
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            resolve(response.fee_amount);
+                        } else {
+                            resolve(0);
+                        }
+                    },
+                    error: function() {
+                        resolve(0);
+                    }
+                });
+            });
+        }
+
+        // ==================== UPDATE FEE FUNCTION ====================
+        async function updateFeeField(selectedStatus) {
+            var feeInput = $("#examplefee");
+            var branchId = $('#brch').val();
+            var doctorId = $('#docname').val();
+
+            if (selectedStatus && selectedStatus !== "Select" && selectedStatus !== "") {
+
+                // Try to get fee from database via AJAX
+                var dbFee = 0;
+                try {
+                    dbFee = await getFeeFromBackend(doctorId, selectedStatus, branchId);
+                } catch(e) {
+                    console.log('Error fetching fee from backend:', e);
+                }
+
+                if (dbFee > 0) {
+                    feeInput.val(dbFee);
+                    feeInput.removeClass('fee-not-configured');
+                } else {
+                    // Fallback to JSON data
+                    const jsonFee = getFeeFromTable(branchId, doctorId, selectedStatus);
+                    if (jsonFee !== null && jsonFee >= 0) {
+                        feeInput.val(jsonFee);
+                        feeInput.removeClass('fee-not-configured');
+                    } else {
+                        // Fallback to static rates
+                        if (staticRates[selectedStatus] !== undefined) {
+                            feeInput.val(staticRates[selectedStatus]);
+                            feeInput.removeClass('fee-not-configured');
+                        } else {
+                            feeInput.val(0);
+                            feeInput.addClass('fee-not-configured');
+                        }
+                    }
+                }
+
+                // Set readonly property based on status
+                if (readonlyStatuses.includes(selectedStatus)) {
+                    feeInput.prop('readonly', false);
+                } else {
+                    feeInput.prop('readonly', true);
+                }
+
+                // Clear any previous warning
+                $("#status").css('border-color', '');
+                if ($("#status").parent().find('.status-warning').length > 0) {
+                    $("#status").parent().find('.status-warning').remove();
+                }
+
+            } else {
+                // If no status selected, show warning and clear fee
+                feeInput.val("");
+                feeInput.prop('readonly', false);
+                showStatusWarning();
+            }
+        }
+
+        // ==================== SHOW STATUS WARNING ====================
+        function showStatusWarning() {
+            var statusSelect = $("#status");
+            var parentDiv = statusSelect.parent();
+
+            if (parentDiv.find('.status-warning').length > 0) {
+                parentDiv.find('.status-warning').remove();
+            }
+
+            parentDiv.append(`
+                <div class="status-warning" style="color: #dc3545; font-size: 0.875em; margin-top: 5px;">
+                    <i class="fas fa-exclamation-triangle"></i> Please select a status
+                </div>
+            `);
+        }
+
+        // ==================== DEBOUNCE FUNCTION ====================
+        function debounce(func, wait) {
+            var timeout;
+            return function() {
+                var context = this;
+                var args = arguments;
+                clearTimeout(timeout);
+                timeout = setTimeout(function() {
+                    func.apply(context, args);
+                }, wait);
+            };
+        }
+
+        // ==================== EVENT HANDLERS ====================
+
+        // Status change
+        $("#status").change(function() {
+            var selectedStatus = $(this).val();
+            updateFeeField(selectedStatus);
+        });
+
+        // Doctor change
+        $('#docname').change(function() {
+            var selectedStatus = $("#status").val();
+            if (selectedStatus && selectedStatus !== "Select" && selectedStatus !== "") {
+                updateFeeField(selectedStatus);
+            } else {
+                showStatusWarning();
+                $('#examplefee').val('');
+            }
+        });
+
+        // ==================== FORM SUBMIT VALIDATION ====================
+        $('#appointmentForm').on('submit', function(e) {
+            var selectedStatus = $("#status").val();
+
+            if (!selectedStatus || selectedStatus === "" || selectedStatus === "Select") {
+                e.preventDefault();
+                showStatusWarning();
+                alert("Please select a status before submitting.");
+                return false;
+            }
+
+            var feeValue = $("#examplefee").val();
+            if (!feeValue || feeValue.trim() === "") {
+                e.preventDefault();
+                $("#examplefee").css('border-color', '#dc3545');
+                alert("Fee amount is required. Please select a valid status.");
+                return false;
+            }
+
+            $('#submitBtn').prop('disabled', true);
+            $('#submitText').hide();
+            $('#submitLoader').show();
+
+            return true;
+        });
+
+        // ==================== INITIALIZATION ====================
+        $("#status").on('focus', function() {
+            $(this).css('border-color', '');
+            $(this).parent().find('.status-warning').remove();
+        });
+
+        $("#examplefee").on('keydown', function(e) {
+            if ($(this).prop('readonly')) {
+                e.preventDefault();
+                return false;
+            }
+        });
+
+        // Show warning on page load only if no status pre-selected
+        var initialStatus = $("#status").val();
+        if (!initialStatus || initialStatus === "" || initialStatus === "Select") {
+            showStatusWarning();
+        } else {
+            // If status is pre-filled from pre-booking, trigger fee calculation
+            updateFeeField(initialStatus);
+        }
+    });
+    </script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const dateInput = document.getElementById("exampleInputdate");
+
+        if (dateInput) {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            const formattedToday = `${year}-${month}-${day}`;
+
+            dateInput.setAttribute("min", formattedToday);
+
+            // ✅ Only set default if no pre-filled date from pre-booking
+            if (!dateInput.value) {
+                dateInput.value = formattedToday;
+            }
+        }
+    });
+    </script>
+    <!-- ===== DOCTOR DROPDOWN AJAX ===== -->
+    <script>
+    $(document).ready(function () {
+        var preDoctor = $('#pre_selected_doctor').val();
+
+        function loadDoctors(selectFirstIfNoPreDoctor) {
+            var brch = $('#brch').val();
+            var desg = $('#inputdesgn').val();
+            var dept = $('#inputdept').val();
+            var dropdown = $('#docname');
+
+            dropdown.empty().append('<option selected disabled>Loading...</option>');
+
+            if (brch && desg && dept) {
+                $.ajax({
+                    type: 'GET',
+                    url: "{% url 'get_staff_by_branch_and_designation' %}",
+                    data: { branch: brch, designation: desg, department: dept },
+                    success: function(data) {
+                        dropdown.empty().append('<option selected disabled>Select</option>');
+                        if (data.length > 0) {
+                            data.forEach(function(item) {
+                                dropdown.append(`<option value="${item.Staff_id}">${item.Staff_firstname} ${item.Staff_lastname} - ${item.deprt}</option>`);
+                            });
+
+                            // ✅ If there's a pre-selected doctor from pre-booking, select it
+                            if (preDoctor) {
+                                dropdown.val(preDoctor);
+                                dropdown.trigger('change');
+                                preDoctor = null; // Only use once
+                            } else if (selectFirstIfNoPreDoctor) {
+                                dropdown.val(data[0].Staff_id);
+                                dropdown.trigger('change');
+                            }
+                        } else {
+                            dropdown.append('<option selected disabled value="">No staff found for this Branch</option>');
+                            if (!preDoctor) {
+                                alert("No staff found for this branch. Please register staff before proceeding.");
+                            }
+                        }
+                    },
+                    error: function(xhr) {
+                        dropdown.empty().append('<option selected disabled>Error fetching data</option>');
+                        console.error(xhr.responseText);
+                    }
+                });
+            }
+        }
+
+        // Bind change events
+        $('#brch, #inputdept, #inputdesgn').on('change', function() {
+            loadDoctors(true);
+        });
+
+        // ✅ On page load: if pre-booking has dept + desg filled, auto-trigger doctor load
+        var preDept = $('#inputdept').val();
+        var preDesg = $('#inputdesgn').val();
+        var preBrch = $('#brch').val();
+
+        if (preDept && preDesg && preBrch) {
+            // Small delay to ensure DOM is ready
+            setTimeout(function() {
+                loadDoctors(false);
+            }, 300);
+        }
+    });
+    </script>
 {% endblock %}

@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="content-wrapper" style="background: #f0f2f5;">
+    <section class="content">
+        <div class="container-fluid py-3">
+            <div class="row">
+                <div class="col-12">
+                    <!-- Page Header -->
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="mb-0" style="font-weight: 700; color: #1a2332;">
+                            <i class="fas fa-file-invoice me-2" style="color: #2c7a5f;"></i> Purchase Invoice
+                        </h4>
+                      <div class="float-right">
+                        <a href="{% url 'purchase_invoice_list' %}" class="btn btn-secondary btn-sm" style=" padding: 8px 10px;">
+                            <i class="fas fa-arrow-left"></i> Back To List
+                        </a>
+                        <a href="{% url 'staffwise_bill_analysis' %}" class="btn btn-success btn-sm" style="padding: 8px 20px;">
+                            <i class="fas fa-arrow-left"></i> Back To Report
+                        </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Main Card -->
+                    <div class="card" style="border: none; box-shadow: 0 2px 12px rgba(0,0,0,0.06);">
+                        <div class="card-body p-4">
+
+                            <!-- Invoice Header - Two Column Layout -->
+                            <div class="row g-4">
+                                <!-- Left: Invoice Info -->
+                                <div class="col-md-6">
+                                    <div style="background: #f8fafc; border-radius: 12px; padding: 18px 20px;">
+                                        <h6 style="font-weight: 600; color: #2c7a5f; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
+                                            <i class="fas fa-receipt me-2"></i> Invoice Information
+                                        </h6>
+                                        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 4px 12px; font-size: 0.92rem;">
+                                            <span style="color: #6b7a8f;">Invoice Number</span>
+                                            <span style="font-weight: 600; color: #1a2332;">{{ invoice.invoice_number }}</span>
+                                            
+                                            <span style="color: #6b7a8f;">Invoice Date</span>
+                                            <span>{{ invoice.invoice_date|date:"d-m-Y" }}</span>
+                                            
+                                            <span style="color: #6b7a8f;">Payment Terms</span>
+                                            <span>{{ invoice.payment_terms }}</span>
+                                            
+                                            <span style="color: #6b7a8f;">Created By</span>
+                                            <span>{{ invoice.created_by.Staff.Staff_firstname }} {{ invoice.created_by.Staff.Staff_lastname }}</span>
+                                            
+                                            <span style="color: #6b7a8f;">Created Date</span>
+                                            <span>{{ invoice.created_date|date:"d-m-Y H:i:s" }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Right: Supplier Details -->
+                                <div class="col-md-6">
+                                    <div style="background: #f8fafc; border-radius: 12px; padding: 18px 20px;">
+                                        <h6 style="font-weight: 600; color: #2c7a5f; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
+                                            <i class="fas fa-truck me-2"></i> Supplier Details
+                                        </h6>
+                                        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 4px 12px; font-size: 0.92rem;">
+                                            <span style="color: #6b7a8f;">Supplier Name</span>
+                                            <span style="font-weight: 500;">{{ invoice.supplier.shopname }}</span>
+                                            
+                                            <span style="color: #6b7a8f;">Supplier Code</span>
+                                            <span>{{ invoice.supplier.suppliercode|default:"-" }}</span>
+                                            
+                                            <span style="color: #6b7a8f;">Contact</span>
+                                            <span>{{ invoice.supplier.contactnumber|default:"-" }}</span>
+                                            
+                                            <span style="color: #6b7a8f;">Address</span>
+                                            <span>{{ invoice.supplier.address|default:"-" }}</span>
+                                            
+                                            <span style="color: #6b7a8f;">Supplier Bill No</span>
+                                            <span>{{ invoice.supplier_bill_number|default:"-" }}</span>
+                                            
+                                            <span style="color: #6b7a8f;">Supplier Bill Date</span>
+                                            <span>{{ invoice.supplier_bill_date|date:"d-m-Y"|default:"-" }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Store & Company Row -->
+                            <div class="row g-4 mt-1">
+                                <div class="col-md-6">
+                                    <div style="background: #f8fafc; border-radius: 12px; padding: 14px 20px;">
+                                        <h6 style="font-weight: 600; color: #2c7a5f; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
+                                            <i class="fas fa-store me-2"></i> Store Details
+                                        </h6>
+                                        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 4px 12px; font-size: 0.92rem;">
+                                            <span style="color: #6b7a8f;">Store Name</span>
+                                            <span>{{ invoice.store.storename }}</span>
+                                            <span style="color: #6b7a8f;">Branch</span>
+                                            <span>{{ invoice.branch.Branch_Name|default:"-" }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <!-- Empty for spacing or can add other info -->
+                                </div>
+                            </div>
+
+                            <!-- Items Table -->
+                            <div class="mt-2">
+                                <div style="background: #f8fafc; border-radius: 12px; overflow: hidden;">
+                                    <div style="padding: 12px 20px; background: #ffffff; border-bottom: 1px solid #edf0f5;">
+                                        <h6 style="font-weight: 600; color: #2c7a5f; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; margin: 0;">
+                                            <i class="fas fa-table-list me-2"></i> Medicine Items
+                                        </h6>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table" style="font-size: 0.88rem; margin-bottom: 0;">
+                                            <thead style="background: #f0f2f5;">
+                                                <tr>
+                                                    <th style="padding: 10px 12px; font-weight: 600;">#</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600;">Medicine Name</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600;">Company</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600;">Batch No</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600;">Expiry</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600; text-align: center;">Qty/Unit</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600; text-align: center;">Free</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600; text-align: right;">Purchase</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600; text-align: right;">Wholesale</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600; text-align: right;">Retail</th>
+                                                    <th style="padding: 10px 12px; font-weight: 600; text-align: right;">Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for item in invoice.items.all %}
+                                                <tr style="border-bottom: 1px solid #edf0f5;">
+                                                    <td style="padding: 10px 12px;">{{ forloop.counter }}</td>
+                                                    <td style="padding: 10px 12px;">
+                                                        <strong>{{ item.medicine.itemnm }}</strong>
+                                                        <br><small class="text-muted">{{ item.medicine.Generic_name|default:"" }}</small>
+                                                    </td>
+                                                    <td style="padding: 10px 12px;">{{ item.company.Comapany_name|default:"-" }}</td>
+                                                    <td style="padding: 10px 12px; font-weight: 500;">{{ item.batch_no }}</td>
+                                                    <td style="padding: 10px 12px;">{{ item.expiry_date|date:"M-Y"|default:"-" }}</td>
+                                                    <td style="padding: 10px 12px; text-align: center;">{{ item.quantity }} ({{ item.unt.unitname }})</td>
+                                                    <td style="padding: 10px 12px; text-align: center;">{{ item.free_quantity|default:"0" }}</td>
+                                                    <td style="padding: 10px 12px; text-align: right;">₹ {{ item.unit_price|floatformat:2 }}</td>
+                                                    <td style="padding: 10px 12px; text-align: right;">₹ {{ item.wholesalerate|floatformat:2 }}</td>
+                                                    <td style="padding: 10px 12px; text-align: right;">₹ {{ item.retalrate|floatformat:2 }}</td>
+                                                    <td style="padding: 10px 12px; text-align: right; font-weight: 600;">₹ {{ item.total_amount|floatformat:2 }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                            <tfoot style="background: #f8fafc; border-top: 2px solid #e0e6ed;">
+                                                <tr>
+                                                    <td colspan="10" style="padding: 10px 12px; text-align: right; font-weight: 500;">Subtotal</td>
+                                                    <td style="padding: 10px 12px; text-align: right; font-weight: 500;">₹ {{ invoice.subtotal|floatformat:2 }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td colspan="10" style="padding: 4px 12px; text-align: right; font-weight: 500;">
+                                                        Total GST ({% widthratio invoice.total_gst invoice.subtotal 100 %}%)
+                                                    </td>
+                                                    <td style="padding: 4px 12px; text-align: right; font-weight: 500;">₹ {{ invoice.total_gst|floatformat:2 }}</td>
+                                                </tr>
+                                                {% if invoice.total_discount > 0 %}
+                                                <tr>
+                                                    <td colspan="10" style="padding: 4px 12px; text-align: right; font-weight: 500; color: #dc3545;">Discount</td>
+                                                    <td style="padding: 4px 12px; text-align: right; font-weight: 500; color: #dc3545;">- ₹ {{ invoice.total_discount|floatformat:2 }}</td>
+                                                </tr>
+                                                {% endif %}
+                                                {% if invoice.shipping_charge > 0 %}
+                                                <tr>
+                                                    <td colspan="10" style="padding: 4px 12px; text-align: right; font-weight: 500;">Shipping Charge</td>
+                                                    <td style="padding: 4px 12px; text-align: right; font-weight: 500;">+ ₹ {{ invoice.shipping_charge|floatformat:2 }}</td>
+                                                </tr>
+                                                {% endif %}
+                                                {% if invoice.other_charge > 0 %}
+                                                <tr>
+                                                    <td colspan="10" style="padding: 4px 12px; text-align: right; font-weight: 500;">Other Charges</td>
+                                                    <td style="padding: 4px 12px; text-align: right; font-weight: 500;">+ ₹ {{ invoice.other_charge|floatformat:2 }}</td>
+                                                </tr>
+                                                {% endif %}
+                                                <tr style="background: #e9f5ef;">
+                                                    <td colspan="10" style="padding: 10px 12px; text-align: right; font-weight: 700; font-size: 1.05rem;">Grand Total</td>
+                                                    <td style="padding: 10px 12px; text-align: right; font-weight: 700; font-size: 1.05rem; color: #1e7e54;">
+                                                        ₹ {{ invoice.grand_total|floatformat:2 }}
+                                                    </td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Notes & Amount in Words -->
+                            <div class="row g-4 mt-3">
+                                {% if invoice.notes %}
+                                <div class="col-md-6">
+                                    <div style="background: #f8fafc; border-radius: 12px; padding: 14px 20px;">
+                                        <h6 style="font-weight: 600; color: #2c7a5f; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">
+                                            <i class="fas fa-sticky-note me-2"></i> Notes
+                                        </h6>
+                                        <p class="mb-0" style="font-size: 0.92rem; color: #4a5a6e;">{{ invoice.notes|linebreaks }}</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                {% else %}
+                                <div class="col-12">
+                                {% endif %}
+                                    <div style="background: #e8f4fd; border-radius: 12px; padding: 14px 20px; border-left: 4px solid #2c7a5f;">
+                                        <h6 style="font-weight: 600; color: #2c7a5f; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+                                            <i class="fas fa-language me-2"></i> Amount in Words
+                                        </h6>
+                                        <p class="mb-0" style="font-size: 0.95rem; font-weight: 500; color: #1a2332;">{{ invoice.amount_in_words }}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+{% endblock %}

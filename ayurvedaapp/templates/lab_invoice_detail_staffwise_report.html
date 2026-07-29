@@ -1,0 +1,242 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="content-wrapper">
+    <!-- Content Header -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>
+                        <i class="fas fa-file-invoice"></i> Invoice Details
+                    </h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{% url 'index' %}">Home</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'lab_invoice_list' %}">Lab Invoices</a></li>
+                        <li class="breadcrumb-item active">Invoice #{{ invoice.invoiceno }}</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                    <!-- Invoice Card -->
+                    <div class="card card-primary">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-receipt"></i> Invoice Information
+                            </h3>
+                            <div class="card-tools">
+                                {%if not invoice.is_credit and invoice.payment_status == "Paid"%}
+                                <a href="{% url 'lab_invoice_print' %}?invoice_id={{ invoice.id }}&header=0"><button type="button" class="btn btn-success mr-3">
+                                    <i class="fas fa-print"></i> Print
+                                </button></a>
+                                {%endif%}
+                                <a href="{% url 'staffwise_bill_analysis' %}" class="btn btn-danger mr-3">
+                                    <i class="fas fa-file-alt"></i> Back to Report
+                                </a>
+                                <a href="{% url 'lab_invoice_list' %}" class="btn btn-dark">
+                                    <i class="fas fa-arrow-left"></i> Back
+                                </a>
+                               
+                            </div>
+                        </div>
+                        
+                        <div class="card-body">
+                            <!-- Invoice Header -->
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="invoice-header">
+                                        <h4>
+                                            <strong>Invoice No:</strong> 
+                                            <span class="badge badge-primary badge-lg">{{ invoice.invoiceno }}</span>
+                                        </h4>
+                                        <p><strong>Date:</strong> {{ invoice.date }}</p>
+                                        <p><strong>Created By:</strong> {{ invoice.created_by.Staff_firstname|default:"System" }}</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 text-right">
+                                    <div class="invoice-status">
+                                        <h4>
+                                            {%if not invoice.is_credit%}
+                                            <span class="badge badge-success">
+                                                <i class="fas fa-check-circle"></i> Completed
+                                            </span>
+                                            {%else%}
+                                            <span class="badge badge-warning">
+                                                <i class="fas fa-times-circle"></i> Unpaid
+                                            </span>
+                                            {%endif%}
+                                        </h4>
+                                        <p><strong>Generated:</strong> {{ invoice.date|date:"d-m-Y" }}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr>
+
+                            <!-- Patient Information -->
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <h4 class="text-info">
+                                        <i class="fas fa-user-injured"></i> Patient Details
+                                    </h4>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered">
+                                            <tr>
+                                                <th width="20%">Patient Name:</th>
+                                                <td width="30%">{{ invoice.patient.Patient_Name|default:"-" }}</td>
+                                                <th width="20%">MR Number:</th>
+                                                <td width="30%">{{ invoice.patient.Medical_Record_Number|default:"-" }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Phone Number:</th>
+                                                <td>{{ invoice.patient.contactno|default:"-" }}</td>
+                                                <th>Status:</th>
+                                                {%if invoice.is_credit and invoice.payment_status == "Credit"%}
+                                                <td><span class="badge badge-danger">Credit</span></td>
+                                                {%else%}
+                                                <td><span class="badge badge-success">Paid</span></td>
+                                                {%endif%}
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr>
+
+                            <!-- Test Items Table -->
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <h4 class="text-info">
+                                        <i class="fas fa-flask"></i> Lab Tests Details
+                                    </h4>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered table-striped table-hover">
+                                            <thead class="thead-light thead-sm">
+                                                <tr>
+                                                    <th width="5%">Sl</th>
+                                                    <th width="40%">Test Name</th>
+                                                    <th width="15%">Quantity</th>
+                                                    <th width="20%">Rate (₹)</th>
+                                                    <th width="20%">Amount (₹)</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for item in items %}
+                                                <tr>
+                                                    <td class="text-center">{{ item.sl_no }}</td>
+                                                    <td>{{ item.testname }}</td>
+                                                    <td class="text-center">{{ item.qty }}</td>
+                                                    <td class="text-right">₹ {{ item.rate|floatformat:2 }}</td>
+                                                    <td class="text-right">₹ {{ item.amount|floatformat:2 }}</td>
+                                                </tr>
+                                                {% empty %}
+                                                <tr>
+                                                    <td colspan="5" class="text-center text-muted">
+                                                        No test items found
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                            <tfoot class="bg-light">
+                                                <tr>
+                                                    <th colspan="4" class="text-right">Subtotal:</th>
+                                                    <th class="text-right">₹ {{ invoice.subtotal|floatformat:2 }}</th>
+                                                </tr>
+                                                <tr>
+                                                    <th colspan="4" class="text-right">Tax ({{ invoice.tax_percentage|floatformat:2 }}%):</th>
+                                                    <th class="text-right">₹ {{ invoice.tax_amount|floatformat:2 }}</th>
+                                                </tr>
+                                                <tr>
+                                                    <th colspan="4" class="text-right">Consultation Fee:</th>
+                                                    <th class="text-right">₹ {{ invoice.consultation_fee|floatformat:2 }}</th>
+                                                </tr>
+                                                <tr>
+                                                    <th colspan="4" class="text-right">Registration Fee:</th>
+                                                    <th class="text-right">₹ {{ invoice.registration_fee|floatformat:2 }}</th>
+                                                </tr>
+                                                <tr>
+                                                    <th colspan="4" class="text-right text-danger">Discount:</th>
+                                                    <th class="text-right text-danger">- ₹ {{ invoice.discount|floatformat:2 }}</th>
+                                                </tr>
+                                                 <tr class="bg-light text-dark">
+                                                    <th colspan="4" class="text-right">Payment Details:</th>
+                                                    {%if invoice.is_credit and invoice.credit_amount%}
+                                                    <th class="text-right">Credit:₹ {{ invoice.credit_amount|floatformat:2 }}(Not Paid)</th>
+                                                    {%else%}
+                                                    <th class="text-right">Cash:₹ {{ invoice.cash_amount|floatformat:2| default:"0.00"}}<br>Online Amount: ₹{{ invoice.gpay_amount|floatformat:2| default:"0.00" }}<br>Card Amount: {{ invoice.card_amount|floatformat:2| default:"0.00" }}</th>
+                                                    {%endif%}
+                                                </tr>
+                                                <tr class="bg-success text-white">
+                                                    <th colspan="4" class="text-right">Grand Total:</th>
+                                                    <th class="text-right">₹ {{ invoice.total|floatformat:2 }}</th>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Additional Information -->
+                            <div class="row mt-4">
+                                <div class="col-md-12">
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-info-circle"></i> 
+                                        <strong>Note:</strong> This is a computer-generated invoice and requires no signature.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<style>
+    @media print {
+        .btn, .card-header, .card-footer, .main-sidebar, .main-header {
+            display: none !important;
+        }
+        .card {
+            border: none !important;
+        }
+        .content-wrapper {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+    }
+    
+    .thead-dark th {
+        background-color: #343a40;
+        color: white;
+    }
+    
+    .bg-success {
+        background-color: #28a745 !important;
+    }
+</style>
+
+<script>
+    $(document).ready(function() {
+        // Add print button functionality
+        $('.btn-tool').on('click', function() {
+            if ($(this).find('.fa-print').length) {
+                window.print();
+            }
+        });
+    });
+</script>
+
+{% endblock %}

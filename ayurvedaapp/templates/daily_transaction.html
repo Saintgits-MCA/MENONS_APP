@@ -457,48 +457,41 @@
                       </div>
 
                       <!-- Registration Fee Invoices Table -->
-                      <table class="table table-bordered table-striped" id="regFeeTable" style="width:100%">
-                          <thead>
-                              <tr>
-                                  {% if is_superadmin %}<th>Branch</th>{% endif %}
-                                  <th>Invoice</th>
-                                  <th>Patient</th>
-                                  <th>MR Number</th>
-                                  {% comment %} <th>Visit Type</th> {% endcomment %}
-                                  <th>Payment Mode</th>
-                                  <th>Amount</th>
-                              </tr>
-                          </thead>
-                          <tbody>
-                              {% for inv in reg_fee_invoices %}
-                              <tr>
-                                  {% if is_superadmin %}<td>{{ inv.branch.Branch_Name }}</td>{% endif %}
-                                  <td>{{ inv.treatmentInvoicenumber }}</td>
-                                  <td>{{ inv.patientname }}</td>
-                                  <td>
-                                      {% if inv.Mrno %}
-                                          {{ inv.Mrno.Medical_Record_Number }}
-                                      {% else %}
-                                          N/A
-                                      {% endif %}
-                                  </td>
-                                  {% comment %} <td>
-                                      <span class="badge badge-info">
-                                          {{ inv.appointment_status|default:"Consultation" }}
-                                      </span>
-                                  </td> {% endcomment %}
-                                  <td>{{ inv.payementmode }}</td>
-                                  <td>₹ {{ inv.total|floatformat:2 }}</td>
-                              </tr>
-                              {% empty %}
-                              <tr>
-                                  <td colspan="{% if is_superadmin %}7{% else %}6{% endif %}" class="text-center text-muted">
-                                      No Registration Fee Transactions
-                                  </td>
-                              </tr>
-                              {% endfor %}
-                          </tbody>
-                      </table>
+                        <table class="table table-bordered table-striped" id="example6">
+                <thead>
+                    <tr>
+                        <th>Invoice</th>
+                        <th>Patient</th>
+                        <th>MR Number</th>
+                        <th>Payment Mode</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for inv in reg_fee_invoices %}
+                    <tr>
+                        <td>{{ inv.invoice_number }}</td>
+                        <td>{{ inv.patient_name }}</td>
+                        <td>{{ inv.patient_mr_no }}</td>
+                        <td>{{ inv.payment_mode }}</td>
+                        <td>₹ {{ inv.registration_fee|floatformat:2 }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">No registration fee transactions found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                {% comment %} <tfoot>
+                    <tr class="font-weight-bold">
+                      <td></td>
+                      <td></td>
+                      <td></td>
+                        <td  class="text-right">TOTAL</td>
+                        <td>₹ {{ total_reg_fees|floatformat:2 }}</td>
+                    </tr>
+                </tfoot> {% endcomment %}
+            </table>
                   </div>
                   {% else %}
                   <!-- Show message when no registration fees -->
@@ -762,6 +755,82 @@
         },
         'colvis'
       ]
+    });
+     $('#example6').DataTable({
+        dom: '<"row"<"col-sm-6"l><"col-sm-6"f>>' +
+             '<"row"<"col-sm-12"B>>' +
+             '<"row"<"col-sm-12"tr>>' +
+             '<"row"<"col-sm-5"i><"col-sm-7"p>>',
+        buttons: [
+            {
+                extend: 'copy',
+                text: '<i class="fas fa-copy"></i> Copy',
+                className: 'btn btn-secondary btn-md',
+                footer: true, 
+            },
+            {
+                extend: 'excel',
+                text: '<i class="fas fa-file-excel"></i> Excel',
+                className: 'btn btn-secondary btn-md',
+                footer: true, 
+            },
+            {
+                extend: 'pdf',
+                text: '<i class="fas fa-file-pdf"></i> PDF',
+                className: 'btn btn-secondary btn-md',
+                orientation: 'landscape',
+                pageSize: 'A4',
+                footer: true, 
+            },
+            {
+                extend: 'print',
+                text: '<i class="fas fa-print"></i> Print',
+                className: 'btn btn-secondary btn-md',
+                footer: true, 
+            },
+            {
+                extend: 'csv',
+                text: '<i class="fas fa-file-csv"></i> CSV',
+                className: 'btn btn-secondary btn-md',
+                footer: true, 
+            }
+        ],
+        pageLength: 5,  // Default showing 10 entries
+        responsive: true,
+        lengthMenu: [
+            [5,10, 25, 50, 100], 
+            [5,10, 25, 50, 100]
+        ],
+        columnDefs: [
+            {
+                targets: [0], // Sl.No - center align
+                className: 'text-center'
+            },
+            {
+                targets: [1], // Procedure Name
+                className: 'text-left'
+            },
+            {
+                targets: [2], // Count - center align
+                className: 'text-center'
+            },
+            {
+                targets: [3], // Total Amount - right align
+                className: 'text-right'
+            }
+        ],
+        language: {
+            lengthMenu: "Show _MENU_ entries",
+            info: "Showing _START_ to _END_ of _TOTAL_ entries",
+            infoEmpty: "Showing 0 to 0 of 0 entries",
+            infoFiltered: "(filtered from _MAX_ total entries)",
+            paginate: {
+                first: "First",
+                last: "Last",
+                next: "Next",
+                previous: "Previous"
+            }
+        }
     });
   });
 </script>

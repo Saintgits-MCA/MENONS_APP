@@ -40,6 +40,7 @@
                     <option value="PURCHASE" {% if bill_type == 'PURCHASE' %}selected{% endif %}>PURCHASE</option>
                     <option value="APPOINTMENT" {% if bill_type == 'APPOINTMENT' %}selected{% endif %}>APPOINTMENT</option>
                     <option value="TREATMENT" {% if bill_type == 'TREATMENT' %}selected{% endif %}>TREATMENT</option>
+                    <option value="PROCEDURE" {% if bill_type == 'PROCEDURE' %}selected{% endif %}>PROCEDURE</option>
                   </select>
                 </div>
               </div>
@@ -141,14 +142,14 @@
             <table class="table table-bordered table-striped" id="example1">
               <thead>
                 <tr>
-                  {% comment %} <th>Sl.No</th> {% endcomment %}
+                  <th>Sl.No</th>
                   <th>Bill Number</th>
                   <th>Bill Type</th>
                   <th>Patient/Party Name</th>
                   <th>OP Number</th>
                   <th class="text-right">Gross</th>
                   <th class="text-right">Cash</th>
-                  <th class="text-right">Credit</th>
+                  {% comment %} <th class="text-right">Credit</th> {% endcomment %}
                   <th>Action</th>
                 </tr>
               </thead>
@@ -157,7 +158,7 @@
                 {% if bill_data %}
                   {% for bill in bill_data %}
                   <tr>
-                    {% comment %} <td>{{ forloop.counter }}</td> {% endcomment %}
+                    <td>{{ forloop.counter }}</td>
                     <td>{{ bill.bill_number }}</td>
                     <td>
                       <span class="badge 
@@ -174,7 +175,7 @@
                     <td>{{ bill.op_number }}</td>
                     <td class="text-right">{{ bill.gross|floatformat:2 }}</td>
                     <td class="text-right">{{ bill.cash|floatformat:2 }}</td>
-                    <td class="text-right">{{ bill.credit|floatformat:2 }}</td>
+                    {% comment %} <td class="text-right">{{ bill.credit|floatformat:2 }}</td> {% endcomment %}
                     <td> {% if bill.bill_type == 'APPOINTMENT' %}
         <a href="{% url 'appointmentinvoice' %}?invoice_id={{ bill.bill_id }}" 
            class="btn btn-primary btn-sm" title="View Appointment Invoice">
@@ -198,6 +199,11 @@
     {% elif bill.bill_type == 'TREATMENT' %}
         <a href="{% url 'treatmentinvprint' %}?ids={{ bill.bill_id }}" 
            class="btn btn-danger btn-sm" title="View Treatment Invoice">
+            <i class="fas fa-eye"></i>
+        </a>
+      {%elif bill.bill_type == 'PROCEDURE'%}
+      <a href="{% url 'casuality_invoice_detail' %}?invoice_id={{ bill.bill_id }}" 
+           class="btn btn-dark btn-sm" title="View Procedure Invoice">
             <i class="fas fa-eye"></i>
         </a>
     {% else %}
