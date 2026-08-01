@@ -110,6 +110,17 @@
     page-break-after: always;
   }
 
+  .ip-credit-stamp {
+    color: #dc3545;
+    font-weight: bold;
+    font-size: 14px;
+    border: 2px solid #dc3545;
+    padding: 4px 12px;
+    border-radius: 4px;
+    display: inline-block;
+    background-color: #fff5f5;
+  }
+
   @media print {
     .print-btn {
       display: none !important;
@@ -182,7 +193,9 @@
         <strong>Bill Details:</strong><br>
         Invoice Number: {{ lsinvoice.Invoicenumber }}<br>
         Bill Date: {{ lsinvoice.currentdate }}<br>
-       
+        {% if lsinvoice.ip_credit %}
+          <span class="ip-credit-stamp">*** IP CREDIT ***</span>
+        {% endif %}
       </div>
     </div>
 
@@ -250,6 +263,16 @@
   </div>
 
   <div class="amount-words">In Words: {{ amount_in_words }}</div>
+  
+  <!-- IP Credit Note -->
+  {% if lsinvoice.ip_credit %}
+    <div style="text-align: center; color: #dc3545; font-weight: bold; margin-top: 10px; border-top: 2px solid #dc3545; padding-top: 10px; border-bottom: 2px solid #dc3545; padding-bottom: 10px;">
+      *** THIS IS AN IP CREDIT BILL - NO PAYMENT COLLECTED ***
+      <br>
+      <span style="font-size: 10px; font-weight: normal;">(Payment will be settled through IP billing)</span>
+    </div>
+  {% endif %}
+
 <p>Certified that the medicines sold against this bill have been purchased
 locally from registered dealers who have certified in the related sale
 bills such medicines had duly suffered compound tax.

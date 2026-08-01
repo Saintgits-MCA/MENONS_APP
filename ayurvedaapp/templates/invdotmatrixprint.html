@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+  @media print {
+    @page { size: auto; margin: 0; }
+    body * { visibility: hidden; }
+    .dotmatrix-sheet, .dotmatrix-sheet * { visibility: visible; }
+    .dotmatrix-sheet { position: absolute; left: 0; top: 0; }
+    .no-print { display: none !important; }
+  }
+
+  .dotmatrix-sheet {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 16px;
+    font-weight: bold;
+    width: 480px;
+    margin: 20px auto;
+    color: #000;
+    line-height: 1.4;
+  }
+  .dotmatrix-sheet .center { text-align: center; }
+  .dotmatrix-sheet .bold { font-weight: bold; }
+  .dotmatrix-sheet hr {
+    border: none;
+    border-top: 1px dashed #000;
+    margin: 4px 0;
+  }
+  .dotmatrix-sheet table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .dotmatrix-sheet table th,
+  .dotmatrix-sheet table td {
+    padding: 1px 2px;
+    text-align: left;
+    vertical-align: top;
+  }
+  .dotmatrix-sheet .right { text-align: right; }
+  .dotmatrix-sheet .dl-row {
+    display: flex;
+    justify-content: space-between;
+  }
+  .print-btn-row { text-align: center; margin-top: 15px; }
+  .print-btn-row button {
+    padding: 10px 20px;
+    background: #444;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+</style>
+
+<div class="dotmatrix-sheet">
+  <div class="center bold">{{ objhospt.Name }}</div>
+  <div class="center">{{ br.Branch_Address }}</div>
+  <div class="center">Phone: {{ br.Branch_contactno }}</div>
+  <div class="dl-row">
+    <span>DL.Nos2.116726/2021</span>
+    <span>DL.Nos1.116725/2021</span>
+  </div>
+  {% if branch_has_gst %}<div>GSTIN: {{ br.gstno }}</div>{% endif %}
+  <hr>
+  <div>BillNo: {{ lsinvoice.Invoicenumber }} &nbsp;  Date: {{ lsinvoice.currentdate }}</div>
+     {% if lsinvoice.ip_credit %}
+        <span class="float-right"> <strong>IP CREDIT</strong></span>
+      {% endif %}
+  <div>Patient: {{ lsinvoice.patientname }}</div>
+  <div class="center bold">CASH BILL</div>
+  <hr>
+
+  <table>
+    <thead>
+      <tr>
+        <th>No</th>
+        <th>Item</th>
+        <th>HSN</th>
+        <th>Batch</th>
+        <th>Exp</th>
+        <th>Qty</th>
+        {% if branch_has_gst and not branch_is_composition %}
+          <th>Taxable</th>
+          <th>GST%</th>
+          <th>SGST</th>
+          <th>CGST</th>
+        {% endif %}
+        <th>Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in chinvoice %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>{{ item.particulars }}</td>
+        <td>{{ item.hsncode }}</td>
+        <td>{{ item.batchno }}</td>
+        <td>{{ item.expirydate }}</td>
+        <td>{{ item.quantity }}</td>
+        {% if branch_has_gst and not branch_is_composition %}
+          <td>{{ item.taxableamount }}</td>
+          <td>{{ item.tax }}%</td>
+          <td>{{ item.sgstamount }}</td>
+          <td>{{ item.cgstamount }}</td>
+        {% endif %}
+        <td class="right">{{ item.sutotal }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <hr>
+
+  {% if branch_has_gst and not branch_is_composition %}
+  <div>Total Taxable Amount: {{ lsinvoice.totaltaxableamount }}</div>
+  <div>Total SGST Amount: {{ lsinvoice.totalsgstamount }}</div>
+  <div>Total CGST Amount: {{ lsinvoice.totalcgstamount }}</div>
+  <hr>
+  {% endif %}
+
+  <div class="bold">Gross Amt: {{ lsinvoice.total }}</div>
+  <hr>
+
+  <div class="center bold">Declaration</div>
+  <div>Certified that the medicines sold as per this bill have been purchased
+  locally from registered dealers who have certified in the related sale
+  bills such medicines had duly suffered compound tax. Goods once sold will
+  not be taken back.</div>
+  <div>E &amp; OE.</div>
+
+  <div style="margin-top:20px;">Pharmacist</div>
+</div>
+
+<div class="print-btn-row no-print">
+  <button onclick="window.print()">🖨️ Print</button>
+</div>
+{% endblock %}

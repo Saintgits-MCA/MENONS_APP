@@ -354,27 +354,7 @@
                             </div>
                         </div>
                         
-                        <div class="visit-card">
-                            <div class="visit-icon">
-                                <i class="fab fa-whatsapp"></i>
-                            </div>
-                            <h6>Whatsapp</h6>
-                            <div class="count">{{ whatsapp_count|default:0 }}</div>
-                            <div class="visit-amount">
-                                <i class="fas fa-rupee-sign"></i> {{ whatsapp_fee|default:0|floatformat:2 }}
-                            </div>
-                        </div>
-                        
-                        <div class="visit-card">
-                            <div class="visit-icon">
-                                <i class="fas fa-medkit"></i>
-                            </div>
-                            <h6>Camp</h6>
-                            <div class="count">{{ camp_count|default:0 }}</div>
-                            <div class="visit-amount">
-                                <i class="fas fa-rupee-sign"></i> {{ camp_fee|default:0|floatformat:2 }}
-                            </div>
-                        </div>
+                      
                         
                         <div class="visit-card">
                             <div class="visit-icon">
@@ -387,43 +367,83 @@
                             </div>
                         </div>
 
-                        <!-- Zoho Online Consultation -->
-                        <div class="visit-card">
-                            <div class="visit-icon">
-                                <i class="fas fa-video"></i>
-                            </div>
-                            <h6>Zoho Online Consultation</h6>
-                            <div class="count">{{ zoho_online_consultation_count|default:0 }}</div>
-                            <div class="visit-amount">
-                                <i class="fas fa-rupee-sign"></i> {{ zoho_online_consultation_fee|default:0|floatformat:2 }}
-                            </div>
-                        </div>
-
-                        <!-- Zoho Online Revisit -->
-                        <div class="visit-card">
-                            <div class="visit-icon">
-                                <i class="fas fa-video-slash"></i>
-                            </div>
-                            <h6>Zoho Online Revisit</h6>
-                            <div class="count">{{ zoho_online_revisit_count|default:0 }}</div>
-                            <div class="visit-amount">
-                                <i class="fas fa-rupee-sign"></i> {{ zoho_online_revisit_fee|default:0|floatformat:2 }}
-                            </div>
-                        </div>
-
-                        <!-- WhatsApp Revisit -->
-                        <div class="visit-card">
-                            <div class="visit-icon">
-                                <i class="fab fa-whatsapp"></i>
-                            </div>
-                            <h6>WhatsApp Revisit</h6>
-                            <div class="count">{{ whatsapp_revisit_count|default:0 }}</div>
-                            <div class="visit-amount">
-                                <i class="fas fa-rupee-sign"></i> {{ whatsapp_revisit_fee|default:0|floatformat:2 }}
-                            </div>
-                        </div>
+                        
                     </div>
                 </div>
+
+
+
+                  <h2>Appointment Transactions</h2>
+                  <div class="summary-row">
+                    <div class="summary-box cash">
+                      <h4>Cash</h4>
+                      <span>₹ {{ appointment_totals.cash|default:0|floatformat:2 }}</span>
+                    </div>
+
+                    <div class="summary-box gpay">
+                      <h4>GPay</h4>
+                      <span>₹ {{ appointment_totals.gpay|default:0|floatformat:2 }}</span>
+                    </div>
+
+                    <div class="summary-box card">
+                      <h4>Card</h4>
+                      <span>₹ {{ appointment_totals.card|default:0|floatformat:2 }}</span>
+                    </div>
+
+                    <div class="summary-box total">
+                      <h4>Total</h4>
+                      <span>₹ {{ appointment_totals.total|default:0|floatformat:2 }}</span>
+                    </div>
+                  </div>
+
+                  <table class="table table-bordered table-striped" id="appointmentTable" style="width:100%">
+                    <thead>
+                      <tr>
+                        {% if is_superadmin %}<th>Branch</th>{% endif %}
+                        <th>Invoice</th>
+                        <th>Patient</th>
+                        <th>Visit Type</th>
+                        <th>Payment Mode</th>
+                        <th>Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for a in appointment_page %}
+                      <tr>
+                        {% if is_superadmin %}<td>{{ a.branch.Branch_Name }}</td>{% endif %}
+                        <td>{{ a.treatmentInvoicenumber }}</td>
+                        <td>{{ a.patientname }}</td>
+                        <td>
+                          {% if a.appointment_status %}
+                          <span class="badge 
+                            {% if a.appointment_status|lower == 'consultation' %}bg-info
+                            {% elif a.appointment_status|lower == 'followup' %}bg-success
+                            {% elif a.appointment_status|lower == 'revisit' %}bg-primary
+                            {% elif a.appointment_status|lower == 'whatsapp' %}bg-secondary
+                            {% elif a.appointment_status|lower == 'whatsapp revisit' %}bg-secondary
+                            {% elif a.appointment_status|lower == 'zoho online consultation' %}bg-info
+                            {% elif a.appointment_status|lower == 'zoho online revisit' %}bg-info
+                            {% elif a.appointment_status|lower == 'camp' %}bg-warning
+                            {% elif a.appointment_status|lower == 'treatment' %}bg-danger
+                            {% else %}bg-dark{% endif %}">
+                            {{ a.appointment_status }}
+                          </span>
+                          {% else %}
+                          —
+                          {% endif %}
+                        </td>
+                        <td>{{ a.payementmode }}</td>
+                        <td>₹ {{ a.total|floatformat:2 }}</td>
+                      </tr>
+                      {% empty %}
+                      <tr>
+                        <td colspan="{% if is_superadmin %}6{% else %}5{% endif %}" class="text-center text-muted">
+                          No Appointment Transactions
+                        </td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
 
                   <hr>
                   {% if reg_fee_count > 0 %}
@@ -506,80 +526,6 @@
                   {% endif %}
                   <hr>
 
-                  <h2>Appointment Transactions</h2>
-                  <div class="summary-row">
-                    <div class="summary-box cash">
-                      <h4>Cash</h4>
-                      <span>₹ {{ appointment_totals.cash|default:0|floatformat:2 }}</span>
-                    </div>
-
-                    <div class="summary-box gpay">
-                      <h4>GPay</h4>
-                      <span>₹ {{ appointment_totals.gpay|default:0|floatformat:2 }}</span>
-                    </div>
-
-                    <div class="summary-box card">
-                      <h4>Card</h4>
-                      <span>₹ {{ appointment_totals.card|default:0|floatformat:2 }}</span>
-                    </div>
-
-                    <div class="summary-box total">
-                      <h4>Total</h4>
-                      <span>₹ {{ appointment_totals.total|default:0|floatformat:2 }}</span>
-                    </div>
-                  </div>
-
-                  <table class="table table-bordered table-striped" id="appointmentTable" style="width:100%">
-                    <thead>
-                      <tr>
-                        {% if is_superadmin %}<th>Branch</th>{% endif %}
-                        <th>Invoice</th>
-                        <th>Patient</th>
-                        <th>Visit Type</th>
-                        <th>Payment Mode</th>
-                        <th>Total</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {% for a in appointment_page %}
-                      <tr>
-                        {% if is_superadmin %}<td>{{ a.branch.Branch_Name }}</td>{% endif %}
-                        <td>{{ a.treatmentInvoicenumber }}</td>
-                        <td>{{ a.patientname }}</td>
-                        <td>
-                          {% if a.appointment_status %}
-                          <span class="badge 
-                            {% if a.appointment_status|lower == 'consultation' %}bg-info
-                            {% elif a.appointment_status|lower == 'followup' %}bg-success
-                            {% elif a.appointment_status|lower == 'revisit' %}bg-primary
-                            {% elif a.appointment_status|lower == 'whatsapp' %}bg-secondary
-                            {% elif a.appointment_status|lower == 'whatsapp revisit' %}bg-secondary
-                            {% elif a.appointment_status|lower == 'zoho online consultation' %}bg-info
-                            {% elif a.appointment_status|lower == 'zoho online revisit' %}bg-info
-                            {% elif a.appointment_status|lower == 'camp' %}bg-warning
-                            {% elif a.appointment_status|lower == 'treatment' %}bg-danger
-                            {% else %}bg-dark{% endif %}">
-                            {{ a.appointment_status }}
-                          </span>
-                          {% else %}
-                          —
-                          {% endif %}
-                        </td>
-                        <td>{{ a.payementmode }}</td>
-                        <td>₹ {{ a.total|floatformat:2 }}</td>
-                      </tr>
-                      {% empty %}
-                      <tr>
-                        <td colspan="{% if is_superadmin %}6{% else %}5{% endif %}" class="text-center text-muted">
-                          No Appointment Transactions
-                        </td>
-                      </tr>
-                      {% endfor %}
-                    </tbody>
-                  </table>
-
-                  <hr>
-
                   <h2>Pharmacy Transactions</h2>
                   <div class="summary-row">
                     <div class="summary-box cash">
@@ -618,13 +564,15 @@
                     <tbody>
                       {% for p in pharmacy_page %}
                       <tr>
+                        {%if not p.ip_credit %}
                         {% if is_superadmin %}<td>{{ p.branch.Branch_Name }}</td>{% endif %}
                         <td>{{ p.Invoicenumber }}</td>
                         <td>{{ p.patientname }}</td>
                         <td>₹ {{ p.cash_amount|floatformat:2 }}</td>
                         <td>₹ {{ p.gpay_amount|floatformat:2 }}</td>
                         <td>₹ {{ p.card_amount|floatformat:2 }}</td>
-                        <td>₹ {{ p.total|floatformat:2 }}</td>
+                        <td>{%if not p.ip_credit %}₹ {{ p.total|floatformat:2 }}{%else%}₹ 0.00{%endif%}</td>
+                      {%endif%}
                       </tr>
                       {% empty %}
                       <tr>

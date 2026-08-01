@@ -1,7 +1,12 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block content %}
-
+<style>
+  .table-responsive::-webkit-scrollbar
+  {
+    width:1px;
+  }
+</style>
 <div class="content-wrapper">
 
   <section class="content-header">
@@ -68,7 +73,7 @@
 
         <!-- Test Results Table -->
         <div class="table-responsive">
-          <table id="detailTable" class="table table-bordered table-striped table-sm">
+          <table id="example1" class="table table-bordered table-striped table-sm">
             <thead>
               <tr>
                 <th width="5%">#</th>

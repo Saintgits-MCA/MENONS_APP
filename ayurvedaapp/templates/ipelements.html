@@ -261,6 +261,10 @@
         <td>Treatment Charges</td>
         <td>₹ {{ bill.treatment_charges|floatformat:2 }}</td>
       </tr>
+       <tr>
+        <td>Procedure Charges</td>
+        <td>₹ {{ bill.procedure_charges|floatformat:2 }}</td>
+      </tr>
       <tr>
         <td>Medicine Charges</td>
         <td>₹ {{ bill.medicine_charges|floatformat:2 }}</td>
@@ -277,6 +281,18 @@
         <td>Other Expenses</td>
         <td>₹ {{ bill.other_expenses|floatformat:2 }}</td>
       </tr>
+       <tr>
+            <td> Pharmacy IP Credit</td>
+            <td>₹ {{ pharmacy_ip_credit_total|floatformat:2 }}</td>
+        </tr>
+        <tr>
+            <td> Lab IP Credit</td>
+            <td>₹ {{ lab_ip_credit_total|floatformat:2 }}</td>
+        </tr>
+        {% comment %} <tr style="background-color: #d4edda; font-weight: 700;">
+            <td style="font-size: 16px;"><i class="fas fa-credit-card" style="color: #28a745;"></i> Total IP Credit</td>
+            <td style="font-size: 16px; color: #28a745;">₹ {{ total_ip_credit|floatformat:2 }}</td>
+        </tr> {% endcomment %}
     </tbody>
   </table>
 

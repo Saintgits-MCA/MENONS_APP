@@ -45,22 +45,30 @@
              
                 <div class="card-body">
                     <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                   <div class="form-group ">
                     <label for="exampleInputRegisterNo">Start Date</label>
-                   <input type="date" class="form-control" name="sdate" id="exampleInputdate" required>
+                   <input type="date" class="form-control" name="sdate" id="exampleInputdate">
               </div>
         </div>
-              <div class="col-md-6">
+            <div class="col-md-4">
                       <div class="form-group">
                           <label for="exampleInputRegisterNo">End Date</label>
-                          <input type="date" class="form-control" name="edate" id="exampleInputdate" required>
+                          <input type="date" class="form-control" name="edate" id="exampleInputdate">
 
                       </div>
+                    </div>
+                       <div class="col-md-4">
+                <label class="fw-bold">Payment Mode:</label>
+                <select class="form-control" name="payment_mode">
+                  <option value="">All Payment Modes</option>
+                  <option value="Cash" {% if selected_payment_mode == 'Cash' %}selected{% endif %}>Cash</option>
+                  <option value="GPay" {% if selected_payment_mode == 'GPay' %}selected{% endif %}>GPay</option>
+                  <option value="Card" {% if selected_payment_mode == 'Card' %}selected{% endif %}>Card</option>
+                  <option value="IP Credit" {% if selected_payment_mode == 'IP Credit' %}selected{% endif %}>IP Credit</option>
+                </select>
+              </div>
                   </div>
-                </div>
-                 
-               
               </div>
             </div>
                 <!-- /.card-body -->

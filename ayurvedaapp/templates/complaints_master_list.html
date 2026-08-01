@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    .table-responsive::-webkit-scrollbar
+    {
+        width : 1px;
+    }
+</style>
+<div class="content-wrapper">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Complaints Master</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{% url 'index' %}">Home</a></li>
+                        <li class="breadcrumb-item active">Complaints Master</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0 font-weight-bold">
+                        <i class="fas fa-list"></i> Complaints List
+                    </h6>
+                    <div class="card-tools">
+                        <a href="{% url 'complaints_master_add' %}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus"></i> Add Complaint
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped" id="example1">
+                            <thead>
+                                <tr>
+                                    <th>Sl.No</th>
+                                    <th>Complaint Name</th>
+                                    <th>Status</th>
+                                    <th>Created At</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if complaints %}
+                                    {% for complaint in complaints %}
+                                    <tr>
+                                        <td>{{ forloop.counter }}</td>
+                                        <td>{{ complaint.name }}</td>
+                                        <td>
+                                            {% if complaint.status %}
+                                                <span class="badge badge-success">Active</span>
+                                            {% else %}
+                                                <span class="badge badge-danger">Inactive</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ complaint.created_at|date:"d/m/Y H:i" }}</td>
+                                        <td>
+                                            <a href="{% url 'complaints_master_edit' %}?ids={{ complaint.id }}" class="btn btn-info btn-sm" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted py-3">
+                                            <i class="fas fa-inbox fa-2x d-block mb-2"></i>
+                                            No complaints found
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script>
+    $(document).ready(function() {
+        $('#complaintsTable').DataTable({
+            dom: '<"row"<"col-sm-6"l><"col-sm-6"f>>' +
+                 '<"row"<"col-sm-12"tr>>' +
+                 '<"row"<"col-sm-5"i><"col-sm-7"p>>',
+            pageLength: 10,
+            responsive: true,
+            lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+            language: {
+                lengthMenu: "Show _MENU_ entries",
+                info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                infoEmpty: "Showing 0 to 0 of 0 entries",
+                infoFiltered: "(filtered from _MAX_ total entries)",
+                paginate: {
+                    first: "First",
+                    last: "Last",
+                    next: "Next",
+                    previous: "Previous"
+                }
+            }
+        });
+    });
+</script>
+
+{% endblock %}

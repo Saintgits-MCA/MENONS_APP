@@ -2539,29 +2539,28 @@
                                  class="form-control form-control-sm text-center">
                         </div>
                         
-                        <!-- Timing -->
-                        <div class="col-md-8 col-lg-8">
-                          <label class="form-label small mb-1 fw-semibold">Timing</label>
-                          <div class="row g-3">
-                            <div class="col-4 text-center">
-                              <input type="text" name="morning[]" class="form-control timing-input text-center" value="0" placeholder="0">
-                              <small class="text-muted x-small">☀️ Morning</small>
-                            </div>
-                            <div class="col-4 text-center">
-                              <input type="text" name="noon[]" class="form-control timing-input text-center" value="0" placeholder="0">
-                              <small class="text-muted x-small">🌤 Noon</small>
-                            </div>
-                            <div class="col-4 text-center">
-                              <input type="text" name="night[]" class="form-control timing-input text-center" value="0" placeholder="0">
-                              <small class="text-muted x-small">🌙 Night</small>
-                            </div>
-                          </div>
-                        </div>
                       </div>
                     </div>
                                   </div>
                                 </div>
-
+<!-- Timing -->
+                        <div class="col-md-7 col-lg-7">
+                          <label class="form-label small mb-1 fw-semibold">Timing</label>
+                          <div class="row g-3">
+                            <div class="col-4 text-center">
+                              <input type="text" name="morning[]" class="form-control timing-input text-center" value="0" placeholder="0">
+                              <small class="text-muted x-small"> Morning</small>
+                            </div>
+                            <div class="col-4 text-center">
+                              <input type="text" name="noon[]" class="form-control timing-input text-center" value="0" placeholder="0">
+                              <small class="text-muted x-small"> Noon</small>
+                            </div>
+                            <div class="col-4 text-center">
+                              <input type="text" name="night[]" class="form-control timing-input text-center" value="0" placeholder="0">
+                              <small class="text-muted x-small "> Night</small>
+                            </div>
+                          </div>
+                        </div>
                                 <!-- Diet Timing & Guidelines Side-by-Side -->
                                 <div class="col-12 col-md-6 mt-3">
                                   <label class="form-label small mb-1 fw-semibold">Diet Timing</label>
@@ -2637,6 +2636,10 @@
            <p class="mb-1">
             <strong>Diagnosis:</strong> {{ complaint.final_diagnosis }}</p>
           {% endif %}
+          {% if complaint.follow_up_date %}
+           <p class="mb-1">
+            <strong>Next Followup Date:</strong> {{ complaint.follow_up_date }}</p>
+          {% endif %}
           
           <!-- Edit and Delete Buttons - Icons Only -->
           <div class="complaint-actions position-absolute" style="top: 10px; right: 10px;">
@@ -2646,6 +2649,7 @@
                                            '{{ complaint.present_complaint|escapejs }}',
                                            '{{ complaint.final_diagnosis|escapejs }}',
                                            '{{ complaint.status|escapejs }}',
+                                           '{{ complaint.follow_up_date |escapejs}}',
                                            '')" title="Edit">
               <i class="fas fa-edit"></i>
             </button>
@@ -2657,13 +2661,31 @@
         </div>
         {% empty %}
         <div class="complaint-card">
-          <p class="mb-1 text-muted">No complaints recorded</p>
+          <p class="text-muted">No complaints recorded</p>
         </div>
         {% endfor %}
       </div>
-      
+      <!-- Add this search div above the complaint form -->
+<div class="search-complaint-container mb-3 mt-5">
+    <div class="input-group">
+        <div class="input-group-prepend">
+            <span class="input-group-text bg-primary text-white">
+                <i class="fas fa-search"></i>
+            </span>
+        </div>
+        <input type="text" id="complaintSearch" class="form-control" 
+               placeholder="Search existing complaints..." autocomplete="off">
+        <div class="input-group-append">
+            <button class="btn btn-outline-secondary" type="button" id="clearSearch">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+    <div id="complaintSearchResults" class="list-group mt-2" style="display: none; max-height: 200px; overflow-y: auto; position: relative; z-index: 1000;"></div>
+    <small class="text-muted">Type to search and click on a complaint to add to Chief Complaint</small>
+</div>
       <!-- Add New Complaint Form -->
-      <div class="border-top pt-3 mt-3">
+      <div class="border-top pt-1 mt-1">
         <label for="newComplaintEditor" class="fw-bold" style="font-size: 1.3rem;">Add New Complaint</label>
         <form id="complaintForm" method="POST" action="{% url 'create_casehistory' %}">
           {% csrf_token %}
@@ -2692,7 +2714,7 @@
               </select>
             </div>
             <div class="col-md-4">
-              <label class="form-label">Follow Up Date</label>
+              <label class="form-label">Next Follow Up Date</label>
               <input type="date" name="follow_up_date" class="form-control" value="{% now 'Y-m-d' %}">
             </div>
             <div class="col-md-4">
@@ -3585,7 +3607,26 @@
         <form id="editComplaintForm" method="POST" action="{% url 'edit_casehistory' %}">
           {% csrf_token %}
           <input type="hidden" name="ids" id="edit_complaint_id">
-            
+            <!-- Search Complaint Section -->
+          <div class="search-complaint-container mb-3">
+            <label class="form-label fw-semibold">Search & Add Complaint</label>
+            <div class="input-group">
+              <div class="input-group-prepend">
+                <span class="input-group-text bg-primary text-white">
+                  <i class="fas fa-search"></i>
+                </span>
+              </div>
+              <input type="text" id="editComplaintSearch" class="form-control" 
+                     placeholder="Search existing complaints..." autocomplete="off">
+              <div class="input-group-append">
+                <button class="btn btn-outline-secondary" type="button" id="clearEditSearch">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+            </div>
+            <div id="editComplaintSearchResults" class="list-group mt-2" style="display: none; max-height: 200px; overflow-y: auto;"></div>
+            <small class="text-muted">Type to search, use arrow keys to navigate, Enter to select</small>
+          </div>
           <div class="form-group">
             <label for="edit_present_complaint" class="form-label fw-semibold">Chief Complaint</label>
             <div id="edit_present_complaint_editor" style="height: 300px;"></div>
@@ -3606,10 +3647,10 @@
           </div>
           
           <!-- Add follow_up_date field if your model has it -->
-          <!-- <div class="form-group">
+          <div class="form-group">
             <label for="edit_follow_up_date" class="form-label fw-semibold">Follow Up Date</label>
             <input type="date" class="form-control" id="edit_follow_up_date" name="follow_up_date">
-          </div> -->
+          </div> 
         </form>
       </div>
       <div class="modal-footer">
@@ -5806,7 +5847,13 @@ function openEditModal(complaintId, chiefComplaint, presentComplaint, finalDiagn
     document.getElementById('edit_complaint_id').value = complaintId;
     document.getElementById('edit_final_diagnosis').value = finalDiagnosis;
     document.getElementById('edit_status').value = status;
-    
+    const followUpDateInput = document.getElementById('edit_follow_up_date');
+    if (followUpDateInput) {
+        if (followUpDate && followUpDate !== '') {
+            // If date is provided, use it
+            followUpDateInput.value = followUpDate;
+        }
+    }
     // Set Quill editor content - with safety check
     if (editComplaintEditor && editComplaintEditor.root) {
         editComplaintEditor.root.innerHTML = chiefComplaint || '';
@@ -9549,5 +9596,612 @@ function clearFileInput() {
     $('#fileName').html('');
 }
 </script> 
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('complaintSearch');
+    const searchResults = document.getElementById('complaintSearchResults');
+    const clearSearchBtn = document.getElementById('clearSearch');
+    let searchTimeout = null;
+    let selectedIndex = -1;
+    let searchResultsData = [];
+    
+    if (!searchInput || !searchResults) return;
+    
+    // Search on input
+    searchInput.addEventListener('input', function() {
+        const query = this.value.trim();
+        selectedIndex = -1;
+        
+        clearTimeout(searchTimeout);
+        
+        if (query.length < 2) {
+            searchResults.style.display = 'none';
+            searchResults.innerHTML = '';
+            searchResultsData = [];
+            return;
+        }
+        
+        searchTimeout = setTimeout(() => {
+            performComplaintSearch(query);
+        }, 300);
+    });
+    
+    // Keyboard navigation for search results
+    searchInput.addEventListener('keydown', function(e) {
+        const items = searchResults.querySelectorAll('button.list-group-item');
+        
+        if (items.length === 0) return;
+        
+        // Down arrow
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+            updateSelectedItem(items);
+        }
+        // Up arrow
+        else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            selectedIndex = Math.max(selectedIndex - 1, 0);
+            updateSelectedItem(items);
+        }
+        // Enter key
+        else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (selectedIndex >= 0 && selectedIndex < items.length) {
+                const selectedItem = items[selectedIndex];
+                const complaint = searchResultsData[selectedIndex];
+                if (complaint) {
+                    addComplaintToQuill(complaint);
+                }
+            }
+        }
+        // Escape key - close results
+        else if (e.key === 'Escape') {
+            searchResults.style.display = 'none';
+            searchResults.innerHTML = '';
+            searchInput.blur();
+        }
+    });
+    
+    // Update selected item highlight
+    function updateSelectedItem(items) {
+        items.forEach((item, index) => {
+            if (index === selectedIndex) {
+                item.style.backgroundColor = '#e9ecef';
+                item.style.borderLeft = '3px solid #00796b';
+                item.scrollIntoView({ block: 'nearest' });
+            } else {
+                item.style.backgroundColor = '';
+                item.style.borderLeft = '';
+            }
+        });
+    }
+    
+    // Clear search
+    if (clearSearchBtn) {
+        clearSearchBtn.addEventListener('click', function() {
+            searchInput.value = '';
+            searchResults.style.display = 'none';
+            searchResults.innerHTML = '';
+            searchResultsData = [];
+            selectedIndex = -1;
+            searchInput.focus();
+        });
+    }
+    
+    // Close results when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+            searchResults.style.display = 'none';
+        }
+    });
+    
+    // Perform search function
+    function performComplaintSearch(query) {
+        fetch(`/search-complaints/?q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                searchResults.innerHTML = '';
+                searchResultsData = data;
+                selectedIndex = -1;
+                
+                if (data.length === 0) {
+                    searchResults.innerHTML = `
+                        <div class="list-group-item text-muted text-center py-2">
+                            <i class="fas fa-info-circle mr-1"></i> No complaints found
+                        </div>
+                    `;
+                    searchResults.style.display = 'block';
+                    return;
+                }
+                
+                data.forEach((complaint, index) => {
+                    const item = document.createElement('button');
+                    item.type = 'button';
+                    item.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center';
+                    item.dataset.index = index;
+                    item.innerHTML = `
+                        <div>
+                            <strong>${complaint.name}</strong>
+                            ${complaint.description ? `<br><small class="text-muted">${complaint.description}</small>` : ''}
+                        </div>
+                    `;
+                    
+                    item.addEventListener('click', function() {
+                        addComplaintToQuill(complaint);
+                    });
+                    
+                    item.addEventListener('mouseenter', function() {
+                        const items = searchResults.querySelectorAll('button.list-group-item');
+                        items.forEach((el, i) => {
+                            if (i === index) {
+                                el.style.backgroundColor = '#e9ecef';
+                                el.style.borderLeft = '3px solid #00796b';
+                            } else {
+                                el.style.backgroundColor = '';
+                                el.style.borderLeft = '';
+                            }
+                        });
+                        selectedIndex = index;
+                    });
+                    
+                    searchResults.appendChild(item);
+                });
+                
+                searchResults.style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Search error:', error);
+                searchResults.innerHTML = `
+                    <div class="list-group-item text-danger text-center py-2">
+                        <i class="fas fa-exclamation-triangle mr-1"></i> Error searching complaints
+                    </div>
+                `;
+                searchResults.style.display = 'block';
+            });
+    }
+    
+    // Add complaint to Quill editor
+    function addComplaintToQuill(complaint) {
+        if (!presentComplaintEditor) {
+            return;
+        }
+        
+        // Get current text content from Quill (plain text without HTML)
+        const currentText = presentComplaintEditor.getText().trim();
+        const currentHtml = presentComplaintEditor.root.innerHTML;
+        
+        // Check if editor has content (not empty or just a newline)
+        const hasContent = currentText.length > 0 && 
+                          currentHtml !== '<p><br></p>' && 
+                          currentHtml !== '<p></p>' &&
+                          currentHtml !== '';
+        
+        let newContent;
+        let plainTextContent;
+        
+        if (hasContent) {
+            // Get current text
+            let existingText = currentText;
+            
+            // Remove any trailing comma
+            existingText = existingText.replace(/,\s*$/, '');
+            
+            // Split existing text by commas to get individual items
+            let existingItems = existingText.split(',').map(item => item.trim()).filter(item => item.length > 0);
+            
+            // Check if complaint already exists (case insensitive)
+            const complaintExists = existingItems.some(item => 
+                item.toLowerCase() === complaint.name.toLowerCase()
+            );
+            
+            if (complaintExists) {
+                // Complaint already exists, don't add again
+                searchInput.value = '';
+                searchResults.style.display = 'none';
+                searchResults.innerHTML = '';
+                searchResultsData = [];
+                selectedIndex = -1;
+                presentComplaintEditor.focus();
+                return;
+            }
+            
+            // Add new complaint to the list
+            existingItems.push(complaint.name);
+            plainTextContent = existingItems.join(',');
+            
+            newContent = `<p>${plainTextContent}</p>`;
+        } else {
+            // First complaint - just the name
+            plainTextContent = complaint.name;
+            if (complaint.description) {
+                newContent = `<p>${plainTextContent} (${complaint.description})</p>`;
+            } else {
+                newContent = `<p>${plainTextContent}</p>`;
+            }
+        }
+        
+        // Set the content in Quill editor
+        presentComplaintEditor.root.innerHTML = newContent;
+        
+        // Update hidden field
+        document.getElementById('present_complaint').value = newContent;
+        
+        // Clear search and close results
+        searchInput.value = '';
+        searchResults.style.display = 'none';
+        searchResults.innerHTML = '';
+        searchResultsData = [];
+        selectedIndex = -1;
+        
+        // Focus back to editor
+        presentComplaintEditor.focus();
+    }
+  });
+
+document.addEventListener('DOMContentLoaded', function() {
+    const editSearchInput = document.getElementById('editComplaintSearch');
+    const editSearchResults = document.getElementById('editComplaintSearchResults');
+    const clearEditSearchBtn = document.getElementById('clearEditSearch');
+    let editSearchTimeout = null;
+    let editSelectedIndex = -1;
+    let editSearchResultsData = [];
+    
+    if (!editSearchInput || !editSearchResults) return;
+    
+    // Search on input
+    editSearchInput.addEventListener('input', function() {
+        const query = this.value.trim();
+        editSelectedIndex = -1;
+        
+        clearTimeout(editSearchTimeout);
+        
+        if (query.length < 2) {
+            editSearchResults.style.display = 'none';
+            editSearchResults.innerHTML = '';
+            editSearchResultsData = [];
+            return;
+        }
+        
+        editSearchTimeout = setTimeout(() => {
+            performEditComplaintSearch(query);
+        }, 300);
+    });
+    
+    // Keyboard navigation for search results
+    editSearchInput.addEventListener('keydown', function(e) {
+        const items = editSearchResults.querySelectorAll('button.list-group-item');
+        
+        if (items.length === 0) return;
+        
+        // Down arrow
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            editSelectedIndex = Math.min(editSelectedIndex + 1, items.length - 1);
+            updateEditSelectedItem(items);
+        }
+        // Up arrow
+        else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            editSelectedIndex = Math.max(editSelectedIndex - 1, 0);
+            updateEditSelectedItem(items);
+        }
+        // Enter key
+        else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (editSelectedIndex >= 0 && editSelectedIndex < items.length) {
+                const selectedItem = items[editSelectedIndex];
+                const complaint = editSearchResultsData[editSelectedIndex];
+                if (complaint) {
+                    addEditComplaintToQuill(complaint);
+                }
+            }
+        }
+        // Escape key - close results
+        else if (e.key === 'Escape') {
+            editSearchResults.style.display = 'none';
+            editSearchResults.innerHTML = '';
+            editSearchInput.blur();
+        }
+    });
+    
+    // Update selected item highlight
+    function updateEditSelectedItem(items) {
+        items.forEach((item, index) => {
+            if (index === editSelectedIndex) {
+                item.style.backgroundColor = '#e9ecef';
+                item.style.borderLeft = '3px solid #00796b';
+                item.scrollIntoView({ block: 'nearest' });
+            } else {
+                item.style.backgroundColor = '';
+                item.style.borderLeft = '';
+            }
+        });
+    }
+    
+    // Clear search
+    if (clearEditSearchBtn) {
+        clearEditSearchBtn.addEventListener('click', function() {
+            editSearchInput.value = '';
+            editSearchResults.style.display = 'none';
+            editSearchResults.innerHTML = '';
+            editSearchResultsData = [];
+            editSelectedIndex = -1;
+            editSearchInput.focus();
+        });
+    }
+    
+    // Close results when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!editSearchInput.contains(e.target) && !editSearchResults.contains(e.target)) {
+            editSearchResults.style.display = 'none';
+        }
+    });
+    
+    // Perform search function
+    function performEditComplaintSearch(query) {
+        fetch(`/search-complaints/?q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                editSearchResults.innerHTML = '';
+                editSearchResultsData = data;
+                editSelectedIndex = -1;
+                
+                if (data.length === 0) {
+                    editSearchResults.innerHTML = `
+                        <div class="list-group-item text-muted text-center py-2">
+                            <i class="fas fa-info-circle mr-1"></i> No complaints found
+                        </div>
+                    `;
+                    editSearchResults.style.display = 'block';
+                    return;
+                }
+                
+                data.forEach((complaint, index) => {
+                    const item = document.createElement('button');
+                    item.type = 'button';
+                    item.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center';
+                    item.dataset.index = index;
+                    item.innerHTML = `
+                        <div>
+                            <strong>${complaint.name}</strong>
+                            ${complaint.description ? `<br><small class="text-muted">${complaint.description}</small>` : ''}
+                        </div>
+                    `;
+                    
+                    item.addEventListener('click', function() {
+                        addEditComplaintToQuill(complaint);
+                    });
+                    
+                    item.addEventListener('mouseenter', function() {
+                        const items = editSearchResults.querySelectorAll('button.list-group-item');
+                        items.forEach((el, i) => {
+                            if (i === index) {
+                                el.style.backgroundColor = '#e9ecef';
+                                el.style.borderLeft = '3px solid #00796b';
+                            } else {
+                                el.style.backgroundColor = '';
+                                el.style.borderLeft = '';
+                            }
+                        });
+                        editSelectedIndex = index;
+                    });
+                    
+                    editSearchResults.appendChild(item);
+                });
+                
+                editSearchResults.style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Search error:', error);
+                editSearchResults.innerHTML = `
+                    <div class="list-group-item text-danger text-center py-2">
+                        <i class="fas fa-exclamation-triangle mr-1"></i> Error searching complaints
+                    </div>
+                `;
+                editSearchResults.style.display = 'block';
+            });
+    }
+    
+    // Add complaint to Edit Quill editor
+    function addEditComplaintToQuill(complaint) {
+        if (!editComplaintEditor) {
+            return;
+        }
+        
+        // Get current text content from Quill
+        const currentText = editComplaintEditor.getText().trim();
+        const currentHtml = editComplaintEditor.root.innerHTML;
+        
+        // Check if editor has content
+        const hasContent = currentText.length > 0 && 
+                          currentHtml !== '<p><br></p>' && 
+                          currentHtml !== '<p></p>' &&
+                          currentHtml !== '';
+        
+        let newContent;
+        let plainTextContent;
+        
+        if (hasContent) {
+            let existingText = currentText;
+            existingText = existingText.replace(/,\s*$/, '');
+            
+            let existingItems = existingText.split(',').map(item => item.trim()).filter(item => item.length > 0);
+            
+            // Check if complaint already exists (case insensitive)
+            const complaintExists = existingItems.some(item => 
+                item.toLowerCase() === complaint.name.toLowerCase()
+            );
+            
+            if (complaintExists) {
+                editSearchInput.value = '';
+                editSearchResults.style.display = 'none';
+                editSearchResults.innerHTML = '';
+                editSearchResultsData = [];
+                editSelectedIndex = -1;
+                editComplaintEditor.focus();
+                return;
+            }
+            
+            existingItems.push(complaint.name);
+            plainTextContent = existingItems.join(',');
+            newContent = `<p>${plainTextContent}</p>`;
+        } else {
+            plainTextContent = complaint.name;
+            if (complaint.description) {
+                newContent = `<p>${plainTextContent} (${complaint.description})</p>`;
+            } else {
+                newContent = `<p>${plainTextContent}</p>`;
+            }
+        }
+        
+        // Set the content in Quill editor
+        editComplaintEditor.root.innerHTML = newContent;
+        
+        // Update hidden field
+        document.getElementById('edit_present_complaint').value = newContent;
+        
+        // Clear search and close results
+        editSearchInput.value = '';
+        editSearchResults.style.display = 'none';
+        editSearchResults.innerHTML = '';
+        editSearchResultsData = [];
+        editSelectedIndex = -1;
+        
+        // Focus back to editor
+        editComplaintEditor.focus();
+    }
+    
+    // Also handle modal show to load existing content
+    $('#editComplaintModal').on('shown.bs.modal', function() {
+        // Focus on the search input when modal opens
+        setTimeout(() => {
+            editSearchInput.focus();
+        }, 300);
+    });
+});
+</script>
+<style>
+  /* Complaint Search Styles */
+.search-complaint-container {
+    position: relative;
+}
+
+#complaintSearch {
+    border-radius: 0 4px 4px 0;
+    font-size: 16px;
+}
+
+#complaintSearch:focus {
+    border-color: #00796b;
+    box-shadow: 0 0 0 0.2rem rgba(0, 121, 107, 0.25);
+}
+
+#complaintSearchResults {
+    position: absolute;
+    width: 100%;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    z-index: 1000;
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+#complaintSearchResults .list-group-item {
+    border: none;
+    border-bottom: 1px solid #f0f0f0;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    font-size: 16px;
+}
+
+#complaintSearchResults .list-group-item:hover {
+    background-color: #f8f9fa;
+}
+
+#complaintSearchResults .list-group-item:last-child {
+    border-bottom: none;
+}
+
+#complaintSearchResults .badge-sm {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+}
+
+/* Custom scrollbar for search results */
+#complaintSearchResults::-webkit-scrollbar {
+    width: 6px;
+}
+
+#complaintSearchResults::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+#complaintSearchResults::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+#complaintSearchResults::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* For Firefox */
+#complaintSearchResults {
+    scrollbar-width: thin;
+    scrollbar-color: #c1c1c1 #f1f1f1;
+}
+
+/* Popup Message Styles (if not already present) */
+.popup-message {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.9);
+    background: white;
+    border-radius: 12px;
+    padding: 20px 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    text-align: center;
+    z-index: 9999;
+    opacity: 0;
+    transition: all 0.3s ease;
+    min-width: 260px;
+}
+
+.popup-message.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.popup-message.success {
+    border-top: 5px solid #28a745;
+}
+
+.popup-message.error {
+    border-top: 5px solid #dc3545;
+}
+
+.popup-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.popup-icon {
+    font-size: 2rem;
+}
+
+.popup-text {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+}
+</style>
 </body>
 </html>

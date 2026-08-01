@@ -3,11 +3,35 @@
 
 {% block content %}
 <style>
-  textarea
-  {
-    resize:none;
+  textarea {
+    resize: none;
+  }
+  
+  .ip-credit-section {
+    border: 2px solid #dc3545;
+    border-radius: 5px;
+    padding: 10px;
+    background-color: #fff5f5;
+    margin-top: 10px;
+  }
+  
+  .ip-credit-section .form-check-label {
+    color: #dc3545;
+    font-weight: bold;
+    font-size: 16px;
+  }
+  
+  .ip-credit-badge {
+    display: inline-block;
+    background-color: #dc3545;
+    color: white;
+    padding: 2px 10px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: bold;
   }
 </style>
+
 <div class="content-wrapper">
 
 <section class="content-header">
@@ -57,7 +81,6 @@
     </div>
   </div>
 </div>
-
 
 <!-- Modal for Adding New Patient -->
 <div class="modal fade" id="addPatientModal" tabindex="-1" role="dialog" aria-labelledby="addPatientModalLabel" aria-hidden="true">
@@ -254,7 +277,7 @@
 
         <hr>
 
-        <!-- Totals -->
+        <!-- Totals - Registration Fee Hidden -->
         <div class="row">
           <div class="col-md-6"></div>
           <div class="col-md-6">
@@ -275,26 +298,28 @@
                 <th>Consultation Fee:</th>
                 <td><input type="text" id="cfee" name="cfee" class="form-control"></td>
               </tr>
-              <tr>
+              <!-- Registration Fee - HIDDEN -->
+              <tr id="registrationFeeRow" style="display: none;">
                 <th>Registration Fee:</th>
-                <td><input type="text" id="rgfee" name="rgfee" class="form-control"></td>
+                <td><input type="text" id="rgfee" name="rgfee" class="form-control" value="0" readonly></td>
               </tr>
               <tr>
                 <th>Total:</th>
                 <td><input type="text" id="grand_total" name="totalIncludingTax" class="form-control" readonly></td>
               </tr>
-
             </table>
           </div>
         </div>
-         <div class="row mb-4">
+
+        <!-- Payment Mode Section with IP Credit -->
+        <div class="row mb-4">
           <div class="col-md-6"></div>
           <div class="col-md-2 text-end">
             <label class="col-form-label"><strong>Payment Mode:</strong></label>
           </div>
           <div class="col-md-4">
             <div class="form-check mb-3">
-              <input class="form-check-input" type="checkbox" id="cashCheck" name="payment_modes" value="Cash"  onchange="togglePaymentInputs()" checked>
+              <input class="form-check-input" type="checkbox" id="cashCheck" name="payment_modes" value="Cash" onchange="togglePaymentInputs()" checked>
               <label class="form-check-label" for="cashCheck">Cash</label>
               <input type="number" id="cashInput" name="cash_amount" class="form-control mt-1 payment-input" placeholder="Cash Amount" min="0" onwheel="this.blur()">
             </div>
@@ -311,10 +336,29 @@
               <input type="number" id="cardInput" name="card_amount" class="form-control mt-1 payment-input" placeholder="Card Amount" style="display:none;" min="0" onwheel="this.blur()">
             </div>
 
-            <div class="form-check">
+            <div class="form-check mb-3">
               <input class="form-check-input" type="checkbox" id="creditCheck" name="payment_modes" value="Credit" onchange="togglePaymentInputs()">
               <label class="form-check-label" for="creditCheck">Credit</label>
               <input type="number" id="creditInput" name="credit_amount" class="form-control mt-1 payment-input" placeholder="Credit Amount" style="display:none;" min="0" onwheel="this.blur()">
+            </div>
+
+            <!-- IP Credit Section -->
+            <div class="form-check ip-credit-section">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                id="ipCreditCheck"
+                name="ip_credit"
+                value="true"
+                onchange="toggleIpCredit()"
+                style="transform: scale(1.2);"
+              />
+              <label class="form-check-label" for="ipCreditCheck">
+                IP Credit
+              </label>
+              <small class="form-text text-muted" style="display: block; margin-top: 5px; color: #6c757d;">
+                Check this if this is an IP Credit bill (No payment collected)
+              </small>
             </div>
           </div>
         </div>
@@ -464,13 +508,70 @@ function calculateAll() {
     let tax = parseFloat($("#tax_percent").val()) || 0;
     let discount = parseFloat($("#discount").val()) || 0;
     let cfee = parseFloat($("#cfee").val()) || 0;
-    let rgfee = parseFloat($("#rgfee").val()) || 0;
+    // Registration fee is always 0 (hidden)
+    let rgfee = 0;
 
     let taxAmount = subtotal * (tax / 100);
     let grand = subtotal + taxAmount + cfee + rgfee - discount;
     $("#grand_total").val(grand.toFixed(2));
 }
+
+// IP Credit Toggle Function
+function toggleIpCredit() {
+    const ipCreditCheck = document.getElementById('ipCreditCheck');
+    const cashCheck = document.getElementById('cashCheck');
+    const gpayCheck = document.getElementById('gpayCheck');
+    const cardCheck = document.getElementById('cardCheck');
+    const creditCheck = document.getElementById('creditCheck');
+    const cashInput = document.getElementById('cashInput');
+    const gpayInput = document.getElementById('gpayInput');
+    const cardInput = document.getElementById('cardInput');
+    const creditInput = document.getElementById('creditInput');
+    const grandTotal = document.getElementById('grand_total');
+    
+    if (ipCreditCheck.checked) {
+        // When IP Credit is checked, disable other payment modes
+        cashCheck.disabled = true;
+        gpayCheck.disabled = true;
+        cardCheck.disabled = true;
+        creditCheck.disabled = true;
+        cashCheck.checked = false;
+        gpayCheck.checked = false;
+        cardCheck.checked = false;
+        creditCheck.checked = false;
+        cashInput.value = '';
+        gpayInput.value = '';
+        cardInput.value = '';
+        creditInput.value = '';
+        cashInput.style.display = 'none';
+        gpayInput.style.display = 'none';
+        cardInput.style.display = 'none';
+        creditInput.style.display = 'none';
+        // Change total color to indicate IP Credit
+        grandTotal.style.color = '#dc3545';
+    } else {
+        // Re-enable other payment modes
+        cashCheck.disabled = false;
+        gpayCheck.disabled = false;
+        cardCheck.disabled = false;
+        creditCheck.disabled = false;
+        cashCheck.checked = true;
+        // Show payment inputs based on checkboxes
+        togglePaymentInputs();
+        // Reset color
+        grandTotal.style.color = '';
+    }
+}
+
+// Update togglePaymentInputs to respect IP Credit
 function togglePaymentInputs() {
+    const ipCreditCheck = document.getElementById('ipCreditCheck');
+    
+    // If IP Credit is checked, don't toggle individual payment inputs
+    if (ipCreditCheck.checked) {
+        return;
+    }
+    
     const cashChecked = $("#cashCheck").is(":checked");
     const gpayChecked = $("#gpayCheck").is(":checked");
     const cardChecked = $("#cardCheck").is(":checked");
@@ -494,8 +595,10 @@ function togglePaymentInputs() {
     $("#cardInput").toggle(cardChecked);
     $("#creditInput").toggle(creditChecked);
 }
+
 // Also recalc when tax/discount/fees change
-$(document).on("input", "#tax_percent, #discount, #cfee, #rgfee", calculateAll);
+$(document).on("input", "#tax_percent, #discount, #cfee", calculateAll);
+
 $(document).ready(function() {
     togglePaymentInputs();
     $("#cashCheck, #gpayCheck, #cardCheck, #creditCheck").on("change", function() {
@@ -505,6 +608,7 @@ $(document).ready(function() {
     // Validation before submit
     $("#invoiceForm").on("submit", function() {
         const total = parseFloat($("#grand_total").val()) || 0;
+        const ipCreditCheck = document.getElementById('ipCreditCheck');
         let paid = 0;
 
         // Check for zero amount tests
@@ -555,7 +659,12 @@ $(document).ready(function() {
             return false;
         }
 
-        // Payment validation
+        // If IP Credit is checked, skip payment validation
+        if (ipCreditCheck.checked) {
+            return true;
+        }
+
+        // Payment validation for non-IP Credit
         if ($("#creditCheck").is(":checked")) {
             paid = parseFloat($("#creditInput").val()) || 0;
         } else {

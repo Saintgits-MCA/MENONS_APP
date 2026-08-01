@@ -68,6 +68,11 @@
       padding: 10px;
     }
   }
+
+  .print-btn.dotmatrix {
+    background-color: #6c757d;
+    color: white;
+  }
 </style>
 
 <div class="print-container">
@@ -76,6 +81,7 @@
     <div class="btn-group">
       <a href="{% url 'a5print' %}" class="print-btn a4">🖨️ Print A5</a>
       {% comment %} <a href="{% url 'newtaxtermalinvprint' %}" class="print-btn thermal">🧾 Print Thermal</a> {% endcomment %}
+      <a href="{% url 'invdotmatrixprint' %}" class="print-btn dotmatrix">🖨️ Print Dot Matrix</a>
     </div>
   </div>
 </div>

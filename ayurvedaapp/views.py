@@ -766,7 +766,7 @@ def appointmentafterreg(request):
             return redirect('error_page')
         except Exception as e:
             messages.error(request, f"Unable to retrieve Menu Management details: {str(e)}. Please contact the admin for assistance.")
-            return redirect('error_page')     
+            return redirect('error_page')    
 
   
      
@@ -1030,7 +1030,7 @@ def online_appointment(request):
                     return redirect('error_page')
 
                 # Get staff ID from session
-                staff_id = request.session.get("staffid")
+                staff_id = request.session.get("staff_id")
                 
                 # Patient name and phone
                 patient_name = patient_obj.Patient_Name
@@ -1351,7 +1351,6 @@ def appointmenttable(request):
         'today': today,  # Add today to context for template
     }
     return render(request, "appointmentdetailstable.html", context)
-
 
 @login_required
 def editappointment(request):
@@ -10814,9 +10813,12 @@ def invlist(request):
     total_amount = None  # Initialize total amount
     sdate = None  # Initialize start date
     edate = None  # Initialize end date
+    payment_mode = None
     if request.method == 'POST':
         sdate = request.POST.get('sdate')
         edate = request.POST.get('edate')
+        payment_mode = request.POST.get('payment_mode')
+
         if sdate and edate:  # Check if both start and end dates are provided
             inv = newInvoiceMaster.objects.filter(currentdate__range=[sdate, edate],restockstatus='1').order_by('-Invoicenumber')
             total_amount = inv.aggregate(total_amount=Sum('total'))['total_amount']
@@ -10824,6 +10826,10 @@ def invlist(request):
             inv = newInvoiceMaster.objects.all().order_by('-Invoicenumber')
             invst=newInvoiceMaster.objects.filter(restockstatus=1).order_by('-Invoicenumber')
             total_amount = invst.aggregate(total_amount=Sum('total'))['total_amount']
+
+        if payment_mode:
+            inv = newInvoiceMaster.objects.filter(payementmode__iexact=payment_mode,restockstatus='1').order_by('-Invoicenumber')
+            total_amount = inv.aggregate(total_amount=Sum('total'))['total_amount']
         stdesign = request.session.get('loginstaffdesign')
         if not stdesign:
             return redirect('staff_login')
@@ -17411,7 +17417,7 @@ def smilee_kannur_appointment(request):
                         messages.error(request, "Hospital details not found.")
                         return redirect('error_page')
 
-                    staff_id = request.session.get("staffid")
+                    staff_id = request.session.get("staff_id")
                     patient_name = patient_obj.Patient_Name
                     patient_phone = patient_obj.contactno or addcontactnumber
 
@@ -18211,20 +18217,20 @@ def get_treatment_details(request):
     # Fetch prescriptions from ipdailymedicine (filtered by current admission)
     prescriptions = []
     if current_admission:
-        med_qs = ipdailymedicine.objects.filter(
-            ipno=current_admission
-        ).select_related('medicinename').order_by('-id')
+        med_qs = Prescriptionnew.objects.filter(
+            patient_id=current_admission.MR_Number_id
+        ).order_by('-id')
         for m in med_qs:
             prescriptions.append({
                 'id': m.id,
-                'medicine_name': m.medicinename.itemnm if m.medicinename else '',
-                'noofdays': '',
-                'moringtime': '',
-                'noontime': '',
-                'nighttime': '',
-                'beforeorafterdiet': m.dosage or '',
+                'medicine_name': m.medicine_name if m.medicine_name else '',
+                'noofdays': m.noofdays,
+                'moringtime': m.moringtime,
+                'noontime': m.noontime or '',
+                'nighttime': m.nighttime or  '',
+                'beforeorafterdiet': m.beforeorafterdiet or '',
                 'medicineguideline': '',
-                'qtyprescriped': m.count or 1,
+                'qtyprescriped': m.qtyprescriped or 1,
                 'stock_id': m.physicalstock_id or None,
             })
 
@@ -19065,29 +19071,47 @@ def search_ip_patient_details(request):
     query = request.GET.get("query", "").strip()
     if not query:
         return JsonResponse([], safe=False)
+    
     # Filtering PatientDetails based on query
     matching_patients = Patient_details.objects.filter(
         Q(Medical_Record_Number__icontains=query) |
         Q(Patient_Name__icontains=query) |
         Q(contactno__icontains=query)
     ).values_list('id', flat=True)
+    
     # Step 1: Get latest discharge per patient
     latest_discharges = (
         PatientDischarge.objects.filter(ipptno__MR_Number_id__in=matching_patients, ipptno__MR_Number__deleted=False)
-    .values("ipptno__MR_Number")
-    .annotate(latest_discharge_date=Max("discharged_date"))
-        # (ipptno__MR_Number__deleted=False)
-        # .values("ipptno__MR_Number")
-        # .annotate(latest_discharge_date=Max("discharged_date"))
+        .values("ipptno__MR_Number")
+        .annotate(latest_discharge_date=Max("discharged_date"))
     )
+    
     latest_discharge_dict = {
         discharge["ipptno__MR_Number"]: discharge["latest_discharge_date"]
         for discharge in latest_discharges
     }
-
+    
+    # ============================================================
+    # FIX: Exclude patients who already have IP bills
+    # ============================================================
+    # Get all patient IDs that already have IP bills
+    patients_with_bills = IPBill.objects.filter(
+        ip_admission__MR_Number_id__in=latest_discharge_dict.keys()
+    ).values_list('ip_admission__MR_Number_id', flat=True).distinct()
+    
+    # Filter out patients who already have bills
+    eligible_patient_ids = [
+        patient_id for patient_id in latest_discharge_dict.keys() 
+        if patient_id not in patients_with_bills
+    ]
+    
+    # If no eligible patients, return empty
+    if not eligible_patient_ids:
+        return JsonResponse([], safe=False)
+    
     discharged_patients = PatientDischarge.objects.filter(
-        ipptno__MR_Number__in=latest_discharge_dict.keys(),
-        discharged_date__in=latest_discharge_dict.values(),
+        ipptno__MR_Number__in=eligible_patient_ids,
+        discharged_date__in=[latest_discharge_dict[pid] for pid in eligible_patient_ids],
         ipptno__MR_Number__deleted=False
     ).select_related("ipptno", "ipptno__MR_Number", "dischargedstaff")
 
@@ -19095,6 +19119,11 @@ def search_ip_patient_details(request):
 
     for discharge in discharged_patients:
         patient = discharge.ipptno
+        
+        # Double-check: Skip if already has a bill (safety check)
+        if IPBill.objects.filter(ip_admission=patient).exists():
+            continue
+            
         room_rent_total = 0
         room_stay_breakdown = []
         stays = []
@@ -19182,7 +19211,6 @@ def search_ip_patient_details(request):
             (float(m.physicalstock.Rate) if m.physicalstock and str(m.physicalstock.Rate).replace('.', '', 1).isdigit() else 0.0)
             for m in medicines
         )
-       
         
         # Treatment Cost
         treatments = iptreatmentdetails.objects.filter(MR_Number=patient.MR_Number).select_related("tratmntid")
@@ -19195,17 +19223,16 @@ def search_ip_patient_details(request):
         total_cost = room_rent_total + medicine_cost + treatment_cost
 
         try:
-            # Use the patient object (which is ippatientadmission) to filter
             total_advance = IPAdvancePayment.objects.filter(
-                ip_admission=patient  # ✅ Correct - patient is ippatientadmission
+                ip_admission=patient
             ).aggregate(total=Sum('amount'))['total'] or 0
         except Exception as e:
             logger.warning(f"Advance payment error: {str(e)}")
             total_advance = 0
             
-        # Also check if admission.total_advance has value
         if total_advance == 0 and patient.total_advance:
             total_advance = float(patient.total_advance)
+            
         data.append({
             "ip_id": patient.id,
             "patientid": patient.MR_Number_id,
@@ -19218,19 +19245,19 @@ def search_ip_patient_details(request):
             "floor_number": room_booking.floor_number if room_booking else "",
             "doctor": room_booking.admitteddoctor.Staff.Staff_firstname if room_booking and room_booking.admitteddoctor else "N/A",
             "room_rate": round(room_rent_total, 2),
-             "room_charges_breakdown": room_stay_breakdown,
+            "room_charges_breakdown": room_stay_breakdown,
             "room_change_history": change_logs,
-      
             "treatment_cost": round(treatment_cost, 2),
             "medicine_cost": round(medicine_cost, 2),
             "total_cost": round(total_cost, 2),
             "Discharge_Date": discharge.discharged_date.strftime("%Y-%m-%d") if discharge.discharged_date else None,
             "dischargeid": discharge.id,
-             "total_advance": float(total_advance),
-          })
-            
+            "total_advance": float(total_advance),
+        })
 
     return JsonResponse(data, safe=False)
+
+
 def ipbill(request):
     if request.method == "POST":
         st = request.session.get('loginstaff')
@@ -19255,7 +19282,15 @@ def ipbill(request):
         other_expenses = to_float(request.POST.get("expense"))
         discount = to_float(request.POST.get("discount"))
         food_total = to_float(request.POST.get("food_total"))
+        totalprocedureamount = to_float(request.POST.get("totalprocedureamount"))
         
+        # ============================================================
+        # IP CREDIT AMOUNTS - FROM HTML FORM
+        # ============================================================
+        pharmacy_ip_credit = to_float(request.POST.get("pharmacy_ip_credit"))
+        lab_ip_credit = to_float(request.POST.get("lab_ip_credit"))
+        total_ip_credit = pharmacy_ip_credit + lab_ip_credit
+                
         # Get payment mode amounts
         cash_amount = to_float(request.POST.get("cashAmount"))
         card_amount = to_float(request.POST.get("cardAmount"))
@@ -19268,27 +19303,30 @@ def ipbill(request):
         # Get advance amount from admission
         advance_amount = float(admission.total_advance) if admission.total_advance else 0
         
-        # Calculate bill totals
-        subtotal = room_charges + medicine_charges + treatment_charges + other_expenses + food_total
+        # ============================================================
+        # CALCULATE BILL TOTALS WITH IP CREDIT
+        # Subtotal = All charges combined + IP Credit
+        # ============================================================
+        subtotal = room_charges + medicine_charges + treatment_charges + totalprocedureamount + other_expenses + food_total + total_ip_credit
         tax_amount = (subtotal * tax) / 100
         grand_total = subtotal + tax_amount - discount
         
-        # Total collected from all payment modes (recorded, not part of refund calc)
+        # Total collected from all payment modes
         total_collected = cash_amount + card_amount + upi_amount + bank_amount
         
         # ============================================================
-        # NET / REFUND CALCULATION - same approach as ipbillexpand()
-        # net_amount = grand_total - advance_amount
-        # If advance alone exceeds grand_total, the excess is a refund
+        # NET / REFUND CALCULATION
         # ============================================================
         net_amount = grand_total - advance_amount
         refund_amount = 0
         if net_amount < 0:
             refund_amount = abs(net_amount)
             net_amount = 0
-        
         balance_amount = net_amount
         
+        # ============================================================
+        # DETERMINE PAYMENT STATUS
+        # ============================================================
         if refund_amount > 0:
             payment_status = 'REFUND'
         elif balance_amount == 0 and grand_total > 0:
@@ -19298,7 +19336,9 @@ def ipbill(request):
         else:
             payment_status = 'PENDING'
         
-        # Save the bill record
+        # ============================================================
+        # SAVE IP BILL
+        # ============================================================
         ip_bill = IPBill.objects.create(
             ip_admission=admission,
             discharge=discharge,
@@ -19316,24 +19356,152 @@ def ipbill(request):
             advance_paid=round(advance_amount, 2),
             balance_amount=round(balance_amount, 2),
             refundamount=round(refund_amount, 2),
+            procedure_charges=round(totalprocedureamount, 2),
+            pharmacyipcredit=round(pharmacy_ip_credit, 2),
+            labipcredit=round(lab_ip_credit, 2),
+            payment_method=payment_method,
+            cash_amount=round(cash_amount, 2),
+            card_amount=round(card_amount, 2),
+            upi_amount=round(upi_amount, 2),
+            bank_amount=round(bank_amount, 2),
         )
         
-        # Build success message with payment details
-        success_msg = f"Bill #{ip_bill.ipinvoicenumber} generated successfully!\n"
-        success_msg += f"Grand Total: ₹{grand_total:.2f}\n"
-        success_msg += f"Advance Paid: ₹{advance_amount:.2f}\n"
-        success_msg += f"Payment Method: {payment_method.upper().replace('_', ' ')}\n"
-        success_msg += f"Amount Collected: ₹{total_collected:.2f}\n"
+        # ============================================================
+        # UPDATE IP CREDIT STATUS TO 0 FOR PHARMACY AND LAB INVOICES
+        # AND UPDATE PAYMENT_STATUS TO 'Paid'
+        # ============================================================
+        patient = admission.MR_Number
+        if patient:
+            # Update Pharmacy IP Credit invoices - set ip_credit to False and payment_status to 'Paid'
+            pharmacy_invoices = newInvoiceMaster.objects.filter(
+                Mrno=patient,
+                ip_credit=True,
+                restockstatus=True
+            )
+            for inv in pharmacy_invoices:
+                inv.ip_credit = False
+                inv.payementmode = 'Cash'  # ✅ Update payment status to Paid
+                inv.save()
+            
+            # Update Lab IP Credit invoices - set ip_credit to False and payment_status to 'Paid'
+            lab_invoices = LabInvoiceMaster.objects.filter(
+                patient=patient,
+                ip_credit=True,
+                is_cancelled=False
+            )
+            for inv in lab_invoices:
+                inv.ip_credit = False
+                inv.payment_status = 'Paid'  # ✅ Update payment status to Paid
+                inv.save()
         
-        if refund_amount > 0:
-            success_msg += f"Refund Due: ₹{refund_amount:.2f}"
-        else:
-            success_msg += f"Balance Due: ₹{balance_amount:.2f}"
+        # # Build success message
+        # success_msg = f"Bill #{ip_bill.ipinvoicenumber} generated successfully!\n"
+        # success_msg += f"Grand Total: ₹{grand_total:.2f}\n"
+        # success_msg += f"Advance Paid: ₹{advance_amount:.2f}\n"
+        # success_msg += f"IP Credit Applied: ₹{total_ip_credit:.2f}\n"
+        # success_msg += f"Payment Method: {payment_method.upper().replace('_', ' ')}\n"
+        # success_msg += f"Amount Collected: ₹{total_collected:.2f}\n"
+        # success_msg += f"Payment Status: {payment_status}\n"
         
-        messages.success(request, success_msg)
+        # if refund_amount > 0:
+        #     success_msg += f"Refund Due: ₹{refund_amount:.2f}"
+        # else:
+        #     success_msg += f"Balance Due: ₹{balance_amount:.2f}"
+        
+        # messages.success(request, success_msg)
         return redirect('ipnew')
     
     return render(request, "ipbill.html")
+
+
+def get_patient_ip_credit_balance(request):
+    """
+    API endpoint to get IP Credit balance for an IP admission.
+    patient_id refers to ippatientadmission.id
+    """
+    admission_id = request.GET.get('patient_id')
+
+    if not admission_id:
+        return JsonResponse({'error': 'Patient ID required'}, status=400)
+
+    try:
+        admission = ippatientadmission.objects.select_related('MR_Number').get(
+            id=admission_id
+        )
+    except ippatientadmission.DoesNotExist:
+        return JsonResponse({'error': 'IP Admission not found'}, status=404)
+
+    # Get actual patient from the admission
+    patient = admission.MR_Number
+
+    if not patient:
+        return JsonResponse(
+            {'error': 'No patient linked to this admission'},
+            status=404
+        )
+
+    # Pharmacy IP Credit invoices
+    pharmacy_ip_credit = newInvoiceMaster.objects.filter(
+        Mrno=patient,
+        ip_credit=True
+    ).values(
+        'id',
+        'Invoicenumber',
+        'currentdate',
+        'total',
+        'payementmode'
+    )
+
+    # Lab IP Credit invoices
+    lab_ip_credit = LabInvoiceMaster.objects.filter(
+        patient=patient,
+        ip_credit=True,
+        is_cancelled=False
+    ).values(
+        'id',
+        'invoiceno',
+        'date',
+        'total',
+        'payment_status'
+    )
+
+    # Calculate totals
+    pharmacy_total = sum(
+        float(item['total'] or 0)
+        for item in pharmacy_ip_credit
+    )
+
+    lab_total = sum(
+        float(item['total'] or 0)
+        for item in lab_ip_credit
+    )
+
+    data = {
+        # Admission ID
+        'admission_id': admission.id,
+
+        # Actual Patient ID
+        'patient_id': patient.id,
+
+        'patient_name': patient.Patient_Name,
+        'mr_number': patient.Medical_Record_Number,
+
+        'ip_number': admission.ipnumber,
+
+        'pharmacy_ip_credit': list(pharmacy_ip_credit),
+        'lab_ip_credit': list(lab_ip_credit),
+
+        'pharmacy_total': pharmacy_total,
+        'lab_total': lab_total,
+        'grand_total': pharmacy_total + lab_total,
+
+        'count': (
+            pharmacy_ip_credit.count() +
+            lab_ip_credit.count()
+        )
+    }
+
+    return JsonResponse(data)
 
 
 @login_required  
@@ -19555,14 +19723,29 @@ def ipnew(request):
     st_id= request.session['loginstaff'] 
     staff_branch=Staffallocation.objects.get(id=st_id)
     stbtachid=staff_branch.Branch_Name_id
-    # mrnoobj = Patientadmission.objects.filter(Branch_Name_id=stbtachid)
     brname = Branch.objects.filter(id=stbtachid)
+    
+    # Get the latest bill for today
     bill= IPBill.objects.filter(billing_date=today).order_by('-id').first()
+    
+    # ============================================================
+    # GET IP CREDIT TOTALS FROM THE BILL ITSELF
+    # ============================================================
+    pharmacy_ip_credit_total = 0
+    lab_ip_credit_total = 0
+    total_ip_credit = 0
+    
+    if bill:
+        # Get IP credit from the bill fields (pharmacyipcredit and labipcredit)
+        pharmacy_ip_credit_total = float(bill.pharmacyipcredit or 0)
+        lab_ip_credit_total = float(bill.labipcredit or 0)
+        total_ip_credit = pharmacy_ip_credit_total + lab_ip_credit_total
+    
     amount_in_words = ""
     if bill and bill.total_amount is not None:
         amount_in_words = num2words(bill.total_amount, to='currency', lang='en_IN')
-        # Optional cleanup
         amount_in_words = amount_in_words.replace("euro", "Rupees").title() + " Only"
+    
     context={
         'un':un,
         'stff':stff,
@@ -19573,36 +19756,66 @@ def ipnew(request):
         'mrnoobj':mrnoobj,
         'stdesign':stdesign,
         'brname':brname,
-    
         'bill':bill,
-         'amount_in_words': amount_in_words,
+        'amount_in_words': amount_in_words,
+        'pharmacy_ip_credit_total': pharmacy_ip_credit_total,
+        'lab_ip_credit_total': lab_ip_credit_total,
+        'total_ip_credit': total_ip_credit,
     }
     return render(request,"ipelements.html",context)
     
 
+from django.db.models import Q, Max, Sum
+from collections import defaultdict
+import logging
+logger = logging.getLogger(__name__)
+
+@login_required
 def search_ip_expanded(request):
     query = request.GET.get("query", "").strip()
     if not query:
         return JsonResponse([], safe=False)
+    
     matching_patients = Patient_details.objects.filter(
         Q(Medical_Record_Number__icontains=query) |
         Q(Patient_Name__icontains=query) |
         Q(contactno__icontains=query)
     ).values_list('id', flat=True)
+    
     # Step 1: Get latest discharge per patient
     latest_discharges = (
         PatientDischarge.objects.filter(ipptno__MR_Number_id__in=matching_patients, ipptno__MR_Number__deleted=False)
-    .values("ipptno__MR_Number")
-    .annotate(latest_discharge_date=Max("discharged_date"))
+        .values("ipptno__MR_Number")
+        .annotate(latest_discharge_date=Max("discharged_date"))
     )
+    
     # Convert to dictionary for fast lookup
     latest_discharge_dict = {
         discharge["ipptno__MR_Number"]: discharge["latest_discharge_date"] for discharge in latest_discharges
     }
-    # Step 2: Fetch only the latest discharge record for each patient, ensuring they're not deleted
+    
+    # ============================================================
+    # FIX: Exclude patients who already have IP bills
+    # ============================================================
+    # Get all patient IDs that already have IP bills
+    patients_with_bills = IPBill.objects.filter(
+        ip_admission__MR_Number_id__in=latest_discharge_dict.keys()
+    ).values_list('ip_admission__MR_Number_id', flat=True).distinct()
+    
+    # Filter out patients who already have bills
+    eligible_patient_ids = [
+        patient_id for patient_id in latest_discharge_dict.keys() 
+        if patient_id not in patients_with_bills
+    ]
+    
+    # If no eligible patients, return empty
+    if not eligible_patient_ids:
+        return JsonResponse([], safe=False)
+    
+    # Step 2: Fetch only the latest discharge record for each eligible patient
     discharged_patients = PatientDischarge.objects.filter(
-        ipptno__MR_Number__in=latest_discharge_dict.keys(),
-        discharged_date__in=latest_discharge_dict.values(),
+        ipptno__MR_Number__in=eligible_patient_ids,
+        discharged_date__in=[latest_discharge_dict[pid] for pid in eligible_patient_ids],
         ipptno__MR_Number__deleted=False
     ).select_related("ipptno", "ipptno__MR_Number", "dischargedstaff")
 
@@ -19610,6 +19823,11 @@ def search_ip_expanded(request):
 
     for discharge in discharged_patients:
         patient = discharge.ipptno
+        
+        # Double-check: Skip if already has a bill (safety check)
+        if IPBill.objects.filter(ip_admission=patient).exists():
+            continue
+            
         room_rent_total = 0
         room_stay_breakdown = []
         stays = []
@@ -19625,7 +19843,7 @@ def search_ip_expanded(request):
                 room_booking.bed_number.rate if room_booking.bed_number and room_booking.bed_number.rate else 0
             )
             stays.append({
-                 "roomid":room_booking.roomdt_id,
+                "roomid": room_booking.roomdt_id,
                 "start": patient.Current_Date,
                 "room_or_ward": room_booking.room_number.Roomno if room_booking.room_number else room_booking.bed_number.wardbedno,
                 "floor": room_booking.floor_number or "",
@@ -19655,7 +19873,7 @@ def search_ip_expanded(request):
                 is_ward = False
 
             stays.append({
-                   "roomid": change.to_room_or_ward.id,
+                "roomid": change.to_room_or_ward.id,
                 "start": change.change_date,
                 "room_or_ward": label,
                 "floor": floor,
@@ -19673,8 +19891,9 @@ def search_ip_expanded(request):
                 "Total Rent": float(change.total_rent or 0),
                 "Changed By": getattr(change.changed_by.Staff, "Staff_firstname", "N/A") if change.changed_by else "N/A",
                 "Remarks": change.remarks or "",
-              "roomid": change.to_room_or_ward.id
+                "roomid": change.to_room_or_ward.id
             })
+        
         # Room charges computation
         for i, stay in enumerate(stays):
             start_date = stay["start"]
@@ -19690,26 +19909,10 @@ def search_ip_expanded(request):
                 "Rate per Day": stay["rate"],
                 "No of Days": days,
                 "Total": round(cost, 2),
-                "roomid":stay["roomid"]
+                "roomid": stay["roomid"]
             })
+        
         # Medicine Cost Calculation
-       
-        # medicines = ipdailymedicine.objects.filter(MR_Number=patient.MR_Number).select_related("physicalstock")
-        # medicine_cost = sum(
-        #     (int(m.count) if str(m.count).isdigit() else 0) *
-        #     (float(m.physicalstock.Rate) if m.physicalstock and str(m.physicalstock.Rate).replace('.', '', 1).isdigit() else 0.0)
-        #     for m in medicines
-        # )
-        # medicine_details = [
-        #     {
-        #         "name": m.physicalstock.itemnm.itemnm if m.physicalstock else "N/A",
-        #         "count": m.count,
-        #         "rate": float(m.physicalstock.Rate) if m.physicalstock and str(m.physicalstock.Rate).replace('.', '', 1).isdigit() else 0.0,
-        #         "total": (int(m.count) if str(m.count).isdigit() else 0) *
-        #                 (float(m.physicalstock.Rate) if m.physicalstock and str(m.physicalstock.Rate).replace('.', '', 1).isdigit() else 0.0)
-        #     }
-        #     for m in medicines
-        # ]
         medicines = ipdailymedicine.objects.filter(ipno=patient).select_related("medicinename")
         medicine_dict = defaultdict(lambda: {"count": 0, "rate": 0, "total_cost": 0})
         for medicine in medicines:
@@ -19724,64 +19927,93 @@ def search_ip_expanded(request):
                 medicine_dict[name]["physicalid"] = stock.id
                 medicine_dict[name]["total_cost"] = medicine_dict[name]["count"] * rate
 
-        medicine_details = [{"name": name, "rate": data["rate"], "count": data["count"], "total": data["total_cost"],"physcid": data["physicalid"]} for name, data in medicine_dict.items()]
-        print(medicines)
+        medicine_details = [{"name": name, "rate": data["rate"], "count": data["count"], "total": data["total_cost"], "physcid": data["physicalid"]} for name, data in medicine_dict.items()]
         medicine_cost = sum(data["total_cost"] for data in medicine_dict.values())
+        
         # Treatment Cost Calculation
-        # Aggregate treatment details (Group by treatment name)
         treatments = iptreatmentdetails.objects.filter(ipno=patient).select_related("tratmntid")
         treatment_dict = defaultdict(lambda: {"count": 0, "rate": 0, "total_cost": 0})
         for treatment in treatments:
             if treatment.tratmntid:
                 name = treatment.tratmntid.Treatment_name
-                treatmntid=treatment.tratmntid.id
-                print(treatmntid)
+                treatmntid = treatment.tratmntid.id
                 rate = float(treatment.tratmntid.Rate)
                 count = int(treatment.treatmentcount) if treatment.treatmentcount and treatment.treatmentcount.isdigit() else 1
                 treatment_dict[name]["count"] += count
                 treatment_dict[name]["rate"] = rate
                 treatment_dict[name]["total_cost"] = treatment_dict[name]["count"] * rate
                 treatment_dict[name]["treatmntid"] = treatmntid
-        treatment_details = [{"name": name, "rate": data["rate"], "count": data["count"], "total": data["total_cost"],"treatmntid":data["treatmntid"]} for name, data in treatment_dict.items()]
-        treatment_cost= sum(data["total_cost"] for data in treatment_dict.values())
-        # treatments = iptreatmentdetails.objects.filter(MR_Number=patient.MR_Number).select_related("tratmntid")
-        # treatment_cost = sum(
-        #     (int(t.treatmentcount) if str(t.treatmentcount).isdigit() else 0) *
-        #     (float(t.tratmntid.Rate) if t.tratmntid and str(t.tratmntid.Rate).replace('.', '', 1).isdigit() else 0.0)
-        #     for t in treatments
-        # )
+        treatment_details = [{"name": name, "rate": data["rate"], "count": data["count"], "total": data["total_cost"], "treatmntid": data["treatmntid"]} for name, data in treatment_dict.items()]
+        treatment_cost = sum(data["total_cost"] for data in treatment_dict.values())
         
-        # treatment_details = [
-        #     {
-        #         "name": t.tratmntid.Treatment_name if t.tratmntid else "N/A",
-        #         "count": t.treatmentcount,
-        #         "rate": float(t.tratmntid.Rate) if t.tratmntid and str(t.tratmntid.Rate).replace('.', '', 1).isdigit() else 0.0,
-        #         "total": (int(t.treatmentcount) if str(t.treatmentcount).isdigit() else 0) *
-        #                 (float(t.tratmntid.Rate) if t.tratmntid and str(t.tratmntid.Rate).replace('.', '', 1).isdigit() else 0.0)
-        #     }
-        #     for t in treatments
-        # ]
-
-        # print(treatments)
         # Total Cost Calculation
-        total_cost =  room_rent_total + medicine_cost + treatment_cost
+        total_cost = room_rent_total + medicine_cost + treatment_cost
+        
         try:
             total_advance = IPAdvancePayment.objects.filter(
-                ip_admission=patient  # patient is ippatientadmission object
+                ip_admission=patient
             ).aggregate(total=Sum('amount'))['total'] or 0
         except Exception as e:
             logger.warning(f"Advance payment error for patient {patient.id}: {str(e)}")
             total_advance = 0
         
-        # If admission has total_advance field, use it as fallback
         if total_advance == 0 and hasattr(patient, 'total_advance') and patient.total_advance:
             total_advance = float(patient.total_advance)
-        # Append patient data (Only latest discharge, excluding deleted patients)
+
+        # ============================================================
+        # GET IP CREDIT PENDING DETAILS FROM newInvoiceMaster
+        # ============================================================
+        pharmacy_ip_credit = []
+        lab_ip_credit = []
+        pharmacy_ip_credit_total = 0
+        lab_ip_credit_total = 0
+        
+        if patient and patient.MR_Number:
+            # Get Pharmacy IP Credit invoices where ip_credit = True
+            pharmacy_invoices = newInvoiceMaster.objects.filter(
+                Mrno=patient.MR_Number,
+                ip_credit=True,
+                restockstatus=True
+            )
+            
+            for inv in pharmacy_invoices:
+                amount = float(inv.total or 0)
+                pharmacy_ip_credit_total += amount
+                pharmacy_ip_credit.append({
+                    'invoice_number': inv.Invoicenumber or 'N/A',
+                    'date': inv.currentdate.strftime('%Y-%m-%d') if inv.currentdate else '',
+                    'payment_mode': inv.payementmode or 'Cash',
+                    'amount': amount
+                })
+            
+            # Get Lab IP Credit invoices where ip_credit = True
+            lab_invoices = LabInvoiceMaster.objects.filter(
+                patient=patient.MR_Number,
+                ip_credit=True,
+                is_cancelled=False
+            )
+            
+            for inv in lab_invoices:
+                amount = float(inv.total or 0)
+                lab_ip_credit_total += amount
+                lab_ip_credit.append({
+                    'invoice_number': inv.invoiceno or 'N/A',
+                    'date': inv.date.strftime('%Y-%m-%d') if inv.date else '',
+                    'payment_status': inv.payment_status or 'Pending',
+                    'amount': amount
+                })
+        
+        total_ip_credit_pending = pharmacy_ip_credit_total + lab_ip_credit_total
+        # ============================================================
+        # END OF IP CREDIT PENDING DETAILS
+        # ============================================================
+
+        # Append patient data
         data.append({
             "ip_id": patient.id,
             "patientid": patient.MR_Number_id,
-            "age":patient.age,
-            "gender":patient.MR_Number.Gender,
+            "age": patient.age,
+            "gender": patient.MR_Number.Gender,
             "Medical_Record_Number": patient.MR_Number.Medical_Record_Number,
             "Patient_Name": patient.MR_Number.Patient_Name,
             "contactno": patient.MR_Number.contactno or "N/A",
@@ -19791,20 +20023,25 @@ def search_ip_expanded(request):
             "floor_number": room_booking.floor_number if room_booking else "",
             "doctor": room_booking.admitteddoctor.Staff.Staff_firstname if room_booking and room_booking.admitteddoctor else "N/A",
             "room_rate": round(room_rent_total, 2),
-             "room_charges_breakdown": room_stay_breakdown,
+            "room_charges_breakdown": room_stay_breakdown,
             "room_change_history": change_logs,
-      
             "medicine_cost": round(medicine_cost, 2),
             "treatment_cost": round(treatment_cost, 2),
             "total_cost": round(total_cost, 2),
             "Discharge_Date": discharge.discharged_date.strftime("%Y-%m-%d") if discharge.discharged_date else None,
             "dischargeid": discharge.id,
             "medicine_details": medicine_details,
-"treatment_details": treatment_details,
-   "total_advance": float(total_advance),
-
+            "treatment_details": treatment_details,
+            "total_advance": float(total_advance),
+            # IP CREDIT PENDING DATA
+            "pharmacy_ip_credit": pharmacy_ip_credit,
+            "lab_ip_credit": lab_ip_credit,
+            "pharmacy_ip_credit_total": pharmacy_ip_credit_total,
+            "lab_ip_credit_total": lab_ip_credit_total,
+            "total_ip_credit_pending": total_ip_credit_pending,
         })
-    return JsonResponse(data, safe=False)  
+    
+    return JsonResponse(data, safe=False)
     
 
 def ipbill_detail_view(request):
@@ -19836,6 +20073,216 @@ def ipbill_detail_view(request):
 from json import loads 
 logger = logging.getLogger(__name__)
 @csrf_exempt
+# def ipbillexpand(request):
+#     if request.method == 'POST':
+#         try:
+#             with transaction.atomic():
+#                 ipno_id = request.POST.get('ipno')
+#                 if not ipno_id:
+#                     return JsonResponse({"success": False, "error": "IP number was not provided."})
+
+#                 try:
+#                     ip_admission = ippatientadmission.objects.get(id=ipno_id)
+#                 except ippatientadmission.DoesNotExist:
+#                     return JsonResponse({"success": False, "error": f"No admission found for IP ID {ipno_id}"})
+
+#                 # Get total advance from IPAdvancePayment table
+#                 total_advance = IPAdvancePayment.objects.filter(
+#                     ip_admission=ip_admission
+#                 ).aggregate(total=Sum('amount'))['total'] or 0
+                
+#                 # Update admission's total_advance field
+#                 ip_admission.total_advance = total_advance
+#                 ip_admission.save(update_fields=['total_advance'])
+
+#                 # Get values from POST
+#                 subtotal = Decimal(request.POST.get('sub_total', 0))
+#                 tax = Decimal(request.POST.get('tax', 0) or 0)
+#                 discount = Decimal(request.POST.get('discount', 0) or 0)
+#                 advance_paid = Decimal(total_advance)
+                
+#                 # Calculate grand total (before advance deduction)
+#                 grand_total = subtotal + tax - discount
+                
+#                 # Calculate net amount (after advance deduction)
+#                 net_amount = grand_total - advance_paid
+                
+#                 # Calculate refund amount if advance exceeds grand total
+#                 refund_amount = Decimal(0)
+#                 if net_amount < 0:
+#                     refund_amount = abs(net_amount)  # Amount to refund
+#                     net_amount = 0  # Net amount becomes 0
+                
+#                 # Amount collected is what the patient pays (net amount)
+#                 amount_collected = net_amount
+                
+#                 # Get payment method and amounts from POST
+#                 payment_method = request.POST.get('payment_method', 'cash')
+#                 cash_amount = Decimal(request.POST.get('cash_amount', 0) or 0)
+#                 card_amount = Decimal(request.POST.get('card_amount', 0) or 0)
+#                 upi_amount = Decimal(request.POST.get('upi_amount', 0) or 0)
+#                 bank_amount = Decimal(request.POST.get('bank_amount', 0) or 0)
+                
+#                 # Determine payment status
+                
+#                 # Create main bill with all payment fields
+#                 bill = IPBill.objects.create(
+#                     ip_admission=ip_admission,
+#                     room_charges=Decimal(request.POST.get('room_rent_total', 0)),
+#                     medicine_charges=Decimal(request.POST.get('medicine_total', 0)),
+#                     treatment_charges=Decimal(request.POST.get('treatment_total', 0)),
+#                     subtotal=subtotal,
+#                     other_expenses=Decimal(request.POST.get('service_total', 0)),
+#                     tax=tax,
+#                     discount=discount,
+#                     total_amount=grand_total,
+#                     food_expenses=Decimal(request.POST.get('totalfoodamount', 0) or 0),
+#                     billingstaff_id=request.session.get('loginstaff'),
+#                     advance_paid=advance_paid,
+#                     balance_amount=net_amount,  # This is the amount due
+#                     refundamount=refund_amount,  # Refund amount if overpaid
+#                     payment_method=payment_method,
+#                     cash_amount=cash_amount,
+#                     card_amount=card_amount,
+#                     upi_amount=upi_amount,
+#                     bank_amount=bank_amount,
+#                 )
+
+#                 # Parse and save medicine details
+#                 medicines = loads(request.POST.get('medicine_details', '[]'))
+#                 for m in medicines:
+#                     ipexpandedbillmedicinedetail.objects.create(
+#                         ipno=ip_admission,
+#                         ipbilldt=bill,
+#                         medicinename=m['name'],
+#                         count=m['count'],
+#                         rate_per_medicine=m['rate'],
+#                         totalmedicine=m['total'],
+#                         physicalstock_id=m['stockid'],
+#                         Current_Date=date.today()
+#                     )
+
+#                 # Parse and save treatment details
+#                 treatments = loads(request.POST.get('treatment_details', '[]'))
+#                 for t in treatments:
+#                     ipexpandedbilltreatmentdetail.objects.create(
+#                         ipno=ip_admission,
+#                         ipbilldt=bill,
+#                         tratmntid_id=t['treatmntid'],
+#                         treatmentcount=t['count'],
+#                         rate_per_treatment=t['rate'],
+#                         total_treatmentrate=t['total'],
+#                         Current_Date=date.today()
+#                     )
+
+#                 # Parse and save room details
+#                 rooms = loads(request.POST.get('room_details', '[]'))
+#                 for r in rooms:
+#                     IPExpandedBillRoomDetail.objects.create(
+#                         ipbill=bill,
+#                         ipno=ip_admission,
+#                         room_id=r['roomid'],
+#                         no_of_days=r['days'],
+#                         rate_per_day=r['rate'],
+#                         total_rent=r['total']
+#                     )
+
+#                 # Parse and save service details
+#                 services = loads(request.POST.get('service_details', '[]'))
+#                 for s in services:
+#                     ipexpandedbillotherexpensesdetail.objects.create(
+#                         ipno=ip_admission,
+#                         ipbilldt=bill,
+#                         service=s['service'],
+#                         details=s['details'],
+#                         charges=s['charges'],
+#                         Current_Date=date.today()
+#                     )
+
+#                 return JsonResponse({
+#                     "success": True,
+#                     "message": "Bill saved successfully.",
+#                     "redirect_url": f"{reverse('ipbill_detail_view')}?bill_id={bill.id}"
+#                 })
+
+#         except Exception as e:
+#             print("ERROR:", e)
+#             return JsonResponse({"success": False, "error": str(e)})
+
+#     # GET request - show the bill details page
+#     bill_id = request.GET.get('bill_id')
+#     if bill_id:
+#         bill = get_object_or_404(IPBill, id=bill_id)
+        
+#         # Get all details
+#         medicine_details = ipexpandedbillmedicinedetail.objects.filter(ipbilldt=bill)
+#         treatment_details = ipexpandedbilltreatmentdetail.objects.filter(ipbilldt=bill)
+#         room_details = IPExpandedBillRoomDetail.objects.filter(ipbill=bill)
+#         other_expenses_details = ipexpandedbillotherexpensesdetail.objects.filter(ipbilldt=bill)
+        
+#         # Get values
+#         total_advance = bill.advance_paid or 0
+#         discount = bill.discount or 0
+#         gross_total = bill.total_amount or 0
+#         net_amount = bill.balance_amount or 0
+#         refund_amount = bill.refundamount or 0
+#         amount_collected = net_amount  # This is what patient pays
+        
+#         # Calculate payment summary for display
+#         total_collected = (bill.cash_amount or 0) + (bill.card_amount or 0) + (bill.upi_amount or 0) + (bill.bank_amount or 0)
+        
+#         # Convert amount to words (using net amount)
+#         try:
+#             from num2words import num2words
+#             amount_in_words = num2words(net_amount, lang='en_IN').title()
+#             if net_amount == int(net_amount):
+#                 amount_in_words = f"Rupees {amount_in_words} Only"
+#             else:
+#                 rupees = int(net_amount)
+#                 paise = int(round((net_amount - rupees) * 100))
+#                 rupees_words = num2words(rupees, lang='en_IN').title()
+#                 paise_words = num2words(paise, lang='en_IN').title()
+#                 amount_in_words = f"Rupees {rupees_words} and {paise_words} Paise Only"
+#         except:
+#             amount_in_words = f"{net_amount:.2f} Only"
+        
+#         context = {
+#             'bill': bill,
+#             'medicine_details': medicine_details,
+#             'treatment_details': treatment_details,
+#             'room_details': room_details,
+#             'other_expenses_details': other_expenses_details,
+#             'total_advance': total_advance,
+#             'discount_amount': discount,
+#             'gross_total': gross_total,
+#             'net_amount': net_amount,
+#             'refund_amount': refund_amount,
+#             'amount_collected': amount_collected,
+#             'total_collected': total_collected,
+#             'amount_in_words': amount_in_words,
+#             'objhospt': Hospitaldetails.objects.all(),
+#         }
+#         return render(request, "ipbillexpanded.html", context)
+    
+#     return render(request, "ipbillexpanded.html")
+def safe_decimal(value, default=0):
+    """
+    Safely convert a value to Decimal.
+    Returns default if conversion fails.
+    """
+    if value is None or value == '' or value == 'None':
+        return Decimal(default)
+    try:
+        # Remove any currency symbols or commas
+        if isinstance(value, str):
+            value = value.replace('₹', '').replace(',', '').replace('$', '').strip()
+            if value == '':
+                return Decimal(default)
+        return Decimal(value)
+    except (InvalidOperation, ValueError, TypeError):
+        return Decimal(default)
+    
+@login_required
 def ipbillexpand(request):
     if request.method == 'POST':
         try:
@@ -19858,119 +20305,320 @@ def ipbillexpand(request):
                 ip_admission.total_advance = total_advance
                 ip_admission.save(update_fields=['total_advance'])
 
-                # Get values from POST
-                subtotal = Decimal(request.POST.get('sub_total', 0))
-                tax = Decimal(request.POST.get('tax', 0) or 0)
-                discount = Decimal(request.POST.get('discount', 0) or 0)
-                advance_paid = Decimal(total_advance)
+                # ============================================================
+                # GET VALUES FROM POST - USING CORRECT FORM FIELD NAMES
+                # ============================================================
                 
-                # Calculate grand total (before advance deduction)
-                grand_total = subtotal + tax - discount
+                # Room charges - from roomRentTotal field
+                room_charges = safe_decimal(request.POST.get('roomRentTotal', 0))
                 
-                # Calculate net amount (after advance deduction)
-                net_amount = grand_total - advance_paid
+                # Medicine charges - from medicine-cost field
+                medicine_charges = safe_decimal(request.POST.get('medicine-cost', 0))
                 
-                # Calculate refund amount if advance exceeds grand total
-                refund_amount = Decimal(0)
-                if net_amount < 0:
-                    refund_amount = abs(net_amount)  # Amount to refund
-                    net_amount = 0  # Net amount becomes 0
+                # Treatment charges - from treatment-total field
+                treatment_charges = safe_decimal(request.POST.get('treatment-total', 0))
                 
-                # Amount collected is what the patient pays (net amount)
-                amount_collected = net_amount
+                # Procedure charges - from procedure-total field
+                procedure_charges = safe_decimal(request.POST.get('procedure-total', 0))
                 
-                # Get payment method and amounts from POST
+                # Food expenses - from food-total field
+                food_expenses = safe_decimal(request.POST.get('food-total', 0))
+                
+                # Other services - from other-services-total field
+                other_expenses = safe_decimal(request.POST.get('other-services-total', 0))
+                
+                # Subtotal - from subtotal field
+                subtotal = safe_decimal(request.POST.get('subtotal', 0))
+                
+                # Tax and Discount
+                tax = safe_decimal(request.POST.get('tax', 0))
+                discount = safe_decimal(request.POST.get('discount', 0))
+                
+                # Advance paid - from advance_paid field or use total_advance
+                advance_paid = safe_decimal(request.POST.get('advance_paid', total_advance))
+                
+                # Payment details
                 payment_method = request.POST.get('payment_method', 'cash')
-                cash_amount = Decimal(request.POST.get('cash_amount', 0) or 0)
-                card_amount = Decimal(request.POST.get('card_amount', 0) or 0)
-                upi_amount = Decimal(request.POST.get('upi_amount', 0) or 0)
-                bank_amount = Decimal(request.POST.get('bank_amount', 0) or 0)
+                cash_amount = safe_decimal(request.POST.get('cash_amount', 0))
+                card_amount = safe_decimal(request.POST.get('card_amount', 0))
+                upi_amount = safe_decimal(request.POST.get('Gpay_amount', 0))  # Form uses Gpay_amount
+                bank_amount = safe_decimal(request.POST.get('bank_amount', 0))
                 
-                # Determine payment status
+                # Payment amount (for single payment mode)
+                payment_amount = safe_decimal(request.POST.get('payment_amount', 0))
                 
-                # Create main bill with all payment fields
+                # If single payment mode, use payment_amount for the selected method
+                if payment_method != 'multiple':
+                    if payment_method == 'cash':
+                        cash_amount = payment_amount
+                    elif payment_method == 'card':
+                        card_amount = payment_amount
+                    elif payment_method == 'Gpay':
+                        upi_amount = payment_amount
+                
+                pharmacyipcredit = safe_decimal(request.POST.get('pharmacyipcredit', 0))
+                labipcredit = safe_decimal(request.POST.get('labipcredit', 0))
+                # Calculate total amount collected
+                amount_collected = cash_amount + card_amount + upi_amount + bank_amount
+
+                # Calculate grand total from individual charges
+                grand_total = room_charges + medicine_charges + treatment_charges + procedure_charges + food_expenses + other_expenses + tax - discount + labipcredit + pharmacyipcredit
+                
+                # If subtotal is 0 but grand_total > 0, use grand_total
+                if subtotal == 0 and grand_total > 0:
+                    subtotal = grand_total - tax + discount
+                
+                # ============================================================
+                # BALANCE AND REFUND CALCULATION
+                # ============================================================
+                
+                # Balance = Grand Total - Advance Paid - Amount Collected
+                balance = grand_total - advance_paid - amount_collected
+                
+                refund_amount = Decimal(0)
+                if balance < 0:
+                    refund_amount = abs(balance)
+                    balance = 0
+                elif balance > 0:
+                    refund_amount = Decimal(0)
+                
+                # Net amount to be paid after advance deduction (for display)
+                net_amount = grand_total - advance_paid
+                if net_amount < 0:
+                    net_amount = 0
+                
+                # ============================================================
+                # CREATE BILL
+                # ============================================================
+                
                 bill = IPBill.objects.create(
                     ip_admission=ip_admission,
-                    room_charges=Decimal(request.POST.get('room_rent_total', 0)),
-                    medicine_charges=Decimal(request.POST.get('medicine_total', 0)),
-                    treatment_charges=Decimal(request.POST.get('treatment_total', 0)),
+                    room_charges=room_charges,
+                    medicine_charges=medicine_charges,
+                    treatment_charges=treatment_charges,
+                    procedure_charges=procedure_charges,
                     subtotal=subtotal,
-                    other_expenses=Decimal(request.POST.get('service_total', 0)),
+                    other_expenses=other_expenses,
                     tax=tax,
                     discount=discount,
                     total_amount=grand_total,
-                    food_expenses=Decimal(request.POST.get('totalfoodamount', 0) or 0),
+                    food_expenses=food_expenses,
                     billingstaff_id=request.session.get('loginstaff'),
                     advance_paid=advance_paid,
-                    balance_amount=net_amount,  # This is the amount due
-                    refundamount=refund_amount,  # Refund amount if overpaid
+                    balance_amount=balance,
+                    refundamount=refund_amount,
                     payment_method=payment_method,
                     cash_amount=cash_amount,
                     card_amount=card_amount,
                     upi_amount=upi_amount,
                     bank_amount=bank_amount,
+                    pharmacyipcredit=pharmacyipcredit,
+                    labipcredit=labipcredit
                 )
 
-                # Parse and save medicine details
-                medicines = loads(request.POST.get('medicine_details', '[]'))
-                for m in medicines:
-                    ipexpandedbillmedicinedetail.objects.create(
-                        ipno=ip_admission,
-                        ipbilldt=bill,
-                        medicinename=m['name'],
-                        count=m['count'],
-                        rate_per_medicine=m['rate'],
-                        totalmedicine=m['total'],
-                        physicalstock_id=m['stockid'],
-                        Current_Date=date.today()
-                    )
+                if pharmacyipcredit > 0 and bill:
+                    # Find the actual pharmacy invoice linked to this admission
+                    pharmacy_invoices = newInvoiceMaster.objects.filter(Mrno_id=ip_admission.MR_Number_id)
+                    for inv in pharmacy_invoices:
+                        # Update status to Paid and set credit to 0
+                        inv.payement_mode = 'Cash'
+                        inv.ip_credit = 0
+                        inv.save()
 
-                # Parse and save treatment details
-                treatments = loads(request.POST.get('treatment_details', '[]'))
-                for t in treatments:
-                    ipexpandedbilltreatmentdetail.objects.create(
-                        ipno=ip_admission,
-                        ipbilldt=bill,
-                        tratmntid_id=t['treatmntid'],
-                        treatmentcount=t['count'],
-                        rate_per_treatment=t['rate'],
-                        total_treatmentrate=t['total'],
-                        Current_Date=date.today()
-                    )
+                # If lab credit is used, set to Paid and reset credit to 0
+                if labipcredit > 0 and bill :
+                    # Find the actual lab invoice linked to this admission's patient
+                    lab_invoices = LabInvoiceMaster.objects.filter(patient_id=ip_admission.MR_Number_id)
+                    for inv in lab_invoices:
+                        inv.payment_status = 'Paid'
+                        inv.ip_credit = False
+                        inv.credit_amount = 0
+                        inv.save()
 
-                # Parse and save room details
-                rooms = loads(request.POST.get('room_details', '[]'))
-                for r in rooms:
-                    IPExpandedBillRoomDetail.objects.create(
-                        ipbill=bill,
-                        ipno=ip_admission,
-                        room_id=r['roomid'],
-                        no_of_days=r['days'],
-                        rate_per_day=r['rate'],
-                        total_rent=r['total']
-                    )
+                # ============================================================
+                # PARSE AND SAVE MEDICINE DETAILS FROM FORM ARRAYS
+                # ============================================================
+                medicine_names = request.POST.getlist('medicine_name_hidden[]')
+                medicine_stockids = request.POST.getlist('medicine_stckid[]')
+                medicine_counts = request.POST.getlist('medicine_count[]')
+                medicine_rates = request.POST.getlist('medicine_rate[]')
+                medicine_totals = request.POST.getlist('medicine_total[]')
+                
+                for i in range(len(medicine_names)):
+                    if i < len(medicine_counts) and i < len(medicine_rates):
+                        name = medicine_names[i] if i < len(medicine_names) else ''
+                        try:
+                            count = int(medicine_counts[i]) if i < len(medicine_counts) and medicine_counts[i] else 0
+                        except (ValueError, TypeError):
+                            count = 0
+                        rate = safe_decimal(medicine_rates[i]) if i < len(medicine_rates) and medicine_rates[i] else Decimal(0)
+                        total = safe_decimal(medicine_totals[i]) if i < len(medicine_totals) and medicine_totals[i] else Decimal(0)
+                        try:
+                            stockid = int(medicine_stockids[i]) if i < len(medicine_stockids) and medicine_stockids[i] else 1
+                        except (ValueError, TypeError):
+                            stockid = 1
+                        
+                        if name and count > 0:
+                            ipexpandedbillmedicinedetail.objects.create(
+                                ipno=ip_admission,
+                                ipbilldt=bill,
+                                medicinename=name,
+                                count=count,
+                                rate_per_medicine=rate,
+                                totalmedicine=total,
+                                physicalstock_id=stockid,
+                                Current_Date=date.today()
+                            )
 
-                # Parse and save service details
-                services = loads(request.POST.get('service_details', '[]'))
-                for s in services:
-                    ipexpandedbillotherexpensesdetail.objects.create(
-                        ipno=ip_admission,
-                        ipbilldt=bill,
-                        service=s['service'],
-                        details=s['details'],
-                        charges=s['charges'],
-                        Current_Date=date.today()
-                    )
+                # ============================================================
+                # PARSE AND SAVE TREATMENT DETAILS FROM FORM ARRAYS
+                # ============================================================
+                treatment_names = request.POST.getlist('treatment_name_hidden[]')
+                treatment_ids = request.POST.getlist('treatmntid[]')
+                treatment_counts = request.POST.getlist('treatmntqty[]')
+                treatment_rates = request.POST.getlist('treatmntrate[]')
+                treatment_totals = request.POST.getlist('treatmnttotal[]')
+                
+                for i in range(len(treatment_names)):
+                    if i < len(treatment_counts) and i < len(treatment_rates):
+                        name = treatment_names[i] if i < len(treatment_names) else ''
+                        try:
+                            count = int(treatment_counts[i]) if i < len(treatment_counts) and treatment_counts[i] else 0
+                        except (ValueError, TypeError):
+                            count = 0
+                        rate = safe_decimal(treatment_rates[i]) if i < len(treatment_rates) and treatment_rates[i] else Decimal(0)
+                        total = safe_decimal(treatment_totals[i]) if i < len(treatment_totals) and treatment_totals[i] else Decimal(0)
+                        try:
+                            treatid = int(treatment_ids[i]) if i < len(treatment_ids) and treatment_ids[i] else 1
+                        except (ValueError, TypeError):
+                            treatid = 1
+                        
+                        if name and count > 0:
+                            ipexpandedbilltreatmentdetail.objects.create(
+                                ipno=ip_admission,
+                                ipbilldt=bill,
+                                tratmntid_id=treatid,
+                                treatmentcount=count,
+                                rate_per_treatment=rate,
+                                total_treatmentrate=total,
+                                Current_Date=date.today()
+                            )
 
+                # ============================================================
+                # PARSE AND SAVE PROCEDURE DETAILS FROM FORM ARRAYS
+                # ============================================================
+                procedure_names = request.POST.getlist('procedure_name_hidden[]')
+                procedure_ids = request.POST.getlist('procedure_id[]')
+                procedure_counts = request.POST.getlist('procedure_count[]')
+                procedure_rates = request.POST.getlist('procedure_rate[]')
+                procedure_totals = request.POST.getlist('procedure_total[]')
+                
+                for i in range(len(procedure_names)):
+                    if i < len(procedure_counts) and i < len(procedure_rates):
+                        name = procedure_names[i] if i < len(procedure_names) else ''
+                        try:
+                            count = int(procedure_counts[i]) if i < len(procedure_counts) and procedure_counts[i] else 0
+                        except (ValueError, TypeError):
+                            count = 0
+                        rate = safe_decimal(procedure_rates[i]) if i < len(procedure_rates) and procedure_rates[i] else Decimal(0)
+                        total = safe_decimal(procedure_totals[i]) if i < len(procedure_totals) and procedure_totals[i] else Decimal(0)
+                        try:
+                            procid = int(procedure_ids[i]) if i < len(procedure_ids) and procedure_ids[i] else 1
+                        except (ValueError, TypeError):
+                            procid = 1
+                        
+                        if name and count > 0:
+                            procedure_master = None
+                            try:
+                                procedure_master = ProcedureMaster.objects.get(id=procid)
+                            except ProcedureMaster.DoesNotExist:
+                                pass
+                            
+                            ipexpandedbillproceduredetail.objects.create(
+                                ipno=ip_admission,
+                                ipbilldt=bill,
+                                procedure_name=name,
+                                procedure=procedure_master,
+                                count=count,
+                                rate_per_procedure=rate,
+                                total_procedure=total,
+                                Current_Date=date.today()
+                            )
+
+                # ============================================================
+                # PARSE AND SAVE ROOM DETAILS FROM FORM ARRAYS
+                # ============================================================
+                room_ids = request.POST.getlist('room[]')
+                room_rates = request.POST.getlist('roomperrate[]')
+                room_days = request.POST.getlist('days[]')
+                room_totals = request.POST.getlist('totalrentamount[]')
+                
+                for i in range(len(room_ids)):
+                    if i < len(room_rates) and i < len(room_days):
+                        try:
+                            roomid = int(room_ids[i]) if room_ids[i] else 1
+                        except (ValueError, TypeError):
+                            roomid = 1
+                        rate = safe_decimal(room_rates[i]) if i < len(room_rates) and room_rates[i] else Decimal(0)
+                        try:
+                            days = int(room_days[i]) if i < len(room_days) and room_days[i] else 1
+                        except (ValueError, TypeError):
+                            days = 1
+                        total = safe_decimal(room_totals[i]) if i < len(room_totals) and room_totals[i] else Decimal(0)
+                        
+                        IPExpandedBillRoomDetail.objects.create(
+                            ipbill=bill,
+                            ipno=ip_admission,
+                            room_id=roomid,
+                            no_of_days=days,
+                            rate_per_day=rate,
+                            total_rent=total
+                        )
+
+                # ============================================================
+                # PARSE AND SAVE SERVICE DETAILS FROM FORM ARRAYS
+                # ============================================================
+                service_names = request.POST.getlist('service[]')
+                service_details = request.POST.getlist('details[]')
+                service_charges = request.POST.getlist('charges[]')
+                
+                for i in range(len(service_names)):
+                    if i < len(service_charges):
+                        name = service_names[i] if i < len(service_names) else ''
+                        detail = service_details[i] if i < len(service_details) else ''
+                        charge = safe_decimal(service_charges[i]) if i < len(service_charges) and service_charges[i] else Decimal(0)
+                        
+                        if name and charge > 0:
+                            ipexpandedbillotherexpensesdetail.objects.create(
+                                ipno=ip_admission,
+                                ipbilldt=bill,
+                                service=name,
+                                details=detail,
+                                charges=charge,
+                                Current_Date=date.today()
+                            )
+
+                # ============================================================
+                # RETURN SUCCESS RESPONSE
+                # ============================================================
                 return JsonResponse({
+                    "status": "success",
                     "success": True,
                     "message": "Bill saved successfully.",
+                    "bill_id": bill.id,
                     "redirect_url": f"{reverse('ipbill_detail_view')}?bill_id={bill.id}"
                 })
 
         except Exception as e:
             print("ERROR:", e)
-            return JsonResponse({"success": False, "error": str(e)})
+            import traceback
+            traceback.print_exc()
+            return JsonResponse({
+                "status": "error",
+                "success": False, 
+                "error": str(e),
+                "message": f"Error: {str(e)}"
+            })
 
     # GET request - show the bill details page
     bill_id = request.GET.get('bill_id')
@@ -19980,6 +20628,7 @@ def ipbillexpand(request):
         # Get all details
         medicine_details = ipexpandedbillmedicinedetail.objects.filter(ipbilldt=bill)
         treatment_details = ipexpandedbilltreatmentdetail.objects.filter(ipbilldt=bill)
+        procedure_details = ipexpandedbillproceduredetail.objects.filter(ipbilldt=bill)
         room_details = IPExpandedBillRoomDetail.objects.filter(ipbill=bill)
         other_expenses_details = ipexpandedbillotherexpensesdetail.objects.filter(ipbilldt=bill)
         
@@ -19987,38 +20636,49 @@ def ipbillexpand(request):
         total_advance = bill.advance_paid or 0
         discount = bill.discount or 0
         gross_total = bill.total_amount or 0
-        net_amount = bill.balance_amount or 0
+        balance_amount = bill.balance_amount or 0
         refund_amount = bill.refundamount or 0
-        amount_collected = net_amount  # This is what patient pays
+        
+        # Calculate amount collected
+        amount_collected = (bill.cash_amount or 0) + (bill.card_amount or 0) + (bill.upi_amount or 0) + (bill.bank_amount or 0)
+        
+        # Net amount after advance deduction
+        net_amount = gross_total - total_advance
+        if net_amount < 0:
+            net_amount = 0
         
         # Calculate payment summary for display
         total_collected = (bill.cash_amount or 0) + (bill.card_amount or 0) + (bill.upi_amount or 0) + (bill.bank_amount or 0)
         
-        # Convert amount to words (using net amount)
+        # Convert amount to words
+        display_amount = refund_amount if refund_amount > 0 else balance_amount
+        
         try:
             from num2words import num2words
-            amount_in_words = num2words(net_amount, lang='en_IN').title()
-            if net_amount == int(net_amount):
+            amount_in_words = num2words(display_amount, lang='en_IN').title()
+            if display_amount == int(display_amount):
                 amount_in_words = f"Rupees {amount_in_words} Only"
             else:
-                rupees = int(net_amount)
-                paise = int(round((net_amount - rupees) * 100))
+                rupees = int(display_amount)
+                paise = int(round((display_amount - rupees) * 100))
                 rupees_words = num2words(rupees, lang='en_IN').title()
                 paise_words = num2words(paise, lang='en_IN').title()
                 amount_in_words = f"Rupees {rupees_words} and {paise_words} Paise Only"
         except:
-            amount_in_words = f"{net_amount:.2f} Only"
+            amount_in_words = f"{display_amount:.2f} Only"
         
         context = {
             'bill': bill,
             'medicine_details': medicine_details,
             'treatment_details': treatment_details,
+            'procedure_details': procedure_details,
             'room_details': room_details,
             'other_expenses_details': other_expenses_details,
             'total_advance': total_advance,
             'discount_amount': discount,
             'gross_total': gross_total,
             'net_amount': net_amount,
+            'balance_amount': balance_amount,
             'refund_amount': refund_amount,
             'amount_collected': amount_collected,
             'total_collected': total_collected,
@@ -20027,6 +20687,7 @@ def ipbillexpand(request):
         }
         return render(request, "ipbillexpanded.html", context)
     
+    # If no bill_id, render the form page
     return render(request, "ipbillexpanded.html")
     
 def delete_treatment_plan(request):
@@ -23642,6 +24303,9 @@ def save_lab_invoice(request):
         if not patient:
             return JsonResponse({'success': False, 'error': 'Patient ID required'})
 
+        # NEW: Get IP Credit checkbox value
+        ip_credit = data.get('ip_credit', 'false') == 'true'
+
         today_date = date.today()
         
         # Get pending requisition
@@ -23663,18 +24327,27 @@ def save_lab_invoice(request):
         tax_percentage = float(data.get('taxperc') or 0)
         discount = float(data.get('discount') or 0)
         cfee = float(data.get('cfee') or 0)
-        rgfee = float(data.get('rgfee') or 0)
+        # Registration fee is always 0 (hidden)
+        rgfee = 0.00
         total = float(data.get('totalIncludingTax') or 0)
 
         tax_amount = (subtotal * tax_percentage) / 100
 
-        # Payment Details
-        cash_amount = float(data.get('cash_amount') or 0)
-        gpay_amount = float(data.get('gpay_amount') or 0)
-        card_amount = float(data.get('card_amount') or 0)
-        credit_amount = float(data.get('credit_amount') or 0)
-
-        is_credit = credit_amount > 0
+        # Payment Details - If IP Credit is checked, reset all payments
+        if ip_credit:
+            cash_amount = 0
+            gpay_amount = 0
+            card_amount = 0
+            credit_amount = 0
+            is_credit = False
+            payment_status = "IP Credit"
+        else:
+            cash_amount = float(data.get('cash_amount') or 0)
+            gpay_amount = float(data.get('gpay_amount') or 0)
+            card_amount = float(data.get('card_amount') or 0)
+            credit_amount = float(data.get('credit_amount') or 0)
+            is_credit = credit_amount > 0
+            payment_status = "Credit" if is_credit else "Paid"
         
         # Create Invoice
         invoice = LabInvoiceMaster.objects.create(
@@ -23685,15 +24358,16 @@ def save_lab_invoice(request):
             tax_amount=tax_amount,
             discount=discount,
             consultation_fee=cfee,
-            registration_fee=rgfee,
+            registration_fee=rgfee,  # Always 0
             total=total,
             cash_amount=cash_amount,
             gpay_amount=gpay_amount,
             card_amount=card_amount,
             credit_amount=credit_amount,
             is_credit=is_credit,
-            payment_status="Credit" if is_credit else "Paid",
-            created_by_id=staff_id
+            payment_status=payment_status,
+            created_by_id=staff_id,
+            ip_credit=ip_credit  # NEW: Save IP Credit flag
         )
         
         # ✅ Save Test Items
@@ -23809,7 +24483,11 @@ def save_lab_invoice(request):
         if message_parts:
             messages.success(request, f"Invoice {invoice.invoiceno} created successfully!")
         
-        if is_credit:
+        # Redirect based on IP Credit or payment type
+        if ip_credit:
+            # For IP Credit, show print option directly
+            return redirect(reverse('lab_invoice_print_option') + f"?invid={invoice.id}")
+        elif is_credit:
             return redirect('lab_invoice_list')
         else:
             return redirect(reverse('lab_invoice_print_option') + f"?invid={invoice.id}")
@@ -24560,7 +25238,7 @@ def lab_invoice_print_results(request):
     try:
         invoice = get_object_or_404(LabInvoiceMaster, id=invoice_id)
         
-        if invoice.payment_status != "Paid":
+        if invoice.payment_status != "Paid" and invoice.payment_status != "IP Credit":
             messages.error(request, "Results can only be printed for paid invoices")
             return redirect('lab_invoice_list')
         
@@ -25690,6 +26368,7 @@ def get_invoice_number(branch_name=None):
     
     # Format with 4 digits (0001, 0002, ..., 9999)
     return f"{financial_year_prefix}{new_number:04d}"
+
 from django.db.models import Q
 @transaction.atomic
 def pharmacy_invoice(request):
@@ -25703,6 +26382,7 @@ def pharmacy_invoice(request):
                 hospital_id = request.POST.get('hosptname')
                 branch_id = request.POST.get('branchname')
                 customer_type = request.POST.get('customerType', 'registered')
+                
                 # ----------------- CUSTOMER HANDLING -----------------
                 if customer_type == 'registered':
                     mrno_id = request.POST.get('mrnum')
@@ -25719,8 +26399,10 @@ def pharmacy_invoice(request):
                     patient_contact = request.POST.get('unreg_contact', '').strip()
                     if not patient_name:
                         return JsonResponse({"success": False, "error": "Customer name is required for unregistered customers."}, status=400)
+                
                 if not all([hospital_id, branch_id]):
                     return JsonResponse({"success": False, "error": "Missing required master fields."}, status=400)
+                
                 # ----------------- BRANCH & INVOICE -----------------
                 branch_obj = Branch.objects.get(id=branch_id)
                 branch_name = branch_obj.Branch_Name.upper().strip()
@@ -25729,9 +26411,13 @@ def pharmacy_invoice(request):
                 invoicen = get_invoice_number(branch_name)
                         
                 # ----------------- AMOUNTS -----------------
+                # Discount handling - support both percentage and fixed amount
+                discount_type = request.POST.get('discountType', 'percentage')
                 discount_percent = safe_float(request.POST.get('totalDiscountInput', 0))
                 discount_amount = safe_float(request.POST.get('discountAmount', 0))
-                discount = safe_float(request.POST.get('totalDiscountInput', 0))
+                
+                # For percentage discount, discount_amount will be calculated in the loop
+                # For fixed amount, discount_percent will be 0
                 totsgst = safe_float(request.POST.get('totsgst', 0))
                 totcgst = safe_float(request.POST.get('totcgst', 0))
                 tottaxamount = safe_float(request.POST.get('tottaxamount', 0))
@@ -25739,6 +26425,12 @@ def pharmacy_invoice(request):
                 gpay_amount = safe_float(request.POST.get('gpay_amount', 0))
                 card_amount = safe_float(request.POST.get('card_amount', 0))
                 stff_id = request.session.get('branchid')
+                
+                # Rounding flag from checkbox
+                use_rounding = request.POST.get('use_rounding', 'false') == 'true'
+                
+                # NEW: Get IP Credit checkbox value
+                ip_credit = request.POST.get('ip_credit', 'false') == 'true'
                 
                 # ----------------- ITEMS & BACKEND TOTAL CALC -----------------
                 item_count = int(request.POST.get('items_count', 0))
@@ -25754,7 +26446,7 @@ def pharmacy_invoice(request):
                     batchno = request.POST.get(f'items[{i}][batchno]', '')
                     raw_suppid = request.POST.get(f'items[{i}][suppid]', '').strip()
                     
-                    # 🔹 Skip completely empty rows
+                    # Skip completely empty rows
                     if not any([particulars, batchno, raw_suppid]):
                         continue
                     
@@ -25801,9 +26493,7 @@ def pharmacy_invoice(request):
                             continue
                     
                     try:
-                        # ============================================================
-                        # FIX: More flexible stock search
-                        # ============================================================
+                        # More flexible stock search
                         # First try: exact match with batch and supplier
                         qs = Physicalstockdetails.objects.filter(
                             itemnm__itemnm=particulars,
@@ -25901,16 +26591,46 @@ def pharmacy_invoice(request):
                         errors.append(f"{item_label}: Error - {str(e)}")
                         continue
                 
+                # ----------------- DISCOUNT HANDLING -----------------
+                # Calculate discount based on type
+                final_discount_amount = 0
+                final_discount_percent = 0
+                
+                if discount_type == 'percentage':
+                    final_discount_percent = min(discount_percent, 100)
+                    final_discount_amount = calculated_subtotal * (final_discount_percent / 100)
+                else:  # amount
+                    final_discount_amount = min(discount_amount, calculated_subtotal)
+                    final_discount_percent = (final_discount_amount / calculated_subtotal * 100) if calculated_subtotal > 0 else 0
+                
                 # ----------------- FINAL TOTAL -----------------
-                calculated_total = calculated_subtotal - discount_amount
+                calculated_total = calculated_subtotal - final_discount_amount
+                
+                # Check if rounding is enabled
+                if use_rounding:
+                    # Apply rounding (0.5 and above rounds up)
+                    final_total = int(round(calculated_total))
+                else:
+                    # Use exact amount
+                    final_total = calculated_total
                 
                 # ----------------- PAYMENTS AUTO-ADJUST -----------------
                 payment_modes = request.POST.getlist('payment_modes')
                 payment_mode_str = ','.join(payment_modes) if payment_modes else 'Cash'
                 payment_total = cash_amount + gpay_amount + card_amount
                 
+                # If IP Credit is checked, set payment mode to "IP Credit"
+                if ip_credit:
+                    payment_mode_str = "IP Credit"
+                    # Reset payment amounts for IP Credit
+                    cash_amount = 0
+                    gpay_amount = 0
+                    card_amount = 0
+                    payment_total = 0
+                
+                # Round values for database storage
                 rounded_subtotal = int(round(calculated_subtotal))
-                rounded_total = int(round(calculated_total))
+                rounded_total = int(round(final_total))
                 rounded_tax = int(round(calculated_tax))
                 rounded_taxable_amount = int(round(calculated_taxable_amount))
                 rounded_totsgst = int(round(totsgst))
@@ -25920,10 +26640,12 @@ def pharmacy_invoice(request):
                 rounded_gpay_amount = int(round(gpay_amount))
                 rounded_card_amount = int(round(card_amount))
                 
-                if abs(payment_total - calculated_total) > 0.01:
-                    difference = calculated_total - payment_total
+                # Only adjust payment if not IP Credit
+                if not ip_credit and abs(payment_total - final_total) > 0.01:
+                    difference = final_total - payment_total
                     cash_amount += difference
                     payment_total = cash_amount + gpay_amount + card_amount
+                    rounded_cash_amount = int(round(cash_amount))
                 
                 # ----------------- CREATE INVOICE MASTER -----------------
                 invoice = newInvoiceMaster.objects.create(
@@ -25935,7 +26657,8 @@ def pharmacy_invoice(request):
                     subtotal=rounded_subtotal,
                     tax=calculated_tax,
                     total=rounded_total,
-                    discount=str(int(round(discount))),
+                    discount=str(round(final_discount_amount, 2)),
+                    discount_percent=Decimal(str(round(final_discount_percent, 2))),
                     patientname=patient_name,
                     patientphno=patient_contact,
                     preparedby_id=request.session.get('loginstaff'),
@@ -25946,7 +26669,8 @@ def pharmacy_invoice(request):
                     cash_amount=str(rounded_cash_amount),
                     gpay_amount=str(rounded_gpay_amount),
                     card_amount=str(rounded_card_amount),
-                    payementmode=payment_mode_str
+                    payementmode=payment_mode_str,
+                    ip_credit=ip_credit  # NEW: Save IP Credit flag
                 )
                 
                 # Update children with master id
@@ -26002,6 +26726,7 @@ def pharmacy_invoice(request):
         'inv_id': inv
     }
     return render(request, "pharmacyinvoice.html", context)
+
 
 
 
@@ -32360,28 +33085,32 @@ def daily_transaction_report(request):
         elif "card" in mode:
             appointment_totals['card'] += fee
 
-    # ============================================================
-    # 6. PHARMACY
+     # ============================================================
+    # 6. PHARMACY 
     # ============================================================
     pharmacy_qs = newInvoiceMaster.objects.filter(
         currentdate__range=(start_date, end_date),
         restockstatus=True
     ).filter(branch_filter)
 
-    pharmacy_totals = pharmacy_qs.aggregate(
-        cash=Sum(Cast('cash_amount', FloatField())),
-        gpay=Sum(Cast('gpay_amount', FloatField())),
-        card=Sum(Cast('card_amount', FloatField())),
-    )
+    # Calculate pharmacy totals including ip_credit
+    pharmacy_totals = {
+        'cash': 0,
+        'gpay': 0,
+        'card': 0,
+        'total': 0
+    }
 
-    pharmacy_totals['cash'] = pharmacy_totals['cash'] or 0
-    pharmacy_totals['gpay'] = pharmacy_totals['gpay'] or 0
-    pharmacy_totals['card'] = pharmacy_totals['card'] or 0
-    pharmacy_totals['total'] = (
-        pharmacy_totals['cash'] +
-        pharmacy_totals['gpay'] +
-        pharmacy_totals['card']
-    )
+    for p in pharmacy_qs:
+        cash = float(p.cash_amount or 0)
+        gpay = float(p.gpay_amount or 0)
+        card = float(p.card_amount or 0)
+       
+       
+        pharmacy_totals['cash'] += cash
+        pharmacy_totals['gpay'] += gpay
+        pharmacy_totals['card'] += card
+        pharmacy_totals['total'] += (cash + gpay + card )
 
     # ============================================================
     # 7. BRANCH LIST
@@ -38898,7 +39627,8 @@ def save_casuality_invoice(request):
         # ==================== SUCCESS RESPONSE ====================
         messages.success(request, f'Invoice {invoice_no} saved successfully!')
         
-        return redirect('casuality_invoice_list')
+        redirect_url = reverse('casuality_invoice_print') + f'?invoice_id={invoice.id}'
+        return redirect(redirect_url)
         
     except Exception as e:
         import traceback
@@ -39911,7 +40641,6 @@ def advance_register_ip(request):
         'stdesign': staff_design_id,
     }
     return render(request, 'advance_register_ip.html', context)
-
 
 
 # ==================== ADMISSION DISCHARGE BILL REGISTER ====================
@@ -41515,6 +42244,15 @@ def doctorwise_op_registration(request):
     if doctor_id:
         appointments = appointments.filter(Doctor_Name_id=doctor_id)
     
+    # Track first visit per patient (by date and id order)
+    patient_first_visit = {}  # key: patient_id, value: first appointment id
+    
+    # First pass: Find the first appointment (by date and id) for each patient
+    for appt in appointments.order_by('Appointment_date', 'id'):
+        patient_id = appt.MR_Number_id
+        if patient_id and patient_id not in patient_first_visit:
+            patient_first_visit[patient_id] = appt.id
+    
     # Build registration data
     reg_data = []
     total_reg_fees = 0
@@ -41522,10 +42260,16 @@ def doctorwise_op_registration(request):
     total_count = 0
     
     for appt in appointments.order_by('-Appointment_date', '-id'):
-        # ✅ Get reg_Fee from Patient_details (if registered patient)
+        patient_id = appt.MR_Number_id
+        
+        # ✅ Get reg_Fee - Only for first visit, else 0
         reg_fees = 0
         if appt.MR_Number:
-            reg_fees = float(appt.MR_Number.reg_Fee)
+            # Check if this is the first visit for this patient (by appointment id)
+            if patient_id in patient_first_visit and patient_first_visit[patient_id] == appt.id:
+                reg_fees = float(appt.MR_Number.reg_Fee or 0)
+            else:
+                reg_fees = 0  # Subsequent visits - no registration fee
         
         # ✅ Get consultation fee from Appointment Fee field
         cons_fees = 0
@@ -41550,7 +42294,7 @@ def doctorwise_op_registration(request):
             'patient_details': f"{appt.MR_Number.Patient_Name if appt.MR_Number else 'N/A'} ({appt.MR_Number.Gender if appt.MR_Number else 'N/A'}/{appt.MR_Number.Age if appt.MR_Number else '0'} Y)" if appt.MR_Number else 'N/A',
             'reg_fees': reg_fees,
             'cons_fees': cons_fees,
-            'id':appt.id,
+            'id': appt.id,
         })
         total_reg_fees += reg_fees
         total_cons_fees += cons_fees
@@ -41860,6 +42604,7 @@ def discharge_summary_view(request):
     return render(request, 'design_discharge_summary.html', context)
 
 
+# ==================== OCCUPANCY LIST ====================
 # ==================== OCCUPANCY LIST ====================
 def occupancy_list(request):
     """Occupancy List - Shows doctor wise occupancy from ippatientroombooking"""
@@ -44556,6 +45301,8 @@ def get_appointment_fee_ajax(request):
 
 
 
+
+
 def advance_register_ip_detail(request):
     """
     Detail view for a specific IP advance payment
@@ -45625,9 +46372,11 @@ def pre_appointment_booking(request):
         
     # GET Request
     branchobj = Branch.objects.all()
-    departmentobj = Department.objects.filter(flag=1)
-    designobj = Designation.objects.all()
+    departmentobj = Department.objects.filter(flag=1,id__in=[4,8, 15, 16, 17, 18, 19, 20])
+    designobj = Designation.objects.filter(id__in=[2,3,13,15])
     appointment_status = AppointmentStatus.objects.filter(is_active="1")
+    countryobj = Country.objects.all()
+    stateobj = State.objects.all()
     
     context = {
         'idmngmnt': idmngmnt,
@@ -45635,6 +46384,8 @@ def pre_appointment_booking(request):
         'departmentobj': departmentobj,
         'designobj': designobj,
         'appointment_status': appointment_status,
+        'countryobj': countryobj,      
+        'stateobj': stateobj,   
     }
     return render(request, "pre_appointment_booking.html", context)
 
@@ -45871,8 +46622,8 @@ def registration_fee_invoice(request):
     
     # Convert total to words
     from num2words import num2words
-    amount_in_words = num2words(reg_fee, to="cardinal", lang="en_IN").title()
-    amount_in_words = amount_in_words.replace("Rs", "Rupees").replace("cents", "Paise") + " Only"
+    amount_in_words = num2words(reg_fee, to="currency", lang="en_IN")
+    amount_in_words = amount_in_words
     
     context = {
         'lsinvoice': invoice,
@@ -45885,52 +46636,121 @@ def registration_fee_invoice(request):
     }
     
     return render(request, 'registration_fee_invoice.html', context)
-
-
     
 
 def dotmatrixview(request):
         lsinvoice = newInvoiceMaster.objects.get(id=request.GET.get('ids'))  # fetch specific invoice
         chinvoice = newInvoiceChild.objects.filter(invmasterid=lsinvoice.id)
-    
-        # Chunk items for printing
-        chunk_size = 10
-        chinvoice_list = list(chinvoice)
-        chinvoice_chunks = []
-        for i in range(0, len(chinvoice_list), chunk_size):
-            chunk_items = chinvoice_list[i:i+chunk_size]
-            chunk_subtotal = sum(item.sutotal for item in chunk_items)
-            chinvoice_chunks.append((chunk_items, chunk_subtotal))
-    
-        # Staff info
+        
+        stbtachid = request.session.get('branchid')
         st_id = request.session['loginstaff']
         staff_branch = Staffallocation.objects.get(id=st_id)
-    
-        # Hospital & branch info from invoice
-        br = lsinvoice.branch  # assuming ForeignKey to Branch in invoice
+        staffn = staff_branch
         objhospt = Hospitaldetails.objects.first()
-    
-        # GST flags
+        today = date.today()
+        todate = timezone.now().strftime("%d/%m/%y")
+
+        stbtachid = request.session.get('branchid')
+        br = Branch.objects.filter(id=stbtachid).first()
+
         branch_has_gst = bool(br and br.gstno and br.gstno.lower() != 'none')
         branch_is_composition = bool(br and br.compositiontax)
-    
-        # Amount in words
-        amount_in_words = ""
-        if lsinvoice.total:
-            amount_in_words = num2words(lsinvoice.total, lang='en_IN').title()
-            amount_in_words = f"Rupees {amount_in_words} Only"
-    
+
+        # Reuse the same invoice number lookup as a5print
+        current_year = today.year % 100
+        next_year = (today.year + 1) % 100
+        financial_year_prefix = f"INV{current_year:02d}/{next_year:02d}"
+
+        # Aggregate GST breakup across all child lines (like the sample bill's
+        # CGST% / SGST% / CGST / SGST rows under the item table)
+        total_taxable = sum(float(i.taxableamount or 0) for i in chinvoice)
+        total_cgst_amt = sum(float(i.cgstamount or 0) for i in chinvoice)
+        total_sgst_amt = sum(float(i.sgstamount or 0) for i in chinvoice)
+        # Pick the rate off the first line item (assumes a single slab bill,
+        # same as the sample where every item shares one GST%)
+        first_item = chinvoice.first()
+        cgst_rate = first_item.cgst if first_item else "0"
+        sgst_rate = first_item.sgst if first_item else "0"
+
+        gross_amt = sum(float(i.amount or 0) for i in chinvoice)
+
+        request.session['invoice_print_accessed'] = True
+
         context = {
-            'lsinvoice': lsinvoice,
-            'chinvoice_chunks': chinvoice_chunks,
-            'staffn': staff_branch,
-            'objhospt': objhospt,
-            'br': br,
-            'branch_has_gst': branch_has_gst,
-            'branch_is_composition': branch_is_composition,
-            'amount_in_words': amount_in_words,
-        }
-        return render(request, "dotmatrixprint.html", context)
+        'lsinvoice': lsinvoice,
+        'chinvoice': chinvoice,
+        'staffn': staffn,
+        'objhospt': objhospt,
+        'today': today,
+        'todate': todate,
+        'br': br,
+        'branch_has_gst': branch_has_gst,
+        'branch_is_composition': branch_is_composition,
+        'total_taxable': total_taxable,
+        'total_cgst_amt': total_cgst_amt,
+        'total_sgst_amt': total_sgst_amt,
+        'cgst_rate': cgst_rate,
+        'sgst_rate': sgst_rate,
+        'gross_amt': gross_amt,
+       }
+        return render(request, "invdotmatrixprint.html", context)
+
+def dotmatrixprint(request):
+    stbtachid = request.session.get('branchid')
+    lsinvoice = newInvoiceMaster.objects.filter(branch=stbtachid).last()
+    chinvoice = newInvoiceChild.objects.filter(invmasterid=lsinvoice.id)
+
+    st_id = request.session['loginstaff']
+    staff_branch = Staffallocation.objects.get(id=st_id)
+    staffn = staff_branch
+    objhospt = Hospitaldetails.objects.first()
+    today = date.today()
+    todate = timezone.now().strftime("%d/%m/%y")
+
+    stbtachid = request.session.get('branchid')
+    br = Branch.objects.filter(id=stbtachid).first()
+
+    branch_has_gst = bool(br and br.gstno and br.gstno.lower() != 'none')
+    branch_is_composition = bool(br and br.compositiontax)
+
+    # Reuse the same invoice number lookup as a5print
+    current_year = today.year % 100
+    next_year = (today.year + 1) % 100
+    financial_year_prefix = f"INV{current_year:02d}/{next_year:02d}"
+
+    # Aggregate GST breakup across all child lines (like the sample bill's
+    # CGST% / SGST% / CGST / SGST rows under the item table)
+    total_taxable = sum(float(i.taxableamount or 0) for i in chinvoice)
+    total_cgst_amt = sum(float(i.cgstamount or 0) for i in chinvoice)
+    total_sgst_amt = sum(float(i.sgstamount or 0) for i in chinvoice)
+    # Pick the rate off the first line item (assumes a single slab bill,
+    # same as the sample where every item shares one GST%)
+    first_item = chinvoice.first()
+    cgst_rate = first_item.cgst if first_item else "0"
+    sgst_rate = first_item.sgst if first_item else "0"
+
+    gross_amt = sum(float(i.amount or 0) for i in chinvoice)
+
+    request.session['invoice_print_accessed'] = True
+
+    context = {
+        'lsinvoice': lsinvoice,
+        'chinvoice': chinvoice,
+        'staffn': staffn,
+        'objhospt': objhospt,
+        'today': today,
+        'todate': todate,
+        'br': br,
+        'branch_has_gst': branch_has_gst,
+        'branch_is_composition': branch_is_composition,
+        'total_taxable': total_taxable,
+        'total_cgst_amt': total_cgst_amt,
+        'total_sgst_amt': total_sgst_amt,
+        'cgst_rate': cgst_rate,
+        'sgst_rate': sgst_rate,
+        'gross_amt': gross_amt,
+    }
+    return render(request, "invdotmatrixprint.html", context)
 
 @login_required
 @require_http_methods(["POST"])
@@ -45992,72 +46812,36 @@ def save_ipprocedure(request):
         except Staffallocation.DoesNotExist:
             pass
         
-        # Get arrays from POST data
-        procedure_ids = request.POST.getlist('procedure_id[]')
-        counts = request.POST.getlist('count[]')
-        dates = request.POST.getlist('proceduretakendate[]')
-        
-        if not procedure_ids or not any(procedure_ids):
-            return JsonResponse({
-                'success': False,
-                'error': 'At least one procedure is required'
-            }, status=400)
-        
-        saved_procedures = []
-        errors = []
-        
-        # Process each procedure
-        for i, procedure_id in enumerate(procedure_ids):
-            if not procedure_id:
-                continue
+        try:
+            procedures = loads(request.POST.get('procedure_details', '[]'))
+            logger.info(f"Processing {len(procedures)} procedures")
+            for proc in procedures:
+                # Get or create procedure master if needed
+                # Use the procedure_id from the form
+                try:
+                    procedure_master = ProcedureMaster.objects.get(id=proc.get('procedure_id', 1))
+                except ProcedureMaster.DoesNotExist:
+                    # Create a new procedure if it doesn't exist (fallback)
+                    procedure_master = ProcedureMaster.objects.create(
+                        name=proc.get('name', 'Unknown Procedure'),
+                        rate=proc.get('rate', 0),
+                        category='General',
+                        is_active=True
+                    )
                 
-            try:
-                # Get the procedure from master
-                procedure = ProcedureMaster.objects.get(id=procedure_id)
-                
-                # Get count (default to 1 if not provided)
-                count = counts[i] if i < len(counts) else '1'
-                
-                # Get date (default to today if not provided)
-                procedure_date = dates[i] if i < len(dates) else datetime.now().date()
-                if isinstance(procedure_date, str):
-                    try:
-                        procedure_date = datetime.strptime(procedure_date, '%Y-%m-%d').date()
-                    except ValueError:
-                        procedure_date = datetime.now().date()
-                
-                # Create the procedure record
-                procedure_record = ipprocedurecreation(
+                # Save to your expanded bill procedure details model
+                # You'll need to create this model if it doesn't exist
+                ipexpandedbillproceduredetail.objects.create(
                     ipno=ip_admission,
-                    currentdate=datetime.now().date(),
-                    proceduretaken=procedure,
-                    proceduretakendate=procedure_date,
-                    count=count,
-                    createdby=created_by,
-                    MR_Number=patient,
-                    branchdt_id=branch_id if branch_id else None
-                )
-                procedure_record.save()
-                
-                saved_procedures.append({
-                    'id': procedure_record.id,
-                    'procedure_name': procedure.name,
-                    'proceduretakendate': procedure_date.strftime('%Y-%m-%d'),
-                    'count': count
-                })
-                
-            except ProcedureMaster.DoesNotExist:
-                errors.append(f'Procedure with ID {procedure_id} not found')
-            except Exception as e:
-                errors.append(str(e))
-        
-        if saved_procedures:
-            return JsonResponse({
-                'success': True,
-                'message': f'{len(saved_procedures)} procedure(s) saved successfully',
-                'procedures': saved_procedures,
-                'errors': errors if errors else None
-            })
+                    ipbilldt=bill,
+                    procedure_name=proc.get('name', ''),
+                    procedure_id=procedure_master.id,
+                    count=proc.get('count', 1),
+                    rate_per_procedure=proc.get('rate', 0),
+                    total_procedure=proc.get('total', 0),
+                    Current_Date=date.today())
+        except Exception as e:
+            logger.error(f"Error saving procedures: {e}")
         else:
             return JsonResponse({
                 'success': False,
@@ -46294,7 +47078,16 @@ def doctorwise_op_registration_detail(request):
         # ✅ Registration Fee: From Patient_details.reg_Fee
         reg_fee = 0
         if patient:
-            reg_fee = float(patient.reg_Fee or 0)
+            # Check if this is the first appointment for this patient
+            first_appointment = Appointments.objects.filter(
+                MR_Number=patient
+            ).order_by('Appointment_date', 'id').first()
+            
+            # Only show reg_fee if this is the first appointment
+            if first_appointment and first_appointment.id == appointment.id:
+                reg_fee = float(patient.reg_Fee or 0)
+            else:
+                reg_fee = 0  # Not first appointment, so no registration fee
         
         # ✅ Consultation Fee: From Appointment.Fee (only for consultation/followup/revisit)
         cons_fee = 0
@@ -46317,6 +47110,14 @@ def doctorwise_op_registration_detail(request):
         ).exclude(
             id=appointment.id
         ).select_related('Doctor_Name', 'Branch').order_by('-Appointment_date')[:5]
+        
+        # Check if this is the first visit
+        is_first_visit = False
+        first_appt = Appointments.objects.filter(
+            MR_Number=appointment.MR_Number
+        ).order_by('Appointment_date', 'id').first()
+        if first_appt and first_appt.id == appointment.id:
+            is_first_visit = True
         
         context = {
             'appointment': appointment,
@@ -47818,3 +48619,1191 @@ def registration_fee_invoice_list(request):
         'stdesign': staff_design_id,
     }
     return render(request, 'registration_fee_invoice_list.html', context)
+
+
+def complaints_master_list(request):
+    """List all complaints"""
+    staff_design_id = request.session.get('loginstaffdesign')
+    if not staff_design_id:
+        return redirect('staff_login')
+    
+    complaints = ComplaintsMaster.objects.all().order_by('name')
+    
+    context = {
+        'complaints': complaints,
+        'stdesign': staff_design_id,
+    }
+    return render(request, 'complaints_master_list.html', context)
+
+
+def complaints_master_add(request):
+    """Add new complaint"""
+    staff_design_id = request.session.get('loginstaffdesign')
+    if not staff_design_id:
+        return redirect('staff_login')
+    
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        status = request.POST.get('status') == 'on'
+        
+        if not name:
+            messages.error(request, "Complaint name is required.")
+            return render(request, 'complaints_master_add.html', {'stdesign': staff_design_id})
+        
+        if ComplaintsMaster.objects.filter(name__iexact=name).exists():
+            messages.error(request, f"Complaint '{name}' already exists.")
+            return render(request, 'complaints_master_add.html', {'stdesign': staff_design_id})
+        
+        complaint = ComplaintsMaster.objects.create(
+            name=name,
+            status=status
+        )
+        messages.success(request, f"Complaint '{name}' added successfully.")
+        return redirect('complaints_master_list')
+    
+    context = {
+        'stdesign': staff_design_id,
+    }
+    return render(request, 'complaints_master_add.html', context)
+
+
+def complaints_master_edit(request):
+    """Edit existing complaint"""
+    staff_design_id = request.session.get('loginstaffdesign')
+    if not staff_design_id:
+        return redirect('staff_login')
+    
+    complaint_id = request.GET.get('ids')
+    if not complaint_id:
+        messages.error(request, "Complaint ID is required.")
+        return redirect('complaints_master_list')
+    
+    complaint = get_object_or_404(ComplaintsMaster, id=complaint_id)
+    
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        status = request.POST.get('status') == 'on'
+        
+        if not name:
+            messages.error(request, "Complaint name is required.")
+            return render(request, 'complaints_master_edit.html', {
+                'complaint': complaint,
+                'stdesign': staff_design_id
+            })
+        
+        # Check if another complaint with same name exists
+        if ComplaintsMaster.objects.filter(name__iexact=name).exclude(id=complaint_id).exists():
+            messages.error(request, f"Complaint '{name}' already exists.")
+            return render(request, 'complaints_master_edit.html', {
+                'complaint': complaint,
+                'stdesign': staff_design_id
+            })
+        
+        complaint.name = name
+        complaint.status = status
+        complaint.save()
+        
+        messages.success(request, f"Complaint '{name}' updated successfully.")
+        return redirect('complaints_master_list')
+    
+    context = {
+        'complaint': complaint,
+        'stdesign': staff_design_id,
+    }
+    return render(request, 'complaints_master_edit.html', context)
+
+def search_complaints(request):
+    """
+    Search complaints from ComplaintsMaster and return JSON results
+    """
+    query = request.GET.get('q', '').strip()
+    
+    if not query or len(query) < 2:
+        return JsonResponse([], safe=False)
+    
+    # Search in ComplaintsMaster
+    complaints = ComplaintsMaster.objects.filter(
+       Q(name__icontains=query),
+        status=True  # Only active complaints
+    ).values('id', 'name')[:20]
+    
+    results = []
+    for complaint in complaints:
+        results.append({
+            'id': complaint['id'],
+            'name': complaint['name'],
+        })
+    
+    return JsonResponse(results, safe=False)
+import json
+import traceback
+from django.http import JsonResponse
+from django.views.decorators.http import require_GET
+from django.db.models import Q
+from datetime import date
+from django.contrib.auth.decorators import login_required
+
+@require_GET
+def search_medicineapi(request):
+    try:
+        search_term = request.GET.get('q', '').strip()
+        if not search_term or len(search_term) < 2:
+            return JsonResponse([], safe=False)
+        
+        branch_id = request.session.get('branchid')
+        if not branch_id:
+            return JsonResponse([], safe=False)
+        
+        current_date = date.today()
+        medicines = Physicalstockdetails.objects.filter(
+            itemnm__itemnm__icontains=search_term,
+            Expiry_date__gte=current_date,
+            qty__gt=0,
+            stockbranch_id=branch_id,
+            deleted=False
+        ).select_related('itemnm', 'unt', 'Comapany_name')[:20]
+        
+        data = []
+        for medicine in medicines:
+            data.append({
+                'id': medicine.itemnm.id,
+                'itemnm': medicine.itemnm.itemnm,
+                'name': medicine.itemnm.itemnm,
+                'rate': float(medicine.Rate) if medicine.Rate else 0,
+                'mrp': float(medicine.Rate) if medicine.Rate else 0,
+                'currentstock': medicine.qty,
+                'physicalstock_id': medicine.id,
+                'batchno': medicine.Batch_no,
+            })
+        return JsonResponse(data, safe=False)
+    except Exception as e:
+        print(f"Medicine search error: {str(e)}")  # Log error for debugging
+        return JsonResponse([], safe=False)
+
+@require_GET
+def search_treatmentapi(request):
+    try:
+        search_term = request.GET.get('q', '').strip()
+        if not search_term or len(search_term) < 2:
+            return JsonResponse([], safe=False)
+        
+        treatments = Treatment_master.objects.filter(
+            Treatment_name__icontains=search_term
+        )[:20]
+        
+        data = []
+        for treat in treatments:
+            data.append({
+                'id': treat.id,
+                'name': treat.Treatment_name,
+                'rate': float(treat.Rate) if treat.Rate else 0,
+            })
+        return JsonResponse(data, safe=False)
+    except Exception as e:
+        print(f"Treatment search error: {str(e)}")  # Log error for debugging
+        return JsonResponse([], safe=False)
+
+
+@require_GET
+def search_procedures_api(request):
+    try:
+        query = request.GET.get('q', '').strip()
+        if not query or len(query) < 2:
+            return JsonResponse([], safe=False)
+        
+        from .models import ProcedureMaster
+        procedures = ProcedureMaster.objects.filter(
+            Q(name__icontains=query) | Q(description__icontains=query),
+            is_active=True
+        )[:20]
+        
+        results = []
+        for proc in procedures:
+            results.append({
+                'id': proc.id,
+                'name': proc.name,
+                'procedure_name': proc.name,
+                'rate': float(proc.rate) if proc.rate else 0,
+                'category': proc.category or '',
+                'description': proc.description or '',
+            })
+        return JsonResponse(results, safe=False)
+    except Exception as e:
+        print(f"Procedure search error: {str(e)}")  # Log error for debugging
+        return JsonResponse([], safe=False)
+
+
+
+# views.py - Complete working version
+import pandas as pd
+import json
+import re
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.http import JsonResponse, HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.utils import timezone
+from datetime import datetime, date, timedelta
+from django.core.paginator import Paginator
+from django.db.models import Q
+import openpyxl
+from openpyxl.styles import Font, PatternFill, Alignment
+from io import BytesIO
+
+from .models import (
+    storedetails, medicinemaster, unitdt, supplier, Comapany, 
+    baseunit, Physicalstockdetails, Branch
+)
+
+# Helper function to parse dates
+def parse_date(date_value):
+    """Parse date from various formats - returns date object (YYYY-MM-DD)"""
+    if pd.isna(date_value) or date_value == '' or date_value == 'None':
+        return None
+    try:
+        # If it's already a date object
+        if isinstance(date_value, date):
+            return date_value
+        
+        # If it's a datetime object, convert to date
+        if isinstance(date_value, datetime):
+            return date_value.date()
+        
+        # If it's a pandas Timestamp, convert to date
+        if isinstance(date_value, pd.Timestamp):
+            return date_value.date()
+        
+        # Convert to string
+        date_str = str(date_value).strip()
+        
+        # Try Excel serial date number
+        if isinstance(date_value, (int, float)) and date_value > 40000:
+            try:
+                excel_epoch = datetime(1899, 12, 30)
+                return (excel_epoch + timedelta(days=float(date_value))).date()
+            except:
+                pass
+        
+        # Remove ordinal indicators (st, nd, rd, th)
+        for ord_ind in ['st', 'nd', 'rd', 'th']:
+            date_str = date_str.replace(ord_ind, '')
+        
+        # Handle format like "Nov. 1, 2024" - remove the dot after month
+        date_str = date_str.replace('.', '')
+        
+        # List of possible date formats
+        formats = [
+            '%b %d, %Y', '%B %d, %Y', '%d %b %Y', '%d %B %Y',
+            '%b %d %Y', '%B %d %Y', '%Y-%m-%d', '%d/%m/%Y',
+            '%m/%d/%Y', '%Y/%m/%d', '%d-%m-%Y', '%m-%d-%Y',
+            '%d.%m.%Y', '%m.%d.%Y'
+        ]
+        
+        for fmt in formats:
+            try:
+                return datetime.strptime(date_str, fmt).date()
+            except:
+                continue
+        
+        # Try pandas to_datetime as fallback
+        try:
+            result = pd.to_datetime(date_str)
+            if result and not pd.isna(result):
+                return result.date()
+        except:
+            pass
+        
+        return None
+        
+    except Exception as e:
+        print(f"Date parsing error for '{date_value}': {str(e)}")
+        return None
+# Helper function to parse quantity - returns INTEGER
+def parse_quantity(qty_value):
+    """Parse quantity, handling Excel formulas - returns integer"""
+    if pd.isna(qty_value) or qty_value == '':
+        return 0
+    try:
+        if isinstance(qty_value, str):
+            # Handle Excel formulas like '=71+134'
+            if qty_value.startswith('='):
+                try:
+                    qty_value = str(eval(qty_value[1:]))
+                except:
+                    pass
+            # Remove any non-numeric characters except decimal
+            numbers = re.findall(r'[\d.]+', qty_value)
+            if numbers:
+                # Convert to float first, then to int (handle decimals like 100.0)
+                return int(float(numbers[0]))
+        # Convert to int, if it's a float like 100.0, it will become 100
+        return int(float(qty_value)) if qty_value else 0
+    except:
+        return 0
+
+# Function to get or create baseunit
+def get_or_create_baseunit(unit_name):
+    if not unit_name or unit_name == 'nan':
+        return None
+    unit_name_clean = unit_name.strip().upper()
+    base_unit, created = baseunit.objects.get_or_create(unit=unit_name_clean)
+    return base_unit
+
+# Function to get or create unitdt
+def get_or_create_unitdt(unit_name, base_quantity='1'):
+    if not unit_name or unit_name == '' or unit_name == 'nan':
+        return None
+    
+    unit_name_clean = unit_name.strip().upper()
+    existing_units = unitdt.objects.filter(unitname=unit_name_clean)
+    
+    if existing_units.exists():
+        if existing_units.count() > 1:
+            print(f"Warning: Multiple units found for '{unit_name_clean}'. Using first one.")
+        return existing_units.first()
+    else:
+        base_unit = get_or_create_baseunit(unit_name_clean)
+        unit = unitdt.objects.create(
+            unitname=unit_name_clean,
+            bsuntid=base_unit,
+            basequantity=base_quantity if base_quantity and base_quantity != 'nan' else '1'
+        )
+        return unit
+
+# Function to get or create store
+def get_or_create_store(store_name):
+    if not store_name or store_name == 'nan':
+        return None
+    store, created = storedetails.objects.get_or_create(
+        storename=store_name.strip()
+    )
+    return store
+
+# Function to get or create medicine
+def get_or_create_medicine(medicine_name, base_unit_obj):
+    if not medicine_name or medicine_name == 'nan':
+        return None
+    medicine, created = medicinemaster.objects.get_or_create(
+        itemnm=medicine_name.strip(),
+        defaults={'bsuntid': base_unit_obj}
+    )
+    return medicine
+
+# Function to get or create supplier
+def get_or_create_supplier(supplier_name):
+    if not supplier_name or supplier_name == '' or supplier_name == 'nan':
+        return None
+    supplier_obj, created = supplier.objects.get_or_create(
+        shopname=supplier_name.strip()
+    )
+    return supplier_obj
+
+# Function to get or create company
+def get_or_create_company(company_name):
+    if not company_name or company_name == '' or company_name == 'nan':
+        return None
+    company_obj, created = Comapany.objects.get_or_create(
+        Comapany_name=company_name.strip()
+    )
+    return company_obj
+# Function to check duplicate - FIXED: All fields must match exactly
+def check_duplicate(store, medicine, batch_no, expiry_date, manufacture_date, unitdt_obj, supplier_obj, company_obj, rate):
+    """Check if record already exists - ALL fields must match"""
+    if not store or not medicine:
+        return False
+    
+    # Start with the base query
+    query = Physicalstockdetails.objects.filter(
+        storenm=store,
+        itemnm=medicine,
+        deleted=False,
+        stockbranch_id=1
+    )
+    
+    # Add all filters - if any field doesn't match, it won't be a duplicate
+    # Batch number is critical
+    if batch_no:
+        query = query.filter(Batch_no=batch_no)
+    else:
+        query = query.filter(Batch_no__isnull=True)
+    
+    # Manufacture date
+    if manufacture_date:
+        query = query.filter(Manufacturer_date=manufacture_date)
+    else:
+        query = query.filter(Manufacturer_date__isnull=True)
+    
+    # Expiry date
+    if expiry_date:
+        query = query.filter(Expiry_date=expiry_date)
+    else:
+        query = query.filter(Expiry_date__isnull=True)
+    
+    # Unit
+    if unitdt_obj:
+        query = query.filter(unt=unitdt_obj)
+    else:
+        query = query.filter(unt__isnull=True)
+    
+    # Supplier
+    if supplier_obj:
+        query = query.filter(suppliernm=supplier_obj)
+    else:
+        query = query.filter(suppliernm__isnull=True)
+    
+    # Company
+    if company_obj:
+        query = query.filter(Comapany_name=company_obj)
+    else:
+        query = query.filter(Comapany_name__isnull=True)
+    
+    # Rate
+    if rate and rate != 0:
+        query = query.filter(Rate=str(rate))
+    else:
+        query = query.filter(Q(Rate__isnull=True) | Q(Rate='0') | Q(Rate=''))
+    
+    # Debug print
+    print(f"  Duplicate check query count: {query.count()}")
+    
+    return query.exists()
+
+# Main upload function
+def upload_stock(request):
+    context = {
+        'title': 'Stock Take Upload',
+        'active_tab': 'upload'
+    }
+    return render(request, 'upload.html', context)
+# Preview stock data function - FIXED for JSON serialization
+def preview_stock(request):
+    """Preview stock data from Excel"""
+    if request.method == 'POST' and request.FILES.get('excel_file'):
+        excel_file = request.FILES['excel_file']
+        
+        try:
+            # Read Excel file - your file has header in row 1 (second row)
+            df = pd.read_excel(excel_file, sheet_name='Sheet1', header=1)
+            
+            print("=" * 60)
+            print("Excel Columns Found:", df.columns.tolist())
+            print(f"Total rows in Excel: {len(df)}")
+            
+            preview_data = []
+            duplicate_count = 0
+            new_count = 0
+            total_valid = 0
+            
+            # Get branch (stockbranch id = 7)
+            branch = Branch.objects.filter(id=1).first()
+            
+            for index, row in df.iterrows():
+                try:
+                    # Extract data
+                    store_name = str(row.get('Store', '')).strip() if pd.notna(row.get('Store')) else None
+                    medicine_name = str(row.get('Medicine', '')).strip() if pd.notna(row.get('Medicine')) else None
+                    supplier_name = str(row.get('Supplier', '')).strip() if pd.notna(row.get('Supplier')) else None
+                    company_name = str(row.get('Medicine Company', '')).strip() if pd.notna(row.get('Medicine Company')) else None
+                    batch_no = str(row.get('Batch No', '')).strip() if pd.notna(row.get('Batch No')) else None
+                    base_quantity = str(row.get('Base Quantity', '')).strip() if pd.notna(row.get('Base Quantity')) else None
+                    quantity = parse_quantity(row.get('Quantity'))
+                    unit_name = str(row.get('Unit', '')).strip().upper() if pd.notna(row.get('Unit')) else None
+                    manufacture_date = parse_date(row.get('Manufacture Date'))
+                    expiry_date = parse_date(row.get('Expiry Date'))
+                    rate = row.get('Rate', 0)
+                    
+                    # Skip if essential data missing
+                    if not store_name or store_name == 'None' or store_name == 'nan' or store_name == '':
+                        continue
+                    if not medicine_name or medicine_name == 'None' or medicine_name == 'nan' or medicine_name == '':
+                        continue
+                    
+                    total_valid += 1
+                    
+                    # Get or create all related objects
+                    store = get_or_create_store(store_name)
+                    supplier_obj = get_or_create_supplier(supplier_name)
+                    company_obj = get_or_create_company(company_name)
+                    unitdt_obj = get_or_create_unitdt(unit_name, base_quantity)
+                    
+                    # Get the baseunit from the unitdt object for medicine
+                    base_unit_for_medicine = unitdt_obj.bsuntid if unitdt_obj else get_or_create_baseunit(unit_name)
+                    
+                    # Get or create medicine with the baseunit
+                    medicine = get_or_create_medicine(medicine_name, base_unit_for_medicine)
+                    
+                    # Check for duplicate
+                    is_duplicate = check_duplicate(
+                        store, medicine, batch_no, expiry_date, 
+                        manufacture_date, unitdt_obj, supplier_obj, company_obj, rate
+                    )
+                    
+                    if is_duplicate:
+                        duplicate_count += 1
+                    else:
+                        new_count += 1
+                    
+                    # Prepare preview data - STORE DATES AS STRINGS for JSON serialization
+                    preview_data.append({
+                        'sl_no': len(preview_data) + 1,
+                        'store': store_name,
+                        'medicine': medicine_name,
+                        'supplier': supplier_name if supplier_name and supplier_name != 'nan' else '',
+                        'medicine_company': company_name if company_name and company_name != 'nan' else '',
+                        'batch_no': batch_no if batch_no and batch_no != 'nan' else '',
+                        'quantity': quantity,
+                        'unit': unit_name if unit_name and unit_name != 'nan' else '',
+                        'manufacture_date': manufacture_date.strftime('%Y-%m-%d') if manufacture_date else '',
+                        'expiry_date': expiry_date.strftime('%Y-%m-%d') if expiry_date else '',
+                        'rate': rate,
+                        'is_duplicate': is_duplicate,
+                        # Store IDs for saving
+                        'store_id': store.id if store else None,
+                        'medicine_id': medicine.id if medicine else None,
+                        'supplier_id': supplier_obj.id if supplier_obj else None,
+                        'company_id': company_obj.id if company_obj else None,
+                        'unitdt_id': unitdt_obj.id if unitdt_obj else None,
+                    })
+                    
+                except Exception as e:
+                    print(f"Error processing row {index}: {str(e)}")
+                    continue
+            
+            # Store in session (all data is now JSON serializable)
+            request.session['preview_data'] = preview_data
+            request.session['duplicate_count'] = duplicate_count
+            request.session['new_count'] = new_count
+            request.session['total_valid'] = total_valid
+            
+            print("\n" + "=" * 60)
+            print(f"SUMMARY:")
+            print(f"  Total valid rows: {total_valid}")
+            print(f"  New records: {new_count}")
+            print(f"  Duplicate records: {duplicate_count}")
+            print("=" * 60)
+            
+            if total_valid == 0:
+                messages.error(request, 'No valid records found in the Excel file. Please check the file format.')
+                return redirect('upload_stock')
+            
+            context = {
+                'preview_data': preview_data,
+                'total_records': total_valid,
+                'duplicate_count': duplicate_count,
+                'new_records_count': new_count,
+                'title': 'Stock Preview',
+                'active_tab': 'preview',
+                'now': timezone.now().date()
+            }
+            return render(request, 'preview.html', context)
+            
+        except Exception as e:
+            import traceback
+            print(f"Error: {str(e)}")
+            print(traceback.format_exc())
+            messages.error(request, f'Error processing Excel file: {str(e)}')
+            return redirect('upload_stock')
+    else:
+        messages.error(request, 'Please upload a valid Excel file')
+    
+    return redirect('upload_stock')
+# Save stock data function - FIXED for date conversion
+def save_stock(request):
+    """Save selected stock records"""
+    if request.method == 'POST':
+        selected_indices = json.loads(request.POST.get('selected_indices', '[]'))
+        preview_data = request.session.get('preview_data', [])
+        
+        if not selected_indices:
+            messages.warning(request, 'Please select at least one record to save.')
+            return redirect('upload_stock')
+        
+        saved_count = 0
+        errors = []
+        branch = Branch.objects.filter(id=1).first()
+        
+        for idx in selected_indices:
+            try:
+                record = preview_data[int(idx)]
+                
+                if record.get('is_duplicate', False):
+                    continue
+                
+                # Get model instances by ID
+                store = storedetails.objects.get(id=record['store_id']) if record.get('store_id') else None
+                medicine = medicinemaster.objects.get(id=record['medicine_id']) if record.get('medicine_id') else None
+                unitdt_obj = unitdt.objects.get(id=record['unitdt_id']) if record.get('unitdt_id') else None
+                supplier_obj = supplier.objects.get(id=record['supplier_id']) if record.get('supplier_id') else None
+                company_obj = Comapany.objects.get(id=record['company_id']) if record.get('company_id') else None
+                
+                # Convert date strings back to date objects
+                manufacture_date = None
+                expiry_date = None
+                
+                if record.get('manufacture_date'):
+                    try:
+                        manufacture_date = datetime.strptime(record['manufacture_date'], '%Y-%m-%d').date()
+                    except:
+                        pass
+                
+                if record.get('expiry_date'):
+                    try:
+                        expiry_date = datetime.strptime(record['expiry_date'], '%Y-%m-%d').date()
+                    except:
+                        pass
+                
+                # Ensure quantity is integer
+                quantity = int(record.get('quantity', 0))
+                
+                print(f"Saving: {record.get('medicine')} - Batch: {record.get('batch_no')} - Qty: {quantity}")
+                
+                # Create physical stock record
+                stock_record = Physicalstockdetails(
+                    storenm=store,
+                    itemnm=medicine,
+                    unt=unitdt_obj,
+                    suppliernm=supplier_obj,
+                    Comapany_name=company_obj,
+                    Manufacturer_date=manufacture_date,
+                    Expiry_date=expiry_date,
+                    Batch_no=record.get('batch_no', ''),
+                    Rate=str(record.get('rate', 0)),
+                    qty=quantity,
+                    lastupdatedate=timezone.now(),
+                    stockbranch=branch,
+                    deleted=False
+                )
+                stock_record.save()
+                saved_count += 1
+                
+            except Exception as e:
+                errors.append(f"Error saving record {record.get('sl_no', 'unknown')}: {str(e)}")
+                print(f"Error details: {str(e)}")
+        
+        if saved_count > 0:
+            messages.success(request, f'Successfully saved {saved_count} records!')
+        if errors:
+            messages.error(request, f'Errors occurred: {", ".join(errors[:5])}')
+        
+        # Clear session data
+        if 'preview_data' in request.session:
+            del request.session['preview_data']
+        if 'duplicate_count' in request.session:
+            del request.session['duplicate_count']
+        if 'new_count' in request.session:
+            del request.session['new_count']
+        
+        return redirect('view_saved_stock')
+    
+    return redirect('upload_stock')
+# View saved stock function
+def view_saved_stock(request):
+    stock_records = Physicalstockdetails.objects.filter(
+        deleted=False
+    ).select_related('storenm', 'itemnm', 'unt', 'suppliernm', 'Comapany_name', 'stockbranch').order_by('-lastupdatedate')
+    
+    search_query = request.GET.get('search', '')
+    if search_query:
+        stock_records = stock_records.filter(
+            Q(itemnm__itemnm__icontains=search_query) |
+            Q(storenm__storename__icontains=search_query) |
+            Q(Batch_no__icontains=search_query) |
+            Q(suppliernm__shopname__icontains=search_query) |
+            Q(Comapany_name__Comapany_name__icontains=search_query)
+        )
+    
+    paginator = Paginator(stock_records, 50)
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'page_obj': page_obj,
+        'search_query': search_query,
+        'total_records': stock_records.count(),
+        'title': 'Saved Stock Records',
+        'active_tab': 'saved',
+        'now': timezone.now().date()
+    }
+    return render(request, 'saved_records.html', context)
+
+# Reset stock upload function
+def reset_stock_upload(request):
+    if 'preview_data' in request.session:
+        del request.session['preview_data']
+    if 'duplicate_count' in request.session:
+        del request.session['duplicate_count']
+    if 'new_count' in request.session:
+        del request.session['new_count']
+    
+    messages.info(request, 'Upload session has been reset.')
+    return redirect('upload_stock')
+
+# Delete stock function
+def delete_stock(request, stock_id):
+    if request.method == 'POST':
+        stock = get_object_or_404(Physicalstockdetails, id=stock_id)
+        stock.soft_delete()
+        messages.success(request, f'Stock record "{stock.itemnm.itemnm}" has been deleted.')
+    
+    return redirect('view_saved_stock')
+
+# Edit stock function
+def edit_stock(request, stock_id):
+    stock = get_object_or_404(Physicalstockdetails, id=stock_id, deleted=False)
+    context = {
+        'stock': stock,
+        'title': 'Edit Stock Record'
+    }
+    return render(request, 'edit_stock.html', context)
+
+# Update stock function
+def update_stock(request, stock_id):
+    if request.method == 'POST':
+        stock = get_object_or_404(Physicalstockdetails, id=stock_id)
+        try:
+            if request.POST.get('quantity'):
+                stock.qty = int(request.POST.get('quantity'))
+            if request.POST.get('rate'):
+                stock.Rate = request.POST.get('rate')
+            if request.POST.get('batch_no'):
+                stock.Batch_no = request.POST.get('batch_no')  
+            if request.POST.get('expiry_date'):
+                stock.Expiry_date = datetime.strptime(request.POST.get('expiry_date'), '%Y-%m-%d').date()
+            stock.lastupdatedate = timezone.now()
+            stock.save()
+            messages.success(request, 'Stock record updated successfully!')
+        except Exception as e:
+            messages.error(request, f'Error updating record: {str(e)}')
+    return redirect('view_saved_stock')
+
+# Export stock to Excel function
+def export_stock_excel(request):
+    stock_records = Physicalstockdetails.objects.filter(
+        deleted=False
+    ).select_related('storenm', 'itemnm', 'unt', 'suppliernm', 'Comapany_name')
+    
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Stock Records"
+    
+    headers = ['ID', 'Store', 'Medicine', 'Supplier', 'Company', 'Batch No', 
+               'Quantity', 'Unit', 'Rate', 'Manufacture Date', 'Expiry Date', 'Saved Date']
+    
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+    header_alignment = Alignment(horizontal="center", vertical="center")
+    
+    for col, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col, value=header)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = header_alignment
+    
+    for row_idx, record in enumerate(stock_records, 2):
+        ws.cell(row=row_idx, column=1, value=record.id)
+        ws.cell(row=row_idx, column=2, value=record.storenm.storename if record.storenm else '')
+        ws.cell(row=row_idx, column=3, value=record.itemnm.itemnm if record.itemnm else '')
+        ws.cell(row=row_idx, column=4, value=record.suppliernm.shopname if record.suppliernm else '')
+        ws.cell(row=row_idx, column=5, value=record.Comapany_name.Comapany_name if record.Comapany_name else '')
+        ws.cell(row=row_idx, column=6, value=record.Batch_no)
+        ws.cell(row=row_idx, column=7, value=record.qty)
+        ws.cell(row=row_idx, column=8, value=record.unt.unitname if record.unt else '')
+        ws.cell(row=row_idx, column=9, value=record.Rate)
+        ws.cell(row=row_idx, column=10, value=record.Manufacturer_date.strftime('%Y-%m-%d') if record.Manufacturer_date else '')
+        ws.cell(row=row_idx, column=11, value=record.Expiry_date.strftime('%Y-%m-%d') if record.Expiry_date else '')
+        ws.cell(row=row_idx, column=12, value=record.lastupdatedate.strftime('%Y-%m-%d %H:%M:%S') if record.lastupdatedate else '')
+    
+    for column in ws.columns:
+        max_length = 0
+        column_letter = column[0].column_letter
+        for cell in column:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(str(cell.value))
+            except:
+                pass
+        adjusted_width = min(max_length + 2, 50)
+        ws.column_dimensions[column_letter].width = adjusted_width
+    
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=stock_records.xlsx'
+    wb.save(response)
+    
+    return response
+
+
+# Search stock function
+def search_stock(request):
+    if request.method == 'GET' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        query = request.GET.get('q', '')
+        if query:
+            stocks = Physicalstockdetails.objects.filter(
+                Q(itemnm__itemnm__icontains=query) |
+                Q(Batch_no__icontains=query),
+                deleted=False
+            )[:20]
+            
+            results = [{
+                'id': stock.id,
+                'medicine': stock.itemnm.itemnm if stock.itemnm else '',
+                'batch_no': stock.Batch_no,
+                'quantity': stock.qty,
+                'store': stock.storenm.storename if stock.storenm else ''
+            } for stock in stocks]
+            
+            return JsonResponse({'success': True, 'results': results})
+    
+    return JsonResponse({'success': False, 'results': []})
+
+
+def save_casehistoryprocedure(request):
+    if request.method == "POST":
+        try:
+            patient_id = request.session.get('tabcasehstptid')
+            # Remove ipno_id since we aren't saving to iptreatmentdetails anymore
+            # ipno_id = request.session.get('tab_ipno_id') 
+
+            procedure_ids = request.POST.getlist("treatment_id[]")
+            counts = request.POST.getlist("count[]")
+            dates = request.POST.getlist("date[]")
+            
+            saved = []
+            
+            for i in range(len(procedure_ids)):
+                if procedure_ids[i]:
+                    obj = casehistoryprocedure.objects.create(
+                        patient_id=patient_id,
+                        procedure_id=procedure_ids[i],
+                        count=counts[i] if i < len(counts) else '1',
+                        date=dates[i] or None,
+                        prepairedby=getattr(request.user, "staffdetails", None)
+                    )
+                    
+                    
+                    saved.append({
+                        "id": obj.id,
+                        "date": obj.date.strftime("%Y-%m-%d") if obj.date else "",
+                        "procedure": str(obj.procedure.name),
+                        "count": obj.count,
+                    })
+            
+            return JsonResponse({"success": True, "procedures": saved})
+        
+        except Exception as e:
+            return JsonResponse({"success": False, "error": str(e)})
+    
+    return JsonResponse({"success": False, "error": "Invalid request method"})
+
+
+def get_procedure_history(request):
+    """
+    Fetch existing procedures for the selected patient from casehistoryprocedure model.
+    """
+    try:
+        ipno_id = request.GET.get('ipno_id')
+        booking_id = request.GET.get('booking_id')
+        patient_id = request.GET.get('patient_id')  # Fallback if direct patient ID provided
+
+        if not ipno_id and not booking_id and not patient_id:
+            return JsonResponse({'error': 'Patient identifier required'}, status=400)
+
+        # Determine the patient
+        patient = None
+        if ipno_id:
+            try:
+                ip_admission = ippatientadmission.objects.get(id=ipno_id)
+                patient = ip_admission.MR_Number
+            except ippatientadmission.DoesNotExist:
+                pass
+
+        if not patient and booking_id:
+            try:
+                # Try to find patient via follow-up booking
+                followup = clairvedaFollowUp.objects.get(id=booking_id)
+                patient = followup.patient
+            except:
+                pass
+
+        if not patient and patient_id:
+            try:
+                patient = Patient_details.objects.get(id=patient_id)
+            except:
+                pass
+
+        if not patient:
+            return JsonResponse({'error': 'Patient not found'}, status=404)
+
+        # Fetch procedures (only non-deleted, newest first)
+        procedures = casehistoryprocedure.objects.filter(
+            patient=patient,
+            deletedstatus=False
+        ).select_related('procedure').order_by('-date', '-created_at')
+
+        procedures_data = []
+        for proc in procedures:
+            procedures_data.append({
+                'id': proc.id,
+                'date': proc.date.strftime('%Y-%m-%d') if proc.date else '',
+                'procedure_id':proc.procedure.id if proc.procedure else 'Unknown Procedure',
+                'procedure_name': proc.procedure.name if proc.procedure else 'Unknown Procedure',
+                'count': proc.count,
+                'created_at': proc.created_at.strftime('%Y-%m-%d') if proc.created_at else '',
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'procedures': procedures_data,
+        })
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'error': str(e)}, status=500)
+
+def get_patient_billing_costs(request):
+    """
+    Fetches the sum of Procedure costs and Medicine costs for a specific patient
+    based on their saved casehistoryprocedure and Prescriptionnew records.
+    """
+    try:
+        patient_id = request.GET.get('patient_id')
+        if not patient_id:
+            return JsonResponse({'error': 'Patient ID required'}, status=400)
+
+        # Get the patient from ippatientadmission
+        try:
+            admission = ippatientadmission.objects.get(id=patient_id)
+            patient = admission.MR_Number
+        except ippatientadmission.DoesNotExist:
+            return JsonResponse({'error': 'IP Admission not found'}, status=404)
+        
+        if not patient:
+            return JsonResponse({'error': 'Patient not found'}, status=404)
+
+        # ============================================================
+        # 1. CALCULATE PROCEDURE COSTS
+        # ============================================================
+        procedures = casehistoryprocedure.objects.filter(
+            patient=patient,
+            deletedstatus=False
+        ).select_related('procedure')
+
+        procedure_total = 0
+        procedure_details = []
+        for proc in procedures:
+            if proc.procedure:
+                rate = float(proc.procedure.rate or 0)
+                # count is stored as CharField, try converting to int
+                try:
+                    count = int(proc.count) if proc.count else 1
+                except (ValueError, TypeError):
+                    count = 1
+                total = rate * count
+                procedure_total += total
+                
+                procedure_details.append({
+                    'procedure_name': proc.procedure.name or 'Unknown',
+                    'rate': rate,
+                    'count': count,
+                    'total': total
+                })
+
+        # ============================================================
+        # 2. CALCULATE MEDICINE COSTS (From Prescriptionnew)
+        # ============================================================
+        prescriptions = Prescriptionnew.objects.filter(
+            patient=patient,
+            deletedstatus=False
+        ).select_related('physicalstock', 'physicalstock__itemnm')
+
+        medicine_total = 0
+        medicine_details = []
+        for rx in prescriptions:
+            rate = 0
+            if rx.physicalstock and rx.physicalstock.Rate:
+                try:
+                    rate = float(rx.physicalstock.Rate)
+                except (ValueError, TypeError):
+                    rate = 0
+            
+            try:
+                qty = int(rx.qtyprescriped) if rx.qtyprescriped else 1
+            except (ValueError, TypeError):
+                qty = 1
+            
+            total = rate * qty
+            medicine_total += total
+            
+            medicine_details.append({
+                'medicine_name': rx.medicine_name or 'Unknown',
+                'rate': rate,
+                'qty': qty,
+                'total': total
+            })
+
+        # ============================================================
+        # 3. CALCULATE TREATMENT COSTS (From iptreatmentdetails if available)
+        # ============================================================
+        treatment_total = 0
+        treatment_details = []
+        
+        # Get treatments from iptreatmentdetails
+        ip_treatments = iptreatmentdetails.objects.filter(
+            ipno=admission,
+            deletedstatus=False
+        ).select_related('tratmntid')
+        
+        for t in ip_treatments:
+            if t.tratmntid:
+                rate = float(t.tratmntid.Rate or 0)
+                try:
+                    count = int(t.treatmentcount) if t.treatmentcount else 1
+                except (ValueError, TypeError):
+                    count = 1
+                total = rate * count
+                treatment_total += total
+                
+                treatment_details.append({
+                    'treatment_name': t.tratmntid.Treatment_name or 'Unknown',
+                    'rate': rate,
+                    'count': count,
+                    'total': total
+                })
+
+        # ============================================================
+        # 4. CALCULATE FOOD CHARGES (From IPBill if available)
+        # ============================================================
+        food_total = 0
+        ip_bill = IPBill.objects.filter(ip_admission=admission).first()
+        if ip_bill and ip_bill.food_expenses:
+            try:
+                food_total = float(ip_bill.food_expenses)
+            except (ValueError, TypeError):
+                food_total = 0
+
+        # ============================================================
+        # 5. RETURN JSON RESPONSE
+        # ============================================================
+        return JsonResponse({
+            'success': True,
+            'procedure_total': round(procedure_total, 2),
+            'procedure_details': procedure_details,
+            'medicine_total': round(medicine_total, 2),
+            'medicine_details': medicine_details,
+            'treatment_total': round(treatment_total, 2),
+            'treatment_details': treatment_details,
+            'food_total': round(food_total, 2),
+        })
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+def get_patient_procedure_details(request):
+    """
+    Fetches procedure details for a specific patient from casehistoryprocedure model.
+    This is used to populate the procedure table in the IP bill expanded form.
+    
+    Expects: patient_id = IP Admission ID (from ippatientadmission)
+    """
+    try:
+        admission_id = request.GET.get('patient_id')
+        if not admission_id:
+            return JsonResponse({'error': 'Admission ID required'}, status=400)
+
+        # Get staff branch from session
+        staff_id = request.session.get('loginstaff')
+        if not staff_id:
+            return JsonResponse({'error': 'Staff not authenticated'}, status=401)
+        
+        try:
+            staff_allocation = Staffallocation.objects.get(id=staff_id)
+            staff_branch_id = staff_allocation.Branch_Name_id
+        except Staffallocation.DoesNotExist:
+            return JsonResponse({'error': 'Staff branch not found'}, status=404)
+
+        # ============================================================
+        # STEP 1: Get IP Admission and extract actual Patient
+        # ============================================================
+        try:
+            admission = ippatientadmission.objects.get(id=admission_id)
+            patient = admission.MR_Number  # This is the actual Patient_details object
+            
+            # ✅ VERIFY: Admission belongs to staff's branch
+            if admission.admittedbranch_id != staff_branch_id:
+                return JsonResponse({'error': 'Admission does not belong to your branch'}, status=403)
+                
+        except ippatientadmission.DoesNotExist:
+            return JsonResponse({'error': 'IP Admission not found'}, status=404)
+        
+        if not patient:
+            return JsonResponse({'error': 'Patient not found for this admission'}, status=404)
+
+        # ============================================================
+        # STEP 2: Fetch Procedures for the ACTUAL Patient
+        # ============================================================
+        procedures = casehistoryprocedure.objects.filter(
+            patient=patient,  # ✅ Uses actual Patient_details object
+            deletedstatus=False
+        ).select_related('procedure', 'procedure__branch_id').order_by('-date', '-created_at')
+
+        # ✅ FILTER: Only get procedures from current branch
+        procedures = procedures.filter(
+            Q(procedure__branch_id=staff_branch_id) | Q(procedure__branch_id__isnull=True)
+        )
+
+        # ✅ FILTER: Only get procedures from this admission period
+        admission_date = admission.Current_Date
+        procedures = procedures.filter(
+            Q(date__gte=admission_date) | Q(date__isnull=True)
+        )
+
+        procedure_list = []
+        procedure_total = 0
+        
+        for proc in procedures:
+            if proc.procedure:
+                rate = float(proc.procedure.rate or 0)
+                try:
+                    count = int(proc.count) if proc.count else 1
+                except (ValueError, TypeError):
+                    count = 1
+                total = rate * count
+                procedure_total += total
+                
+                procedure_list.append({
+                    'id': proc.id,
+                    'procedure_id': proc.procedure.id,
+                    'name': proc.procedure.name or 'Unknown Procedure',
+                    'rate': rate,
+                    'count': count,
+                    'total': total,
+                    'date': proc.date.strftime('%Y-%m-%d') if proc.date else '',
+                    'created_at': proc.created_at.strftime('%Y-%m-%d') if proc.created_at else '',
+                    'branch_id': proc.procedure.branch_id.id if proc.procedure.branch_id else None,
+                })
+
+        # ============================================================
+        # RETURN JSON RESPONSE
+        # ============================================================
+        return JsonResponse({
+            'success': True,
+            'procedures': procedure_list,
+            'procedure_total': round(procedure_total, 2),
+            'count': len(procedure_list),
+            'patient_id': patient.id,  # ✅ Return actual patient ID
+            'admission_id': admission.id,  # ✅ Return admission ID
+            'patient_name': patient.Patient_Name,
+        })
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)

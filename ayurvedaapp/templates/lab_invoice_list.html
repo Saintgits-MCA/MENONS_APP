@@ -1,7 +1,12 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block content %}
-
+<style>
+  .table-responsive::-webkit-scrollbar
+  {
+    width:1px;
+  }
+</style>
 <div class="content-wrapper">
 
   <section class="content-header">
@@ -64,6 +69,7 @@
                   <option value="">All</option>
                   <option value="Paid" {% if payment_status == "Paid" %}selected{% endif %}>Paid</option>
                   <option value="Credit" {% if payment_status == "Credit" %}selected{% endif %}>Credit</option>
+                  <option value="IP Credit" {% if payment_status == "IP Credit" %}selected{% endif %}>IP Credit</option>
                 </select>
               </div>
             </div>
@@ -116,8 +122,10 @@
         <span class="badge badge-danger">Cancelled by {{invoice.cancelled_by.Staff.Staff_firstname}}</span>
     {% elif invoice.payment_status == "Paid" %}
         <span class="badge badge-success">Paid</span>
-    {% else %}
+    {% elif invoice.payment_status == "Credit" %}
         <span class="badge badge-warning">Credit</span>
+    {%elif invoice.payment_status == "IP Credit" %}
+    <span class="badge badge-danger">IP Credit</span>
     {% endif %}
                 </td>
                 <td class="text-center">
@@ -125,26 +133,26 @@
                   <a href="{% url 'lab_invoice_detail' %}?invoice_id={{ invoice.id }}" class="btn btn-sm btn-info" title="View">
                     <i class="fas fa-eye"></i>
                   </a>
-                   {% if invoice.payment_status == "Paid" and invoice.has_results %}
+                   {% if invoice.payment_status == "Paid" or invoice.payment_status == "IP Credit" and invoice.has_results %}
             <a href="{% url 'lab_invoice_print_results' %}?invoice_id={{ invoice.id }}" 
-               class="btn btn-sm btn-success ml-1" 
+               class="btn btn-sm btn-success" 
                title="Print Results"
                target="_blank">
                 <i class="fas fa-file-alt"></i> Results
             </a>
         {% endif %}
                   <!-- Print button only shows if payment_status is "Paid" -->
-                    {% if invoice.payment_status == "Paid"%}
+                    {% if invoice.payment_status == "Paid" or invoice.payment_status == "IP Credit"%}
     <a href="{% url 'lab_invoice_print_option' %}?invid={{ invoice.id }}" class="btn btn-sm btn-primary ml-2" title="Print" target="_blank">
       <i class="fas fa-print"></i>
     </a>
     <a href="{% url 'lab_invoice_cancel' %}?invoice_id={{ invoice.id }}" 
-               class="btn btn-danger btn-sm ml-1"
+               class="btn btn-danger btn-sm"
                onclick="return confirm('Are you sure you want to cancel this invoice? This action cannot be undone.')"
                title="Cancel Invoice">
                 <i class="fas fa-times"></i>
             </a>
-  {% else %}
+  {% elif invoice.payment_status == "Credit" %}
     <!-- Single URL for payment -->
     <a href="{% url 'lab_invoice_payment' %}?invoice_id={{ invoice.id }}" class="btn btn-sm btn-success ml-2" title="Pay Now">
       <i class="fas fa-money-bill-wave"></i>

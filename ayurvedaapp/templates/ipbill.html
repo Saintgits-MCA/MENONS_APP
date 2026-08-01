@@ -155,8 +155,6 @@
     font-weight: 700;
     font-size: 18px;
   }
-
-  /* Payment Summary Box - Same as ipbillexpanded */
   .payment-summary-box {
     border: 2px solid #007bff;
     border-radius: 8px;
@@ -178,8 +176,28 @@
     font-weight: 700;
     font-size: 1.2rem;
   }
+  .ip-credit-row {
+    background-color: #e8f4fd !important;
+  }
+  .ip-credit-row th {
+    color: #007bff;
+  }
+  .ip-credit-row .credit-amount {
+    color: #007bff;
+    font-weight: 700;
+  }
+  .ip-credit-total-row {
+    background-color: #d4edda !important;
+  }
+  .ip-credit-total-row th {
+    color: #28a745;
+  }
+  .ip-credit-total-row .credit-amount {
+    color: #28a745;
+    font-weight: 700;
+    font-size: 16px;
+  }
 
-  /* Refund Alert */
   #refundAlert {
     display: none;
     margin-top: 10px;
@@ -231,6 +249,16 @@
     }
     .grand-total-row {
       background-color: #f8f9fa !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    .ip-credit-row {
+      background-color: #e8f4fd !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    .ip-credit-total-row {
+      background-color: #d4edda !important;
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
     }
@@ -335,16 +363,18 @@
                 </thead>
                 <tbody>
                   <tr>
-                     <td>
-                      <input type="number" step="0.01" id="treatment-total" class="form-control" name="treatment_total" placeholder="0.00">
-                    
-                     </td>
-                      
                     <td>
-                      <input type="number" step="0.01" id="procedure-total" class="form-control" name="procedure_total" placeholder="0.00"></td>
-                   
-                    <td><input type="number" step="0.01" id="medicine-total" class="form-control" name="medicine_total" placeholder="0.00"></td>
-                    <td><input type="number" step="0.01" id="food-total" class="form-control" name="food_total" placeholder="0.00"></td>
+                      <input type="number" step="0.01" id="treatment-total" class="form-control" name="treatment_total" placeholder="0.00">
+                    </td>
+                    <td>
+                      <input type="number" step="0.01" id="procedure-total" class="form-control" name="procedure_total" placeholder="0.00">
+                    </td>
+                    <td>
+                      <input type="number" step="0.01" id="medicine-total" class="form-control" name="medicine_total" placeholder="0.00">
+                    </td>
+                    <td>
+                      <input type="number" step="0.01" id="food-total" class="form-control" name="food_total" placeholder="0.00">
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -374,7 +404,7 @@
             </div>
 
             <!-- ============================================================ -->
-            <!-- BILL SUMMARY TABLE - Same as ipbillexpanded                   -->
+            <!-- BILL SUMMARY TABLE - WITH IP CREDIT                          -->
             <!-- ============================================================ -->
             <div class="section-title mt-4" style="background-color: #f8f9fa; padding: 10px; font-weight: 600; border-left: 5px solid #007bff; margin-bottom: 15px;">
               <i class="fas fa-calculator"></i> Bill Summary
@@ -390,7 +420,7 @@
                     <th>Total Treatment Charges</th>
                     <td><input type="text" id="totaltreatmentamount" class="form-control" value="0.00" name="totaltreatmentamount" readonly></td>
                   </tr>
-                   <tr>
+                  <tr>
                     <th>Total Procedure Charges</th>
                     <td><input type="text" id="totalprocedureamount" class="form-control" value="0.00" name="totalprocedureamount" readonly></td>
                   </tr>
@@ -406,23 +436,47 @@
                     <th>Other Services</th>
                     <td><input type="text" id="totalserviceamount" class="form-control" value="0.00" name="totalserviceamount" readonly></td>
                   </tr>
+                  
+                  <!-- ============================================================ -->
+                  <!-- IP CREDIT ROWS - PHARMACY AND LAB                          -->
+                  <!-- ============================================================ -->
+                  <tr class="ip-credit-row">
+                    <th><i class="fas fa-prescription"></i> Pharmacy IP Credit</th>
+                    <td>
+                      <input type="text" id="pharmacyIpCredit" class="form-control" value="0.00" name="pharmacy_ip_credit" readonly style="font-weight: bold; color: #007bff;">
+                      <small class="text-muted">From pharmacy IP credit invoices</small>
+                    </td>
+                  </tr>
+                  <tr class="ip-credit-row">
+                    <th><i class="fas fa-flask"></i> Lab IP Credit</th>
+                    <td>
+                      <input type="text" id="labIpCredit" class="form-control" value="0.00" name="lab_ip_credit" readonly style="font-weight: bold; color: #007bff;">
+                      <small class="text-muted">From lab IP credit invoices</small>
+                    </td>
+                  </tr>
+                  <tr class="ip-credit-total-row">
+                    <th><i class="fas fa-credit-card"></i> Total IP Credit</th>
+                    <td>
+                      <input type="text" id="totalIpCredit" class="form-control" value="0.00" name="total_ip_credit" readonly style="font-weight: bold; font-size: 16px; color: #28a745;">
+                      <small class="text-muted">Total credit to be adjusted</small>
+                    </td>
+                  </tr>
+                  
                   <tr>
                     <th><strong>Subtotal</strong></th>
                     <td><input type="text" id="subtotal" class="form-control" value="0.00" name="sub_total" readonly style="font-weight: bold;"></td>
                   </tr>
                   <tr>
-                <tr>
-    <th>Discount</th>
-    <td><input type="text" id="discountDisplay" class="form-control" value="0.00" name="discountDisplay" readonly></td>
-
+                    <th>Discount</th>
+                    <td><input type="text" id="discountDisplay" class="form-control" value="0.00" name="discountDisplay" readonly></td>
                   </tr>
                   <tr>
-    <th>Tax</th>
-    <td><input type="text" id="taxDisplay" class="form-control" value="0.00" name="taxDisplay" readonly></td>
-</tr>
+                    <th>Tax</th>
+                    <td><input type="text" id="taxDisplay" class="form-control" value="0.00" name="taxDisplay" readonly></td>
+                  </tr>
 
                   <!-- ============================================================ -->
-                  <!-- ADVANCE PAID ROW (Highlighted) - Same as ipbillexpanded      -->
+                  <!-- ADVANCE PAID ROW                                             -->
                   <!-- ============================================================ -->
                   <tr class="advance-row">
                     <th><i class="fas fa-hand-holding-usd"></i> Advance Paid</th>
@@ -433,18 +487,18 @@
                   </tr>
 
                   <!-- ============================================================ -->
-                  <!-- NET AMOUNT ROW (Highlighted) - Same as ipbillexpanded       -->
+                  <!-- NET AMOUNT ROW                                              -->
                   <!-- ============================================================ -->
                   <tr class="net-amount-row">
                     <th><i class="fas fa-rupee-sign"></i> Net Amount</th>
                     <td>
-                      <input type="text" id="net-amount" class="form-control" value="0.00" name="net_amount" readonly style=" font-weight: bold; font-size: 16px;">
+                      <input type="text" id="net-amount" class="form-control" value="0.00" name="net_amount" readonly style="font-weight: bold; font-size: 16px;">
                       <small class="text-muted">After advance deduction</small>
                     </td>
                   </tr>
 
                   <!-- ============================================================ -->
-                  <!-- AMOUNT COLLECTED ROW (Highlighted) - Same as ipbillexpanded -->
+                  <!-- AMOUNT COLLECTED ROW                                        -->
                   <!-- ============================================================ -->
                   <tr class="collected-row">
                     <th><i class="fas fa-money-bill-wave"></i> Amount Collected</th>
@@ -455,7 +509,7 @@
                   </tr>
 
                   <!-- ============================================================ -->
-                  <!-- GRAND TOTAL ROW (Highlighted) - Same as ipbillexpanded      -->
+                  <!-- GRAND TOTAL ROW                                             -->
                   <!-- ============================================================ -->
                   <tr class="grand-total-row">
                     <th><i class="fas fa-check-circle"></i> Grand Total</th>
@@ -477,7 +531,7 @@
                   <div class="form-group">
                     <label><i class="fas fa-money-bill-wave"></i> Select Payment Method</label>
                     <div class="row">
-                      <div class="col-md-3">
+                      <div class="col-md-4">
                         <div class="payment-method-card" data-method="cash" onclick="selectPaymentMethod('cash')">
                           <span class="method-icon"></span>
                           <span class="method-name">Cash</span>
@@ -486,7 +540,7 @@
                           </span>
                         </div>
                       </div>
-                      <div class="col-md-3">
+                      <div class="col-md-4">
                         <div class="payment-method-card" data-method="card" onclick="selectPaymentMethod('card')">
                           <span class="method-icon"></span>
                           <span class="method-name">Card</span>
@@ -495,21 +549,12 @@
                           </span>
                         </div>
                       </div>
-                      <div class="col-md-3">
+                      <div class="col-md-4">
                         <div class="payment-method-card" data-method="upi" onclick="selectPaymentMethod('upi')">
                           <span class="method-icon"></span>
-                          <span class="method-name">UPI</span>
+                          <span class="method-name">Gpay</span>
                           <span class="method-amount">
-                            <input type="number" step="0.01" id="upiAmount" class="form-control form-control-sm payment-input" name="upiAmount" placeholder="0.00" style="width:120px;display:inline-block;">
-                          </span>
-                        </div>
-                      </div>
-                      <div class="col-md-3">
-                        <div class="payment-method-card" data-method="bank" onclick="selectPaymentMethod('bank')">
-                          <span class="method-icon"></span>
-                          <span class="method-name">Bank Transfer</span>
-                          <span class="method-amount">
-                            <input type="number" step="0.01" id="bankAmount" class="form-control form-control-sm payment-input" name="bankAmount" placeholder="0.00" style="width:120px;display:inline-block;">
+                            <input type="number" step="0.01" id="GpayAmount" class="form-control form-control-sm payment-input" name="GpayAmount" placeholder="0.00" style="width:120px;display:inline-block;">
                           </span>
                         </div>
                       </div>
@@ -536,14 +581,14 @@
             </div>
 
             <!-- ============================================================ -->
-            <!-- PAYMENT SUMMARY BOX - Same as ipbillexpanded WITH REFUND      -->
+            <!-- PAYMENT SUMMARY BOX                                           -->
             <!-- ============================================================ -->
             <div class="payment-summary-box">
               <div class="header"><i class="fas fa-receipt"></i> Payment Summary</div>
               <div class="row">
                 <div class="col-md-3 text-center">
                   <div><small>Gross Total</small></div>
-                  <div><strong id="displayGrossTotal" style=" font-size: 18px;">₹ 0.00</strong></div>
+                  <div><strong id="displayGrossTotal" style="font-size: 18px;">₹ 0.00</strong></div>
                 </div>
                 <div class="col-md-3 text-center">
                   <div><small>Advance Paid</small></div>
@@ -555,10 +600,10 @@
                 </div>
                 <div class="col-md-3 text-center">
                   <div><small>Amount Collected</small></div>
-                  <div><strong id="displayCollected" style=" font-size: 18px;">₹ 0.00</strong></div>
+                  <div><strong id="displayCollected" style="font-size: 18px;">₹ 0.00</strong></div>
                 </div>
               </div>
-              <!-- Refund Alert - Same as ipbillexpanded -->
+              <!-- Refund Alert -->
               <div id="refundAlert" style="display: none; margin-top: 10px;">
                 <div class="alert alert-danger" style="margin-bottom: 0; padding: 10px 15px;">
                   <strong><i class="fas fa-undo-alt"></i> Refund Amount:</strong> 
@@ -575,13 +620,12 @@
             <!-- Action Buttons -->
             <div class="row mt-3">
               <div class="col-md-12 text-center">
-                <button type="submit" class="btn btn-success btn-lg">
+                <button type="submit" class="btn btn-primary btn-lg">
                   <i class="fas fa-file-invoice"></i> Generate Bill
                 </button>
                 <button type="button" id="resetBtn" class="btn btn-warning btn-lg">
                   <i class="fas fa-undo"></i> Reset
                 </button>
-               
                 <a href="{% url 'ippatient' %}?menumanagement_id={{ idmngmnt }}" class="btn btn-secondary btn-lg">
                   <i class="fas fa-arrow-left"></i> Back
                 </a>
@@ -681,16 +725,15 @@ $(document).ready(function () {
     function updatePaymentTotals() {
         var cash = parseFloat($('#cashAmount').val()) || 0;
         var card = parseFloat($('#cardAmount').val()) || 0;
-        var upi = parseFloat($('#upiAmount').val()) || 0;
-        var bank = parseFloat($('#bankAmount').val()) || 0;
+        var upi = parseFloat($('#GpayAmount').val()) || 0;
         
-        var total = cash + card + upi + bank;
+        var total = cash + card + upi;
         $('#totalCollected').text('₹ ' + total.toFixed(2));
         calculateBalanceDue();
         updatePaymentSummaryDisplay();
     }
 
-    // Calculate balance due after payment - refund based on advance alone (matches ipbillexpand)
+    // Calculate balance due after payment
     function calculateBalanceDue() {
         var grandTotal = parseFloat($('#grandtotal').val()) || 0;
         var advance = parseFloat($('#advance-paid').val()) || 0;
@@ -700,7 +743,6 @@ $(document).ready(function () {
         var display = $('#balanceDueDisplay');
 
         if (remainingAfterAdvance < 0) {
-            // Advance alone already exceeds the total - refund scenario
             display.html('⚠️ Refund Due: ₹ ' + Math.abs(remainingAfterAdvance).toFixed(2)).css('color', '#dc3545');
         } else {
             var balanceDue = remainingAfterAdvance - collected;
@@ -713,14 +755,13 @@ $(document).ready(function () {
     }
 
     // ============================================================
-    // UPDATE PAYMENT SUMMARY DISPLAY (Same as ipbillexpanded)
+    // UPDATE PAYMENT SUMMARY DISPLAY
     // ============================================================
     function updatePaymentSummaryDisplay() {
         let grossTotal = parseFloat($('#grandtotal').val()) || 0;
         let advancePaid = parseFloat($('#advance-paid').val()) || 0;
         let collected = parseFloat($('#totalCollected').text().replace('₹ ', '')) || 0;
 
-        // Total received = advance + amount collected now (matches views.py -> ipbill())
         let totalReceived = advancePaid + collected;
         let netAmount, refundAmount;
 
@@ -735,13 +776,11 @@ $(document).ready(function () {
         $("#net-amount").val(netAmount.toFixed(2));
         $("#amount-collected").val(netAmount.toFixed(2));
 
-        // Update display fields
         $("#displayGrossTotal").text('₹ ' + grossTotal.toFixed(2));
         $("#displayAdvancePaid").text('₹ ' + advancePaid.toFixed(2));
         $("#displayNetAmount").text('₹ ' + netAmount.toFixed(2));
         $("#displayCollected").text('₹ ' + netAmount.toFixed(2));
 
-        // Handle refund - based on combined advance + collected vs grand total
         if (refundAmount > 0) {
             $("#refundAlert").show();
             $("#displayRefundAmount").text(refundAmount.toFixed(2));
@@ -757,21 +796,20 @@ $(document).ready(function () {
             }
         }
         
-        // Update status message
         updateStatusMessage(grossTotal, advancePaid, netAmount, refundAmount);
     }
 
     // ============================================================
-    // UPDATE STATUS MESSAGE - refund-aware (advance + collected vs total)
+    // UPDATE STATUS MESSAGE
     // ============================================================
     function updateStatusMessage(grossTotal, advancePaid, netAmount, refundAmount) {
         const statusMsg = $("#statusMessage");
         if (refundAmount > 0) {
-            statusMsg.html('<span class="badge badge-warning">⚠ REFUND DUE - Advance/Collected exceeds total</span>');
+            statusMsg.html('<span class="badge badge-warning">⚠ REFUND DUE</span>');
         } else if (netAmount === 0 && grossTotal > 0 && advancePaid > 0) {
             statusMsg.html('<span class="badge badge-success">✓ FULLY PAID</span>');
         } else if (advancePaid > 0 && netAmount > 0) {
-            statusMsg.html('<span class="badge badge-info">ℹ PARTIALLY PAID - Balance due</span>');
+            statusMsg.html('<span class="badge badge-info">ℹ PARTIALLY PAID</span>');
         } else if (grossTotal > 0 && advancePaid === 0) {
             statusMsg.html('<span class="badge badge-secondary">⏳ Waiting for payment</span>');
         } else if (grossTotal === 0 && advancePaid === 0) {
@@ -824,6 +862,49 @@ $(document).ready(function () {
         }
     });
 
+    // ============================================================
+    // LOAD IP CREDIT BALANCE
+    // ============================================================
+    function loadPatientIpCredit(patientId) {
+        if (!patientId) {
+            return;
+        }
+        
+        $.ajax({
+            url: '/get-patient-ip-credit-balance/',
+            data: { patient_id: patientId },
+            type: 'GET',
+            dataType: 'json',
+            success: function(response) {
+                if (response.error) {
+                    return;
+                }
+                
+                // Update credit fields
+                var pharmacyTotal = response.pharmacy_total || 0;
+                var labTotal = response.lab_total || 0;
+                var grandTotal = response.grand_total || 0;
+                
+                $('#pharmacyIpCredit').val(pharmacyTotal.toFixed(2));
+                $('#labIpCredit').val(labTotal.toFixed(2));
+                $('#totalIpCredit').val(grandTotal.toFixed(2));
+                
+                // Color coding for total IP credit
+                if (grandTotal > 0) {
+                    $('#totalIpCredit').css('color', '#28a745');
+                } else {
+                    $('#totalIpCredit').css('color', '#6c757d');
+                }
+                
+                // Update billing total to include IP credit
+                updateBillingTotal();
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading IP credit:', error);
+            }
+        });
+    }
+
     // Select patient from search results
     $("#searchResultsTable tbody").on("click", ".select-btn", function () {
         const data = JSON.parse($(this).attr("data-patient"));
@@ -849,10 +930,26 @@ $(document).ready(function () {
         $("#advance-paid").val(advanceAmount.toFixed(2));
         
         // Populate treatment and medicine costs
-        $("#treatment-total").val(parseFloat(data.treatment_cost || 0).toFixed(2));
-        
-       
-        $("#medicine-total").val(parseFloat(data.medicine_cost || 0).toFixed(2));
+        $.ajax({
+    url: "{% url 'get_patient_billing_costs' %}",
+    type: 'GET',
+    data: { patient_id: data.ip_id },
+    dataType: 'json',
+    success: function(resp) {
+        if (resp.success) {
+            $("#procedure-total").val(resp.procedure_total.toFixed(2));
+            $("#medicine-total").val(resp.medicine_total.toFixed(2));
+            $("#treatment-total").val(resp.treatment_total.toFixed(2));  // REMOVED
+            $("#food-total").val(resp.food_total.toFixed(2));           // REMOVED
+            updateBillingTotal(); // Recalculate everything
+        } else {
+            console.error('Error fetching costs:', resp.error);
+        }
+    },
+    error: function(xhr, status, error) {
+        console.error('AJAX error fetching costs:', error);
+    }
+});
         $("#food-total").val(0);
         $("#expense").val(0);
 
@@ -909,17 +1006,19 @@ $(document).ready(function () {
         }
 
         $("#roomRentTotal").val(totalRent.toFixed(2));
+        
+        // Load IP Credit for selected patient
+        loadPatientIpCredit(data.ip_id);
+        
         updateBillingTotal();
         $("#searchModal").modal("hide");
     });
 
     // Trigger calculation on input changes
-    $(document).on("input", "#treatment-total,#procedure-total,#medicine-total, #food-total, #expense, #discount, #tax, .room-days, #advance-paid, .payment-input", updateBillingTotal);
+    $(document).on("input", "#treatment-total, #procedure-total, #medicine-total, #food-total, #expense, #discount, #tax, .room-days, #advance-paid, .payment-input", updateBillingTotal);
 
     // ============================================================
-    // BILLING TOTAL CALCULATION - SAME AS ipbillexpanded
-    // Net Amount = Gross Total - Advance Paid
-    // If Net Amount < 0, show Refund
+    // BILLING TOTAL CALCULATION - WITH IP CREDIT
     // ============================================================
     function updateBillingTotal() {
         let roomRent = 0;
@@ -945,15 +1044,23 @@ $(document).ready(function () {
         const tax = parseFloat($("#tax").val()) || 0;
         const discount = parseFloat($("#discount").val()) || 0;
         const advance = parseFloat($("#advance-paid").val()) || 0;
+        
+        // ============================================================
+        // IP CREDIT AMOUNTS
+        // ============================================================
+        const pharmacyCredit = parseFloat($("#pharmacyIpCredit").val()) || 0;
+        const labCredit = parseFloat($("#labIpCredit").val()) || 0;
+        const totalIpCredit = pharmacyCredit + labCredit;
 
-        // Calculate subtotal
-        const subTotal = roomRent + medicine + treatment + food + expense +procedure;
+        // Calculate subtotal (before IP credit)
+        const subTotal = roomRent + medicine + treatment + procedure + food + expense+totalIpCredit ;
         
         // Calculate tax amount
         const taxAmount = (subTotal * tax) / 100;
         
         // ============================================================
-        // GROSS TOTAL = Subtotal - Discount + Tax (Same as ipbillexpanded)
+        // GROSS TOTAL = Subtotal - Discount + Tax - IP Credit
+        // IP Credit is deducted from the total like a credit adjustment
         // ============================================================
         const grossTotal = subTotal + taxAmount - discount;
         
@@ -975,7 +1082,6 @@ $(document).ready(function () {
         $("#grandtotal").val(grossTotal.toFixed(2));
         $("#net-amount").val(netAmount.toFixed(2));
         $("#amount-collected").val(amountCollected.toFixed(2));
-        $("#balance-amount").val(amountCollected.toFixed(2));
         
         // Update individual totals
         $("#totalrentamount").val(roomRent.toFixed(2));
@@ -985,13 +1091,12 @@ $(document).ready(function () {
         $("#totalprocedureamount").val(procedure.toFixed(2));
         $("#totalserviceamount").val(expense.toFixed(2));
         $("#discountDisplay").val(discount.toFixed(2));
-        $("#taxDisplay").val(tax.toFixed(2));
+        $("#taxDisplay").val(taxAmount.toFixed(2));
+        
         // Update display summary
         updatePaymentSummaryDisplay();
-        
         // Update payment totals
         updatePaymentTotals();
-        
         // Update status message
         updateStatusMessage(grossTotal, advance, netAmount, refundAmount);
         
@@ -1037,9 +1142,7 @@ $(document).ready(function () {
             $("#roomBreakdownTable tbody").html(`<tr id="noRoomData"><td colspan="7" class="text-center text-muted">No room data available</td></tr>`);
             $("#roomRentTotal").val("0.00");
             $("#treatment-total").val("");
-$("#procedure-total").val("");
-
-            
+            $("#procedure-total").val("");
             $("#medicine-total").val("");
             $("#food-total").val("");
             $("#expense").val("");
@@ -1050,16 +1153,19 @@ $("#procedure-total").val("");
             $("#advance-paid").val("");
             $("#net-amount").val("");
             $("#amount-collected").val("").css('color', '#495057');
+            
+            // Reset IP Credit fields
+            $("#pharmacyIpCredit").val("0.00");
+            $("#labIpCredit").val("0.00");
+            $("#totalIpCredit").val("0.00");
+            
             $("#displayGrossTotal").text('₹ 0.00');
             $("#displayAdvancePaid").text('₹ 0.00');
             $("#displayNetAmount").text('₹ 0.00');
             $("#displayCollected").text('₹ 0.00');
             
-            // Reset refund alert
             $("#refundAlert").hide();
             $("#paymentStatusDisplay").val('PENDING').css('color', '#856404');
-            
-            // Update status message
             $("#statusMessage").html('<span class="badge badge-secondary">Waiting for patient selection</span>');
             
             $("#mrDropdown").html('<option selected disabled value="">-- Select Patient --</option>');
@@ -1067,29 +1173,26 @@ $("#procedure-total").val("");
             $("#admission-date").val("");
             $("#discharge-date").val("");
             $("#discharge-id").val("");
-            // Reset payment fields
+            
             $("#cashAmount").val("");
             $("#cardAmount").val("");
-            $("#upiAmount").val("");
-            $("#bankAmount").val("");
+            $("#GpayAmount").val("");
             $("#totalCollected").text('₹ 0.00');
             $("#balanceDueDisplay").html('Balance Due: ₹ 0.00').css('color', '#dc3545');
             $('.payment-method-card').removeClass('active');
             $('#paymentMethod').val('cash');
-            // Reset summary fields
+            
             $("#totalrentamount").val("0.00");
             $("#totaltreatmentamount").val("0.00");
-              $("#totalprocedureamount").val("0.00");
-            
+            $("#totalprocedureamount").val("0.00");
             $("#totalmedicineamount").val("0.00");
             $("#totalfoodamount").val("0.00");
             $("#totalserviceamount").val("0.00");
-            $("#balance-amount").val("0.00");
         }
     });
 
     // ============================================================
-    // FORM SUBMISSION VALIDATION WITH REFUND HANDLING
+    // FORM SUBMISSION VALIDATION
     // ============================================================
     $("#billingForm").on("submit", function(e) {
         const grandTotal = parseFloat($("#grandtotal").val()) || 0;
@@ -1097,20 +1200,19 @@ $("#procedure-total").val("");
         const collected = parseFloat($("#totalCollected").text().replace('₹ ', '')) || 0;
         const totalReceived = advance + collected;
 
-        // REFUND SCENARIO: advance + collected together exceed the grand total.
-        // This is valid — the excess (from advance, collected, or both) is saved
-        // as refundamount by the backend. No block needed.
         if (totalReceived > grandTotal) {
-            // fall through to patient check / submit
+            // Overpayment - allow but warn
+            if (!confirm('⚠️ Overpayment detected!\n\nTotal Received: ₹' + totalReceived.toFixed(2) + '\nGrand Total: ₹' + grandTotal.toFixed(2) + '\nExcess: ₹' + (totalReceived - grandTotal).toFixed(2) + '\n\nThis will be recorded as overpayment. Continue?')) {
+                e.preventDefault();
+                return false;
+            }
         } else if (totalReceived < grandTotal) {
-            // Still owed money and nothing entered to cover it
             if (collected <= 0 && advance <= 0) {
                 e.preventDefault();
                 showMessage("Please enter payment amount for the balance due.", "warning");
                 return false;
             }
         }
-        // totalReceived === grandTotal -> exactly paid, fine
 
         const mrnum = $("#mrDropdown").val();
         if (!mrnum || mrnum === "-- Select Patient --") {
@@ -1119,7 +1221,6 @@ $("#procedure-total").val("");
             return false;
         }
         
-        // Show loading state
         const submitBtn = $(this).find('button[type="submit"]');
         submitBtn.html('<i class="fas fa-spinner fa-spin"></i> Processing...');
         submitBtn.prop('disabled', true);

@@ -194,7 +194,7 @@
   }
 
   /* ─── FOOTER ─── */
-  .footer {
+  .custom-footer {
     font-size: 7pt;
     text-align: center;
     border-top: 1px dashed #000;
@@ -203,10 +203,13 @@
     line-height: 1.3;
   }
 
-  .footer p {
+  .custom-footer p {
     margin: 1px 0;
   }
-
+.main-footer
+{
+  display:none;
+}
   /* ─── PAGE BREAK ─── */
   .page-break {
     page-break-after: always;
@@ -432,7 +435,7 @@
  
 
   <!-- ─── FOOTER ─── -->
-  <div class="footer">
+  <div class="custom-footer">
     <p>For billing and general queries, please mail: {{ objhospt.Email }}</p>
    
   </div>

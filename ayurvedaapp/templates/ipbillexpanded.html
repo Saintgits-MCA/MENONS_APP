@@ -16,48 +16,13 @@
         font-size: 1.1rem;
         font-weight: bold;
     }
-    .advance-row {
-        background-color: #fff3cd !important;
-    }
-    .advance-row th, .advance-row td {
-        color: #856404;
-    }
-    .net-amount-row {
-        background-color: #d4edda !important;
-    }
-    .net-amount-row th, .net-amount-row td {
-        color: #155724;
-    }
-    .collected-row {
-        background-color: #cce5ff !important;
-    }
-    .collected-row th, .collected-row td {
-        color: #004085;
-    }
+    
     .grand-total-row {
         background-color: #f8f9fa !important;
         font-weight: 700;
         font-size: 1.2rem;
     }
-    .text-advance {
-        color: #dc3545;
-        font-weight: 700;
-    }
-    .text-net {
-        color: #28a745;
-        font-weight: 700;
-        font-size: 1.1rem;
-    }
-    .text-collected {
-        color: #007bff;
-        font-weight: 700;
-        font-size: 1.2rem;
-    }
-    .text-grand {
-        color: #28a745;
-        font-weight: 700;
-        font-size: 1.3rem;
-    }
+    
     .payment-summary-box {
         border: 2px solid #007bff;
         border-radius: 8px;
@@ -149,6 +114,225 @@
         font-weight: 600;
         text-align: center;
     }
+    
+    /* ===== AUTOCOMPLETE STYLES ===== */
+    .autocomplete-container {
+        position: relative;
+        width: 100%;
+    }
+    .autocomplete-dropdown {
+        position: absolute;
+        z-index: 1000;
+        background: white;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        max-height: 250px;
+        overflow-y: auto;
+        width: 100%;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        display: none;
+        margin-top: 2px;
+    }
+    .autocomplete-item {
+        padding: 8px 12px;
+        cursor: pointer;
+        border-bottom: 1px solid #eee;
+        transition: background 0.2s;
+    }
+    .autocomplete-item:hover {
+        background-color: #f0f7ff;
+    }
+    .autocomplete-item .item-name {
+        font-weight: 500;
+        color: #333;
+    }
+    .autocomplete-item .item-detail {
+        font-size: 12px;
+        color: #666;
+        margin-top: 2px;
+    }
+    .autocomplete-item .item-rate {
+        color: #28a745;
+        font-weight: 600;
+        font-size: 13px;
+    }
+    .search-loading {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #007bff;
+    }
+    .add-row-btn {
+        margin-top: 10px;
+    }
+    .row-actions {
+        display: flex;
+        gap: 5px;
+        align-items: center;
+    }
+    .table-row-highlight {
+        animation: highlightRow 0.5s ease;
+    }
+    @keyframes highlightRow {
+        0% { background-color: #d4edda; }
+        100% { background-color: transparent; }
+    }
+    .no-results {
+        padding: 12px;
+        text-align: center;
+        color: #999;
+        font-style: italic;
+    }
+    .medicine-search-input, .treatment-search-input, .procedure-search-input {
+        width: 100%;
+        min-width: 180px;
+    }
+    .table td {
+        vertical-align: middle;
+    }
+    .remove-btn {
+        color: #dc3545;
+        cursor: pointer;
+        font-size: 18px;
+        transition: color 0.2s;
+    }
+    .remove-btn:hover {
+        color: #bd2130;
+    }
+    .rate-display {
+        font-weight: 600;
+        color: #007bff;
+    }
+    .total-display {
+        font-weight: 600;
+        color: #28a745;
+    }
+    .add-btn-sm {
+        padding: 4px 10px;
+        font-size: 12px;
+        border-radius: 20px;
+    }
+    .stock-info {
+        font-size: 11px;
+        color: #6c757d;
+    }
+    .stock-available {
+        color: #28a745;
+    }
+    .stock-low {
+        color: #ffc107;
+    }
+    .stock-out {
+        color: #dc3545;
+    }
+    .procedure-category-badge {
+        font-size: 10px;
+        padding: 2px 8px;
+        border-radius: 12px;
+        background: #e9ecef;
+        color: #6c757d;
+        margin-left: 5px;
+    }
+    .procedure-description {
+        font-size: 11px;
+        color: #6c757d;
+        margin-top: 2px;
+    }
+
+    /* Search result item styles */
+    .search-result-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 12px;
+        border-bottom: 1px solid #eee;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    .search-result-item:hover {
+        background-color: #f0f7ff;
+    }
+    .search-result-item .item-info {
+        flex: 1;
+    }
+    .search-result-item .item-name {
+        font-weight: 500;
+        color: #333;
+    }
+    .search-result-item .item-detail {
+        font-size: 12px;
+        color: #666;
+    }
+    .search-result-item .item-rate {
+        color: #28a745;
+        font-weight: 600;
+        font-size: 13px;
+    }
+    .search-result-item .add-btn {
+        background: #28a745;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 4px 12px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    .search-result-item .add-btn:hover {
+        background: #1e7e34;
+    }
+    .search-result-item .add-btn:disabled {
+        background: #6c757d;
+        cursor: not-allowed;
+    }
+
+    .autocomplete-error {
+        padding: 12px;
+        text-align: center;
+        color: #dc3545;
+        font-style: italic;
+    }
+
+    /* Payment disabled styles */
+    .disabled-section {
+        opacity: 0.6;
+        pointer-events: none;
+    }
+    .disabled-input {
+        background-color: #e9ecef !important;
+        cursor: not-allowed !important;
+    }
+    .is-invalid {
+        border-color: #dc3545 !important;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+    }
+    .payment-message {
+        padding: 10px 15px;
+        border-radius: 4px;
+        margin-top: 10px;
+    }
+    .payment-message-success {
+        background-color: #d4edda;
+        border: 1px solid #c3e6cb;
+        color: #155724;
+    }
+    .payment-message-warning {
+        background-color: #fff3cd;
+        border: 1px solid #ffc107;
+        color: #856404;
+    }
+    .payment-message-info {
+        background-color: #cce5ff;
+        border: 1px solid #b8daff;
+        color: #004085;
+    }
+    .payment-message-danger {
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+    }
+
     @media print {
         .no-print {
             display: none !important;
@@ -202,7 +386,7 @@
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-6">
-                    <h1><i class="fas fa-file-invoice"></i> IP Bill</h1>
+                    <h1><i class="fas fa-file-invoice"></i> IP Bill Expanded</h1>
                 </div>
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
@@ -324,7 +508,108 @@
                                         </tfoot>
                                     </table>
                                 </div>
-
+                                   
+                                <div id="pharmacyIpCreditBody" class="mt-4">
+    <div class="section-title" style="border-left-color: #6f42c1;">
+        <i class="fas fa-credit-card" style="color: #6f42c1;"></i> 
+        IP Credit Pending
+    </div>
+    
+    <!-- Pharmacy IP Credit Pending Table -->
+    <div class="card mt-2">
+        <div class="card-header" style="background: #6f42c1; color: white;">
+            <h6 class="mb-0"><i class="fas fa-prescription"></i> Pharmacy IP Credit Pending</h6>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover mb-0" id="pharmacyIpPendingTable">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Invoice No</th>
+                            <th>Date</th>
+                            <th>Payment Mode</th>
+                            <th class="text-right">Amount (₹)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pharmacyIpPendingBody">
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">No pharmacy IP credit pending</td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr class="font-weight-bold" style="background: #f8f9fa;">
+                            <td colspan="3" class="text-right">Pharmacy Total</td>
+                            <td class="text-right" id="pharmacyIpPendingTotal">₹ 0.00</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Lab IP Credit Pending Table -->
+    <div class="card mt-3">
+        <div class="card-header" style="background: #28a745; color: white;">
+            <h6 class="mb-0"><i class="fas fa-flask"></i> Lab IP Credit Pending</h6>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover mb-0" id="labIpPendingTable">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Invoice No</th>
+                            <th>Date</th>
+                            <th>Payment Status</th>
+                            <th class="text-right">Amount (₹)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="labIpPendingBody">
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">No lab IP credit pending</td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr class="font-weight-bold" style="background: #f8f9fa;">
+                            <td colspan="3" class="text-right">Lab Total</td>
+                            <td class="text-right" id="labIpPendingTotal">₹ 0.00</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Grand Total -->
+    <div class="card mt-3" style="border: 2px solid #6f42c1;">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 offset-md-6">
+                    <table class="table table-borderless">
+                        <tr>
+                            <td class="text-right font-weight-bold">Pharmacy Total:</td>
+                            <td class="text-right" id="grandPharmacyPendingTotal">₹ 0.00</td>
+                        </tr>
+                        <tr>
+                            <td class="text-right font-weight-bold">Lab Total:</td>
+                            <td class="text-right" id="grandLabPendingTotal">₹ 0.00</td>
+                        </tr>
+                        <tr class="border-top" style="border-top: 2px solid #6f42c1;">
+                            <td class="text-right font-weight-bold" style="color: #6f42c1; font-size: 16px;">
+                                Total IP Credit Pending
+                            </td>
+                            <td class="text-right font-weight-bold" style="color: #6f42c1; font-size: 18px;" id="grandTotalIpPending">₹ 0.00</td>
+                        </tr>
+                        <tr>
+                            <td class="text-right text-muted small" colspan="2">
+                                Total Invoices Pending: <span id="totalIpPendingCount">0</span>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
                                 <!-- Food Charges -->
                                 <div class="section-title mt-4"><i class="fas fa-utensils"></i> Food Charges</div>
                                 <div class="row">
@@ -336,49 +621,124 @@
                                     </div>
                                 </div>
 
-                                <!-- Medicines -->
+                                <!-- ===== MEDICINES SECTION ===== -->
                                 <div class="section-title mt-4"><i class="fas fa-pills"></i> Medicines</div>
+                                <div class="row mb-2">
+                                    <div class="col-md-12">
+                                        <div class="input-group">
+                                            <input type="text" id="medicineSearchInput" class="form-control" placeholder="Search medicine..." autocomplete="off">
+                                            <div class="input-group-append">
+                                                <button class="btn btn-outline-secondary" type="button" id="clearMedicineSearch">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div id="medicineSearchResults" class="autocomplete-dropdown" style="display:none; position:relative; width:100%;"></div>
+                                    </div>
+                                </div>
                                 <div class="table-responsive">
-                                    <table class="table table-bordered">
+                                    <table class="table table-bordered" id="medicine-table">
                                         <thead>
                                             <tr>
-                                                <th>Medicine</th>
-                                                <th>Quantity</th>
-                                                <th>Rate</th>
-                                                <th>Total</th>
+                                                <th style="width: 35%;">Medicine <span class="text-danger">*</span></th>
+                                                <th style="width: 15%;">Quantity <span class="text-danger">*</span></th>
+                                                <th style="width: 15%;">Rate (₹)</th>
+                                                <th style="width: 25%;">Total (₹)</th>
+                                                <th style="width: 10%;">Action</th>
                                             </tr>
                                         </thead>
-                                        <tbody id="medicine-table-body"></tbody>
+                                        <tbody id="medicine-table-body">
+                                            <!-- Rows will be added dynamically -->
+                                        </tbody>
                                         <tfoot>
                                             <tr>
                                                 <td colspan="3" class="text-end fw-bold">Total Medicines Amount</td>
                                                 <td>
                                                     <input type="text" id="medicine-cost" class="form-control" value="0.00" name="medicine-cost" readonly>
                                                 </td>
+                                                <td></td>
                                             </tr>
                                         </tfoot>
                                     </table>
                                 </div>
 
-                                <!-- Treatment -->
-                                <div class="section-title mt-4"><i class="fas fa-stethoscope"></i> Treatment</div>
+                                <!-- ===== TREATMENT SECTION ===== -->
+                                <div class="section-title mt-4"><i class="fas fa-stethoscope"></i> Treatments</div>
+                                <div class="row mb-2">
+                                    <div class="col-md-12">
+                                        <div class="input-group">
+                                            <input type="text" id="treatmentSearchInput" class="form-control" placeholder="Search treatment..." autocomplete="off">
+                                            <div class="input-group-append">
+                                                <button class="btn btn-outline-secondary" type="button" id="clearTreatmentSearch">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div id="treatmentSearchResults" class="autocomplete-dropdown" style="display:none; position:relative; width:100%;"></div>
+                                    </div>
+                                </div>
                                 <div class="table-responsive">
-                                    <table class="table table-bordered">
+                                    <table class="table table-bordered" id="treatment-table">
                                         <thead>
                                             <tr>
-                                                <th>Treatment</th>
-                                                <th>Quantity</th>
-                                                <th>Rate</th>
-                                                <th>Total</th>
+                                                <th style="width: 35%;">Treatment <span class="text-danger">*</span></th>
+                                                <th style="width: 15%;">Quantity <span class="text-danger">*</span></th>
+                                                <th style="width: 15%;">Rate (₹)</th>
+                                                <th style="width: 25%;">Total (₹)</th>
+                                                <th style="width: 10%;">Action</th>
                                             </tr>
                                         </thead>
-                                        <tbody id="treatment-table-body"></tbody>
+                                        <tbody id="treatment-table-body">
+                                            <!-- Rows will be added dynamically -->
+                                        </tbody>
                                         <tfoot>
                                             <tr>
                                                 <td colspan="3" class="text-end fw-bold">Total Treatments</td>
                                                 <td>
                                                     <input type="text" id="treatment-total" class="form-control" value="0.00" name="treatment-total" readonly>
                                                 </td>
+                                                <td></td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+
+                                <!-- ===== PROCEDURES SECTION ===== -->
+                                <div class="section-title mt-4"><i class="fas fa-syringe"></i> Procedures</div>
+                                <div class="row mb-2">
+                                    <div class="col-md-12">
+                                        <div class="input-group">
+                                            <input type="text" id="procedureSearchInput" class="form-control" placeholder="Search procedure..." autocomplete="off">
+                                            <div class="input-group-append">
+                                                <button class="btn btn-outline-secondary" type="button" id="clearProcedureSearch">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div id="procedureSearchResults" class="autocomplete-dropdown" style="display:none; position:relative; width:100%;"></div>
+                                    </div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered" id="procedure-table">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 35%;">Procedure <span class="text-danger">*</span></th>
+                                                <th style="width: 15%;">Quantity <span class="text-danger">*</span></th>
+                                                <th style="width: 15%;">Rate (₹)</th>
+                                                <th style="width: 25%;">Total (₹)</th>
+                                                <th style="width: 10%;">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="procedure-table-body">
+                                            <!-- Rows will be added dynamically -->
+                                        </tbody>
+                                        <tfoot>
+                                            <tr>
+                                                <td colspan="3" class="text-end fw-bold">Total Procedures</td>
+                                                <td>
+                                                    <input type="text" id="procedure-total" class="form-control" value="0.00" name="procedure-total" readonly>
+                                                </td>
+                                                <td></td>
                                             </tr>
                                         </tfoot>
                                     </table>
@@ -427,6 +787,10 @@
                                                 <td><input type="text" id="totalmedicineamount" class="form-control" value="0.00" name="totalmedicineamount" readonly></td>
                                             </tr>
                                             <tr>
+                                                <th>Total Procedure Charges</th>
+                                                <td><input type="text" id="totalprocedureamount" class="form-control" value="0.00" name="totalprocedureamount" readonly></td>
+                                            </tr>
+                                            <tr>
                                                 <th>Total Food Charges</th>
                                                 <td><input type="text" id="totalfoodamount" class="form-control" value="0.00" name="totalfoodamount" readonly></td>
                                             </tr>
@@ -446,61 +810,51 @@
                                                 <th>Tax</th>
                                                 <td><input type="text" id="tax" class="form-control" value="0.00" name="tax"></td>
                                             </tr>
-
-                                            <!-- ============================================================ -->
-                                            <!-- ADVANCE PAYMENT SECTION                                      -->
-                                            <!-- ============================================================ -->
                                             <tr class="advance-row">
                                                 <th><i class="fas fa-hand-holding-usd"></i> Advance Paid</th>
                                                 <td>
-                                                    <input type="text" id="advance-paid" class="form-control" value="0.00" name="advance_paid" readonly style="color: #dc3545; font-weight: bold;">
+                                                    <input type="text" id="advance-paid" class="form-control" value="0.00" name="advance_paid" readonly style="font-weight: bold;">
                                                     <small class="text-muted">From admission records</small>
                                                 </td>
                                             </tr>
-
                                             <tr class="net-amount-row">
                                                 <th><i class="fas fa-rupee-sign"></i> Net Amount</th>
                                                 <td>
-                                                    <input type="text" id="net-amount" class="form-control" value="0.00" name="net_amount" readonly style="color: #28a745; font-weight: bold; font-size: 16px;">
+                                                    <input type="text" id="net-amount" class="form-control" value="0.00" name="net_amount" readonly style="font-weight: bold; font-size: 16px;">
                                                     <small class="text-muted">After advance deduction</small>
                                                 </td>
                                             </tr>
-
                                             <tr class="collected-row">
-                                                <th><i class="fas fa-money-bill-wave"></i> Amount Collected</th>
+                                                <th><i class="fas fa-money-bill-wave"></i> Amount to Pay</th>
                                                 <td>
-                                                    <input type="text" id="amount-collected" class="form-control" value="0.00" name="amount_collected" readonly style="color: #007bff; font-weight: bold; font-size: 18px;">
-                                                    <small class="text-muted">Final amount to be collected</small>
+                                                    <input type="text" id="amount-collected" class="form-control" value="0.00" name="amount_collected" readonly style="font-weight: bold; font-size: 18px;">
+                                                    <small class="text-muted">Amount to be collected now</small>
                                                 </td>
                                             </tr>
-
                                             <tr class="grand-total-row">
                                                 <th><i class="fas fa-check-circle"></i> Grand Total</th>
                                                 <td>
-                                                    <input type="text" id="grandtotal" class="form-control" value="0.00" name="grandtotal" readonly style="color: #28a745; font-weight: bold; font-size: 18px;">
+                                                    <input type="text" id="grandtotal" class="form-control" value="0.00" name="grandtotal" readonly style="font-weight: bold; font-size: 18px;">
                                                 </td>
                                             </tr>
                                         </tbody>
                                     </table>
                                 </div>
 
-                                <!-- ============================================================ -->
-                                <!-- PAYMENT MODE SECTION                                      -->
-                                <!-- ============================================================ -->
+                                <!-- Payment Mode -->
                                 <div class="section-title mt-4"><i class="fas fa-credit-card"></i> Payment Mode</div>
-                                <div class="payment-card">
+                                <div id="paymentMessageContainer"></div>
+                                <div class="payment-card" id="paymentSection">
                                     <div class="header"><i class="fas fa-wallet"></i> Payment Details</div>
                                     <div class="row">
                                         <div class="col-md-4">
                                             <div class="form-group">
                                                 <label for="paymentMethod"><i class="fas fa-hand-holding-usd"></i> Select Payment Method</label>
                                                 <select id="paymentMethod" class="form-control payment-method-select" name="payment_method" onchange="togglePaymentInputs()">
-                                                    <option value="cash">💵 Cash</option>
-                                                    <option value="card">💳 Card</option>
-                                                    <option value="upi">📱 UPI</option>
-                                                    <option value="bank_transfer">🏦 Bank Transfer</option>
-                                                    <option value="cheque">📝 Cheque</option>
-                                                    <option value="multiple">🔄 Multiple Modes</option>
+                                                    <option value="cash">Cash</option>
+                                                    <option value="card">Card</option>
+                                                    <option value="Gpay">Gpay</option>
+                                                    <option value="multiple">Multiple Modes</option>
                                                 </select>
                                             </div>
                                         </div>
@@ -521,7 +875,6 @@
                                     </div>
                                 </div>
 
-                                <!-- Payment Modes Details (for multiple modes) -->
                                 <div class="row" id="multipleModesContainer" style="display: none;">
                                     <div class="col-md-12">
                                         <div class="card" style="border: 1px solid #007bff; border-radius: 8px; padding: 15px; margin-top: 10px;">
@@ -551,16 +904,16 @@
                                                     <div class="col-md-3">
                                                         <div class="form-group" style="margin-bottom: 5px;">
                                                             <label style="font-weight: 600; font-size: 13px;">
-                                                                <i class="fas fa-mobile-alt text-info"></i> UPI
+                                                                <i class="fas fa-mobile-alt text-info"></i> Gpay
                                                             </label>
                                                             <input type="number" step="0.01" id="upiAmount" class="form-control form-control-sm payment-mode-input" 
-                                                                   name="upi_amount" placeholder="0.00" value="0" oninput="updatePaymentSummary()" disabled>
+                                                                   name="Gpay_amount" placeholder="0.00" value="0" oninput="updatePaymentSummary()" disabled>
                                                         </div>
                                                     </div>
                                                     <div class="col-md-3">
                                                         <div class="form-group" style="margin-bottom: 5px;">
                                                             <label style="font-weight: 600; font-size: 13px;">
-                                                                <i class="fas fa-university text-warning"></i> Bank Transfer
+                                                                <i class="fas fa-university text-warning"></i> Bank
                                                             </label>
                                                             <input type="number" step="0.01" id="bankAmount" class="form-control form-control-sm payment-mode-input" 
                                                                    name="bank_amount" placeholder="0.00" value="0" oninput="updatePaymentSummary()" disabled>
@@ -580,28 +933,27 @@
                                     </div>
                                 </div>
 
-                                <!-- Payment Summary Card -->
+                                <!-- Payment Summary -->
                                 <div class="payment-summary-box">
                                     <div class="header"><i class="fas fa-receipt"></i> Payment Summary</div>
                                     <div class="row">
                                         <div class="col-md-3 text-center">
-                                            <div><small>Gross Total</small></div>
-                                            <div><strong id="displayGrossTotal" style="color: #dc3545; font-size: 18px;">₹ 0.00</strong></div>
+                                            <div><small>Grand Total</small></div>
+                                            <div><strong id="displayGrossTotal" style="font-size: 18px;">₹ 0.00</strong></div>
                                         </div>
                                         <div class="col-md-3 text-center">
                                             <div><small>Advance Paid</small></div>
-                                            <div><strong id="displayAdvancePaid" style="color: #856404; font-size: 18px;">₹ 0.00</strong></div>
+                                            <div><strong id="displayAdvancePaid" style="font-size: 18px;">₹ 0.00</strong></div>
                                         </div>
                                         <div class="col-md-3 text-center">
-                                            <div><small>Net Amount</small></div>
-                                            <div><strong id="displayNetAmount" style="color: #28a745; font-size: 18px;">₹ 0.00</strong></div>
+                                            <div><small>Amount to Pay</small></div>
+                                            <div><strong id="displayNetAmount" style="font-size: 18px;">₹ 0.00</strong></div>
                                         </div>
                                         <div class="col-md-3 text-center">
-                                            <div><small>Amount Collected</small></div>
-                                            <div><strong id="displayCollected" style="color: #007bff; font-size: 18px;">₹ 0.00</strong></div>
+                                            <div><small>Collected</small></div>
+                                            <div><strong id="displayCollected" style="font-size: 18px;">₹ 0.00</strong></div>
                                         </div>
                                     </div>
-                                    <!-- Refund Alert -->
                                     <div id="refundAlert" style="display: none; margin-top: 10px;">
                                         <div class="alert alert-danger" style="margin-bottom: 0; padding: 10px 15px;">
                                             <strong><i class="fas fa-undo-alt"></i> Refund Amount:</strong> 
@@ -611,9 +963,9 @@
                                     </div>
                                 </div>
 
-                                <!-- Submit Button -->
+                                <!-- Submit -->
                                 <div class="card-footer">
-                                    <button type="submit" id="saveipexpanded" class="btn btn-success btn-lg">
+                                    <button type="submit" id="saveipexpanded" class="btn btn-primary btn-lg">
                                         <i class="fas fa-save"></i> Generate Bill
                                     </button>
                                     <button type="button" id="resetBtn" class="btn btn-warning btn-lg">
@@ -623,6 +975,8 @@
                                         <i class="fas fa-arrow-left"></i> Back
                                     </a>
                                 </div>
+                               <input type="hidden" id="pharmacyipcredit" name="pharmacyipcredit" value="0">
+                               <input type="hidden" id="labipcredit" name="labipcredit" value="0">
                             </form>
 
                             {% if error %}
@@ -685,17 +1039,9 @@
     </div>
 </div>
 
-<!-- DataTables CSS -->
-<link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
-
-<!-- Font Awesome -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-
-<!-- jQuery and DataTables -->
-<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
-
 <script>
 $(document).ready(function () {
+    
     // ============================================================
     // INITIALIZE DATATABLE
     // ============================================================
@@ -712,44 +1058,165 @@ $(document).ready(function () {
     });
 
     // ============================================================
+    // GLOBAL ERROR HANDLER FOR AJAX
+    // ============================================================
+    function handleAjaxError(xhr, status, error, context) {
+        console.error(context + ' error:', error);
+        console.error('Status:', status);
+        console.error('Response:', xhr.responseText);
+        
+        if (xhr.status === 403 || xhr.status === 401) {
+            showMessage('Your session has expired. Please login again.', 'error');
+            setTimeout(function() {
+                window.location.href = '/login/';
+            }, 2000);
+            return true;
+        }
+        
+        if (xhr.responseText && xhr.responseText.trim().startsWith('<!DOCTYPE')) {
+            showMessage('Session expired. Please refresh the page and login again.', 'error');
+            setTimeout(function() {
+                window.location.href = '/login/';
+            }, 2000);
+            return true;
+        }
+        
+        return false;
+    }
+
+    // ============================================================
     // TOGGLE PAYMENT INPUTS
     // ============================================================
     window.togglePaymentInputs = function() {
         const method = $("#paymentMethod").val();
         const isMultiple = method === 'multiple';
         
-        // Enable/disable payment mode inputs
+        const isDisabled = $('#paymentSection').hasClass('disabled-section');
+        if (isDisabled) {
+            return;
+        }
+        
         $("#cashAmount, #cardAmount, #upiAmount, #bankAmount").prop('disabled', !isMultiple);
         
-        // Show/hide multiple modes container
         if (isMultiple) {
             $("#multipleModesContainer").show();
         } else {
             $("#multipleModesContainer").hide();
-            // Reset all mode inputs to 0
             $("#cashAmount").val(0);
             $("#cardAmount").val(0);
             $("#upiAmount").val(0);
             $("#bankAmount").val(0);
-            // Set the single payment amount
+            
             const amount = parseFloat($("#paymentAmount").val()) || 0;
             if (method === 'cash') {
                 $("#cashAmount").val(amount.toFixed(2));
             } else if (method === 'card') {
                 $("#cardAmount").val(amount.toFixed(2));
-            } else if (method === 'upi') {
+            } else if (method === 'Gpay') {
                 $("#upiAmount").val(amount.toFixed(2));
-            } else if (method === 'bank_transfer' || method === 'cheque') {
-                $("#bankAmount").val(amount.toFixed(2));
             }
         }
-        
-        // Update payment summary
         updatePaymentSummary();
     };
 
     // ============================================================
-    // SEARCH FUNCTION
+    // UPDATE IP CREDIT PENDING SECTION - SINGLE FUNCTION
+    // ============================================================
+    window.updateIpCreditPending = function(data) {
+        console.log("========== IP CREDIT DATA RECEIVED ==========");
+        console.log("Full data object:", data);
+        
+        if (!data) {
+            console.log("No IP credit data received");
+            $('#ipCreditPendingSection').hide();
+            return;
+        }
+        
+        const pharmacyPending = data.pharmacy_ip_credit || [];
+        const labPending = data.lab_ip_credit || [];
+        const pharmacyTotal = data.pharmacy_ip_credit_total || 0;
+        const labTotal = data.lab_ip_credit_total || 0;
+        const grandTotal = data.total_ip_credit_pending || 0;
+        
+        console.log("Pharmacy Pending:", pharmacyPending);
+        console.log("Lab Pending:", labPending);
+        console.log("Grand Total:", grandTotal);
+        
+        // Update Pharmacy table
+        var pharmacyBody = $('#pharmacyIpPendingBody');
+        pharmacyBody.empty();
+        
+        if (pharmacyPending.length > 0) {
+            var totalPharmacy = 0;
+            $.each(pharmacyPending, function(index, item) {
+                var amount = parseFloat(item.amount) || 0;
+                totalPharmacy += amount;
+                pharmacyBody.append(`
+                    <tr>
+                        <td><strong>${item.invoice_number || 'N/A'}</strong></td>
+                        <td>${item.date || 'N/A'}</td>
+                        <td><span class="badge badge-info">${item.payment_mode || 'Cash'}</span></td>
+                        <td class="text-right text-danger font-weight-bold">₹ ${amount.toFixed(2)}</td>
+                    </tr>
+                `);
+            });
+            $('#pharmacyIpPendingTotal').text('₹ ' + totalPharmacy.toFixed(2));
+            $('#grandPharmacyPendingTotal').text('₹ ' + totalPharmacy.toFixed(2));
+        } else {
+            pharmacyBody.append(`
+                <tr>
+                    <td colspan="4" class="text-center text-muted">No pharmacy IP credit pending</td>
+                </tr>
+            `);
+            $('#pharmacyIpPendingTotal').text('₹ 0.00');
+            $('#grandPharmacyPendingTotal').text('₹ 0.00');
+        }
+        
+        // Update Lab table
+        var labBody = $('#labIpPendingBody');
+        labBody.empty();
+        
+        if (labPending.length > 0) {
+            var totalLab = 0;
+            $.each(labPending, function(index, item) {
+                var amount = parseFloat(item.amount) || 0;
+                totalLab += amount;
+                var statusBadge = item.payment_status === 'Paid' ? 'success' : 'warning';
+                var statusText = item.payment_status || 'Pending';
+                labBody.append(`
+                    <tr>
+                        <td><strong>${item.invoice_number || 'N/A'}</strong></td>
+                        <td>${item.date || 'N/A'}</td>
+                        <td>
+                            <span class="badge bg-${statusBadge}">${statusText}</span>
+                        </td>
+                        <td class="text-right text-danger font-weight-bold">₹ ${amount.toFixed(2)}</td>
+                    </tr>
+                `);
+            });
+            $('#labIpPendingTotal').text('₹ ' + totalLab.toFixed(2));
+            $('#grandLabPendingTotal').text('₹ ' + totalLab.toFixed(2));
+        } else {
+            labBody.append(`
+                <tr>
+                    <td colspan="4" class="text-center text-muted">No lab IP credit pending</td>
+                </tr>
+            `);
+            $('#labIpPendingTotal').text('₹ 0.00');
+            $('#grandLabPendingTotal').text('₹ 0.00');
+        }
+        
+        // Update grand totals
+        $('#grandTotalIpPending').text('₹ ' + grandTotal.toFixed(2));
+        $('#totalIpPendingCount').text(pharmacyPending.length + labPending.length);
+        
+        // Show the section
+        $('#ipCreditPendingSection').show();
+        console.log("IP Credit section updated successfully!");
+    };
+
+    // ============================================================
+    // SEARCH PATIENT FUNCTION
     // ============================================================
     $("#searchBtn").on("click", function (e) {
         e.preventDefault();
@@ -764,8 +1231,13 @@ $(document).ready(function () {
         btn.html('<i class="fas fa-spinner fa-spin"></i> Searching...').prop('disabled', true);
 
         table.clear().draw();
-        fetch(`/search_ip_expanded?query=${query}`)
-            .then(response => response.json())
+        fetch(`/search_ip_expanded?query=${encodeURIComponent(query)}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.length > 0) {
                     data.forEach(item => {
@@ -788,9 +1260,14 @@ $(document).ready(function () {
                             treatment_details: item.treatment_details || [],
                             dischargeid: item.dischargeid || '',
                             accommodation_type: item.accommodation_type || '',
+                            total_advance: item.total_advance || 0,
                             nursing_charge: item.nursing_charge || 0,
                             water_electricity_charge: item.water_electricity_charge || 0,
-                            total_advance: item.total_advance || 0
+                            pharmacy_ip_credit: item.pharmacy_ip_credit || [],
+                            lab_ip_credit: item.lab_ip_credit || [],
+                            pharmacy_ip_credit_total: item.pharmacy_ip_credit_total || 0,
+                            lab_ip_credit_total: item.lab_ip_credit_total || 0,
+                            total_ip_credit_pending: item.total_ip_credit_pending || 0
                         };
                         
                         const btn = `<button class="btn btn-primary select-btn" 
@@ -822,23 +1299,89 @@ $(document).ready(function () {
             });
     });
 
-    // Enter key for search
     $("#mrSearch").on("keypress", function(e) {
         if (e.which === 13) {
             $("#searchBtn").click();
         }
     });
+ function loadPatientProcedures(admissionId) {
+    console.log("Loading procedures for admission ID:", admissionId);
+    
+    // ✅ Clear existing procedure rows first to avoid duplication
+    var procTable = $("#procedure-table-body");
+    procTable.empty();
+    
+    $.ajax({
+        url: "{% url 'get_patient_procedure_details' %}",
+        type: 'GET',
+        data: { 
+            patient_id: admissionId  // ✅ This is the admission ID
+        },
+        dataType: 'json',
+        success: function(response) {
+            console.log("Procedure API Response:", response);
+            
+            if (response.success && response.procedures && response.procedures.length > 0) {
+                // Add each procedure as a row
+                response.procedures.forEach(function(proc) {
+                    addProcedureRow({
+                        id: proc.procedure_id,
+                        name: proc.name,
+                        rate: proc.rate,
+                        count: proc.count,
+                        total: proc.total,
+                        procedure_id: proc.procedure_id,
+                        date: proc.date
+                    });
+                });
+                
+                // Update procedure total
+                updateProcedureTotal();
+                console.log("Added " + response.procedures.length + " procedures");
+            } else {
+                console.log("No procedures found for this admission");
+                // Optionally show a message in the table
+                var procTable = $("#procedure-table-body");
+                if (procTable.find('tr').length === 0) {
+                    procTable.html(`
+                        <tr id="noProcedureData">
+                            <td colspan="5" class="text-center text-muted">
+                                No procedures added for this patient
+                            </td>
+                        </tr>
+                    `);
+                }
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error fetching procedures:', error);
+            console.error('Status:', status);
+            console.error('Response:', xhr.responseText);
+            
+            // Show error in table
+            var procTable = $("#procedure-table-body");
+            procTable.html(`
+                <tr id="procedureError">
+                    <td colspan="5" class="text-center text-danger">
+                        <i class="fas fa-exclamation-triangle"></i> 
+                        Error loading procedures. Please try again.
+                    </td>
+                </tr>
+            `);
+        }
+    });
+}
 
     // ============================================================
-    // SELECT PATIENT FROM SEARCH RESULTS
+    // SELECT PATIENT FROM SEARCH
     // ============================================================
     $("#searchResultsTable tbody").on("click", ".select-btn", function () {
         let $btn = $(this);
         const data = JSON.parse($(this).attr("data-patient"));
         const admissionDate = new Date(data.Admission_Date);
-        const dischargeDate = new Date(data.Discharge_Date);
+        const dischargeDate = data.Discharge_Date ? new Date(data.Discharge_Date) : null;
         
-        if (!dischargeDate) {
+        if (!dischargeDate || isNaN(dischargeDate.getTime())) {
             showMessage("Patient not yet discharged. Billing cannot proceed.", "error");
             return;
         }
@@ -854,12 +1397,9 @@ $(document).ready(function () {
         $("#mrno").val(data.Medical_Record_Number);
         $("#gender").val(data.gender);
 
-        // ============================================================
-        // SET ADVANCE AMOUNT FROM ADMISSION
-        // ============================================================
+        // Set advance amount
         let advanceAmount = parseFloat(data.total_advance) || 0;
         $("#advance-paid").val(advanceAmount.toFixed(2));
-        updateAdvanceAndNetAmount();
 
         // Populate room breakdown
         const tbody = $("#roomBreakdownTable tbody").empty();
@@ -914,62 +1454,47 @@ $(document).ready(function () {
                 </tr>
             `);
         }
-        
+        loadPatientProcedures(data.ip_id);
+
         $("#roomRentTotal").val(totalRent.toFixed(2));
 
-        // Render medicine list
+        // Add medicine rows from patient data
         let medicineList = JSON.parse($btn.attr("data-medicine-details") || "[]");
         let medTable = $("#medicine-table-body");
-        let medTotal = 0;
         medTable.empty();
         
-        medicineList.forEach((med, index) => {
-            let stockid = med.physcid || 1;
-            let qty = med.count || 1;
-            let rate = med.rate || 0;
-            let total = med.total || (qty * rate);
-            medTotal += total;
-            medTable.append(`
-                <tr>
-                    <td>
-                        <input type="text" class="form-control form-control-sm medicinename" data-index="${index}" name="medicine_name[]" value="${med.name}">
-                        <input type="hidden" class="form-control form-control-sm stockid" data-index="${index}" name="medicine_stckid[]" value="${stockid}">
-                    </td>
-                    <td><input type="number" class="form-control form-control-sm med-qty" data-index="${index}" name="medicine_count[]" value="${qty}" min="1"></td>
-                    <td><input type="number" class="form-control form-control-sm med-rate" data-index="${index}" name="medicine_rate[]" value="${rate}" step="0.01" min="0"></td>
-                    <td><input type="number" class="form-control form-control-sm med-total" data-index="${index}" name="medicine_total[]" value="${total.toFixed(2)}" readonly></td>
-                </tr>
-            `);
-        });
-        $("#medicine-cost").val(medTotal.toFixed(2));
+        if (medicineList.length > 0) {
+            medicineList.forEach((med) => {
+                addMedicineRow({
+                    name: med.name,
+                    rate: med.rate,
+                    count: med.count,
+                    total: med.total,
+                    physicalstock_id: med.physcid || med.stockid || 1
+                });
+            });
+        }
+        updateMedicineTotal();
 
-        // Render treatment list
+        // Add treatment rows from patient data
         let treatmentList = JSON.parse($btn.attr("data-treatment-details") || "[]");
         let treatTable = $("#treatment-table-body");
-        let treatmentTotal = 0;
         treatTable.empty();
         
-        treatmentList.forEach((treat, index) => {
-            let qty = treat.count || 1;
-            let rate = treat.rate || 0;
-            let total = qty * rate;
-            treatmentTotal += total;
-            let treatmntid = treat.treatmntid || 1;
-            treatTable.append(`
-                <tr>
-                    <td>
-                        <input type="text" class="form-control form-control-sm treatmntname" name="treatmntname[]" data-index="${index}" value="${treat.name}">
-                        <input type="hidden" class="form-control form-control-sm treatmntid" data-index="${index}" name="treatmntid[]" value="${treatmntid}">
-                    </td>
-                    <td><input type="number" class="form-control form-control-sm treat-qty" data-index="${index}" name="treatmntqty[]" value="${qty}" min="1"></td>
-                    <td><input type="number" class="form-control form-control-sm treat-rate" data-index="${index}" name="treatmntrate[]" value="${rate}" step="0.01" min="0"></td>
-                    <td><input type="number" class="form-control form-control-sm treat-total" data-index="${index}" name="treatmnttotal[]" value="${total.toFixed(2)}" readonly></td>
-                </tr>
-            `);
-        });
-        $("#treatment-total").val(treatmentTotal.toFixed(2));
+        if (treatmentList.length > 0) {
+            treatmentList.forEach((treat) => {
+                addTreatmentRow({
+                    name: treat.name,
+                    rate: treat.rate,
+                    count: treat.count,
+                    total: treat.total,
+                    treatmntid: treat.treatmntid || 1
+                });
+            });
+        }
+        updateTreatmentTotal();
 
-        // Other Services - Auto-add Nursing and Water/Electricity charges
+        // Other Services
         let otherServicesTable = $("#other-services-table tbody").empty();
         let otherServicesTotal = 0;
         
@@ -999,14 +1524,644 @@ $(document).ready(function () {
             }
         }
         
+        
         $("#other-services-total").val(otherServicesTotal.toFixed(2));
+        
+        // ============================================================
+        // UPDATE IP CREDIT - USING WINDOW.UPDATEIPCREDITPENDING
+        // ============================================================
+        console.log("Patient data from search:", data);
+        console.log("Pharmacy IP Credit:", data.pharmacy_ip_credit);
+        console.log("Lab IP Credit:", data.lab_ip_credit);
+        
+        var ipCreditData = {
+            pharmacy_ip_credit: data.pharmacy_ip_credit || [],
+            lab_ip_credit: data.lab_ip_credit || [],
+            pharmacy_ip_credit_total: data.pharmacy_ip_credit_total || 0,
+            lab_ip_credit_total: data.lab_ip_credit_total || 0,
+            total_ip_credit_pending: data.total_ip_credit_pending || 0
+        };
+        
+        if (typeof window.updateIpCreditPending === 'function') {
+            window.updateIpCreditPending(ipCreditData);
+        } else {
+            console.error("updateIpCreditPending function not found!");
+        }
+        
         updateBillingTotal();
         $("#searchModal").modal("hide");
     });
 
+   // ============================================================
+// GLOBAL FUNCTIONS FOR ADDING ROWS
+// (Defined outside of document.ready so they can be called anywhere)
+// ============================================================
+
+function addMedicineRow(data) {
+    const tableBody = document.getElementById('medicine-table-body');
+    const rowCount = tableBody.querySelectorAll('tr').length;
+    const index = rowCount;
+    
+    const row = document.createElement('tr');
+    row.dataset.medicineIndex = index;
+    row.className = 'table-row-highlight';
+    
+    const nameValue = data ? data.name || data.itemnm || '' : '';
+    const stockIdValue = data ? data.physicalstock_id || data.id || 1 : 1;
+    const rateValue = data ? parseFloat(data.rate || data.mrp || 0).toFixed(2) : '0.00';
+    const qtyValue = data ? data.count || 1 : 1;
+    const totalValue = data ? parseFloat(data.total || 0).toFixed(2) : '0.00';
+    
+    row.innerHTML = `
+        <td>
+            <input type="text" class="form-control form-control-sm" value="${nameValue}" readonly>
+            <input type="hidden" class="medicine-stockid" name="medicine_stckid[]" value="${stockIdValue}">
+            <input type="hidden" class="medicine-name-hidden" name="medicine_name_hidden[]" value="${nameValue}">
+        </td>
+        <td><input type="number" class="form-control form-control-sm med-qty" name="medicine_count[]" value="${qtyValue}" min="1"></td>
+        <td><input type="number" class="form-control form-control-sm med-rate" name="medicine_rate[]" value="${rateValue}" step="0.01" min="0" readonly></td>
+        <td><input type="number" class="form-control form-control-sm med-total" name="medicine_total[]" value="${totalValue}" readonly></td>
+        <td>
+            <button type="button" class="btn btn-danger btn-sm remove-medicine">
+                <i class="fas fa-times"></i>
+            </button>
+        </td>
+    `;
+    
+    tableBody.appendChild(row);
+    
+    const qtyInput = row.querySelector('.med-qty');
+    if (qtyInput) {
+        qtyInput.addEventListener('input', function() {
+            const row = this.closest('tr');
+            calculateMedicineTotal(row);
+            updateMedicineTotal();
+        });
+    }
+    
+    const removeBtn = row.querySelector('.remove-medicine');
+    if (removeBtn) {
+        removeBtn.addEventListener('click', function() {
+            row.remove();
+            updateMedicineTotal();
+        });
+    }
+    
+    calculateMedicineTotal(row);
+    updateMedicineTotal();
+}
+
+function calculateMedicineTotal(row) {
+    const qty = parseFloat(row.querySelector('.med-qty').value) || 0;
+    const rate = parseFloat(row.querySelector('.med-rate').value) || 0;
+    const total = qty * rate;
+    const totalInput = row.querySelector('.med-total');
+    if (totalInput) {
+        totalInput.value = total.toFixed(2);
+    }
+}
+
+function updateMedicineTotal() {
+    let total = 0;
+    document.querySelectorAll('#medicine-table-body .med-total').forEach(input => {
+        total += parseFloat(input.value) || 0;
+    });
+    document.getElementById('medicine-cost').value = total.toFixed(2);
+    updateBillingTotal();
+}
+
+function addTreatmentRow(data) {
+    const tableBody = document.getElementById('treatment-table-body');
+    const rowCount = tableBody.querySelectorAll('tr').length;
+    const index = rowCount;
+    
+    const row = document.createElement('tr');
+    row.dataset.treatmentIndex = index;
+    row.className = 'table-row-highlight';
+    
+    const nameValue = data ? data.name || data.tr_name || '' : '';
+    const treatIdValue = data ? data.id || data.trid || 1 : 1;
+    const rateValue = data ? parseFloat(data.rate || data.Rate || 0).toFixed(2) : '0.00';
+    const qtyValue = data ? data.count || 1 : 1;
+    const totalValue = data ? parseFloat(data.total || 0).toFixed(2) : '0.00';
+    
+    row.innerHTML = `
+        <td>
+            <input type="text" class="form-control form-control-sm" value="${nameValue}" readonly>
+            <input type="hidden" class="treatment-treatid" name="treatmntid[]" value="${treatIdValue}">
+            <input type="hidden" class="treatment-name-hidden" name="treatment_name_hidden[]" value="${nameValue}">
+        </td>
+        <td><input type="number" class="form-control form-control-sm treat-qty" name="treatmntqty[]" value="${qtyValue}" min="1"></td>
+        <td><input type="number" class="form-control form-control-sm treat-rate" name="treatmntrate[]" value="${rateValue}" step="0.01" min="0" readonly></td>
+        <td><input type="number" class="form-control form-control-sm treat-total" name="treatmnttotal[]" value="${totalValue}" readonly></td>
+        <td>
+            <button type="button" class="btn btn-danger btn-sm remove-treatment">
+                <i class="fas fa-times"></i>
+            </button>
+        </td>
+    `;
+    
+    tableBody.appendChild(row);
+    
+    const qtyInput = row.querySelector('.treat-qty');
+    if (qtyInput) {
+        qtyInput.addEventListener('input', function() {
+            const row = this.closest('tr');
+            calculateTreatmentTotal(row);
+            updateTreatmentTotal();
+        });
+    }
+    
+    const removeBtn = row.querySelector('.remove-treatment');
+    if (removeBtn) {
+        removeBtn.addEventListener('click', function() {
+            row.remove();
+            updateTreatmentTotal();
+        });
+    }
+    
+    calculateTreatmentTotal(row);
+    updateTreatmentTotal();
+}
+
+function calculateTreatmentTotal(row) {
+    const qty = parseFloat(row.querySelector('.treat-qty').value) || 0;
+    const rate = parseFloat(row.querySelector('.treat-rate').value) || 0;
+    const total = qty * rate;
+    const totalInput = row.querySelector('.treat-total');
+    if (totalInput) {
+        totalInput.value = total.toFixed(2);
+    }
+}
+
+function updateTreatmentTotal() {
+    let total = 0;
+    document.querySelectorAll('#treatment-table-body .treat-total').forEach(input => {
+        total += parseFloat(input.value) || 0;
+    });
+    document.getElementById('treatment-total').value = total.toFixed(2);
+    updateBillingTotal();
+}
+
+function addProcedureRow(data) {
+    const tableBody = document.getElementById('procedure-table-body');
+    const rowCount = tableBody.querySelectorAll('tr').length;
+    const index = rowCount;
+    
+    const row = document.createElement('tr');
+    row.dataset.procedureIndex = index;
+    row.className = 'table-row-highlight';
+    
+    const nameValue = data ? data.name || data.procedure_name || '' : '';
+    const procIdValue = data ? data.id || 1 : 1;
+    const rateValue = data ? parseFloat(data.rate || 0).toFixed(2) : '0.00';
+    const qtyValue = data ? data.count || 1 : 1;
+    const totalValue = data ? parseFloat(data.total || 0).toFixed(2) : '0.00';
+    
+    row.innerHTML = `
+        <td>
+            <input type="text" class="form-control form-control-sm" value="${nameValue}" readonly>
+            <input type="hidden" class="procedure-procid" name="procedure_id[]" value="${procIdValue}">
+            <input type="hidden" class="procedure-name-hidden" name="procedure_name_hidden[]" value="${nameValue}">
+        </td>
+        <td><input type="number" class="form-control form-control-sm proc-qty" name="procedure_count[]" value="${qtyValue}" min="1"></td>
+        <td><input type="number" class="form-control form-control-sm proc-rate" name="procedure_rate[]" value="${rateValue}" step="0.01" min="0" readonly></td>
+        <td><input type="number" class="form-control form-control-sm proc-total" name="procedure_total[]" value="${totalValue}" readonly></td>
+        <td>
+            <button type="button" class="btn btn-danger btn-sm remove-procedure">
+                <i class="fas fa-times"></i>
+            </button>
+        </td>
+    `;
+    
+    tableBody.appendChild(row);
+    
+    const qtyInput = row.querySelector('.proc-qty');
+    if (qtyInput) {
+        qtyInput.addEventListener('input', function() {
+            const row = this.closest('tr');
+            calculateProcedureTotal(row);
+            updateProcedureTotal();
+        });
+    }
+    
+    const removeBtn = row.querySelector('.remove-procedure');
+    if (removeBtn) {
+        removeBtn.addEventListener('click', function() {
+            row.remove();
+            updateProcedureTotal();
+        });
+    }
+    
+    calculateProcedureTotal(row);
+    updateProcedureTotal();
+}
+
+function calculateProcedureTotal(row) {
+    const qty = parseFloat(row.querySelector('.proc-qty').value) || 0;
+    const rate = parseFloat(row.querySelector('.proc-rate').value) || 0;
+    const total = qty * rate;
+    const totalInput = row.querySelector('.proc-total');
+    if (totalInput) {
+        totalInput.value = total.toFixed(2);
+    }
+}
+
+function updateProcedureTotal() {
+    let total = 0;
+    document.querySelectorAll('#procedure-table-body .proc-total').forEach(input => {
+        total += parseFloat(input.value) || 0;
+    });
+    document.getElementById('procedure-total').value = total.toFixed(2);
+    updateBillingTotal();
+}
+
+
+// ============================================================
+// SEARCH AUTOCOMPLETE SCRIPTS (Click to Select)
+// ============================================================
+    
+    // 1. MEDICINE SEARCH
+    let medicineTimer;
+    $('#medicineSearchInput').on('input', function() {
+        clearTimeout(medicineTimer);
+        const query = $(this).val().trim();
+        const resultsDiv = $('#medicineSearchResults');
+        
+        if (query.length < 2) {
+            resultsDiv.hide();
+            return;
+        }
+        
+        medicineTimer = setTimeout(function() {
+            $.ajax({
+                url: "{% url 'search_medicineapi' %}",
+                data: { q: query },
+                dataType: 'json',
+                success: function(data) {
+                    resultsDiv.empty();
+                    if (data.length === 0) {
+                        resultsDiv.append('<div class="no-results">No medicines found</div>');
+                    } else {
+                        data.forEach(function(item) {
+                            const div = $('<div class="search-result-item"></div>');
+                            div.attr('data-id', item.id);
+                            div.attr('data-name', item.itemnm);
+                            div.attr('data-rate', item.rate);
+                            div.attr('data-stockid', item.physicalstock_id);
+                            div.html(`
+                                <div class="item-info">
+                                    <div class="item-name">${item.itemnm}</div>
+                                    <div class="item-detail">Batch: ${item.batchno || 'N/A'} | Stock: ${item.currentstock}</div>
+                                </div>
+                                <div class="item-rate">₹${item.rate}</div>
+                            `);
+                            resultsDiv.append(div);
+                        });
+                    }
+                    resultsDiv.show();
+                },
+                error: function() {
+                    resultsDiv.hide();
+                }
+            });
+        }, 300);
+    });
+
+    $(document).on('click', '#medicineSearchResults .search-result-item', function() {
+        const data = {
+            id: $(this).data('id'),
+            name: $(this).data('name'),
+            rate: $(this).data('rate'),
+            physicalstock_id: $(this).data('stockid'),
+            count: 1,
+            total: $(this).data('rate')
+        };
+        addMedicineRow(data);
+        $('#medicineSearchInput').val('');
+        $('#medicineSearchResults').hide();
+        updateMedicineTotal();
+    });
+
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('#medicineSearchInput').length && !$(e.target).closest('#medicineSearchResults').length) {
+            $('#medicineSearchResults').hide();
+        }
+    });
+    $('#clearMedicineSearch').click(function() {
+        $('#medicineSearchInput').val('');
+        $('#medicineSearchResults').hide();
+    });
+
+
+    // 2. TREATMENT SEARCH
+    let treatmentTimer;
+    $('#treatmentSearchInput').on('input', function() {
+        clearTimeout(treatmentTimer);
+        const query = $(this).val().trim();
+        const resultsDiv = $('#treatmentSearchResults');
+        
+        if (query.length < 2) {
+            resultsDiv.hide();
+            return;
+        }
+        
+        treatmentTimer = setTimeout(function() {
+            $.ajax({
+                url: "{% url 'search_treatmentapi' %}",
+                data: { q: query },
+                dataType: 'json',
+                success: function(data) {
+                    resultsDiv.empty();
+                    if (data.length === 0) {
+                        resultsDiv.append('<div class="no-results">No treatments found</div>');
+                    } else {
+                        data.forEach(function(item) {
+                            const div = $('<div class="search-result-item"></div>');
+                            div.attr('data-id', item.id);
+                            div.attr('data-name', item.name);
+                            div.attr('data-rate', item.rate);
+                            div.html(`
+                                <div class="item-info">
+                                    <div class="item-name">${item.name}</div>
+                                </div>
+                                <div class="item-rate">₹${item.rate}</div>
+                            `);
+                            resultsDiv.append(div);
+                        });
+                    }
+                    resultsDiv.show();
+                },
+                error: function() {
+                    resultsDiv.hide();
+                }
+            });
+        }, 300);
+    });
+
+    $(document).on('click', '#treatmentSearchResults .search-result-item', function() {
+        const data = {
+            id: $(this).data('id'),
+            name: $(this).data('name'),
+            rate: $(this).data('rate'),
+            count: 1,
+            total: $(this).data('rate')
+        };
+        addTreatmentRow(data);
+        $('#treatmentSearchInput').val('');
+        $('#treatmentSearchResults').hide();
+        updateTreatmentTotal();
+    });
+
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('#treatmentSearchInput').length && !$(e.target).closest('#treatmentSearchResults').length) {
+            $('#treatmentSearchResults').hide();
+        }
+    });
+    $('#clearTreatmentSearch').click(function() {
+        $('#treatmentSearchInput').val('');
+        $('#treatmentSearchResults').hide();
+    });
+
+
+    // 3. PROCEDURE SEARCH
+    let procedureTimer;
+    $('#procedureSearchInput').on('input', function() {
+        clearTimeout(procedureTimer);
+        const query = $(this).val().trim();
+        const resultsDiv = $('#procedureSearchResults');
+        
+        if (query.length < 2) {
+            resultsDiv.hide();
+            return;
+        }
+        
+        procedureTimer = setTimeout(function() {
+            $.ajax({
+                url: "{% url 'search_procedures_api' %}",
+                data: { q: query },
+                dataType: 'json',
+                success: function(data) {
+                    resultsDiv.empty();
+                    if (data.length === 0) {
+                        resultsDiv.append('<div class="no-results">No procedures found</div>');
+                    } else {
+                        data.forEach(function(item) {
+                            const desc = item.description ? `<div class="item-detail">${item.description.substring(0, 40)}...</div>` : '';
+                            const cat = item.category ? `<span class="procedure-category-badge">${item.category}</span>` : '';
+                            const div = $('<div class="search-result-item"></div>');
+                            div.attr('data-id', item.id);
+                            div.attr('data-name', item.name);
+                            div.attr('data-rate', item.rate);
+                            div.html(`
+                                <div class="item-info">
+                                    <div class="item-name">${item.name} ${cat}</div>
+                                    ${desc}
+                                </div>
+                                <div class="item-rate">₹${item.rate}</div>
+                            `);
+                            resultsDiv.append(div);
+                        });
+                    }
+                    resultsDiv.show();
+                },
+                error: function() {
+                    resultsDiv.hide();
+                }
+            });
+        }, 300);
+    });
+
+    $(document).on('click', '#procedureSearchResults .search-result-item', function() {
+        const data = {
+            id: $(this).data('id'),
+            name: $(this).data('name'),
+            rate: $(this).data('rate'),
+            count: 1,
+            total: $(this).data('rate')
+        };
+        addProcedureRow(data);
+        $('#procedureSearchInput').val('');
+        $('#procedureSearchResults').hide();
+        updateProcedureTotal();
+    });
+
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('#procedureSearchInput').length && !$(e.target).closest('#procedureSearchResults').length) {
+            $('#procedureSearchResults').hide();
+        }
+    });
+    $('#clearProcedureSearch').click(function() {
+        $('#procedureSearchInput').val('');
+        $('#procedureSearchResults').hide();
+    });
+
     // ============================================================
-    // ADD SERVICE ROW
+    // UPDATE BILLING TOTAL
     // ============================================================
+   function updateBillingTotal() {
+    let roomRent = parseFloat($("#roomRentTotal").val()) || 0;
+    let medicineTotal = parseFloat($("#medicine-cost").val()) || 0;
+    let treatmentTotal = parseFloat($("#treatment-total").val()) || 0;
+    let procedureTotal = parseFloat($("#procedure-total").val()) || 0;
+    let foodCharges = parseFloat($("#food-total").val()) || 0;
+    let otherCharges = parseFloat($("#other-services-total").val()) || 0;
+    
+    // Get pharmacy IP credit from the table footer
+    const pharmacyTotalText = $('#pharmacyIpPendingTotal').text();
+    let pharmacyIpCredit = 0;
+    if (pharmacyTotalText) {
+        pharmacyIpCredit = parseFloat(pharmacyTotalText.replace('₹', '').trim()) || 0;
+        // Set hidden field value - CORRECTED: use # for ID selector
+        $('#pharmacyipcredit').val(pharmacyIpCredit);
+        console.log('Pharmacy IP Credit:', pharmacyIpCredit);
+    }
+    
+    // Get lab total from the footer
+    const labTotalText = $('#labIpPendingTotal').text();
+    let labIpCredit = 0;
+    if (labTotalText) {
+        labIpCredit = parseFloat(labTotalText.replace('₹', '').trim()) || 0;
+        // Set hidden field value - CORRECTED: use # for ID selector
+        $('#labipcredit').val(labIpCredit);
+        console.log('Lab IP Credit:', labIpCredit);
+    }
+    
+    // Calculate subtotal including IP credits
+    let subtotal = roomRent + medicineTotal + treatmentTotal + procedureTotal + foodCharges + otherCharges + pharmacyIpCredit + labIpCredit;
+    $("#subtotal").val(subtotal.toFixed(2));
+
+    $("#totalrentamount").val(roomRent.toFixed(2));
+    $("#totalfoodamount").val(foodCharges.toFixed(2));
+    $("#totalmedicineamount").val(medicineTotal.toFixed(2));
+    $("#totaltreatmentamount").val(treatmentTotal.toFixed(2));
+    $("#totalprocedureamount").val(procedureTotal.toFixed(2));
+    $("#totalserviceamount").val(otherCharges.toFixed(2));
+    
+    updateAdvanceAndNetAmount();
+    updatePaymentSummary();
+}
+
+    // ============================================================
+    // UPDATE ADVANCE AND NET AMOUNT
+    // ============================================================
+    function updateAdvanceAndNetAmount() {
+        let subtotal = parseFloat($("#subtotal").val()) || 0;
+        let discount = parseFloat($("#discount").val()) || 0;
+        let tax = parseFloat($("#tax").val()) || 0;
+        let advancePaid = parseFloat($("#advance-paid").val()) || 0;
+        
+        let grossTotal = subtotal - discount + tax;
+        let netAmount = grossTotal - advancePaid;
+        let refundAmount = 0;
+        let requiredPayment = 0;
+        let isFullyPaid = false;
+        
+        if (netAmount < 0) {
+            refundAmount = Math.abs(netAmount);
+            netAmount = 0;
+            requiredPayment = 0;
+            isFullyPaid = true;
+        } else if (netAmount === 0) {
+            refundAmount = 0;
+            requiredPayment = 0;
+            isFullyPaid = true;
+        } else {
+            refundAmount = 0;
+            requiredPayment = netAmount;
+            isFullyPaid = false;
+        }
+        
+        $("#grandtotal").val(grossTotal.toFixed(2));
+        $("#net-amount").val(netAmount.toFixed(2));
+        $("#amount-collected").val(requiredPayment.toFixed(2));
+        
+        $("#displayGrossTotal").text('₹ ' + grossTotal.toFixed(2));
+        $("#displayAdvancePaid").text('₹ ' + advancePaid.toFixed(2));
+        $("#displayNetAmount").text('₹ ' + requiredPayment.toFixed(2));
+        $("#displayCollected").text('₹ 0.00');
+        
+        if (isFullyPaid) {
+            $('#paymentSection').addClass('disabled-section');
+            $('#paymentMethod, #paymentAmount, #cashAmount, #cardAmount, #upiAmount, #bankAmount')
+                .prop('disabled', true)
+                .addClass('disabled-input');
+            $('#multipleModesContainer').hide();
+            
+            $('#paymentAmount').val(0);
+            $('#cashAmount, #cardAmount, #upiAmount, #bankAmount').val(0);
+            
+            if (refundAmount > 0) {
+                $("#refundAlert").show();
+                $("#displayRefundAmount").text(refundAmount.toFixed(2));
+                $("#paymentStatusDisplay").val('REFUND DUE ₹' + refundAmount.toFixed(2)).css('color', '#dc3545');
+                showPaymentMessage('⚠️ Advance payment (₹' + advancePaid.toFixed(2) + ') exceeds Grand Total (₹' + grossTotal.toFixed(2) + '). Refund of ₹' + refundAmount.toFixed(2) + ' is due. No payment required.', 'warning');
+            } else {
+                $("#refundAlert").hide();
+                $("#paymentStatusDisplay").val('FULLY PAID (Advance)').css('color', '#28a745');
+                showPaymentMessage('✅ Bill is fully paid through advance payment of ₹' + advancePaid.toFixed(2) + '. No additional payment required.', 'success');
+            }
+        } else {
+            $('#paymentSection').removeClass('disabled-section');
+            $('#paymentMethod, #paymentAmount, #cashAmount, #cardAmount, #upiAmount, #bankAmount')
+                .prop('disabled', false)
+                .removeClass('disabled-input');
+            
+            togglePaymentInputs();
+            
+            $("#refundAlert").hide();
+            $("#paymentStatusDisplay").val('PAYMENT REQUIRED: ₹' + requiredPayment.toFixed(2)).css('color', '#007bff');
+            showPaymentMessage('💳 Please collect ₹' + requiredPayment.toFixed(2) + ' (Grand Total ₹' + grossTotal.toFixed(2) + ' - Advance ₹' + advancePaid.toFixed(2) + ')', 'info');
+            
+            $('#paymentAmount').val(requiredPayment.toFixed(2));
+        }
+    }
+
+    function showPaymentMessage(message, type) {
+        let alertClass = 'payment-message-info';
+        if (type === 'warning') alertClass = 'payment-message-warning';
+        else if (type === 'success') alertClass = 'payment-message-success';
+        else if (type === 'error') alertClass = 'payment-message-danger';
+        
+        $('#paymentMessageContainer').html(`
+            <div class="payment-message ${alertClass}">
+                <i class="fas fa-info-circle"></i> ${message}
+            </div>
+        `);
+    }
+
+    // ============================================================
+    // UPDATE PAYMENT SUMMARY
+    // ============================================================
+    window.updatePaymentSummary = function() {
+        const cash = parseFloat($("#cashAmount").val()) || 0;
+        const card = parseFloat($("#cardAmount").val()) || 0;
+        const upi = parseFloat($("#upiAmount").val()) || 0;
+        const bank = parseFloat($("#bankAmount").val()) || 0;
+        
+        const totalCollected = cash + card + upi + bank;
+        $("#displayTotalCollected").text(totalCollected.toFixed(2));
+        $("#displayCollected").text('₹ ' + totalCollected.toFixed(2));
+        
+        let requiredPayment = parseFloat($("#net-amount").val()) || 0;
+        if (requiredPayment > 0) {
+            if (totalCollected >= requiredPayment) {
+                $("#paymentStatusDisplay").val('PAYMENT COMPLETE').css('color', '#28a745');
+            } else if (totalCollected > 0) {
+                $("#paymentStatusDisplay").val('PARTIAL PAYMENT').css('color', '#ffc107');
+            } else {
+                $("#paymentStatusDisplay").val('PENDING').css('color', '#856404');
+            }
+        }
+    };
+
+    // ============================================================
+    // OTHER FUNCTIONS
+    // ============================================================
+    $(document).on("input", "#food-total, #discount, #tax, #paymentAmount", function () {
+        updateBillingTotal();
+    });
+
     $("#add-service").click(function () {
         $("#other-services-table tbody").append(`
             <tr>
@@ -1019,18 +2174,12 @@ $(document).ready(function () {
         updateServiceTotal();
     });
 
-    // ============================================================
-    // REMOVE SERVICE ROW
-    // ============================================================
     $("#other-services-table").on("click", ".remove-service", function () {
         $(this).closest("tr").remove();
         updateServiceTotal();
         updateBillingTotal();
     });
 
-    // ============================================================
-    // UPDATE SERVICE TOTAL
-    // ============================================================
     function updateServiceTotal() {
         let total = 0;
         $(".service-charge").each(function () {
@@ -1040,9 +2189,6 @@ $(document).ready(function () {
         $("#other-services-total").val(total.toFixed(2));
     }
 
-    // ============================================================
-    // UPDATE ROOM RENT
-    // ============================================================
     $("#roomBreakdownTable").on("input", ".roomperrate, .room-days", function () {
         let row = $(this).closest("tr");
         let rate = parseFloat(row.find(".roomperrate").val()) || 0;
@@ -1059,149 +2205,10 @@ $(document).ready(function () {
         updateBillingTotal();
     });
 
-    // ============================================================
-    // UPDATE MEDICINE TOTALS
-    // ============================================================
-    $("#medicine-table-body").on("input", ".med-qty, .med-rate", function () {
-        let index = $(this).data("index");
-        let qty = parseFloat($(`.med-qty[data-index='${index}']`).val()) || 0;
-        let rate = parseFloat($(`.med-rate[data-index='${index}']`).val()) || 0;
-        let total = qty * rate;
-        $(`.med-total[data-index='${index}']`).val(total.toFixed(2));
-
-        let medicineTotal = 0;
-        $(".med-total").each(function () {
-            let val = parseFloat($(this).val()) || 0;
-            medicineTotal += val;
-        });
-
-        $("#medicine-cost").val(medicineTotal.toFixed(2));
-        updateBillingTotal();
-    });
-
-    // ============================================================
-    // UPDATE TREATMENT TOTALS
-    // ============================================================
-    $("#treatment-table-body").on("input", ".treat-qty, .treat-rate", function () {
-        let index = $(this).data("index");
-        let qty = parseFloat($(`.treat-qty[data-index='${index}']`).val()) || 0;
-        let rate = parseFloat($(`.treat-rate[data-index='${index}']`).val()) || 0;
-        let total = qty * rate;
-        $(`.treat-total[data-index='${index}']`).val(total.toFixed(2));
-
-        let treatmentTotal = 0;
-        $(".treat-total").each(function () {
-            let val = parseFloat($(this).val()) || 0;
-            treatmentTotal += val;
-        });
-
-        $("#treatment-total").val(treatmentTotal.toFixed(2));
-        updateBillingTotal();
-    });
-
-    // ============================================================
-    // UPDATE SERVICE CHARGES
-    // ============================================================
     $("#other-services-table").on("input", ".service-charge", function () {
         updateServiceTotal();
         updateBillingTotal();
     });
-
-    // ============================================================
-    // UPDATE BILLING TOTAL
-    // ============================================================
-    function updateBillingTotal() {
-        let roomRent = parseFloat($("#roomRentTotal").val()) || 0;
-        let medicineTotal = parseFloat($("#medicine-cost").val()) || 0;
-        let treatmentTotal = parseFloat($("#treatment-total").val()) || 0;
-        let foodCharges = parseFloat($("#food-total").val()) || 0;
-        let otherCharges = parseFloat($("#other-services-total").val()) || 0;
-
-        let subtotal = roomRent + medicineTotal + treatmentTotal + foodCharges + otherCharges;
-        $("#subtotal").val(subtotal.toFixed(2));
-
-        // Update individual totals
-        $("#totalrentamount").val(roomRent.toFixed(2));
-        $("#totalfoodamount").val(foodCharges.toFixed(2));
-        $("#totalmedicineamount").val(medicineTotal.toFixed(2));
-        $("#totaltreatmentamount").val(treatmentTotal.toFixed(2));
-        $("#totalserviceamount").val(otherCharges.toFixed(2));
-        
-        // Update advance and net amount
-        updateAdvanceAndNetAmount();
-        updatePaymentSummary();
-    }
-
-    // ============================================================
-    // UPDATE ADVANCE AND NET AMOUNT
-    // ============================================================
-    function updateAdvanceAndNetAmount() {
-        let subtotal = parseFloat($("#subtotal").val()) || 0;
-        let discount = parseFloat($("#discount").val()) || 0;
-        let tax = parseFloat($("#tax").val()) || 0;
-        let advancePaid = parseFloat($("#advance-paid").val()) || 0;
-        
-        let grossTotal = subtotal - discount + tax;
-        let netAmount = grossTotal - advancePaid;
-        let refundAmount = 0;
-        if (netAmount < 0) {
-            refundAmount = Math.abs(netAmount);
-            netAmount = 0;
-        }
-        let amountCollected = netAmount;
-        
-        // Update fields
-        $("#grandtotal").val(grossTotal.toFixed(2));
-        $("#net-amount").val(netAmount.toFixed(2));
-        $("#amount-collected").val(amountCollected.toFixed(2));
-        
-        // Update display summary
-        $("#displayGrossTotal").text('₹ ' + grossTotal.toFixed(2));
-        $("#displayAdvancePaid").text('₹ ' + advancePaid.toFixed(2));
-        $("#displayNetAmount").text('₹ ' + netAmount.toFixed(2));
-        $("#displayCollected").text('₹ ' + amountCollected.toFixed(2));
-        
-        // Handle refund
-        if (refundAmount > 0) {
-            $("#refundAlert").show();
-            $("#displayRefundAmount").text(refundAmount.toFixed(2));
-            $("#paymentStatusDisplay").val('REFUND DUE').css('color', '#dc3545');
-        } else {
-            $("#refundAlert").hide();
-            if (netAmount === 0 && grossTotal > 0) {
-                $("#paymentStatusDisplay").val('PAID').css('color', '#28a745');
-            } else if (netAmount > 0 && netAmount < grossTotal) {
-                $("#paymentStatusDisplay").val('PARTIAL').css('color', '#007bff');
-            } else if (grossTotal === 0) {
-                $("#paymentStatusDisplay").val('PENDING').css('color', '#856404');
-            } else {
-                $("#paymentStatusDisplay").val('PENDING').css('color', '#856404');
-            }
-        }
-        
-        // Color coding
-        let netField = $("#net-amount");
-        if (netAmount === 0 && grossTotal > 0) {
-            netField.css('color', '#28a745');
-        } else if (advancePaid > grossTotal) {
-            netField.css('color', '#dc3545');
-        } else {
-            netField.css('color', '#007bff');
-        }
-    }
-
-    // ============================================================
-    // UPDATE PAYMENT SUMMARY
-    // ============================================================
-    function updatePaymentSummary() {
-        const cash = parseFloat($("#cashAmount").val()) || 0;
-        const card = parseFloat($("#cardAmount").val()) || 0;
-        const upi = parseFloat($("#upiAmount").val()) || 0;
-        const bank = parseFloat($("#bankAmount").val()) || 0;
-        
-        const totalCollected = cash + card + upi + bank;
-        $("#displayTotalCollected").text(totalCollected.toFixed(2));
-    }
 
     // ============================================================
     // RESET FORM
@@ -1211,18 +2218,21 @@ $(document).ready(function () {
             $("#roomBreakdownTable tbody").empty();
             $("#medicine-table-body").empty();
             $("#treatment-table-body").empty();
+            $("#procedure-table-body").empty();
             $("#other-services-table tbody").empty();
             
             $("#roomRentTotal").val("0.00");
             $("#food-total").val("0.00");
             $("#medicine-cost").val("0.00");
             $("#treatment-total").val("0.00");
+            $("#procedure-total").val("0.00");
             $("#other-services-total").val("0.00");
             
             $("#totalrentamount").val("0.00");
             $("#totaltreatmentamount").val("0.00");
             $("#totalmedicineamount").val("0.00");
             $("#totalfoodamount").val("0.00");
+            $("#totalprocedureamount").val("0.00");
             $("#totalserviceamount").val("0.00");
             $("#subtotal").val("0.00");
             $("#discount").val("0.00");
@@ -1232,7 +2242,6 @@ $(document).ready(function () {
             $("#amount-collected").val("0.00");
             $("#grandtotal").val("0.00");
             
-            // Reset payment fields
             $("#paymentMethod").val('cash');
             $("#paymentAmount").val(0);
             $("#cashAmount").val(0);
@@ -1257,118 +2266,210 @@ $(document).ready(function () {
             $("#admittedate").val("");
             $("#disdate").val("");
             $("#ipno").val("");
+            
+            $('#medicineSearchInput').val('');
+            $('#treatmentSearchInput').val('');
+            $('#procedureSearchInput').val('');
+            $('#medicineSearchResults').hide();
+            $('#treatmentSearchResults').hide();
+            $('#procedureSearchResults').hide();
+            
+            $('#paymentSection').removeClass('disabled-section');
+            $('#paymentMethod, #paymentAmount, #cashAmount, #cardAmount, #upiAmount, #bankAmount')
+                .prop('disabled', false)
+                .removeClass('disabled-input');
+            $('#paymentMessageContainer').empty();
+            
+            // Hide IP Credit section on reset
+            $('#ipCreditPendingSection').hide();
         }
     });
 
-    // ============================================================
-    // FORM SUBMISSION
-    // ============================================================
-    document.getElementById('ipexpandedForm').addEventListener('submit', function (e) {
-        e.preventDefault();
-        let formData = new FormData(this);
-
-        // Collect medicine details
-        let medicineDetails = [];
-        $('#medicine-table-body tr').each(function () {
-            medicineDetails.push({
-                name: $(this).find('.medicinename').val(),
-                stockid: $(this).find('.stockid').val(),
-                count: $(this).find('.med-qty').val(),
-                rate: $(this).find('.med-rate').val(),
-                total: $(this).find('.med-total').val()
-            });
-        });
-
-        // Collect treatment details
-        let treatmentDetails = [];
-        $('#treatment-table-body tr').each(function () {
-            treatmentDetails.push({
-                name: $(this).find('.treatmntname').val(),
-                treatmntid: $(this).find('.treatmntid').val(),
-                count: $(this).find('.treat-qty').val(),
-                rate: $(this).find('.treat-rate').val(),
-                total: $(this).find('.treat-total').val()
-            });
-        });
-
-        // Collect service details
-        let serviceDetails = [];
-        $('#other-services-table tbody tr').each(function () {
-            serviceDetails.push({
-                service: $(this).find('input[name="service[]"]').val(),
-                details: $(this).find('input[name="details[]"]').val(),
-                charges: $(this).find('input[name="charges[]"]').val()
-            });
-        });
-
-        // Collect room details
-        let roomDetails = [];
-        $('#roomBreakdownTable tbody tr').each(function () {
-            roomDetails.push({
-                roomid: $(this).find('.roomid').val(),
-                rate: $(this).find('.roomperrate').val(),
-                days: $(this).find('.room-days').val(),
-                total: $(this).find('.room-rent').val()
-            });
-        });
-
-        // Append all to formData
-        formData.append('medicine_details', JSON.stringify(medicineDetails));
-        formData.append('treatment_details', JSON.stringify(treatmentDetails));
-        formData.append('service_details', JSON.stringify(serviceDetails));
-        formData.append('room_details', JSON.stringify(roomDetails));
-
-        // Also add totals
-        formData.append('grand_total', $('#grandtotal').val());
-        formData.append('sub_total', $('#subtotal').val());
-        formData.append('medicine_total', $('#medicine-cost').val());
-        formData.append('treatment_total', $('#treatment-total').val());
-        formData.append('service_total', $('#other-services-total').val());
-        formData.append('room_rent_total', $('#roomRentTotal').val());
-        formData.append('totalfoodamount', $('#food-total').val());
-        formData.append('discount', $('#discount').val());
-        formData.append('tax', $('#tax').val());
-        formData.append('advance_paid', $('#advance-paid').val());
-        formData.append('net_amount', $('#net-amount').val());
-        formData.append('amount_collected', $('#amount-collected').val());
-        
-        // Add payment mode fields
-        formData.append('payment_method', $('#paymentMethod').val());
-        formData.append('payment_amount', $('#paymentAmount').val());
-        formData.append('cash_amount', $('#cashAmount').val());
-        formData.append('card_amount', $('#cardAmount').val());
-        formData.append('upi_amount', $('#upiAmount').val());
-        formData.append('bank_amount', $('#bankAmount').val());
-
-        // Show loading state
-        let submitBtn = $('#saveipexpanded');
-        let originalText = submitBtn.html();
-        submitBtn.html('<i class="fas fa-spinner fa-spin"></i> Saving...').prop('disabled', true);
-
-        fetch('{% url "ipbillexpand" %}', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showMessage('Bill saved successfully!', 'success');
-                if (data.redirect_url) {
-                    setTimeout(function() {
-                        window.location.href = data.redirect_url;
-                    }, 1500);
-                }
-            } else {
-                showMessage('Error: ' + (data.error || 'Unknown server error.'), 'error');
-                submitBtn.html(originalText).prop('disabled', false);
+   // ============================================================
+// FORM SUBMISSION - FIXED
+// ============================================================
+document.getElementById('ipexpandedForm').addEventListener('submit', function (e) {
+    // Let the form submit naturally, but validate first
+    e.preventDefault();
+    
+    let grossTotal = parseFloat($('#grandtotal').val()) || 0;
+    let advancePaid = parseFloat($('#advance-paid').val()) || 0;
+    let requiredPayment = parseFloat($('#net-amount').val()) || 0;
+    
+    // Check if patient is selected
+    let mrno = $('#mrno').val().trim();
+    if (!mrno) {
+        showMessage('⚠️ Please search and select a patient first before generating the bill.', 'warning');
+        return;
+    }
+    
+    // Check if any items are added (medicines, treatments, procedures, etc.)
+    let hasItems = false;
+    if ($('#medicine-table-body tr').length > 0 || 
+        $('#treatment-table-body tr').length > 0 || 
+        $('#procedure-table-body tr').length > 0 ||
+        $('#other-services-table tbody tr').length > 0 ||
+        parseFloat($('#roomRentTotal').val()) > 0 ||
+        parseFloat($('#food-total').val()) > 0) {
+        hasItems = true;
+    }
+    
+    if (!hasItems) {
+        if (!confirm('⚠️ No items added to the bill. Do you want to generate a bill with zero charges?')) {
+            return;
+        }
+    }
+    
+    // Handle advance payment > gross total (refund scenario)
+    if (advancePaid >= grossTotal) {
+        let refundAmount = advancePaid - grossTotal;
+        if (refundAmount > 0) {
+            if (!confirm(
+                '⚠️ Refund of ₹' + refundAmount.toFixed(2) + ' is due to the patient.\n\n' +
+                'Advance Paid: ₹' + advancePaid.toFixed(2) + '\n' +
+                'Grand Total: ₹' + grossTotal.toFixed(2) + '\n' +
+                'Refund Amount: ₹' + refundAmount.toFixed(2) + '\n\n' +
+                'Do you want to proceed with generating the bill?'
+            )) {
+                return;
             }
-        })
-        .catch(error => {
-            console.error('Fetch error:', error);
-            showMessage('Something went wrong. Please try again.', 'error');
+        } else {
+            if (!confirm(
+                '✅ Bill is fully paid through advance.\n\n' +
+                'Advance Paid: ₹' + advancePaid.toFixed(2) + '\n' +
+                'Grand Total: ₹' + grossTotal.toFixed(2) + '\n\n' +
+                'Do you want to proceed?'
+            )) {
+                return;
+            }
+        }
+    } else {
+        // Payment required - validate payment
+        let amountCollected = 0;
+        let paymentMethod = $('#paymentMethod').val();
+        
+        if (paymentMethod === 'multiple') {
+            amountCollected = (parseFloat($('#cashAmount').val()) || 0) + 
+                             (parseFloat($('#cardAmount').val()) || 0) + 
+                             (parseFloat($('#upiAmount').val()) || 0) + 
+                             (parseFloat($('#bankAmount').val()) || 0);
+        } else {
+            amountCollected = parseFloat($('#paymentAmount').val()) || 0;
+        }
+        
+        // If collected amount is 0, ask for confirmation
+        if (amountCollected === 0) {
+            if (!confirm(
+                '⚠️ No payment collected.\n\n' +
+                'Amount to Pay: ₹' + requiredPayment.toFixed(2) + '\n' +
+                'Collected: ₹0.00\n\n' +
+                'Do you want to generate the bill without payment?'
+            )) {
+                return;
+            }
+        } else if (amountCollected < requiredPayment) {
+            let shortAmount = (requiredPayment - amountCollected).toFixed(2);
+            if (!confirm(
+                '⚠️ INSUFFICIENT PAYMENT!\n\n' +
+                'Grand Total: ₹' + grossTotal.toFixed(2) + '\n' +
+                'Advance Paid: ₹' + advancePaid.toFixed(2) + '\n' +
+                'Amount to Pay: ₹' + requiredPayment.toFixed(2) + '\n' +
+                'Amount Collected: ₹' + amountCollected.toFixed(2) + '\n' +
+                'Short by: ₹' + shortAmount + '\n\n' +
+                'Do you want to continue generating the bill?'
+            )) {
+                return;
+            }
+        } else if (amountCollected > requiredPayment) {
+            let extraAmount = (amountCollected - requiredPayment).toFixed(2);
+            if (!confirm(
+                '⚠️ Overpayment detected!\n\n' +
+                'Required Amount: ₹' + requiredPayment.toFixed(2) + '\n' +
+                'Amount Collected: ₹' + amountCollected.toFixed(2) + '\n' +
+                'Extra Amount: ₹' + extraAmount + '\n\n' +
+                'This will be recorded as overpayment. Do you want to continue?'
+            )) {
+                return;
+            }
+        }
+    }
+    
+    // Clear any error states
+    $('#paymentAmount, #cashAmount, #cardAmount, #upiAmount, #bankAmount').removeClass('is-invalid');
+    
+    // Show loading state on button
+    let submitBtn = $('#saveipexpanded');
+    let originalText = submitBtn.html();
+    submitBtn.html('<i class="fas fa-spinner fa-spin"></i> Generating...').prop('disabled', true);
+    
+    // Submit the form using AJAX
+    let formData = new FormData(this);
+    
+    $.ajax({
+        url: $(this).attr('action') || window.location.href,
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        success: function(response) {
+    submitBtn.html(originalText).prop('disabled', false);
+    
+    // Check for both 'success' and 'status' keys
+    if (response.success === true || response.status === 'success') {
+        showMessage('✅ Bill generated successfully!\n\n' + (response.message || 'Bill saved successfully.'), 'success');
+        
+        // Optionally redirect to bill view
+        if (response.redirect_url) {
+            setTimeout(function() {
+                window.location.href = response.redirect_url;
+            }, 2000);
+        } else {
+            // Reset form
+            $('#resetBtn').click();
+        }
+    } else {
+        showMessage('❌ Error generating bill:\n\n' + (response.message || response.error || 'Unknown error'), 'error');
+    }
+},
+        error: function(xhr, status, error) {
             submitBtn.html(originalText).prop('disabled', false);
-        });
+            
+            // Handle session expiry
+            if (xhr.status === 403 || xhr.status === 401) {
+                showMessage('Your session has expired. Please login again.', 'error');
+                setTimeout(function() {
+                    window.location.href = '/login/';
+                }, 2000);
+                return;
+            }
+            
+            let errorMsg = 'Error generating bill. Please try again.';
+            try {
+                let response = JSON.parse(xhr.responseText);
+                if (response.message) {
+                    errorMsg = response.message;
+                }
+            } catch(e) {
+                // If response is HTML (session expired)
+                if (xhr.responseText && xhr.responseText.includes('login')) {
+                    showMessage('Session expired. Please refresh and login again.', 'error');
+                    setTimeout(function() {
+                        window.location.href = '/login/';
+                    }, 2000);
+                    return;
+                }
+            }
+            
+            showMessage('❌ ' + errorMsg, 'error');
+            console.error('Form submission error:', error);
+            console.error('Status:', status);
+            console.error('Response:', xhr.responseText);
+        }
     });
+});
 
     // ============================================================
     // SHOW MESSAGE FUNCTION
@@ -1376,6 +2477,7 @@ $(document).ready(function () {
     function showMessage(message, type) {
         let title = 'Notification';
         let bgClass = 'bg-secondary';
+        let formattedMessage = message.replace(/\n/g, '<br>');
         if (type === 'success') {
             title = 'Success';
             bgClass = 'bg-success text-white';
@@ -1390,20 +2492,13 @@ $(document).ready(function () {
             bgClass = 'bg-info text-white';
         }
         $('#messageModalLabel').text(title);
-        $('#messageBody').html(message);
-        $('#messageModalHeader').className = 'modal-header ' + bgClass;
+        $('#messageBody').html(formattedMessage);
+        $('#messageModalHeader').removeClass().addClass('modal-header ' + bgClass);
         $('#messageModal').modal('show');
     }
 
     // ============================================================
-    // TRIGGER CALCULATION ON INPUT CHANGES
-    // ============================================================
-    $(document).on("input", "#food-total, #discount, #tax, #paymentAmount", function () {
-        updateBillingTotal();
-    });
-
-    // ============================================================
-    // INITIAL DISPLAY
+    // INITIAL SETUP
     // ============================================================
     $("#displayGrossTotal").text('₹ 0.00');
     $("#displayAdvancePaid").text('₹ 0.00');
@@ -1411,6 +2506,12 @@ $(document).ready(function () {
     $("#displayCollected").text('₹ 0.00');
     $("#paymentStatusDisplay").val('PENDING').css('color', '#856404');
     $("#multipleModesContainer").hide();
+    $("#cashAmount, #cardAmount, #upiAmount, #bankAmount").prop('disabled', true);
+    
+    // Hide IP Credit section initially
+    $('#ipCreditPendingSection').hide();
+
 });
 </script>
+
 {% endblock %}

@@ -38,7 +38,16 @@
     table-layout: fixed;
     word-break: break-word;
   }
-
+.ip-credit-stamp {
+    color: #dc3545;
+    font-weight: bold;
+    font-size: 12px;
+    border: 2px solid #dc3545;
+    padding: 2px 10px;
+    border-radius: 4px;
+    display: inline-block;
+    background-color: #fff5f5;
+  }
   .order-details th,
   .order-details td {
     border: 1px solid black;
@@ -219,7 +228,10 @@
       <strong>Bill Details:</strong><br>
       Invoice Number: {{ lsinvoice.Invoicenumber }}<br>
       Bill Date: {{ lsinvoice.currentdate }}<br>
-       DL.Nos1.116725/2021
+      DL.Nos1.116725/2021 <br>
+       {% if lsinvoice.ip_credit %}
+        <span class="ip-credit-stamp">*** IP CREDIT ***</span>
+      {% endif %}
     </div>
   </div>
 

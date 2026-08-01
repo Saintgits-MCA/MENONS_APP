@@ -777,6 +777,7 @@ class newInvoiceMaster(models.Model):
     gpay_amount = models.CharField(max_length=400, default=0, null=True, blank=True)
     card_amount = models.CharField(max_length=400, default=0, null=True, blank=True)
     discount_percent = models.DecimalField(default=0,decimal_places=2,max_digits=6, null=True, blank=True)
+    ip_credit = models.BooleanField(default=False)
     
 class newInvoiceChild(models.Model):
     quantity = models.IntegerField()
@@ -806,7 +807,6 @@ class newInvoiceChild(models.Model):
     cgstamount = models.CharField(max_length=400, default=None, null=True, blank=True)
     taxableamount = models.CharField(max_length=400, default=None, null=True, blank=True)
     manufacturedate = models.CharField(max_length=400, default=None, null=True, blank=True)
-
     @property
     def remaining_qty(self):
         """Return quantity that can still be credited."""
@@ -1449,6 +1449,7 @@ class LabInvoiceMaster(models.Model):
     cancelled_at = models.DateTimeField(null=True, blank=True)
     patient = models.ForeignKey(Patient_details, on_delete=models.CASCADE,null=True)
     result = models.ForeignKey('LabResultMaster',on_delete=models.PROTECT,null=True)
+    ip_credit = models.BooleanField(default=False)
     def __str__(self):
         return self.invoiceno
 
@@ -1707,6 +1708,19 @@ class ippatientadmission(models.Model):
     admitted_doctor = models.ForeignKey(Staffallocation, on_delete=models.SET_NULL, null=True, blank=True, related_name='ip_admissions')
     # Optional: Add total advance field to track total payments
     total_advance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    patient_name = models.CharField(max_length=255, blank=True)
+    gender = models.CharField(max_length=10, choices=[('Male', 'Male'), ('Female', 'Female'), ('Others', 'Others')], blank=True)
+    marital_status = models.CharField(max_length=10, choices=[('Single', 'Single'), ('Married', 'Married'), ('Others', 'Others')], blank=True)
+    nationality = models.CharField(max_length=100, blank=True)
+    consultant_incharge = models.CharField(max_length=255, blank=True)
+    admission_category = models.CharField(max_length=20, choices=[('Emergency', 'Emergency'), ('Elective', 'Elective'), ('Others', 'Others')], blank=True)
+    booking_start_date = models.DateField(null=True, blank=True)
+    estimated_stay_days = models.IntegerField(null=True, blank=True)
+    
+    procedures_planned = models.TextField(blank=True)
+    surgical_procedure_date = models.DateField(null=True, blank=True)
+    referral_source = models.CharField(max_length=50, blank=True)
+    admission_datetime = models.DateTimeField(auto_now_add=True,null=True, blank=True)
     
 class IPAdvancePayment(models.Model):
     """Model for IP patient advance payments"""
@@ -1888,7 +1902,8 @@ class IPBill(models.Model):
     card_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     upi_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     bank_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    
+    pharmacyipcredit = models.CharField(max_length=400, default=None, null=True, blank=True)
+    labipcredit = models.CharField(max_length=400, default=None, null=True, blank=True)
     def save(self, *args, **kwargs):
         if not self.ipinvoicenumber:
             today = date.today().strftime("%Y%m%d")  # Format: YYYYMMDD
@@ -3454,6 +3469,20 @@ class PreAppointmentBooking(models.Model):
         return f"Pre-Booking: {self.patient.Patient_Name} on {self.appointment_date}"
 
 
+class ipexpandedbillproceduredetail(models.Model):
+    ipno = models.ForeignKey(ippatientadmission, on_delete=models.CASCADE, null=True, default=None, blank=True)
+    ipbilldt = models.ForeignKey(IPBill, on_delete=models.CASCADE, null=True, default=None, blank=True)
+    procedure_name = models.TextField()
+    procedure = models.ForeignKey(ProcedureMaster, on_delete=models.CASCADE, null=True, blank=True)
+    count = models.TextField(default='1', null=True, blank=True)
+    rate_per_procedure = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    total_procedure = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    Current_Date = models.DateField(default=datetime.date.today)
+    
+    def __str__(self):
+        return f"{self.procedure_name} - {self.count} x {self.rate_per_procedure}"
+
+
 class RegistrationFeeInvoice(models.Model):
     """Model for Registration Fee Invoices"""    
     # Invoice Information
@@ -3540,3 +3569,36 @@ class RegistrationFeeInvoice(models.Model):
     notes = models.TextField(blank=True, null=True)    
     def __str__(self):
         return f"{self.invoice_number} - {self.patient_name}"
+
+class ComplaintsMaster(models.Model):
+    """
+    Master table for complaints
+    """
+    name = models.TextField()
+    status = models.BooleanField(default=True, verbose_name="Active Status")
+    # Audit fields (optional but recommended)
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        'Staffdetails', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='created_complaints'
+    )
+    
+    def __str__(self):
+        return self.name
+
+class casehistoryprocedure(models.Model):
+    case_history = models.ForeignKey(clairvedaCaseHistory, on_delete=models.CASCADE, null=True, blank=True)
+    followup = models.ForeignKey(clairvedaFollowUp, on_delete=models.CASCADE, null=True, blank=True)  # Optional link to a follow-up
+    
+    patient = models.ForeignKey(Patient_details, on_delete=models.CASCADE,default="1")
+    procedure = models.ForeignKey(ProcedureMaster, on_delete=models.CASCADE)
+    date=models.DateField(auto_now_add=True)
+    count= models.CharField(max_length=100,null=True, blank=True)
+    created_at = models.DateField(auto_now_add=True)
+    prepairedby = models.ForeignKey(Staffdetails, on_delete=models.CASCADE, null=True, blank=True,default="1")
+    deletedstatus = models.BooleanField(default=False)
+    def __str__(self):
+        return f"doctors Note for {self.case_history.patient.name} ({self.created_at.strftime('%Y-%m-%d')})"

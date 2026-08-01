@@ -513,7 +513,7 @@
                   <div class="row">
                     <div class="col-12">
                       <span class="detail-label">Phone Number</span><br>
-                      <span class="detail-value"><i class="fas fa-phone mr-1"></i> {{ room.patient_phone }}</span>
+                      <span class="detail-value"><i class="fas fa-phone-alt mr-1"></i> {{ room.patient_phone }}</span>
                     </div>
                   </div>
                   <hr class="my-2">
@@ -746,7 +746,7 @@
           <!-- Treatments Card -->
           <div class="card">
             <div class="card-header">
-              <h6 class="section-heading"><i class="fas fa-procedures"></i> Add Treatment</h6>
+              <h6 class="section-heading"><i class="fas fa-procedures"></i> Add Procedure</h6>
             </div>
             <div class="card-body">
               <form id="modalTreatmentForm">
@@ -755,8 +755,8 @@
                   <div class="treatment-row-entry border rounded-3 p-3 mb-3 bg-light">
                     <div class="row g-3 align-items-end">
                       <div class="col-12 col-md-5 position-relative">
-                        <label class="form-label small mb-1 fw-semibold">Treatment</label>
-                        <input type="text" name="treatment[]" class="form-control treatment-input" placeholder="Search treatment..." autocomplete="off">
+                        <label class="form-label small mb-1 fw-semibold">Procedure</label>
+                        <input type="text" name="treatment[]" class="form-control treatment-input" placeholder="Search procedure..." autocomplete="off">
                         <div class="autocomplete-list list-group position-absolute w-100" style="z-index:1050; display:none;"></div>
                         <input type="hidden" name="treatment_id[]" class="treatment-id">
                       </div>
@@ -778,31 +778,31 @@
                 </div>
                 <div class="d-flex flex-column flex-sm-row justify-content-end gap-2 mt-3">
                   <button type="button" id="modalAddTreatmentRow" class="btn btn-hrms-success">
-                    <i class="fas fa-plus mr-1"></i> Add Treatment
+                    <i class="fas fa-plus mr-1"></i> Add Procedure
                   </button>
                   &nbsp;
                   <button type="submit" class="btn btn-hrms-primary" id="modalSaveTreatmentBtn">
-                    <i class="fas fa-save mr-1"></i> Save Treatments
+                    <i class="fas fa-save mr-1"></i> Save Procedure
                   </button>
                 </div>
               </form>
 
               <!-- Existing Treatments Table -->
               <div class="mt-4" id="existingTreatmentsSection">
-                <h6 class="fw-bold mb-2" style="color:#1a3a5c; font-size:0.95rem;"><i class="fas fa-history mr-1"></i> Previous Treatments</h6>
+                <h6 class="fw-bold mb-2" style="color:#1a3a5c; font-size:0.95rem;"><i class="fas fa-history mr-1"></i> Previous Procedure</h6>
                 <div class="existing-table-wrap">
                   <table class="table table-striped table-sm mb-0">
                     <thead>
                       <tr>
                         <th>Date</th>
-                        <th>Treatment</th>
+                        <th>Procedure</th>
                         <th>Count</th>
                         {% comment %} <th class="text-center" style="width:70px;">Action</th> {% endcomment %}
                       </tr>
                     </thead>
                     <tbody id="modalExistingTreatments">
                       <tr>
-                        <td colspan="4" class="text-center text-muted py-2">No treatments found.</td>
+                        <td colspan="4" class="text-center text-muted py-2">No procedures found.</td>
                       </tr>
                     </tbody>
                   </table>
@@ -1015,7 +1015,6 @@
     display: none;
   }
 </style>
-
 <script>
 function modalShowPopupMessage(message, type) {
   type = type || 'success';
@@ -1243,13 +1242,15 @@ function modalInitTreatmentAutocomplete(input) {
         if (autocompleteList) { autocompleteList.style.display = 'none'; autocompleteList.innerHTML = ''; }
         return;
       }
-      fetch('/search_treatments/?q=' + encodeURIComponent(query))
+      // ✅ FIXED: Use the Django URL tag properly
+      fetch("{% url 'search_procedures_api' %}?q=" + encodeURIComponent(query))
         .then(function(r) { return r.json(); })
         .then(function(data) {
           if (!autocompleteList) return;
           autocompleteList.innerHTML = '';
-          if (data.results && data.results.length === 0) { autocompleteList.style.display = 'none'; return; }
-          (data.results || []).forEach(function(t) {
+          // ✅ FIXED: data is a direct array, not data.results
+          if (data.length === 0) { autocompleteList.style.display = 'none'; return; }
+          data.forEach(function(t) {
             var option = document.createElement('div');
             option.className = 'list-group-item list-group-item-action';
             option.textContent = t.name;
@@ -1273,7 +1274,7 @@ function modalInitTreatmentAutocomplete(input) {
 document.addEventListener('DOMContentLoaded', function() {
   var csrfToken = '{{ csrf_token }}';
   var formActionURL_prescription = "{% url 'create_casehistoryprescription' %}";
-  var formActionURL_treatment = "{% url 'save_casehistorytreatmentsplan' %}";
+  var formActionURL_treatment = "{% url 'save_casehistoryprocedure' %}";
   var isSubmittingPrescription = false;
   var isSubmittingTreatment = false;
 
@@ -1459,19 +1460,13 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('modalTreatmentForm').addEventListener('submit', function(e) {
     e.preventDefault();
     if (isSubmittingTreatment) return;
-    if (!modalHasAtLeastOneEntry()) {
-      modalShowPopupMessage('Please add at least one Prescription Medicine or one Treatment before saving.', 'error');
-      return;
-    }
+
     var treatmentRows = document.querySelectorAll('#modal-treatment-body .treatment-row-entry');
     var hasValid = false;
     treatmentRows.forEach(function(row) {
       if (row.querySelector('.treatment-id').value) hasValid = true;
     });
-    if (!hasValid) {
-      modalShowPopupMessage('Please add at least one treatment', 'error');
-      return;
-    }
+  
     isSubmittingTreatment = true;
     var submitBtn = document.getElementById('modalSaveTreatmentBtn');
     var originalText = submitBtn.innerHTML;
@@ -1490,27 +1485,30 @@ document.addEventListener('DOMContentLoaded', function() {
         submitBtn.innerHTML = originalText;
         submitBtn.disabled = false;
         if (data.success) {
-          modalShowPopupMessage('Treatment plan saved successfully!', 'success');
-          if (data.treatments && data.treatments.length > 0) {
+          modalShowPopupMessage('Procedure saved successfully!', 'success');
+          console.log(data);
+          // ✅ FIX: Correctly use data.procedures and procedure_name
+        if (data.procedures && data.procedures.length > 0) {
             var tbody = document.getElementById('modalExistingTreatments');
-            var noRow = tbody.querySelector('.text-muted');
+            var noRow = tbody.querySelector('tr .text-muted');
             if (noRow) noRow.closest('tr').remove();
-            data.treatments.forEach(function(t) {
+              data.procedures.forEach(function(p) {
+              console.log(p);
               var newRow = document.createElement('tr');
-              newRow.innerHTML = '<td>' + (t.date || '') + '</td><td>' + (t.treatment || '') + '</td><td>' + (t.count || '') + '</td>';
+              newRow.innerHTML = '<td>' + (p.date || '') + '</td><td>' + (p.procedure || '') + '</td><td>' + (p.count || '') + '</td>';
               tbody.insertBefore(newRow, tbody.firstChild);
             });
           }
           resetModalTreatmentForm();
         } else {
-          modalShowPopupMessage('Error saving treatment plan: ' + data.error, 'error');
+          modalShowPopupMessage('Error saving procedure: ' + data.error, 'error');
         }
       },
       error: function(xhr, status, error) {
         isSubmittingTreatment = false;
         submitBtn.innerHTML = originalText;
         submitBtn.disabled = false;
-        modalShowPopupMessage('Error saving treatment plan', 'error');
+        modalShowPopupMessage('Error saving procedure', 'error');
       }
     });
   });
@@ -1533,7 +1531,9 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // Open treatment modal on button click
+  // ============================================================
+  // ⭐ OPEN MODAL & FETCH BACK PRESCRIPTIONS + PROCEDURES ⭐
+  // ============================================================
   $(document).on('click', '.treatment-btn', function() {
     var btn = $(this);
     var bookingId = btn.data('booking-id');
@@ -1557,64 +1557,71 @@ document.addEventListener('DOMContentLoaded', function() {
     resetModalPrescriptionForm();
     resetModalTreatmentForm();
     $('#modalExistingPrescriptions').html('<tr><td colspan="7" class="text-center text-muted py-2">Loading prescriptions...</td></tr>');
-    $('#modalExistingTreatments').html('<tr><td colspan="4" class="text-center text-muted py-2">Loading treatments...</td></tr>');
+    $('#modalExistingTreatments').html('<tr><td colspan="4" class="text-center text-muted py-2">Loading procedures...</td></tr>');
 
     $('#treatmentModal').modal('show');
 
+    // 🔹 1. FETCH PRESCRIPTIONS ONLY (Pharmacy / Medicines - from get_treatment_details)
     $.ajax({
-      url: "{% url 'get_treatment_details' %}",
+      url: "{% url 'get_treatment_details' %}",  
       type: "GET",
       data: { booking_id: bookingId, ipno_id: ipnoId },
       dataType: "json",
       headers: { "X-CSRFToken": csrfToken },
       success: function(data) {
-        console.log('get_treatment_details response:', data);
-        if (data.patient_info) {
-          $('#modalPatientName').text(data.patient_info.patient_name || patientName || '-');
-          $('#modalWardName').text(data.patient_info.ward_name || wardName || '-');
-          $('#modalWardNumber').text(data.patient_info.ward_number || wardNumber || '-');
-          $('#modalRoomName').text(data.patient_info.room_name || roomName || '-');
-          $('#modalAccommodationType').text(data.patient_info.accommodation_type || accommodationType || '-');
-        }
-
+        console.log('Prescription data loaded:', data);
         if (data.prescriptions && data.prescriptions.length > 0) {
           var tbody = document.getElementById('modalExistingPrescriptions');
           tbody.innerHTML = '';
           data.prescriptions.forEach(function(p) {
             var row = document.createElement('tr');
-            row.innerHTML = '<td>' + p.medicine_name + '</td>' +
-                '<td>' + p.noofdays + '</td>' +
-                '<td>' + p.moringtime + '</td>' +
-                '<td>' + p.noontime + '</td>' +
-                '<td>' + p.nighttime + '</td>' +
-                '<td>' + p.beforeorafterdiet + '</td>';
-                            tbody.appendChild(row);
+            row.innerHTML = '<td>' + (p.medicine_name || '') + '</td>' +
+                '<td>' + (p.noofdays || '') + '</td>' +
+                '<td>' + (p.moringtime || '0') + '</td>' +
+                '<td>' + (p.noontime || '0') + '</td>' +
+                '<td>' + (p.nighttime || '0') + '</td>' +
+                '<td>' + (p.beforeorafterdiet || 'None') + '</td>';
+            tbody.appendChild(row);
           });
         } else {
           $('#modalExistingPrescriptions').html('<tr><td colspan="7" class="text-center text-muted py-2">No prescriptions found.</td></tr>');
         }
+      },
+      error: function(xhr, status, error) {
+        console.error('Error loading prescriptions:', error);
+        $('#modalExistingPrescriptions').html('<tr><td colspan="7" class="text-center text-danger py-2">Failed to load prescriptions</td></tr>');
+      }
+    });
 
-        if (data.treatments && data.treatments.length > 0) {
+    // 🔹 2. FETCH PROCEDURES ONLY (from get_procedure_history)
+    $.ajax({
+      url: "{% url 'get_procedure_history' %}", 
+      type: "GET",
+      data: { booking_id: bookingId, ipno_id: ipnoId },
+      dataType: "json",
+      headers: { "X-CSRFToken": csrfToken },
+      success: function(data) {
+        console.log('Procedure data loaded:', data);
+        if (data.procedures && data.procedures.length > 0) {
           var tbody2 = document.getElementById('modalExistingTreatments');
           tbody2.innerHTML = '';
-          data.treatments.forEach(function(t) {
+          data.procedures.forEach(function(p) {
             var row = document.createElement('tr');
-            row.innerHTML = '<td>' + (t.date || '') + '</td><td>' + (t.treatment_name || '') + '</td><td>' + (t.count || '') + '</td>';
+            row.innerHTML = '<td>' + (p.date || '') + '</td><td>' + (p.procedure_name || '') + '</td><td>' + (p.count || '') + '</td>';
             tbody2.appendChild(row);
           });
         } else {
-          $('#modalExistingTreatments').html('<tr><td colspan="4" class="text-center text-muted py-2">No treatments found.</td></tr>');
+          $('#modalExistingTreatments').html('<tr><td colspan="4" class="text-center text-muted py-2">No procedures found.</td></tr>');
         }
 
         $('#treatmentLoading').hide();
         $('#treatmentContent').show();
       },
       error: function(xhr, status, error) {
-        console.error('get_treatment_details error:', status, error, xhr.responseText);
+        console.error('Error loading procedures:', error);
         $('#treatmentLoading').hide();
         $('#treatmentContent').show();
-        $('#modalExistingPrescriptions').html('<tr><td colspan="7" class="text-center text-danger py-2">Failed to load prescriptions</td></tr>');
-        $('#modalExistingTreatments').html('<tr><td colspan="4" class="text-center text-danger py-2">Failed to load treatments</td></tr>');
+        $('#modalExistingTreatments').html('<tr><td colspan="4" class="text-center text-danger py-2">Failed to load procedures</td></tr>');
       }
     });
   });

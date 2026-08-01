@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="content-wrapper">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Edit Complaint</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{% url 'index' %}">Home</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'complaints_master_list' %}">Complaints Master</a></li>
+                        <li class="breadcrumb-item active">Edit Complaint</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card card-primary">
+                        <div class="card-header">
+                            <h6 class="mb-0 font-weight-bold">
+                                <i class="fas fa-edit"></i> Edit Complaint
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" action="{% url 'complaints_master_edit' %}?ids={{ complaint.id }}">
+                                {% csrf_token %}
+                                
+                                <div class="form-group">
+                                    <label for="name">Complaint Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="name" name="name" 
+                                           value="{{ complaint.name }}" required>
+                                    <small class="form-text text-muted">e.g., Headache, Fever, Cough, etc.</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="status" name="status" 
+                                               {% if complaint.status %}checked{% endif %}>
+                                        <label class="custom-control-label" for="status">Active</label>
+                                    </div>
+                                    <small class="form-text text-muted">Inactive complaints will not appear in dropdowns</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Created At</label>
+                                    <p class="text-muted">{{ complaint.created_at|date:"d/m/Y H:i" }}</p>
+                                </div>
+
+                                <div class="form-group mt-3">
+                                    <a href="{% url 'complaints_master_list' %}" class="btn btn-secondary">
+                                        <i class="fas fa-arrow-left"></i> Cancel
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> Update Complaint
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0 font-weight-bold">
+                                <i class="fas fa-info-circle"></i> Instructions
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-check-circle text-success"></i> Complaint name should be unique</li>
+                                <li><i class="fas fa-check-circle text-success"></i> Use clear and descriptive names</li>
+                                <li><i class="fas fa-check-circle text-success"></i> Mark as inactive if no longer used</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script>
+    $(document).ready(function() {
+        $('#name').on('keyup', function() {
+            var words = $(this).val().split(' ');
+            for (var i = 0; i < words.length; i++) {
+                if (words[i].length > 0) {
+                    words[i] = words[i].charAt(0).toUpperCase() + words[i].slice(1).toLowerCase();
+                }
+            }
+            $(this).val(words.join(' '));
+        });
+    });
+</script>
+
+{% endblock %}

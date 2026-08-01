@@ -66,9 +66,13 @@
                                 <div class="col-md-6 text-right">
                                     <div class="invoice-status">
                                         <h4>
-                                            {%if not invoice.is_credit%}
+                                            {%if not invoice.is_credit and not invoice.ip_credit%}
                                             <span class="badge badge-success">
                                                 <i class="fas fa-check-circle"></i> Completed
+                                            </span>
+                                            {%elif invoice.ip_credit or invoice.payment_status == "IP Credit" %}
+                                            <span class="badge badge-danger">
+                                                <i class="fas fa-times-circle"></i> IP Credit
                                             </span>
                                             {%else%}
                                             <span class="badge badge-warning">
@@ -101,9 +105,11 @@
                                                 <th>Phone Number:</th>
                                                 <td>{{ invoice.patient.contactno|default:"-" }}</td>
                                                 <th>Status:</th>
-                                                {%if invoice.is_credit and invoice.payment_status == "Credit"%}
-                                                <td><span class="badge badge-danger">Credit</span></td>
-                                                {%else%}
+                                                {%if invoice.is_credit  and invoice.payment_status == "Credit"%}
+                                                <td><span class="badge badge-success">Credit</span></td>
+                                                {%elif invoice.ip_credit or invoice.payment_status == "IP Credit"%}
+                                                <td><span class="badge badge-danger">IP Credit</span></td>
+                                                 {%else%}
                                                 <td><span class="badge badge-success">Paid</span></td>
                                                 {%endif%}
                                             </tr>

@@ -356,6 +356,8 @@
     </tbody>
   </table>
   {% endif %}
+
+  
         
   <!-- Charges Table -->
   <table class="print-page-break">
@@ -383,8 +385,20 @@
         <td>₹ {{ bill.food_expenses|floatformat:2 }}</td>
       </tr>
       <tr>
+        <td>Procedure Charges</td>
+        <td>₹ {{ bill.procedure_charges|floatformat:2 }}</td>
+      </tr>
+      <tr>
         <td>Other Expenses</td>
         <td>₹ {{ bill.other_expenses|floatformat:2 }}</td>
+      </tr>
+       <tr>
+        <td>Pharmacy IP Credit</td>
+        <td>₹ {{ bill.pharmacyipcredit|floatformat:2 }}</td>
+      </tr>
+       <tr>
+        <td>Lab IP Credit</td>
+        <td>₹ {{ bill.labipcredit|floatformat:2 }}</td>
       </tr>
     </tbody>
   </table>

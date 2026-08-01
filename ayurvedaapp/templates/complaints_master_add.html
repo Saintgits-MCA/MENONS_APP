@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="content-wrapper">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Add Complaint</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{% url 'complaints_master_list' %}">Complaints Master</a></li>
+                        <li class="breadcrumb-item active">Add Complaint</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card card-primary">
+                        <div class="card-header">
+                            <h6 class="mb-0 font-weight-bold">
+                                <i class="fas fa-plus-circle"></i> Add New Complaint
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" action="">
+                                {% csrf_token %}
+                                
+                                <div class="form-group">
+                                    <label for="name">Complaint Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="name" name="name" 
+                                           placeholder="Enter complaint name" required>
+                                    <small class="form-text text-muted">e.g., Headache, Fever, Cough, etc.</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="status" name="status" checked>
+                                        <label class="custom-control-label" for="status">Active</label>
+                                    </div>
+                                    <small class="form-text text-muted">Inactive complaints will not appear in dropdowns</small>
+                                </div>
+
+                                <div class="form-group mt-3">
+                                    <a href="{% url 'complaints_master_list' %}" class="btn btn-secondary">
+                                        <i class="fas fa-arrow-left"></i> Cancel
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> Save Complaint
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0 font-weight-bold">
+                                <i class="fas fa-info-circle"></i> Instructions
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-check-circle text-success"></i> Complaint name should be unique</li>
+                                <li><i class="fas fa-check-circle text-success"></i> Use clear and descriptive names</li>
+                                <li><i class="fas fa-check-circle text-success"></i> Examples: Headache, Fever, Cough, Cold</li>
+                                <li><i class="fas fa-check-circle text-success"></i> Mark as inactive if no longer used</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+   <div class="modal fade" id="messageModal" tabindex="-1" role="dialog" aria-labelledby="messageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header" id="messageModalHeader">
+                <h5 class="modal-title" id="messageModalLabel">Notification</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="messageModalBody"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 2. JAVASCRIPT TO TRIGGER THE MODAL WHEN MESSAGES EXIST -->
+{% if messages %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get all Django messages
+        {% for message in messages %}
+            var msgText = "{{ message|escapejs }}";
+            var msgTags = "{{ message.tags }}"; // e.g., 'success', 'error', 'warning', 'info'
+            
+            // Set Modal Title based on message tag
+            var title = 'Notification';
+            var headerClass = 'bg-secondary text-white';
+            
+            if (msgTags === 'success') {
+                title = 'Success';
+                headerClass = 'bg-success text-white';
+            } else if (msgTags === 'error' || msgTags === 'danger') {
+                title = 'Error';
+                headerClass = 'bg-danger text-white';
+            } else if (msgTags === 'warning') {
+                title = 'Warning';
+                headerClass = 'bg-warning text-dark';
+            } else if (msgTags === 'info') {
+                title = 'Information';
+                headerClass = 'bg-info text-white';
+            }
+            
+            // Apply the title and color to the modal
+            document.getElementById('messageModalLabel').innerText = title;
+            document.getElementById('messageModalHeader').className = 'modal-header ' + headerClass;
+            
+            // Inject the message text
+            document.getElementById('messageModalBody').innerHTML = msgText;
+            
+            // Show the modal
+            $('#messageModal').modal('show');
+        {% endfor %}
+    });
+</script>
+{% endif %}
+</div>
+
+<script>
+    $(document).ready(function() {
+        // Auto-uppercase first letter of each word
+        $('#name').on('keyup', function() {
+            var words = $(this).val().split(' ');
+            for (var i = 0; i < words.length; i++) {
+                if (words[i].length > 0) {
+                    words[i] = words[i].charAt(0).toUpperCase() + words[i].slice(1).toLowerCase();
+                }
+            }
+            $(this).val(words.join(' '));
+        });
+    });
+</script>
+
+{% endblock %}
